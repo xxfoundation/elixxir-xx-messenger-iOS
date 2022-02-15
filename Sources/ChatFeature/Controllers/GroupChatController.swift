@@ -1,0 +1,522 @@
+import UIKit
+import Theme
+import Models
+import Shared
+import Combine
+import Voxophone
+import ChatLayout
+import DifferenceKit
+import ChatInputFeature
+import DependencyInjection
+
+typealias OutgoingGroupTextCell = CollectionCell<FlexibleSpace, StackMessageView>
+typealias IncomingGroupTextCell = CollectionCell<StackMessageView, FlexibleSpace>
+typealias OutgoingGroupReplyCell = CollectionCell<FlexibleSpace, ReplyStackMessageView>
+typealias IncomingGroupReplyCell = CollectionCell<ReplyStackMessageView, FlexibleSpace>
+typealias OutgoingFailedGroupTextCell = CollectionCell<FlexibleSpace, StackMessageView>
+typealias OutgoingFailedGroupReplyCell = CollectionCell<FlexibleSpace, ReplyStackMessageView>
+
+public final class GroupChatController: UIViewController {
+    @Dependency private var coordinator: ChatCoordinating
+    @Dependency private var statusBarController: StatusBarStyleControlling
+
+    private let members: MembersController
+    private var collectionView: UICollectionView!
+    lazy private var header = GroupHeaderView()
+    private let inputComponent: ChatInputView
+
+    private let chatLayout = ChatLayout()
+    private var animator: ManualAnimator?
+    private let viewModel: GroupChatViewModel
+    private let layoutDelegate = LayoutDelegate()
+    private var cancellables = Set<AnyCancellable>()
+    private var sections = [ArraySection<ChatSection, GroupChatItem>]()
+    private var currentInterfaceActions = SetActor<Set<InterfaceActions>, ReactionTypes>()
+
+    public override var canBecomeFirstResponder: Bool { true }
+    public override var inputAccessoryView: UIView? { inputComponent }
+
+    public init(_ info: GroupChatInfo) {
+        let viewModel = GroupChatViewModel(info)
+        self.viewModel = viewModel
+        self.members = .init(with: info.members)
+
+        self.inputComponent = ChatInputView(store: .init(
+            initialState: .init(canAddAttachments: false),
+            reducer: chatInputReducer,
+            environment: .init(
+                voxophone: try! DependencyInjection.Container.shared.resolve() as Voxophone,
+                sendAudio: { _ in },
+                didTapCamera: {},
+                didTapLibrary: {},
+                sendText: { viewModel.send($0) },
+                didTapAbortReply: { viewModel.abortReply() },
+                didTapMicrophone: { false }
+            )
+        ))
+
+        super.init(nibName: nil, bundle: nil)
+
+        header.setup(title: info.group.name, members: info.members)
+    }
+
+    public required init?(coder: NSCoder) { nil }
+
+    public override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        statusBarController.style.send(.darkContent)
+        navigationController?.navigationBar.customize(
+            backgroundColor: Asset.neutralWhite.color,
+            shadowColor: Asset.neutralDisabled.color
+        )
+    }
+
+    public override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        collectionView.collectionViewLayout.invalidateLayout()
+        becomeFirstResponder()
+    }
+
+    private var isFirstAppearance = true
+
+    public override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+
+        if isFirstAppearance {
+            isFirstAppearance = false
+            let insets = UIEdgeInsets(
+                top: 0,
+                left: 0,
+                bottom: inputComponent.bounds.height - view.safeAreaInsets.bottom,
+                right: 0
+            )
+            collectionView.contentInset = insets
+            collectionView.scrollIndicatorInsets = insets
+        }
+    }
+
+    public override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        viewModel.readAll()
+    }
+
+    public override func viewDidLoad() {
+        super.viewDidLoad()
+
+        setupNavigationBar()
+        setupCollectionView()
+        setupInputController()
+        setupBindings()
+
+        KeyboardListener.shared.add(delegate: self)
+    }
+
+    private func setupNavigationBar() {
+        let back = UIButton.back()
+        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
+
+        let more = UIButton()
+        more.setImage(Asset.chatMore.image, for: .normal)
+        more.addTarget(self, action: #selector(didTapDots), for: .touchUpInside)
+
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: back)
+        navigationItem.titleView = header
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: more)
+    }
+
+    private func setupCollectionView() {
+        chatLayout.configure(layoutDelegate)
+        collectionView = .init(on: view, with: chatLayout)
+        collectionView.register(IncomingGroupTextCell.self)
+        collectionView.register(OutgoingGroupTextCell.self)
+        collectionView.register(IncomingGroupReplyCell.self)
+        collectionView.register(OutgoingGroupReplyCell.self)
+        collectionView.register(OutgoingFailedGroupTextCell.self)
+        collectionView.register(OutgoingFailedGroupReplyCell.self)
+        collectionView.registerSectionHeader(SectionHeaderView.self)
+        collectionView.dataSource = self
+        collectionView.delegate = self
+    }
+
+    private func setupInputController() {
+        inputComponent.setMaxHeight { [weak self] in
+            guard let self = self else { return 150 }
+
+            let maxHeight = self.collectionView.frame.height
+            - self.collectionView.adjustedContentInset.top
+            - self.collectionView.adjustedContentInset.bottom
+            + self.inputComponent.bounds.height
+
+            return maxHeight * 0.9
+        }
+
+        viewModel.replyPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in inputComponent.setupReply(message: $0.text, sender: $0.sender) }
+            .store(in: &cancellables)
+    }
+
+    private func setupBindings() {
+        viewModel.roundURLPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in coordinator.toWebview(with: $0, from: self) }
+            .store(in: &cancellables)
+
+        viewModel.messages
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] sections in
+                func process() {
+                    let changeSet = StagedChangeset(source: self.sections, target: sections).flattenIfPossible()
+                    collectionView.reload(
+                        using: changeSet,
+                        interrupt: { changeSet in
+                            guard !self.sections.isEmpty else { return true }
+                            return false
+                        }, onInterruptedReload: {
+                            guard let lastSection = self.sections.last else { return }
+                            let positionSnapshot = ChatLayoutPositionSnapshot(
+                                indexPath: IndexPath(
+                                    item: lastSection.elements.count - 1,
+                                    section: self.sections.count - 1
+                                ),
+                                kind: .cell,
+                                edge: .bottom
+                            )
+
+                            self.collectionView.reloadData()
+                            self.chatLayout.restoreContentOffset(with: positionSnapshot)
+                        },
+                        completion: nil,
+                        setData: { self.sections = $0 }
+                    )
+                }
+
+                guard currentInterfaceActions.options.isEmpty else {
+                    let reaction = SetActor<Set<InterfaceActions>, ReactionTypes>.Reaction(
+                        type: .delayedUpdate,
+                        action: .onEmpty,
+                        executionType: .once,
+                        actionBlock: { [weak self] in
+                            guard let _ = self else { return }
+                            process()
+                        }
+                    )
+
+                    currentInterfaceActions.add(reaction: reaction)
+                    return
+                }
+
+                process()
+            }
+            .store(in: &cancellables)
+    }
+
+    @objc private func didTapBack() {
+        navigationController?.popViewController(animated: true)
+    }
+
+    @objc private func didTapDots() {
+        coordinator.toMembersList(members, from: self)
+    }
+
+    func scrollToBottom(completion: (() -> Void)? = nil) {
+        let contentOffsetAtBottom = CGPoint(
+            x: collectionView.contentOffset.x,
+            y: chatLayout.collectionViewContentSize.height
+            - collectionView.frame.height + collectionView.adjustedContentInset.bottom
+        )
+
+        guard contentOffsetAtBottom.y > collectionView.contentOffset.y else { completion?(); return }
+
+        let initialOffset = collectionView.contentOffset.y
+        let delta = contentOffsetAtBottom.y - initialOffset
+
+        if abs(delta) > chatLayout.visibleBounds.height {
+            animator = ManualAnimator()
+            animator?.animate(duration: TimeInterval(0.25), curve: .easeInOut) { [weak self] percentage in
+                guard let self = self else { return }
+
+                self.collectionView.contentOffset = CGPoint(x: self.collectionView.contentOffset.x, y: initialOffset + (delta * percentage))
+                if percentage == 1.0 {
+                    self.animator = nil
+                    let positionSnapshot = ChatLayoutPositionSnapshot(indexPath: IndexPath(item: 0, section: 0), kind: .footer, edge: .bottom)
+                    self.chatLayout.restoreContentOffset(with: positionSnapshot)
+                    self.currentInterfaceActions.options.remove(.scrollingToBottom)
+                    completion?()
+                }
+            }
+        } else {
+            currentInterfaceActions.options.insert(.scrollingToBottom)
+            UIView.animate(withDuration: 0.25, animations: {
+                self.collectionView.setContentOffset(contentOffsetAtBottom, animated: true)
+            }, completion: { [weak self] _ in
+                self?.currentInterfaceActions.options.remove(.scrollingToBottom)
+                completion?()
+            })
+        }
+    }
+}
+
+extension GroupChatController: UICollectionViewDataSource {
+    public func numberOfSections(in collectionView: UICollectionView) -> Int {
+        sections.count
+    }
+
+    public func collectionView(_ collectionView: UICollectionView,
+                               viewForSupplementaryElementOfKind kind: String,
+                               at indexPath: IndexPath) -> UICollectionReusableView {
+        let sectionHeader: SectionHeaderView = collectionView.dequeueSupplementaryView(forIndexPath: indexPath)
+        sectionHeader.title.text = sections[indexPath.section].model.date.asDayOfMonth()
+        return sectionHeader
+    }
+
+    public func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
+        sections[section].elements.count
+    }
+
+    public func collectionView(
+        _ collectionView: UICollectionView,
+        cellForItemAt indexPath: IndexPath
+    ) -> UICollectionViewCell {
+
+        let item = sections[indexPath.section].elements[indexPath.item]
+        let canReply: () -> Bool = {
+            item.status == .sent ||
+            item.status == .received ||
+            item.status == .read
+        }
+
+        let performReply: () -> Void = { [weak self] in
+            self?.viewModel.didRequestReply(item)
+        }
+
+        let name: (Data) -> String = viewModel.getName(from:)
+        let text: (Data) -> String = viewModel.getText(from:)
+        let showRound: (String?) -> Void = viewModel.showRoundFrom(_:)
+
+        if item.status == .received {
+            if item.payload.reply != nil {
+                let cell: IncomingGroupReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
+
+                Bubbler.buildReplyGroup(
+                    bubble: cell.leftView,
+                    with: item,
+                    reply: .init(
+                        text: text(item.payload.reply!.messageId),
+                        sender: name(item.payload.reply!.senderId)
+                    ),
+                    sender: name(item.sender)
+                )
+
+                cell.canReply = canReply()
+                cell.performReply = performReply
+                cell.leftView.didTapShowRound = { showRound(item.roundURL) }
+
+                return cell
+            } else {
+                let cell: IncomingGroupTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
+                Bubbler.buildGroup(bubble: cell.leftView, with: item, with: name(item.sender))
+                cell.canReply = canReply()
+                cell.performReply = performReply
+                cell.leftView.didTapShowRound = { showRound(item.roundURL) }
+
+                return cell
+            }
+        } else if item.status == .failed {
+            if item.payload.reply != nil {
+                let cell: OutgoingFailedGroupReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
+
+                Bubbler.buildReplyGroup(
+                    bubble: cell.rightView,
+                    with: item,
+                    reply: .init(
+                        text: text(item.payload.reply!.messageId),
+                        sender: name(item.payload.reply!.senderId)
+                    ),
+                    sender: name(item.sender)
+                )
+
+                cell.canReply = canReply()
+                cell.performReply = performReply
+
+                return cell
+            } else {
+                let cell: OutgoingFailedGroupTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
+
+                Bubbler.buildGroup(bubble: cell.rightView, with: item, with: name(item.sender))
+                cell.canReply = canReply()
+                cell.performReply = performReply
+
+                return cell
+            }
+        } else {
+            if item.payload.reply != nil {
+                let cell: OutgoingGroupReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
+
+                Bubbler.buildReplyGroup(
+                    bubble: cell.rightView,
+                    with: item,
+                    reply: .init(
+                        text: text(item.payload.reply!.messageId),
+                        sender: name(item.payload.reply!.senderId)
+                    ),
+                    sender: name(item.sender)
+                )
+
+                cell.canReply = canReply()
+                cell.performReply = performReply
+                cell.rightView.didTapShowRound = { showRound(item.roundURL) }
+
+                return cell
+            } else {
+                let cell: OutgoingGroupTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
+
+                Bubbler.buildGroup(bubble: cell.rightView, with: item, with: name(item.sender))
+                cell.canReply = canReply()
+                cell.performReply = performReply
+                cell.rightView.didTapShowRound = { showRound(item.roundURL) }
+
+                return cell
+            }
+        }
+    }
+}
+
+extension GroupChatController: KeyboardListenerDelegate {
+    fileprivate var isUserInitiatedScrolling: Bool {
+        return collectionView.isDragging || collectionView.isDecelerating
+    }
+
+    func keyboardWillChangeFrame(info: KeyboardInfo) {
+        let keyWindow = UIApplication.shared.windows.filter { $0.isKeyWindow }.first
+
+        guard !currentInterfaceActions.options.contains(.changingFrameSize),
+              collectionView.contentInsetAdjustmentBehavior != .never,
+              let keyboardFrame = keyWindow?.convert(info.frameEnd, to: view),
+              collectionView.convert(collectionView.bounds, to: keyWindow).maxY > info.frameEnd.minY else {
+                  return
+              }
+        currentInterfaceActions.options.insert(.changingKeyboardFrame)
+        let newBottomInset = collectionView.frame.minY + collectionView.frame.size.height - keyboardFrame.minY - collectionView.safeAreaInsets.bottom
+        if newBottomInset > 0,
+           collectionView.contentInset.bottom != newBottomInset {
+            let positionSnapshot = chatLayout.getContentOffsetSnapshot(from: .bottom)
+
+            currentInterfaceActions.options.insert(.changingContentInsets)
+            UIView.animate(withDuration: info.animationDuration, animations: {
+                self.collectionView.performBatchUpdates({
+                    self.collectionView.contentInset.bottom = newBottomInset
+                    self.collectionView.verticalScrollIndicatorInsets.bottom = newBottomInset
+                }, completion: nil)
+
+                if let positionSnapshot = positionSnapshot, !self.isUserInitiatedScrolling {
+                    self.chatLayout.restoreContentOffset(with: positionSnapshot)
+                }
+            }, completion: { _ in
+                self.currentInterfaceActions.options.remove(.changingContentInsets)
+            })
+        }
+    }
+
+    func keyboardDidChangeFrame(info: KeyboardInfo) {
+        guard currentInterfaceActions.options.contains(.changingKeyboardFrame) else { return }
+        currentInterfaceActions.options.remove(.changingKeyboardFrame)
+    }
+}
+
+extension GroupChatController: UICollectionViewDelegate {
+    private func makeTargetedPreview(for configuration: UIContextMenuConfiguration) -> UITargetedPreview? {
+        guard let identifier = configuration.identifier as? String,
+              let first = identifier.components(separatedBy: "|").first,
+              let last = identifier.components(separatedBy: "|").last,
+              let item = Int(first), let section = Int(last),
+              let cell = collectionView.cellForItem(at: IndexPath(item: item, section: section)) else {
+                  return nil
+              }
+
+        let parameters = UIPreviewParameters()
+        parameters.backgroundColor = .clear
+
+        if sections[section].elements[item].status == .received {
+            var leftView: UIView!
+
+            if let cell = cell as? IncomingGroupReplyCell {
+                leftView = cell.leftView
+            } else if let cell = cell as? IncomingGroupTextCell {
+                leftView = cell.leftView
+            }
+
+            parameters.visiblePath = UIBezierPath(roundedRect: leftView.bounds, cornerRadius: 13)
+            return UITargetedPreview(view: leftView, parameters: parameters)
+        }
+
+        var rightView: UIView!
+
+        if let cell = cell as? OutgoingGroupTextCell {
+            rightView = cell.rightView
+        } else if let cell = cell as? OutgoingGroupReplyCell {
+            rightView = cell.rightView
+        }
+
+        parameters.visiblePath = UIBezierPath(roundedRect: rightView.bounds, cornerRadius: 13)
+        return UITargetedPreview(view: rightView, parameters: parameters)
+    }
+
+    public func collectionView(
+        _ collectionView: UICollectionView,
+        previewForHighlightingContextMenuWithConfiguration configuration: UIContextMenuConfiguration
+    ) -> UITargetedPreview? {
+        makeTargetedPreview(for: configuration)
+    }
+
+    public func collectionView(
+        _ collectionView: UICollectionView,
+        previewForDismissingContextMenuWithConfiguration configuration: UIContextMenuConfiguration
+    ) -> UITargetedPreview? {
+        makeTargetedPreview(for: configuration)
+    }
+
+    public func collectionView(
+        _ collectionView: UICollectionView,
+        contextMenuConfigurationForItemAt indexPath: IndexPath,
+        point: CGPoint
+    ) -> UIContextMenuConfiguration? {
+        UIContextMenuConfiguration(
+            identifier: "\(indexPath.item)|\(indexPath.section)" as NSCopying,
+            previewProvider: nil
+        ) { [weak self] suggestedActions in
+
+            guard let self = self else { return nil }
+
+            let item = self.sections[indexPath.section].elements[indexPath.item]
+
+            let copy = UIAction(title: Localized.Chat.BubbleMenu.copy, state: .on) { _ in
+                UIPasteboard.general.string = item.payload.text
+            }
+
+            let reply = UIAction(title: Localized.Chat.BubbleMenu.reply, state: .on) { [weak self] _ in
+                self?.viewModel.didRequestReply(item)
+            }
+
+            let delete = UIAction(title: Localized.Chat.BubbleMenu.delete, state: .on) { [weak self] _ in
+                self?.viewModel.didRequestDelete([item])
+            }
+
+            let retry = UIAction(title: Localized.Chat.BubbleMenu.retry, state: .on) { [weak self] _ in
+                self?.viewModel.retry(item)
+            }
+
+            let menu: UIMenu
+
+            if item.status == .failed {
+                menu = UIMenu(title: "", children: [copy, retry, delete])
+            } else if item.status == .sending {
+                menu = UIMenu(title: "", children: [copy])
+            } else {
+                menu = UIMenu(title: "", children: [copy, reply, delete])
+            }
+
+            return menu
+        }
+    }
+}

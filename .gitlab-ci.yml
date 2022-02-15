@@ -1,0 +1,60 @@
+stages:
+- test
+- archive
+- deploy
+
+variables:
+ LANG: "en_US.UTF-8"
+ LC_ALL: "en_US.UTF-8"
+ REPO_DIR: gitlab.com/elixxir
+ REPO_NAME: client-ios
+
+before_script:
+  - bundle install
+  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+  - mkdir -p ~/.ssh
+  - chmod 700 ~/.ssh
+  - ssh-keyscan -t rsa $GITLAB_SERVER > ~/.ssh/known_hosts
+  
+Unit tests:
+  tags: 
+      - ios
+  stage: test
+  script:
+    - bundle exec fastlane test scheme:'Mock'
+    - cp -R /Users/elixxir/Library/Developer/Xcode/DerivedData/client-ios*/Build/Products/Debug-iphonesimulator/client-ios.app ./
+    - cp -R /Users/elixxir/Library/Developer/Xcode/DerivedData/client-ios*/Build/Products/Debug-iphonesimulator/client-ios.app.dSYM ./
+  artifacts:
+    paths: 
+        - ./client-ios.app
+        - ./client-ios.app.dSYM
+
+Mock:
+ tags: 
+  - ios
+ stage: archive
+ script: 
+  - bundle exec fastlane archive scheme:'Mock' app_id:'xx.messenger.mock' notifications_app_id:'xx.messenger.mock.notifications' gym_method:'development' method:'development'
+ needs: ['Unit tests']
+ artifacts:
+  paths:
+   - ./Mock.ipa
+
+Release:
+ tags: 
+  - ios
+ stage: archive
+ script: 
+  - bundle exec fastlane archive scheme:'Release' app_id:'xx.messenger' notifications_app_id:'xx.messenger.notifications' gym_method:'app-store' method:'appstore'
+ needs: ['Unit tests']
+ artifacts:
+  paths:
+   - ./Release.ipa
+
+TestFlight:
+ tags:
+  - ios
+ stage: deploy
+ script:
+  - bundle exec fastlane deploy scheme:'Release'
+ needs: ['Release']
