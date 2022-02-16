@@ -5,7 +5,11 @@
 - Build number: Σ commits (Check App/set_build_number.sh)
 
 ## How to setup
-Clone the project and run. If you'd like to run the project without using the xx network, run the `Mock` scheme. Otherwise, run the `Release` scheme. Since the project is written in Swift 5.0, it requires Xcode 10.2 minimum.
+1) Clone the project
+2) Add a Google-Service.plist file to `client-ios/Resources`
+3) Paste the certificate content to `Sources/Integration/Resources/cert_mainnet` and run.
+
+If you'd like to run the project without using the xx network, run the `Mock` scheme. Otherwise, run the `Release` scheme. Since the project is written in Swift 5.0, it requires Xcode 10.2 minimum.
 
 ## Dependencies
 - App features and external dependencies are defined on `Package.swift`
