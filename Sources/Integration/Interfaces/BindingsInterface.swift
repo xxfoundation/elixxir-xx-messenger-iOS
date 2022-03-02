@@ -1,6 +1,12 @@
 import Models
 import Foundation
 
+public enum MessageDeliveryStatus {
+    case sent
+    case failed
+    case timedout
+}
+
 public typealias BackendEvent = (Int, String?, String?, String?)
 
 public typealias DeliveryResult = (Data?, Bool, Bool, Data?)
@@ -70,7 +76,7 @@ public protocol BindingsInterface {
 
     func listen(
         report: Data,
-        _: @escaping (Result<Bool, Error>) -> Void
+        _: @escaping (Result<MessageDeliveryStatus, Error>) -> Void
     )
     
     func listenRound(

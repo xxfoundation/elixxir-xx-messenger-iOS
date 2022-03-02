@@ -113,7 +113,10 @@ extension CellFactory {
     ) -> Self {
         .init(
             canBuild: { item in
-                (item.status == .sent || item.status == .failedToSend || item.status == .sendingAttachment)
+                (item.status == .sent ||
+                 item.status == .failedToSend ||
+                 item.status == .sendingAttachment ||
+                 item.status == .timedOut)
                 && item.payload.reply == nil
                 && item.payload.attachment != nil
                 && item.payload.attachment?._extension == .audio
@@ -178,7 +181,10 @@ extension CellFactory {
     static func outgoingImage() -> Self {
         .init(
             canBuild: { item in
-                (item.status == .sent || item.status == .failedToSend || item.status == .sendingAttachment)
+                (item.status == .sent ||
+                 item.status == .failedToSend ||
+                 item.status == .sendingAttachment ||
+                 item.status == .timedOut)
                 && item.payload.reply == nil
                 && item.payload.attachment != nil
                 && item.payload.attachment?._extension == .image
@@ -299,7 +305,7 @@ extension CellFactory {
     ) -> Self {
         .init(
             canBuild: { item in
-                item.status == .failedToSend
+                (item.status == .failedToSend || item.status == .timedOut)
                 && item.payload.reply != nil
                 && item.payload.attachment == nil
 
@@ -375,7 +381,7 @@ extension CellFactory {
     static func outgoingFailedText(performReply: @escaping () -> Void) -> Self {
         .init(
             canBuild: { item in
-                item.status == .failedToSend
+                (item.status == .failedToSend || item.status == .timedOut)
                 && item.payload.reply == nil
                 && item.payload.attachment == nil
 
@@ -425,7 +431,7 @@ struct ActionFactory {
         case .reply:
             guard item.status == .read || item.status == .received || item.status == .sent else { return nil }
         case .retry:
-            guard item.status == .failedToSend else { return nil }
+            guard item.status == .failedToSend || item.status == .timedOut else { return nil }
         case .delete, .copy:
             break
         }

@@ -19,6 +19,11 @@ final class Bubbler {
             audioBubble.backgroundColor = Asset.neutralWhite.color
             audioBubble.dateLabel.textColor = Asset.neutralDisabled.color
             audioBubble.progressLabel.textColor = Asset.neutralDisabled.color
+        case .timedOut:
+            audioBubble.lockerView.fail()
+            audioBubble.backgroundColor = Asset.accentWarning.color
+            audioBubble.dateLabel.textColor = Asset.neutralWhite.color
+            audioBubble.progressLabel.textColor = Asset.neutralWhite.color
         case .failedToSend:
             audioBubble.lockerView.fail()
             audioBubble.backgroundColor = Asset.accentDanger.color
@@ -61,6 +66,11 @@ final class Bubbler {
             imageBubble.backgroundColor = Asset.accentDanger.color
             imageBubble.dateLabel.textColor = Asset.neutralWhite.color
             imageBubble.progressLabel.textColor = Asset.neutralWhite.color
+        case .timedOut:
+            imageBubble.lockerView.fail()
+            imageBubble.backgroundColor = Asset.accentWarning.color
+            imageBubble.dateLabel.textColor = Asset.neutralWhite.color
+            imageBubble.progressLabel.textColor = Asset.neutralWhite.color
         case .sent:
             imageBubble.lockerView.stop()
             imageBubble.backgroundColor = Asset.brandBubble.color
@@ -92,6 +102,12 @@ final class Bubbler {
             bubble.dateLabel.textColor = Asset.neutralDisabled.color
             roundButtonColor = Asset.neutralDisabled.color
             bubble.revertBottomStackOrder()
+        case .timedOut:
+            bubble.lockerView.fail()
+            bubble.backgroundColor = Asset.accentWarning.color
+            bubble.textView.textColor = Asset.neutralWhite.color
+            bubble.dateLabel.textColor = Asset.neutralWhite.color
+            roundButtonColor = Asset.neutralWhite.color
         case .failedToSend:
             bubble.lockerView.fail()
             bubble.backgroundColor = Asset.accentDanger.color
@@ -206,6 +222,14 @@ final class Bubbler {
             bubble.replyView.container.backgroundColor = Asset.brandDefault.color
             bubble.replyView.space.backgroundColor = Asset.brandPrimary.color
             bubble.revertBottomStackOrder()
+        case .timedOut:
+            bubble.senderLabel.removeFromSuperview()
+            bubble.backgroundColor = Asset.accentWarning.color
+            bubble.textView.textColor = Asset.neutralWhite.color
+            bubble.dateLabel.textColor = Asset.neutralWhite.color
+            roundButtonColor = Asset.neutralWhite.color
+            bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
+            bubble.replyView.container.backgroundColor = Asset.brandLight.color
         case .failedToSend:
             bubble.senderLabel.removeFromSuperview()
             bubble.backgroundColor = Asset.accentDanger.color
@@ -239,7 +263,7 @@ final class Bubbler {
         switch item.status {
         case .sent:
             bubble.lockerView.stop()
-        case .failedToSend:
+        case .failedToSend, .timedOut:
             bubble.lockerView.fail()
         case .sending, .sendingAttachment:
             bubble.lockerView.animate()
