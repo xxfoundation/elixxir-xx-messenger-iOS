@@ -11,6 +11,7 @@
 #include "Universe.objc.h"
 
 
+@class BindingsBackup;
 @class BindingsClient;
 @class BindingsContact;
 @class BindingsContactList;
@@ -33,6 +34,7 @@
 @class BindingsNewGroupReport;
 @class BindingsNodeRegistrationsStatus;
 @class BindingsNotificationForMeReport;
+@class BindingsRestoreContactsReport;
 @class BindingsRoundList;
 @class BindingsSendReport;
 @class BindingsSendReportDisk;
@@ -43,6 +45,8 @@
 @class BindingsAuthConfirmCallback;
 @protocol BindingsAuthRequestCallback;
 @class BindingsAuthRequestCallback;
+@protocol BindingsAuthResetCallback;
+@class BindingsAuthResetCallback;
 @protocol BindingsClientError;
 @class BindingsClientError;
 @protocol BindingsEventCallbackFunctionObject;
@@ -71,6 +75,8 @@
 @class BindingsNetworkHealthCallback;
 @protocol BindingsPreimageNotification;
 @class BindingsPreimageNotification;
+@protocol BindingsRestoreContactsUpdater;
+@class BindingsRestoreContactsUpdater;
 @protocol BindingsRoundCompletionCallback;
 @class BindingsRoundCompletionCallback;
 @protocol BindingsRoundEventCallback;
@@ -81,12 +87,18 @@
 @class BindingsSingleSearchCallback;
 @protocol BindingsTimeSource;
 @class BindingsTimeSource;
+@protocol BindingsUpdateBackupFunc;
+@class BindingsUpdateBackupFunc;
 
 @protocol BindingsAuthConfirmCallback <NSObject>
 - (void)callback:(BindingsContact* _Nullable)partner;
 @end
 
 @protocol BindingsAuthRequestCallback <NSObject>
+- (void)callback:(BindingsContact* _Nullable)requestor;
+@end
+
+@protocol BindingsAuthResetCallback <NSObject>
 - (void)callback:(BindingsContact* _Nullable)requestor;
 @end
 
@@ -147,6 +159,10 @@
 - (void)notify:(NSData* _Nullable)identity deleted:(BOOL)deleted;
 @end
 
+@protocol BindingsRestoreContactsUpdater <NSObject>
+- (void)restoreContactsCallback:(long)numFound numRestored:(long)numRestored total:(long)total err:(NSString* _Nullable)err;
+@end
+
 @protocol BindingsRoundCompletionCallback <NSObject>
 - (void)eventCallback:(long)rid success:(BOOL)success timedOut:(BOOL)timedOut;
 @end
@@ -167,6 +183,28 @@
 - (int64_t)nowMs;
 @end
 
+@protocol BindingsUpdateBackupFunc <NSObject>
+- (void)updateBackup:(NSData* _Nullable)encryptedBackup;
+@end
+
+@interface BindingsBackup : NSObject <goSeqRefInterface> {
+}
+@property(strong, readonly) _Nonnull id _ref;
+
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref;
+- (nonnull instancetype)init;
+/**
+ * IsBackupRunning returns true if the backup has been initialized and is
+running. Returns false if it has been stopped.
+ */
+- (BOOL)isBackupRunning;
+/**
+ * StopBackup stops the backup processes and deletes the user's password from
+storage. To enable backups again, call InitializeBackup.
+ */
+- (BOOL)stopBackup:(NSError* _Nullable* _Nullable)error;
+@end
+
 /**
  * BindingsClient wraps the api.Client, implementing additional functions
 to support the gomobile Client interface
@@ -179,9 +217,29 @@ to support the gomobile Client interface
 - (nonnull instancetype)init;
 - (BOOL)confirmAuthenticatedChannel:(NSData* _Nullable)recipientMarshaled ret0_:(long* _Nullable)ret0_ error:(NSError* _Nullable* _Nullable)error;
 /**
+ * DeleteAllRequests clears all requests from Client's auth storage.
+ */
+- (BOOL)deleteAllRequests:(NSError* _Nullable* _Nullable)error;
+/**
  * DeleteContact is a function which removes a contact from Client's storage
  */
 - (BOOL)deleteContact:(NSData* _Nullable)b error:(NSError* _Nullable* _Nullable)error;
+/**
+ * DeleteReceiveRequests clears receive requests from Client's auth storage.
+ */
+- (BOOL)deleteReceiveRequests:(NSError* _Nullable* _Nullable)error;
+/**
+ * DeleteRequest will delete a request, agnostic of request type
+for the given partner ID. If no request exists for this
+partner ID an error will be returned.
+ */
+- (BOOL)deleteRequest:(NSData* _Nullable)requesterUserId error:(NSError* _Nullable* _Nullable)error;
+/**
+ * DeleteSentRequests clears sent requests from Client's auth storage.
+ */
+- (BOOL)deleteSentRequests:(NSError* _Nullable* _Nullable)error;
+// skipped method Client.GetInternalClient with unsupported parameter or return types
+
 /**
  * GetNodeRegistrationStatus returns a struct with the number of nodes the
 client is registered with and the number total.
@@ -224,7 +282,7 @@ Running	- 2000
 Stopping	- 3000
  */
 - (long)networkFollowerStatus;
-- (void)registerAuthCallbacks:(id<BindingsAuthRequestCallback> _Nullable)request confirm:(id<BindingsAuthConfirmCallback> _Nullable)confirm;
+- (void)registerAuthCallbacks:(id<BindingsAuthRequestCallback> _Nullable)request confirm:(id<BindingsAuthConfirmCallback> _Nullable)confirm reset:(id<BindingsAuthResetCallback> _Nullable)reset;
 /**
  * RegisterClientErrorCallback registers the callback to handle errors from the
 long running threads controlled by StartNetworkFollower and StopNetworkFollower
@@ -281,6 +339,7 @@ These states are defined in elixxir/primitives/states/state.go
 - (BindingsUnregister* _Nullable)registerRoundEventsHandler:(long)rid cb:(id<BindingsRoundEventCallback> _Nullable)cb timeoutMS:(long)timeoutMS il:(BindingsIntList* _Nullable)il;
 - (void)replayRequests;
 - (BOOL)requestAuthenticatedChannel:(NSData* _Nullable)recipientMarshaled meMarshaled:(NSData* _Nullable)meMarshaled message:(NSString* _Nullable)message ret0_:(long* _Nullable)ret0_ error:(NSError* _Nullable* _Nullable)error;
+- (BOOL)resetSession:(NSData* _Nullable)recipientMarshaled meMarshaled:(NSData* _Nullable)meMarshaled message:(NSString* _Nullable)message ret0_:(long* _Nullable)ret0_ error:(NSError* _Nullable* _Nullable)error;
 /**
  * This will return the round the message was sent on if it is successfully sent
 This can be used to register a round event to learn about message delivery.
@@ -400,6 +459,8 @@ The callbacks will return at timeoutMS if no state update occurs
 
 - (nonnull instancetype)initWithRef:(_Nonnull id)ref;
 - (nonnull instancetype)init;
+// skipped method Contact.GetAPIContact with unsupported parameter or return types
+
 /**
  * GetDHPublicKey returns the public key associated with the Contact.
  */
@@ -1061,6 +1122,38 @@ for bindings.
 - (NSString* _Nonnull)type;
 @end
 
+/**
+ * RestoreContactsReport is a gomobile friendly report structure
+for determining which IDs restored, which failed, and why.
+ */
+@interface BindingsRestoreContactsReport : NSObject <goSeqRefInterface> {
+}
+@property(strong, readonly) _Nonnull id _ref;
+
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref;
+- (nonnull instancetype)init;
+/**
+ * GetErrorAt returns the error string at index
+ */
+- (NSString* _Nonnull)getErrorAt:(long)index;
+/**
+ * GetFailedAt returns the failed ID at index
+ */
+- (NSData* _Nullable)getFailedAt:(long)index;
+/**
+ * GetRestoredAt returns the restored ID at index
+ */
+- (NSData* _Nullable)getRestoredAt:(long)index;
+/**
+ * LenFailed returns the length of the ID's failed.
+ */
+- (long)lenFailed;
+/**
+ * LenRestored returns the length of ID's restored.
+ */
+- (long)lenRestored;
+@end
+
 @interface BindingsRoundList : NSObject <goSeqRefInterface> {
 }
 @property(strong, readonly) _Nonnull id _ref;
@@ -1136,8 +1229,6 @@ Interface which allows the un-registration of a listener
 
 - (nonnull instancetype)initWithRef:(_Nonnull id)ref;
 - (nonnull instancetype)init;
-- (NSData* _Nullable)getCmixDhPrivateKey;
-- (NSData* _Nullable)getCmixDhPublicKey;
 - (BindingsContact* _Nullable)getContact;
 - (NSData* _Nullable)getE2EDhPrivateKey;
 - (NSData* _Nullable)getE2EDhPublicKey;
@@ -1152,16 +1243,13 @@ Interface which allows the un-registration of a listener
 - (BOOL)isPrecanned;
 @end
 
-/**
- * User Discovery object
- */
 @interface BindingsUserDiscovery : NSObject <goSeqRefInterface> {
 }
 @property(strong, readonly) _Nonnull id _ref;
 
 - (nonnull instancetype)initWithRef:(_Nonnull id)ref;
 /**
- * Returns a new user discovery object. Only call this once. It must be called
+ * NewUserDiscovery returns a new user discovery object. Only call this once. It must be called
 after StartNetworkFollower is called and will fail if the network has never
 been contacted.
 This function technically has a memory leak because it causes both sides of
@@ -1172,7 +1260,7 @@ This must be called while start network follower is running.
  */
 - (nullable instancetype)init:(BindingsClient* _Nullable)client;
 /**
- * Adds a fact for the user to user discovery. Will only succeed if the
+ * AddFact adds a fact for the user to user discovery. Will only succeed if the
 user is already registered and the system does not have the fact currently
 registered for any user.
 Will fail if the fact string is not well formed.
@@ -1183,22 +1271,26 @@ called along with the code to finalize the fact.
  */
 - (NSString* _Nonnull)addFact:(NSString* _Nullable)fStr error:(NSError* _Nullable* _Nullable)error;
 /**
- * BackUpMissingFacts adds a registered fact to the Store object. It can take in both an
-email and a phone number. One or the other may be nil, however both is considered
-an error. It checks for the proper fact type for the associated fact.
-Any other fact.FactType is not accepted and returns an error and nothing is backed up.
-If you attempt to back up a fact type that has already been backed up,
-an error will be returned and nothing will be backed up.
-Otherwise, it adds the fact and returns whether the Store saved successfully.
+ * BackUpMissingFacts adds a registered fact to the Store object and saves
+it to storage. It can take in both an email or a phone number, passed into
+the function in that order.  Any one of these fields may be empty,
+however both fields being empty will cause an error. Any other fact that is not
+an email or phone number will return an error. You may only add a fact for the
+accepted types once each. If you attempt to back up a fact type that has already
+been backed up, an error will be returned. Anytime an error is returned, it means
+the backup was not successful.
+NOTE: Do not use this as a direct store operation. This feature is intended to add facts
+to a backend store that have ALREADY BEEN REGISTERED on the account.
+THIS IS NOT FOR ADDING NEWLY REGISTERED FACTS. That is handled on the backend.
  */
 - (BOOL)backUpMissingFacts:(NSString* _Nullable)email phone:(NSString* _Nullable)phone error:(NSError* _Nullable* _Nullable)error;
 /**
- * Confirms a fact first registered via AddFact. The confirmation ID comes from
+ * ConfirmFact confirms a fact first registered via AddFact. The confirmation ID comes from
 AddFact while the code will come over the associated communications system
  */
 - (BOOL)confirmFact:(NSString* _Nullable)confirmationID code:(NSString* _Nullable)code error:(NSError* _Nullable* _Nullable)error;
 /**
- * Looks for the contact object associated with the given userID.  The
+ * Lookup the contact object associated with the given userID.  The
 id is the byte representation of an id.
 This will reject if that id is malformed. The LookupCallback will return
 the associated contact if it exists.
@@ -1221,8 +1313,8 @@ Identity does not go over cmix, it occurs over normal communications
  */
 - (BOOL)register:(NSString* _Nullable)username error:(NSError* _Nullable* _Nullable)error;
 /**
- * Removes a previously confirmed fact.  Will fail if the passed fact string is
-not well formed or if the fact is not associated with this client.
+ * RemoveFact removes a previously confirmed fact.  Will fail if the passed fact string is
+not well-formed or if the fact is not associated with this client.
 Users cannot remove username facts and must instead remove the user.
  */
 - (BOOL)removeFact:(NSString* _Nullable)fStr error:(NSError* _Nullable* _Nullable)error;
@@ -1233,7 +1325,7 @@ unusable.
  */
 - (BOOL)removeUser:(NSString* _Nullable)fStr error:(NSError* _Nullable* _Nullable)error;
 /**
- * Searches for the passed Facts.  The factList is the stringification of a
+ * Search for the passed Facts.  The factList is the stringification of a
 fact list object, look at /bindings/list.go for more on that object.
 This will reject if that object is malformed. The SearchCallback will return
 a list of contacts, each having the facts it hit against.
@@ -1243,7 +1335,7 @@ for a user where multiple pieces of information is known.
  */
 - (BOOL)search:(NSString* _Nullable)fl callback:(id<BindingsSearchCallback> _Nullable)callback timeoutMS:(long)timeoutMS error:(NSError* _Nullable* _Nullable)error;
 /**
- * Searches for the passed Facts.  The fact is the stringification of a
+ * SearchSingle searches for the passed Facts.  The fact is the stringification of a
 fact object, look at /bindings/contact.go for more on that object.
 This will reject if that object is malformed. The SearchCallback will return
 a list of contacts, each having the facts it hit against.
@@ -1251,6 +1343,19 @@ This only searches for a single fact at a time. It is intended to make some
 simple use cases of the API easier.
  */
 - (BOOL)searchSingle:(NSString* _Nullable)f callback:(id<BindingsSingleSearchCallback> _Nullable)callback timeoutMS:(long)timeoutMS error:(NSError* _Nullable* _Nullable)error;
+/**
+ * SetAlternativeUserDiscovery sets the alternativeUd object within manager.
+Once set, any user discovery operation will go through the alternative
+user discovery service.
+To undo this operation, use UnsetAlternativeUserDiscovery.
+The contact file is the already read in bytes, not the file path for the contact file.
+ */
+- (BOOL)setAlternativeUserDiscovery:(NSData* _Nullable)address cert:(NSData* _Nullable)cert contactFile:(NSData* _Nullable)contactFile error:(NSError* _Nullable* _Nullable)error;
+/**
+ * UnsetAlternativeUserDiscovery clears out the information from
+the Manager object.
+ */
+- (BOOL)unsetAlternativeUserDiscovery:(NSError* _Nullable* _Nullable)error;
 @end
 
 /**
@@ -1352,6 +1457,17 @@ FOUNDATION_EXPORT NSString* _Nonnull BindingsGetUnsafeParams(NSError* _Nullable*
 FOUNDATION_EXPORT NSString* _Nonnull BindingsGetVersion(void);
 
 /**
+ * InitializeBackup starts the backup processes that returns backup updates when
+they occur. Any time an event occurs that changes the contents of the backup,
+such as adding or deleting a contact, the backup is triggered and an
+encrypted backup is generated and returned on the updateBackupCb callback.
+Call this function only when enabling backup if it has not already been
+initialized or when the user wants to change their password.
+To resume backup process on app recovery, use ResumeBackup.
+ */
+FOUNDATION_EXPORT BindingsBackup* _Nullable BindingsInitializeBackup(NSString* _Nullable password, id<BindingsUpdateBackupFunc> _Nullable updateBackupCb, BindingsClient* _Nullable c, NSError* _Nullable* _Nullable error);
+
+/**
  * LoadSecretWithMnemonic loads the secret stored from the call to
 StoreSecretWithMnemonic. The path given should be the same filepath
 as the path given in StoreSecretWithMnemonic. There should be a file
@@ -1402,6 +1518,14 @@ at a later date.
 Users of this function should delete the storage directory on error.
  */
 FOUNDATION_EXPORT BOOL BindingsNewClient(NSString* _Nullable network, NSString* _Nullable storageDir, NSData* _Nullable password, NSString* _Nullable regCode, NSError* _Nullable* _Nullable error);
+
+/**
+ * NewClientFromBackup constructs a new Client from an encrypted backup. The backup
+is decrypted using the backupPassphrase. On success a successful client creation,
+the function will return a JSON encoded list of the E2E partners
+contained in the backup.
+ */
+FOUNDATION_EXPORT NSData* _Nullable BindingsNewClientFromBackup(NSString* _Nullable ndfJSON, NSString* _Nullable storageDir, NSData* _Nullable sessionPassword, NSData* _Nullable backupPassphrase, NSData* _Nullable backupFileContents, NSError* _Nullable* _Nullable error);
 
 /**
  * NewDummyTrafficManager creates a DummyTraffic manager and initialises the
@@ -1462,7 +1586,7 @@ Users of this function should delete the storage directory on error.
 FOUNDATION_EXPORT BOOL BindingsNewPrecannedClient(long precannedID, NSString* _Nullable network, NSString* _Nullable storageDir, NSData* _Nullable password, NSError* _Nullable* _Nullable error);
 
 /**
- * Returns a new user discovery object. Only call this once. It must be called
+ * NewUserDiscovery returns a new user discovery object. Only call this once. It must be called
 after StartNetworkFollower is called and will fail if the network has never
 been contacted.
 This function technically has a memory leak because it causes both sides of
@@ -1493,6 +1617,19 @@ FOUNDATION_EXPORT BindingsManyNotificationForMeReport* _Nullable BindingsNotific
  * RegisterLogWriter registers a callback on which logs are written.
  */
 FOUNDATION_EXPORT void BindingsRegisterLogWriter(id<BindingsLogWriter> _Nullable writer);
+
+// skipped function RestoreContactsFromBackup with unsupported parameter or return types
+
+
+/**
+ * ResumeBackup starts the backup processes back up with a new callback after it
+has been initialized.
+Call this function only when resuming a backup that has already been
+initialized or to replace the callback.
+To start the backup for the first time or to use a new password, use
+InitializeBackup.
+ */
+FOUNDATION_EXPORT BindingsBackup* _Nullable BindingsResumeBackup(id<BindingsUpdateBackupFunc> _Nullable cb, BindingsClient* _Nullable c, NSError* _Nullable* _Nullable error);
 
 /**
  * SetTimeSource sets the network time to a custom source.
@@ -1531,9 +1668,17 @@ NOTE that you should not pass in a file path, but a preloaded JSON file
  */
 FOUNDATION_EXPORT BOOL BindingsUpdateCommonErrors(NSString* _Nullable jsonFile, NSError* _Nullable* _Nullable error);
 
+// skipped function WrapAPIClient with unsupported parameter or return types
+
+
+// skipped function WrapUserDiscovery with unsupported parameter or return types
+
+
 @class BindingsAuthConfirmCallback;
 
 @class BindingsAuthRequestCallback;
+
+@class BindingsAuthResetCallback;
 
 @class BindingsClientError;
 
@@ -1563,6 +1708,8 @@ FOUNDATION_EXPORT BOOL BindingsUpdateCommonErrors(NSString* _Nullable jsonFile, 
 
 @class BindingsPreimageNotification;
 
+@class BindingsRestoreContactsUpdater;
+
 @class BindingsRoundCompletionCallback;
 
 @class BindingsRoundEventCallback;
@@ -1572,6 +1719,8 @@ FOUNDATION_EXPORT BOOL BindingsUpdateCommonErrors(NSString* _Nullable jsonFile, 
 @class BindingsSingleSearchCallback;
 
 @class BindingsTimeSource;
+
+@class BindingsUpdateBackupFunc;
 
 /**
  * AuthConfirmCallback notifies the register whenever they receive an auth
@@ -1590,6 +1739,18 @@ request confirmation
 request
  */
 @interface BindingsAuthRequestCallback : NSObject <goSeqRefInterface, BindingsAuthRequestCallback> {
+}
+@property(strong, readonly) _Nonnull id _ref;
+
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref;
+- (void)callback:(BindingsContact* _Nullable)requestor;
+@end
+
+/**
+ * AuthRequestCallback notifies the register whenever they receive an auth
+request
+ */
+@interface BindingsAuthResetCallback : NSObject <goSeqRefInterface, BindingsAuthResetCallback> {
 }
 @property(strong, readonly) _Nonnull id _ref;
 
@@ -1733,7 +1894,7 @@ related to a message send were successful.
 @end
 
 /**
- * MultiLookupCallback returns the result of many paralel lookups
+ * MultiLookupCallback returns the result of many parallel lookups
  */
 @interface BindingsMultiLookupCallback : NSObject <goSeqRefInterface, BindingsMultiLookupCallback> {
 }
@@ -1761,6 +1922,25 @@ changes
 
 - (nonnull instancetype)initWithRef:(_Nonnull id)ref;
 - (void)notify:(NSData* _Nullable)identity deleted:(BOOL)deleted;
+@end
+
+/**
+ * RestoreContactsUpdater interface provides a callback function
+for receiving update information from RestoreContactsFromBackup.
+ */
+@interface BindingsRestoreContactsUpdater : NSObject <goSeqRefInterface, BindingsRestoreContactsUpdater> {
+}
+@property(strong, readonly) _Nonnull id _ref;
+
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref;
+/**
+ * RestoreContactsCallback is called to report the current # of contacts
+that have been found and how many have been restored
+against the total number that need to be
+processed. If an error occurs it it set on the err variable as a
+plain string.
+ */
+- (void)restoreContactsCallback:(long)numFound numRestored:(long)numRestored total:(long)total err:(NSString* _Nullable)err;
 @end
 
 /**
@@ -1814,6 +1994,17 @@ the cMix network.
 
 - (nonnull instancetype)initWithRef:(_Nonnull id)ref;
 - (int64_t)nowMs;
+@end
+
+/**
+ * UpdateBackupFunc contains a function callback that returns new backups.
+ */
+@interface BindingsUpdateBackupFunc : NSObject <goSeqRefInterface, BindingsUpdateBackupFunc> {
+}
+@property(strong, readonly) _Nonnull id _ref;
+
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref;
+- (void)updateBackup:(NSData* _Nullable)encryptedBackup;
 @end
 
 #endif
