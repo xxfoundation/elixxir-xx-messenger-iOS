@@ -116,10 +116,10 @@ public final class BindingsMock: BindingsInterface {
 
     public func listen(
         report: Data,
-        _ completion: @escaping (Result<Bool, Error>) -> Void
+        _ completion: @escaping (Result<MessageDeliveryStatus, Error>) -> Void
     ) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            completion(.success(true))
+            completion(.success(.sent))
         }
     }
 

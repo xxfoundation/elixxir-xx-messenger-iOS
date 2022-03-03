@@ -377,9 +377,11 @@ extension BindingsClient: BindingsInterface {
     ///                 values *completed* or *Error*
     ///                 upon throwing
     ///
-    public func listen(report: Data, _ completion: @escaping (Result<Bool, Error>) -> Void) {
+    public func listen(report: Data, _ completion: @escaping (Result<MessageDeliveryStatus, Error>) -> Void) {
         do {
             try listenDelivery(of: report) { msgId, delivered, timedOut, roundResults in
+                let status: MessageDeliveryStatus
+
                 if delivered == false {
                     let extendedLogs =
                     """
@@ -389,9 +391,17 @@ extension BindingsClient: BindingsInterface {
                     """
                     log(string: extendedLogs, type: .error)
                     log(string: extendedLogs, type: .error)
+
+                    if timedOut == true {
+                        status = .timedout
+                    } else {
+                        status = .failed
+                    }
+                } else {
+                    status = .sent
                 }
 
-                completion(.success(delivered))
+                completion(.success(status))
             }
         } catch {
             completion(.failure(error))

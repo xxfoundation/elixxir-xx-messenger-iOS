@@ -124,7 +124,14 @@ extension Session {
                 self.client.bindings.listen(report: report.marshalled) { result in
                     switch result {
                     case .success(let status):
-                        message.status = status ? .sent : .failedToSend
+                        switch status {
+                        case .failed:
+                            message.status = .failedToSend
+                        case .sent:
+                            message.status = .sent
+                        case .timedout:
+                            message.status = .timedOut
+                        }
                     case .failure:
                         message.status = .failedToSend
                     }
