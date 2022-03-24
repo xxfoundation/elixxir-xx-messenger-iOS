@@ -18,4 +18,17 @@ public enum FactType: Int {
             return "Username"
         }
     }
+
+    public var prefix: String {
+        switch self {
+        case .email:
+            return "E"
+        case .nickname:
+            return "N"
+        case .phone:
+            return "P"
+        case .username:
+            return "U"
+        }
+    }
 }
