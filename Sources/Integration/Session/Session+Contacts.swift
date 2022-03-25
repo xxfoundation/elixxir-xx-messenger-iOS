@@ -149,7 +149,9 @@ extension Session {
 
         contactToOperate.status = .requesting
 
-        client.bindings.add(contactToOperate.marshaled, from: client.bindings.meMarshalled) { [weak self, contactToOperate] in
+        let myself = client.bindings.meMarshalled(username!, email: nil, phone: nil)
+
+        client.bindings.add(contactToOperate.marshaled, from: myself) { [weak self, contactToOperate] in
             guard let self = self, var contactToOperate = contactToOperate else { return }
             let safeName = contactToOperate.nickname ?? contactToOperate.username
             let title = "\(safeName.prefix(2))...\(safeName.suffix(3))"
