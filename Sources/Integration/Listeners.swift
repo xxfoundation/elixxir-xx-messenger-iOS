@@ -38,7 +38,7 @@ public extension BindingsClient {
     ) {
         let requestCallback = RequestCallback { requests(Contact(with: $0, status: .verificationInProgress)) }
         let confirmCallback = ConfirmationCallback { confirmations(Contact(with: $0, status: .friend)) }
-        registerAuthCallbacks(requestCallback, confirm: confirmCallback)
+        registerAuthCallbacks(requestCallback, confirm: confirmCallback, reset: nil)
     }
 
     func listenNetworkUpdates(_ callback: @escaping (Bool) -> Void) {

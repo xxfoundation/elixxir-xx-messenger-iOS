@@ -70,9 +70,20 @@ extension Session {
 
         let ud = client.userDiscovery!
 
-        guard let fact = contact.email ?? contact.phone else {
+        let hasEmail = contact.email != nil
+        let hasPhone = contact.phone != nil
+
+        guard hasEmail || hasPhone else {
             ud.lookup(forUserId: contact.userId, resultClosure)
             return
+        }
+
+        var fact: String
+
+        if hasEmail {
+            fact = "\(FactType.email.prefix)\(contact.email!)"
+        } else {
+            fact = "\(FactType.phone.prefix)\(contact.phone!)"
         }
 
         do {
@@ -138,7 +149,9 @@ extension Session {
 
         contactToOperate.status = .requesting
 
-        client.bindings.add(contactToOperate.marshaled, from: myQR) { [weak self, contactToOperate] in
+        let myself = client.bindings.meMarshalled(username!, email: nil, phone: nil)
+
+        client.bindings.add(contactToOperate.marshaled, from: myself) { [weak self, contactToOperate] in
             guard let self = self, var contactToOperate = contactToOperate else { return }
             let safeName = contactToOperate.nickname ?? contactToOperate.username
             let title = "\(safeName.prefix(2))...\(safeName.suffix(3))"

@@ -147,7 +147,6 @@
 				02FDD06021EDA39A000F1286 /* Resources */,
 				028B1320260A99C800054510 /* ShellScript */,
 				32179BAD26410149008B26EC /* Embed App Extensions */,
-				32B1E78E278FEBF600A77C0E /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -281,23 +280,6 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "$SRCROOT/set_build_number.sh\n";
-		};
-		32B1E78E278FEBF600A77C0E /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "${BUILD_DIR%Build/*}SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

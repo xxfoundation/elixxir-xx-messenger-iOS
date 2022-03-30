@@ -20,6 +20,7 @@ public struct Message: Codable, Equatable, Hashable {
         case receivingAttachment
         case received
         case failedToSend
+        case timedOut
     }
 
     public var id: Int64?
