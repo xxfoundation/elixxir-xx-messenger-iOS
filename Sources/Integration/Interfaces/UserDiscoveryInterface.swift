@@ -20,7 +20,7 @@ public protocol UserDiscoveryInterface {
 
     func search(fact: String, _: @escaping (Result<Contact, Error>) -> Void) throws
 
-    func lookup(idList: [Data], _: @escaping (Result<[LookupResult], Error>) -> Void)
+    func lookup(idList: [Data], _: @escaping (Result<[Contact], Error>) -> Void)
 
     func register(_: FactType, value: String, _: @escaping (Result<String?, Error>) -> Void)
 }

@@ -21,11 +21,12 @@ final class SettingsView: UIView {
     let hideActiveApp = SettingsSwitcher()
     let icognitoKeyboard = SettingsInfoSwitcher()
 
-    let otherStack = UIStackView()
-    let privacyPolicy = RowButton()
-    let disclosures = RowButton()
-    let advanced = RowButton()
-    let delete = RowButton()
+    let otherStackView = UIStackView()
+    let privacyPolicyButton = RowButton()
+    let disclosuresButton = RowButton()
+    let advancedButton = RowButton()
+    let accountBackupButton = RowButton()
+    let deleteButton = RowButton()
 
     let didTap: (InfoTapped) -> Void
 
@@ -132,38 +133,46 @@ final class SettingsView: UIView {
     }
 
     private func setupOtherStack() {
-        privacyPolicy.set(
+        privacyPolicyButton.setup(
             title: Localized.Settings.privacyPolicy,
             icon: Asset.settingsPrivacy.image,
             separator: false
         )
 
-        disclosures.set(
+        disclosuresButton.setup(
             title: Localized.Settings.disclosures,
             icon: Asset.settingsFolder.image
         )
 
-        advanced.set(
+        advancedButton.setup(
             title: Localized.Settings.advanced,
             icon: Asset.settingsAdvanced.image
         )
 
-        delete.set(
+        accountBackupButton.setup(
+            title: Localized.Settings.Advanced.AccountBackup.title,
+            icon: Asset.settingsAdvanced.image,
+            style: .clean,
+            separator: false
+        )
+
+        deleteButton.setup(
             title: Localized.Settings.delete,
             icon: Asset.settingsDelete.image,
             style: .delete,
             separator: false
         )
 
-        otherStack.axis = .vertical
-        otherStack.addArrangedSubview(privacyPolicy)
-        otherStack.addArrangedSubview(disclosures)
-        otherStack.addArrangedSubview(advanced)
-        otherStack.addArrangedSubview(delete)
+        otherStackView.axis = .vertical
+        otherStackView.addArrangedSubview(privacyPolicyButton)
+        otherStackView.addArrangedSubview(disclosuresButton)
+        otherStackView.addArrangedSubview(accountBackupButton)
+        otherStackView.addArrangedSubview(advancedButton)
+        otherStackView.addArrangedSubview(deleteButton)
 
-        addSubview(otherStack)
+        addSubview(otherStackView)
 
-        otherStack.snp.makeConstraints { make in
+        otherStackView.snp.makeConstraints { make in
             make.top.equalTo(chatStack.snp.bottom).offset(15)
             make.left.equalToSuperview().offset(16)
             make.right.equalToSuperview().offset(-16)

@@ -7,7 +7,7 @@ import Combine
 import DependencyInjection
 import ScrollViewController
 
-final class OnboardingEmailController: UIViewController {
+public final class OnboardingEmailController: UIViewController {
     @Dependency private var hud: HUDType
     @Dependency private var coordinator: OnboardingCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
@@ -19,13 +19,13 @@ final class OnboardingEmailController: UIViewController {
     private let viewModel = OnboardingEmailViewModel()
     private var popupCancellables = Set<AnyCancellable>()
 
-    override func viewWillAppear(_ animated: Bool) {
+    public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         statusBarController.style.send(.darkContent)
         navigationController?.navigationBar.customize(translucent: true)
     }
 
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
         navigationItem.backButtonTitle = " "
 
@@ -70,7 +70,13 @@ final class OnboardingEmailController: UIViewController {
             .sink { [unowned self] in
                 viewModel.clearUp()
                 coordinator.toEmailConfirmation(with: $0, from: self) { controller in
-                    coordinator.toSuccess(isEmail: true, from: controller)
+                    let successModel = OnboardingSuccessModel(
+                        title: Localized.Onboarding.Success.Email.title,
+                        subtitle: nil,
+                        nextController: coordinator.toPhone(from:)
+                    )
+
+                    coordinator.toSuccess(with: successModel, from: controller)
                 }
             }.store(in: &cancellables)
 

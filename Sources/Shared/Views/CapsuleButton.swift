@@ -65,11 +65,19 @@ public extension CapsuleButtonStyle {
         disabledTitleColor: Asset.brandPrimary.color.withAlphaComponent(0.5)
     )
 
-    static let simplestColored = CapsuleButtonStyle(
+    static let simplestColoredRed = CapsuleButtonStyle(
         fill: .color(UIColor.clear),
         borderWidth: 0,
         borderColor: nil,
         titleColor: Asset.accentDanger.color,
+        disabledTitleColor: Asset.brandDefault.color.withAlphaComponent(0.5)
+    )
+
+    static let simplestColoredBrand = CapsuleButtonStyle(
+        fill: .color(UIColor.clear),
+        borderWidth: 0,
+        borderColor: nil,
+        titleColor: Asset.brandPrimary.color,
         disabledTitleColor: Asset.brandDefault.color.withAlphaComponent(0.5)
     )
 }

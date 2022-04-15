@@ -1,3 +1,4 @@
+import Retry
 import Models
 import Bindings
 import Foundation
@@ -9,23 +10,20 @@ extension BindingsUserDiscovery: UserDiscoveryInterface {
             case .success(let contact):
                 completion(.success(.init(with: contact, status: .stranger)))
             case .failure(let error):
-                log(string: "UD.lookup 4E2E callback failed:\n\(error.localizedDescription)", type: .error)
                 completion(.failure(error))
             }
         }
 
-        do {
-            try lookup(forUserId, callback: callback, timeoutMS: 20000)
-        } catch {
+        retry(max: 10, retryStrategy: .delay(seconds: 1)) { [weak self] in
+            guard let self = self else { return }
+            try self.lookup(forUserId, callback: callback, timeoutMS: 20000)
+        }.finalCatch { error in
             log(string: "UD.lookup 4E2E failed:\n\(error.localizedDescription)", type: .error)
             completion(.failure(error.friendly()))
         }
     }
 
-    public func lookup(
-        idList: [Data],
-        _ completion: @escaping (Result<[LookupResult], Error>) -> Void
-    ) {
+    public func lookup(idList: [Data], _ completion: @escaping (Result<[Contact], Error>) -> Void) {
         let list = BindingsIdList()
         idList.forEach { try? list.add($0) }
 
@@ -40,16 +38,16 @@ extension BindingsUserDiscovery: UserDiscoveryInterface {
 
             guard let contacts = contactList else { return }
             let count = contacts.len()
-            var results = [LookupResult]()
+            var results = [Contact]()
 
             for index in 0..<count {
                 guard let contact = try? contacts.get(index),
                       let marshal = try? contact.marshal(),
-                      let username = try? self.retrieve(from: marshal, fact: .username) else {
+                      ((try? self.retrieve(from: marshal, fact: .username) != nil) != nil) else {
                     log(string: "Skipping", type: .error); continue
                 }
 
-                results.append(.init(id: contact.getID()!, username: username))
+                results.append(Contact(with: contact, status: .stranger))
             }
 
             completion(.success(results))
@@ -103,7 +101,7 @@ extension BindingsUserDiscovery: UserDiscoveryInterface {
         let confirmationId = addFact(bindingsFact?.stringify(), error: &otherError)
 
         if let otherError = otherError {
-            completion(.failure(otherError.friendly()))
+            completion(.failure(otherError))
             return
         }
 

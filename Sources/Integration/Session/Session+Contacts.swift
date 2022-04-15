@@ -162,8 +162,6 @@ extension Session {
                     contactToOperate.status = success ? .requested : .requestFailed
                     contactToOperate = try self.dbManager.save(contactToOperate)
 
-
-
                     log(string: "Successfully added \(title)", type: .info)
                 case .failure(let error):
                     contactToOperate.status = .requestFailed

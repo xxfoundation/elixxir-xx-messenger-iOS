@@ -53,7 +53,7 @@ final class AccountDeleteView: UIView {
         confirmButton.setStyle(.red)
         confirmButton.isEnabled = false
         confirmButton.setTitle(Localized.Settings.Delete.delete, for: .normal)
-        cancelButton.setStyle(.simplestColored)
+        cancelButton.setStyle(.simplestColoredRed)
         cancelButton.setTitle(Localized.Settings.Delete.cancel, for: .normal)
 
         stackView.spacing = 12

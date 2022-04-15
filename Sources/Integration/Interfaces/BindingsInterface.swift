@@ -1,5 +1,6 @@
 import Models
 import Foundation
+import Combine
 
 public enum MessageDeliveryStatus {
     case sent
@@ -7,9 +8,13 @@ public enum MessageDeliveryStatus {
     case timedout
 }
 
+public typealias DeliveryResult = (Data?, Bool, Bool, Data?)
+
 public typealias BackendEvent = (Int, String?, String?, String?)
 
-public typealias DeliveryResult = (Data?, Bool, Bool, Data?)
+public typealias ClientNew = (String?, String?, Data?, String?, NSErrorPointer) -> Bool
+
+public typealias ClientFromBackup = (String?, String?, Data?, Data?, Data?, NSErrorPointer) -> Data?
 
 public typealias NotificationEvaluation = (String?, String?, NSErrorPointer) -> NotificationManyReportProtocol?
 
@@ -18,6 +23,20 @@ public protocol E2ESendReportType {
     var uniqueId: Data? { get }
     var marshalled: Data { get }
     var roundURL: String { get }
+}
+
+public protocol BackupInterface {
+    func stop() throws
+    func addJson(_: String?)
+}
+
+public protocol RestoreReportType {
+    func lenFailed() -> Int
+    func lenRestored() -> Int
+    func getErrorAt(_: Int) -> String
+    func getFailedAt(_: Int) -> Data?
+    func getRestoreContactsError() -> String
+    func getRestoredAt(_: Int) -> Data?
 }
 
 public protocol BindingsInterface {
@@ -48,7 +67,9 @@ public protocol BindingsInterface {
 
     static var login: (String?, Data?, String?, NSErrorPointer) -> BindingsInterface? { get }
 
-    static var newClient: (String?, String?, Data?, String?, NSErrorPointer) -> Bool { get }
+    static var new: ClientNew { get }
+
+    static var fromBackup: ClientFromBackup { get }
 
     static func updateNDF(for: NetworkEnvironment, _: @escaping (Result<Data?, Error>) -> Void)
 
@@ -74,6 +95,8 @@ public protocol BindingsInterface {
 
     func compress(image: Data, _: @escaping(Result<Data, Error>) -> Void)
 
+    func resetSessionWith(_: Data)
+
     func listen(
         report: Data,
         _: @escaping (Result<MessageDeliveryStatus, Error>) -> Void
@@ -98,6 +121,8 @@ public protocol BindingsInterface {
     
     func generateUD() throws -> UserDiscoveryInterface
 
+    func generateUDFromBackup(email: String?, phone: String?) throws -> UserDiscoveryInterface
+
     // MARK: FileTransfer
 
     func generateTransferManager(
@@ -112,9 +137,12 @@ public protocol BindingsInterface {
 
     func listenMessages(_: @escaping (Message) -> Void) throws
 
+    func listenBackups(_: @escaping (Data) -> Void) -> BackupInterface
+
     func listenRequests(
-        _: @escaping (Contact) -> Void,
-        confirmations: @escaping (Contact) -> Void
+        _ requests: @escaping (Contact) -> Void,
+        _ confirmations: @escaping (Contact) -> Void,
+        _ resets: @escaping (Contact) -> Void
     )
 
     func listenPreImageUpdates()
@@ -127,4 +155,11 @@ public protocol BindingsInterface {
     func listenNetworkUpdates(_: @escaping (Bool) -> Void)
 
     func removeContact(_ data: Data) throws
+
+    func restore(
+        ids: Data,
+        using: UserDiscoveryInterface,
+        lookupCallback: @escaping (Result<Contact, Error>) -> Void,
+        restoreCallback: @escaping (Int, Int, Int, String?) -> Void
+    ) -> RestoreReportType
 }

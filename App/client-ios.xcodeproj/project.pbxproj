@@ -15,6 +15,8 @@
 		32179BAC26410149008B26EC /* NotificationExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 32179BA526410149008B26EC /* NotificationExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		3273327126C7391D0027D79D /* App in Frameworks */ = {isa = PBXBuildFile; productRef = 3273327026C7391D0027D79D /* App */; };
 		32824C8F26EAE13D005D3FAC /* Bindings in Frameworks */ = {isa = PBXBuildFile; productRef = 32824C8E26EAE13D005D3FAC /* Bindings */; };
+		32C194E02808C65500876917 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 32C194DF2808C65500876917 /* GoogleService-Info.plist */; };
+		32C194E12808C65500876917 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 32C194DF2808C65500876917 /* GoogleService-Info.plist */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -53,6 +55,7 @@
 		32179BA526410149008B26EC /* NotificationExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		32179BA726410149008B26EC /* NotificationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationService.swift; sourceTree = "<group>"; };
 		32179BA926410149008B26EC /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
+		32C194DF2808C65500876917 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		32DB0549264DD42000FDCCEB /* NotificationExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = NotificationExtension.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -82,6 +85,7 @@
 			children = (
 				02CB8FEB2326B5BE00A39834 /* client-ios.entitlements */,
 				02FDD06C21EDA39B000F1286 /* Assets.xcassets */,
+				32C194DF2808C65500876917 /* GoogleService-Info.plist */,
 				02FDD07121EDA39B000F1286 /* Info.plist */,
 			);
 			path = Resources;
@@ -145,8 +149,8 @@
 				02FDD05E21EDA39A000F1286 /* Sources */,
 				02FDD05F21EDA39A000F1286 /* Frameworks */,
 				02FDD06021EDA39A000F1286 /* Resources */,
-				028B1320260A99C800054510 /* ShellScript */,
 				32179BAD26410149008B26EC /* Embed App Extensions */,
+				3289935B27DB3EEF003E1407 /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -168,7 +172,6 @@
 				32179BA126410149008B26EC /* Sources */,
 				32179BA226410149008B26EC /* Frameworks */,
 				32179BA326410149008B26EC /* Resources */,
-				32151006264CAE8700A0F50D /* ShellScript */,
 			);
 			buildRules = (
 			);
@@ -234,6 +237,7 @@
 			files = (
 				02FDD07021EDA39B000F1286 /* LaunchScreen.storyboard in Resources */,
 				02FDD06D21EDA39B000F1286 /* Assets.xcassets in Resources */,
+				32C194E02808C65500876917 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -241,13 +245,14 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				32C194E12808C65500876917 /* GoogleService-Info.plist in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
-		028B1320260A99C800054510 /* ShellScript */ = {
+		3289935B27DB3EEF003E1407 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -262,24 +267,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "$SRCROOT/set_build_number.sh\n";
-		};
-		32151006264CAE8700A0F50D /* ShellScript */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputFileListPaths = (
-			);
-			inputPaths = (
-			);
-			outputFileListPaths = (
-			);
-			outputPaths = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "$SRCROOT/set_build_number.sh\n";
+			shellScript = "${BUILD_DIR%Build/*}SourcePackages/checkouts/firebase-ios-sdk/Crashlytics/run\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -368,6 +356,7 @@
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"DEBUG=1",
 					"$(inherited)",
+					"SWIFT_PACKAGE=1",
 				);
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
@@ -381,6 +370,7 @@
 				ONLY_ACTIVE_ARCH = YES;
 				OTHER_SWIFT_FLAGS = "";
 				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "SWIFT_PACKAGE DEBUG";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 				SWIFT_VERSION = 5.0;
 			};
@@ -427,6 +417,7 @@
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				GCC_C_LANGUAGE_STANDARD = gnu11;
 				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = "SWIFT_PACKAGE=1";
 				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
 				GCC_WARN_UNDECLARED_SELECTOR = YES;
@@ -438,6 +429,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = SWIFT_PACKAGE;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				SWIFT_OPTIMIZATION_LEVEL = "-O";
 				SWIFT_VERSION = 5.0;
@@ -456,7 +448,7 @@
 				CODE_SIGN_ENTITLEMENTS = "client-ios/Resources/client-ios.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 48;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = S6JDM2WW29;
 				ENABLE_BITCODE = NO;
@@ -471,7 +463,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.5;
+				MARKETING_VERSION = 1.0.7;
 				OTHER_SWIFT_FLAGS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = xx.messenger.mock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -495,7 +487,7 @@
 				CODE_SIGN_ENTITLEMENTS = "client-ios/Resources/client-ios.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 48;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = S6JDM2WW29;
 				ENABLE_BITCODE = NO;
@@ -511,7 +503,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.0.5;
+				MARKETING_VERSION = 1.0.7;
 				OTHER_SWIFT_FLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = xx.messenger;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -530,7 +522,7 @@
 				CODE_SIGN_ENTITLEMENTS = NotificationExtension/NotificationExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 48;
 				DEVELOPMENT_TEAM = S6JDM2WW29;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -544,7 +536,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.5;
+				MARKETING_VERSION = 1.0.7;
 				PRODUCT_BUNDLE_IDENTIFIER = xx.messenger.mock.notifications;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -561,7 +553,7 @@
 				CODE_SIGN_ENTITLEMENTS = NotificationExtension/NotificationExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 0;
+				CURRENT_PROJECT_VERSION = 48;
 				DEVELOPMENT_TEAM = S6JDM2WW29;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -575,7 +567,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.5;
+				MARKETING_VERSION = 1.0.7;
 				PRODUCT_BUNDLE_IDENTIFIER = xx.messenger.notifications;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";

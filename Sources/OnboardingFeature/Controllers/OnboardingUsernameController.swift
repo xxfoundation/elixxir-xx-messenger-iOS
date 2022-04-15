@@ -7,7 +7,7 @@ import Combine
 import DependencyInjection
 import ScrollViewController
 
-final class OnboardingUsernameController: UIViewController {
+public final class OnboardingUsernameController: UIViewController {
     @Dependency private var hud: HUDType
     @Dependency private var coordinator: OnboardingCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
@@ -15,24 +15,26 @@ final class OnboardingUsernameController: UIViewController {
     lazy private var screenView = OnboardingUsernameView()
     lazy private var scrollViewController = ScrollViewController()
 
+    private let ndf: String
     private var cancellables = Set<AnyCancellable>()
     private let viewModel: OnboardingUsernameViewModel!
     private var popupCancellables = Set<AnyCancellable>()
 
-    override func viewWillAppear(_ animated: Bool) {
+    public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         statusBarController.style.send(.darkContent)
         navigationController?.navigationBar.customize(translucent: true)
     }
 
-    init(_ ndf: String) {
+    public init(_ ndf: String) {
+        self.ndf = ndf
         self.viewModel = OnboardingUsernameViewModel(ndf: ndf)
         super.init(nibName: nil, bundle: nil)
     }
 
     required init?(coder: NSCoder) { nil }
 
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
         setupScrollView()
         setupBindings()
@@ -66,6 +68,12 @@ final class OnboardingUsernameController: UIViewController {
             .removeDuplicates()
             .compactMap { $0 }
             .sink { [unowned self] in viewModel.didInput($0) }
+            .store(in: &cancellables)
+
+        screenView.restoreView.restoreButton
+            .publisher(for: .touchUpInside)
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in coordinator.toRestoreList(with: ndf, from: self) }
             .store(in: &cancellables)
 
         screenView.inputField.returnPublisher

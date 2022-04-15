@@ -61,5 +61,7 @@ extension Session {
         } else {
             phone = confirmation.content
         }
+
+        updateFactsOnBackup()
     }
 }

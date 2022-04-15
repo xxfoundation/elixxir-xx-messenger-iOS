@@ -10,7 +10,7 @@ struct AdvancedViewState: Equatable {
     var isCrashReporting = false
 }
 
-final class AdvancedViewModel {
+final class SettingsAdvancedViewModel {
     @KeyObject(.recordingLogs, defaultValue: true) var isRecordingLogs: Bool
     @KeyObject(.crashReporting, defaultValue: true) var isCrashReporting: Bool
 

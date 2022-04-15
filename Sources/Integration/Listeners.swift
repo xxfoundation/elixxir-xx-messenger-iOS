@@ -3,6 +3,8 @@ import Shared
 import Bindings
 import Foundation
 
+import Combine
+
 public extension BindingsClient {
     static func listenLogs() {
         let callback = LogCallback { log(string: $0 ?? "", type: .bindings) }
@@ -20,6 +22,12 @@ public extension BindingsClient {
         registerPreimageCallback(receptionId, pin: callback)
     }
 
+    func listenBackups(_ callback: @escaping (Data) -> Void) -> BackupInterface {
+        var error: NSError?
+        let backup = BindingsInitializeBackup("", UpdateBackupCallback(callback), self, &error)
+        return backup!
+    }
+
     func listenMessages(_ callback: @escaping (Message) -> Void) throws {
         let zeroBytes = [UInt8](repeating: 0, count: 33)
 
@@ -34,11 +42,13 @@ public extension BindingsClient {
 
     func listenRequests(
         _ requests: @escaping (Contact) -> Void,
-        confirmations: @escaping (Contact) -> Void
+        _ confirmations: @escaping (Contact) -> Void,
+        _ resets: @escaping (Contact) -> Void
     ) {
-        let requestCallback = RequestCallback { requests(Contact(with: $0, status: .verificationInProgress)) }
+        let resetCallback = ResetCallback { resets(Contact(with: $0, status: .friend)) }
         let confirmCallback = ConfirmationCallback { confirmations(Contact(with: $0, status: .friend)) }
-        registerAuthCallbacks(requestCallback, confirm: confirmCallback, reset: nil)
+        let requestCallback = RequestCallback { requests(Contact(with: $0, status: .verificationInProgress)) }
+        registerAuthCallbacks(requestCallback, confirm: confirmCallback, reset: resetCallback)
     }
 
     func listenNetworkUpdates(_ callback: @escaping (Bool) -> Void) {
@@ -49,7 +59,7 @@ public extension BindingsClient {
         do {
             try registerEventCallback("EventListener", myObj: EventCallback(completion))
         } catch {
-            log(string: "Event listener failed: \(error.localizedDescription)", type: .error)
+            log(string: ">>> Event listener failed: \(error.localizedDescription)", type: .error)
         }
     }
 
@@ -79,7 +89,7 @@ public extension BindingsClient {
                     try roundList.get(index, ret0_: &integer)
                     roundIds.append(integer)
                 } catch {
-                    log(string: "Error inspecting round list:\n\(error.localizedDescription)", type: .error)
+                    log(string: ">>> Error inspecting round list:\n\(error.localizedDescription)", type: .error)
                 }
             }
         }

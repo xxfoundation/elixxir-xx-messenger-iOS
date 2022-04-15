@@ -25,6 +25,17 @@ public extension Date {
         return formatter.string(for: self) ?? ""
     }
 
+    func backupStyle() -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = DateFormatter.dateFormat(
+            fromTemplate: "MMM d, YYYY - h:mm",
+            options: 0,
+            locale: Locale(identifier: "en_US")
+        )
+
+        return formatter.string(from: self)
+    }
+
     static var asTimestamp: Int {
         Int(Date().timeIntervalSince1970).toNano()
     }

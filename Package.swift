@@ -30,11 +30,15 @@ let package = Package(
         .library(name: "ChatFeature", targets: ["ChatFeature"]),
         .library(name: "CrashService", targets: ["CrashService"]),
         .library(name: "Presentation", targets: ["Presentation"]),
+        .library(name: "BackupFeature", targets: ["BackupFeature"]),
+        .library(name: "iCloudFeature", targets: ["iCloudFeature"]),
         .library(name: "SearchFeature", targets: ["SearchFeature"]),
+        .library(name: "RestoreFeature", targets: ["RestoreFeature"]),
         .library(name: "CrashReporting", targets: ["CrashReporting"]),
         .library(name: "ProfileFeature", targets: ["ProfileFeature"]),
         .library(name: "ContactFeature", targets: ["ContactFeature"]),
         .library(name: "NetworkMonitor", targets: ["NetworkMonitor"]),
+        .library(name: "DropboxFeature", targets: ["DropboxFeature"]),
         .library(name: "VersionChecking", targets: ["VersionChecking"]),
         .library(name: "SettingsFeature", targets: ["SettingsFeature"]),
         .library(name: "ChatListFeature", targets: ["ChatListFeature"]),
@@ -42,6 +46,7 @@ let package = Package(
         .library(name: "ChatInputFeature", targets: ["ChatInputFeature"]),
         .library(name: "PushNotifications", targets: ["PushNotifications"]),
         .library(name: "OnboardingFeature", targets: ["OnboardingFeature"]),
+        .library(name: "GoogleDriveFeature", targets: ["GoogleDriveFeature"]),
         .library(name: "ContactListFeature", targets: ["ContactListFeature"]),
         .library(name: "DependencyInjection", targets: ["DependencyInjection"])
     ],
@@ -62,9 +67,24 @@ let package = Package(
             from: "9.0.0"
         ),
         .package(
+            name: "FilesProvider",
+            url: "https://github.com/amosavian/FileProvider.git",
+            from: "0.26.0"
+        ),
+        .package(
             name: "GRDB",
             url: "https://github.com/groue/GRDB.swift",
             from: "5.3.0"
+        ),
+        .package(
+            name: "GoogleSignIn",
+            url: "https://github.com/google/GoogleSignIn-iOS",
+            from: "6.1.0"
+        ),
+        .package(
+            name: "GoogleAPIClientForREST",
+            url: "https://github.com/google/google-api-objectivec-client-for-rest",
+            from: "1.6.0"
         ),
         .package(
             name: "SnapKit",
@@ -80,6 +100,11 @@ let package = Package(
             name: "SwiftProtobuf",
             url: "https://github.com/apple/swift-protobuf",
             from: "1.14.0"
+        ),
+        .package(
+            name: "SwiftyDropbox",
+            url: "https://github.com/dropbox/SwiftyDropbox.git",
+            from: "8.2.1"
         ),
         .package(
             name: "KeychainAccess",
@@ -128,14 +153,19 @@ let package = Package(
                 "ChatFeature",
                 "MenuFeature",
                 "CrashService",
+                "BackupFeature",
                 "SearchFeature",
+                "iCloudFeature",
+                "DropboxFeature",
                 "ContactFeature",
+                "RestoreFeature",
                 "ProfileFeature",
                 "CrashReporting",
                 "ChatListFeature",
                 "SettingsFeature",
                 "PushNotifications",
                 "OnboardingFeature",
+                "GoogleDriveFeature",
                 "ContactListFeature"
             ]
         ),
@@ -234,6 +264,48 @@ let package = Package(
                         package: "Firebase"
                     )
                 ]
+            ),
+
+        // MARK: - GoogleDriveFeature
+
+            .target(
+                name: "GoogleDriveFeature",
+                dependencies: [
+                    .product(
+                        name: "GoogleSignIn",
+                        package: "GoogleSignIn"
+                    ),
+                    .product(
+                        name: "GoogleAPIClientForREST_Drive",
+                        package: "GoogleAPIClientForREST"
+                    )
+                ],
+                resources: [.process("Resources")]
+            ),
+
+        // MARK: - iCloudFeature
+
+            .target(
+                name: "iCloudFeature",
+                dependencies: [
+                    .product(
+                        name: "FilesProvider",
+                        package: "FilesProvider"
+                    )
+                ]
+            ),
+
+        // MARK: - DropboxFeature
+
+            .target(
+                name: "DropboxFeature",
+                dependencies: [
+                    .product(
+                        name: "SwiftyDropbox",
+                        package: "SwiftyDropbox"
+                    )
+                ],
+                resources: [.process("Resources")]
             ),
 
         // MARK: - Countries
@@ -346,6 +418,7 @@ let package = Package(
                     "Shared",
                     "Database",
                     "Bindings",
+                    "BackupFeature",
                     "CrashReporting",
                     "NetworkMonitor",
                     "DependencyInjection",
@@ -381,6 +454,22 @@ let package = Package(
                         name: "ComposableArchitecture",
                         package: "swift-composable-architecture"
                     )
+                ]
+            ),
+
+        // MARK: - RestoreFeature
+
+            .target(
+                name: "RestoreFeature",
+                dependencies: [
+                    "HUD",
+                    "Shared",
+                    "Integration",
+                    "Presentation",
+                    "iCloudFeature",
+                    "DropboxFeature",
+                    "GoogleDriveFeature",
+                    "DependencyInjection"
                 ]
             ),
 
@@ -557,6 +646,22 @@ let package = Package(
                     "RequestsFeature",
                     "SettingsFeature",
                     "ContactListFeature"
+                ]
+            ),
+
+        // MARK: - BackupFeature
+
+            .target(
+                name: "BackupFeature",
+                dependencies: [
+                    "HUD",
+                    "Shared",
+                    "Models",
+                    "Presentation",
+                    "GoogleDriveFeature",
+                    "iCloudFeature",
+                    "DropboxFeature",
+                    "DependencyInjection"
                 ]
             ),
 

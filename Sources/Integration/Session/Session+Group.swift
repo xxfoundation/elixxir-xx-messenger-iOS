@@ -169,9 +169,9 @@ extension Session {
 
             ud.lookup(idList: ids) {
                 switch $0 {
-                case .success(let result):
+                case .success(let contacts):
                     strangers.forEach { stranger in
-                        if let found = result.first(where: { lookup in lookup.id == stranger.userId }) {
+                        if let found = contacts.first(where: { contact in contact.userId == stranger.userId }) {
                             var updatedStranger = stranger
                             updatedStranger.username = found.username
                             updatedStrangers.append(updatedStranger)
@@ -180,7 +180,6 @@ extension Session {
 
                     DispatchQueue.main.async {
                         updatedStrangers.forEach {
-
                             do {
                                 try self.dbManager.save($0)
                             } catch {

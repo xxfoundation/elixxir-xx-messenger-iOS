@@ -12,6 +12,7 @@
 
 
 @class BindingsBackup;
+@class BindingsBackupReport;
 @class BindingsClient;
 @class BindingsContact;
 @class BindingsContactList;
@@ -45,8 +46,8 @@
 @class BindingsAuthConfirmCallback;
 @protocol BindingsAuthRequestCallback;
 @class BindingsAuthRequestCallback;
-@protocol BindingsAuthResetCallback;
-@class BindingsAuthResetCallback;
+@protocol BindingsAuthResetNotificationCallback;
+@class BindingsAuthResetNotificationCallback;
 @protocol BindingsClientError;
 @class BindingsClientError;
 @protocol BindingsEventCallbackFunctionObject;
@@ -98,7 +99,7 @@
 - (void)callback:(BindingsContact* _Nullable)requestor;
 @end
 
-@protocol BindingsAuthResetCallback <NSObject>
+@protocol BindingsAuthResetNotificationCallback <NSObject>
 - (void)callback:(BindingsContact* _Nullable)requestor;
 @end
 
@@ -194,6 +195,10 @@
 - (nonnull instancetype)initWithRef:(_Nonnull id)ref;
 - (nonnull instancetype)init;
 /**
+ * AddJson stores a passed in json string in the backup structure
+ */
+- (void)addJson:(NSString* _Nullable)json;
+/**
  * IsBackupRunning returns true if the backup has been initialized and is
 running. Returns false if it has been stopped.
  */
@@ -203,6 +208,17 @@ running. Returns false if it has been stopped.
 storage. To enable backups again, call InitializeBackup.
  */
 - (BOOL)stopBackup:(NSError* _Nullable* _Nullable)error;
+@end
+
+@interface BindingsBackupReport : NSObject <goSeqRefInterface> {
+}
+@property(strong, readonly) _Nonnull id _ref;
+
+- (nonnull instancetype)initWithRef:(_Nonnull id)ref;
+- (nonnull instancetype)init;
+// skipped field BackupReport.RestoredContacts with unsupported type: []*gitlab.com/xx_network/primitives/id.ID
+
+@property (nonatomic) NSString* _Nonnull params;
 @end
 
 /**
@@ -282,7 +298,7 @@ Running	- 2000
 Stopping	- 3000
  */
 - (long)networkFollowerStatus;
-- (void)registerAuthCallbacks:(id<BindingsAuthRequestCallback> _Nullable)request confirm:(id<BindingsAuthConfirmCallback> _Nullable)confirm reset:(id<BindingsAuthResetCallback> _Nullable)reset;
+- (void)registerAuthCallbacks:(id<BindingsAuthRequestCallback> _Nullable)request confirm:(id<BindingsAuthConfirmCallback> _Nullable)confirm reset:(id<BindingsAuthResetNotificationCallback> _Nullable)reset;
 /**
  * RegisterClientErrorCallback registers the callback to handle errors from the
 long running threads controlled by StartNetworkFollower and StopNetworkFollower
@@ -675,11 +691,6 @@ the period.
 The period is specified in milliseconds.
  */
 - (BOOL)registerSendProgressCallback:(NSData* _Nullable)transferID progressFunc:(id<BindingsFileTransferSentProgressFunc> _Nullable)progressFunc periodMS:(long)periodMS error:(NSError* _Nullable* _Nullable)error;
-/**
- * Resend resends a file if sending fails. This function should only be called
-if the interfaces.SentProgressCallback returns an error.
- */
-- (BOOL)resend:(NSData* _Nullable)transferID error:(NSError* _Nullable* _Nullable)error;
 /**
  * Send sends a file to the recipient. The sender must have an E2E relationship
 with the recipient.
@@ -1141,6 +1152,10 @@ for determining which IDs restored, which failed, and why.
  */
 - (NSData* _Nullable)getFailedAt:(long)index;
 /**
+ * GetRestoreContactsError returns an error string. Empty if no error.
+ */
+- (NSString* _Nonnull)getRestoreContactsError;
+/**
  * GetRestoredAt returns the restored ID at index
  */
 - (NSData* _Nullable)getRestoredAt:(long)index;
@@ -1260,6 +1275,28 @@ This must be called while start network follower is running.
  */
 - (nullable instancetype)init:(BindingsClient* _Nullable)client;
 /**
+ * NewUserDiscoveryFromBackup returns a new user discovery object. It
+wil set up the manager with the backup data. Pass into it the backed up
+facts, one email and phone number each. This will add the registered facts
+to the backed Store. Any one of these fields may be empty,
+however both fields being empty will cause an error. Any other fact that is not
+an email or phone number will return an error. You may only add a fact for the
+accepted types once each. If you attempt to back up a fact type that has already
+been backed up, an error will be returned. Anytime an error is returned, it means
+the backup was not successful.
+NOTE: Do not use this as a direct store operation. This feature is intended to add facts
+to a backend store that have ALREADY BEEN REGISTERED on the account.
+THIS IS NOT FOR ADDING NEWLY REGISTERED FACTS. That is handled on the backend.
+Only call this once. It must be called after StartNetworkFollower
+is called and will fail if the network has never been contacted.
+This function technically has a memory leak because it causes both sides of
+the bindings to think the other is in charge of the client object.
+In general this is not an issue because the client object should exist
+for the life of the program.
+This must be called while start network follower is running.
+ */
+- (nullable instancetype)initFromBackup:(BindingsClient* _Nullable)client email:(NSString* _Nullable)email phone:(NSString* _Nullable)phone;
+/**
  * AddFact adds a fact for the user to user discovery. Will only succeed if the
 user is already registered and the system does not have the fact currently
 registered for any user.
@@ -1270,20 +1307,6 @@ associated with, a code will be sent. This confirmation ID needs to be
 called along with the code to finalize the fact.
  */
 - (NSString* _Nonnull)addFact:(NSString* _Nullable)fStr error:(NSError* _Nullable* _Nullable)error;
-/**
- * BackUpMissingFacts adds a registered fact to the Store object and saves
-it to storage. It can take in both an email or a phone number, passed into
-the function in that order.  Any one of these fields may be empty,
-however both fields being empty will cause an error. Any other fact that is not
-an email or phone number will return an error. You may only add a fact for the
-accepted types once each. If you attempt to back up a fact type that has already
-been backed up, an error will be returned. Anytime an error is returned, it means
-the backup was not successful.
-NOTE: Do not use this as a direct store operation. This feature is intended to add facts
-to a backend store that have ALREADY BEEN REGISTERED on the account.
-THIS IS NOT FOR ADDING NEWLY REGISTERED FACTS. That is handled on the backend.
- */
-- (BOOL)backUpMissingFacts:(NSString* _Nullable)email phone:(NSString* _Nullable)phone error:(NSError* _Nullable* _Nullable)error;
 /**
  * ConfirmFact confirms a fact first registered via AddFact. The confirmation ID comes from
 AddFact while the code will come over the associated communications system
@@ -1523,7 +1546,7 @@ FOUNDATION_EXPORT BOOL BindingsNewClient(NSString* _Nullable network, NSString* 
  * NewClientFromBackup constructs a new Client from an encrypted backup. The backup
 is decrypted using the backupPassphrase. On success a successful client creation,
 the function will return a JSON encoded list of the E2E partners
-contained in the backup.
+contained in the backup and a json-encoded string of the parameters stored in the backup
  */
 FOUNDATION_EXPORT NSData* _Nullable BindingsNewClientFromBackup(NSString* _Nullable ndfJSON, NSString* _Nullable storageDir, NSData* _Nullable sessionPassword, NSData* _Nullable backupPassphrase, NSData* _Nullable backupFileContents, NSError* _Nullable* _Nullable error);
 
@@ -1598,12 +1621,36 @@ This must be called while start network follower is running.
 FOUNDATION_EXPORT BindingsUserDiscovery* _Nullable BindingsNewUserDiscovery(BindingsClient* _Nullable client, NSError* _Nullable* _Nullable error);
 
 /**
+ * NewUserDiscoveryFromBackup returns a new user discovery object. It
+wil set up the manager with the backup data. Pass into it the backed up
+facts, one email and phone number each. This will add the registered facts
+to the backed Store. Any one of these fields may be empty,
+however both fields being empty will cause an error. Any other fact that is not
+an email or phone number will return an error. You may only add a fact for the
+accepted types once each. If you attempt to back up a fact type that has already
+been backed up, an error will be returned. Anytime an error is returned, it means
+the backup was not successful.
+NOTE: Do not use this as a direct store operation. This feature is intended to add facts
+to a backend store that have ALREADY BEEN REGISTERED on the account.
+THIS IS NOT FOR ADDING NEWLY REGISTERED FACTS. That is handled on the backend.
+Only call this once. It must be called after StartNetworkFollower
+is called and will fail if the network has never been contacted.
+This function technically has a memory leak because it causes both sides of
+the bindings to think the other is in charge of the client object.
+In general this is not an issue because the client object should exist
+for the life of the program.
+This must be called while start network follower is running.
+ */
+FOUNDATION_EXPORT BindingsUserDiscovery* _Nullable BindingsNewUserDiscoveryFromBackup(BindingsClient* _Nullable client, NSString* _Nullable email, NSString* _Nullable phone, NSError* _Nullable* _Nullable error);
+
+/**
  * NotificationsForMe Check if a notification received is for me
 It returns a NotificationForMeReport which contains a ForMe bool stating if it is for the caller,
 a Type, and a source. These are as follows:
 	TYPE       	SOURCE				DESCRIPTION
 	"default"	recipient user ID	A message with no association
 	"request"	sender user ID		A channel request has been received
+	"reset"	    sender user ID		A channel reset has been received
 	"confirm"	sender user ID		A channel request has been accepted
 	"silent"	sender user ID		A message which should not be notified on
 	"e2e"		sender user ID		reception of an E2E message
@@ -1618,8 +1665,17 @@ FOUNDATION_EXPORT BindingsManyNotificationForMeReport* _Nullable BindingsNotific
  */
 FOUNDATION_EXPORT void BindingsRegisterLogWriter(id<BindingsLogWriter> _Nullable writer);
 
-// skipped function RestoreContactsFromBackup with unsupported parameter or return types
-
+/**
+ * RestoreContactsFromBackup takes as input the jason output of the
+`NewClientFromBackup` function, unmarshals it into IDs, looks up
+each ID in user discovery, and initiates a session reset request.
+This function will not return until every id in the list has been sent a
+request. It should be called again and again until it completes.
+xxDK users should not use this function. This function is used by
+the mobile phone apps and are not intended to be part of the xxDK. It
+should be treated as internal functions specific to the phone apps.
+ */
+FOUNDATION_EXPORT BindingsRestoreContactsReport* _Nullable BindingsRestoreContactsFromBackup(NSData* _Nullable backupPartnerIDs, BindingsClient* _Nullable client, BindingsUserDiscovery* _Nullable udManager, id<BindingsLookupCallback> _Nullable lookupCB, id<BindingsRestoreContactsUpdater> _Nullable updatesCb);
 
 /**
  * ResumeBackup starts the backup processes back up with a new callback after it
@@ -1678,7 +1734,7 @@ FOUNDATION_EXPORT BOOL BindingsUpdateCommonErrors(NSString* _Nullable jsonFile, 
 
 @class BindingsAuthRequestCallback;
 
-@class BindingsAuthResetCallback;
+@class BindingsAuthResetNotificationCallback;
 
 @class BindingsClientError;
 
@@ -1750,7 +1806,7 @@ request
  * AuthRequestCallback notifies the register whenever they receive an auth
 request
  */
-@interface BindingsAuthResetCallback : NSObject <goSeqRefInterface, BindingsAuthResetCallback> {
+@interface BindingsAuthResetNotificationCallback : NSObject <goSeqRefInterface, BindingsAuthResetNotificationCallback> {
 }
 @property(strong, readonly) _Nonnull id _ref;
 

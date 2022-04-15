@@ -29,5 +29,8 @@ xcuserdata/
 *.dSYM.zip
 *.dSYM
 *.p8
-*/cert_mainnet
-*/GoogleService-Info.plist
+Sources/Integration/Resources/udContact-test.bin
+Sources/Integration/Resources/ud.elixxir.io.crt
+Sources/GoogleDriveFeature/Resources/GoogleDrive-Keys.plist
+Sources/DropboxFeature/Resources/Dropbox-Keys.plist
+App/client-ios/Resources/GoogleService-Info.plist

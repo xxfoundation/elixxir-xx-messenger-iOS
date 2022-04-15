@@ -119,7 +119,7 @@ public final class OnboardingLaunchController: UIViewController {
 
                 if let notNowTitle = updateModel.notNowTitle {
                     let notNow = CapsuleButton()
-                    notNow.set(style: .simplestColored, title: notNowTitle)
+                    notNow.set(style: .simplestColoredRed, title: notNowTitle)
 
                     notNow.publisher(for: .touchUpInside)
                         .sink { [unowned self] in

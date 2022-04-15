@@ -428,6 +428,34 @@
 = "Enable crash reporting";
 "settings.advanced.crashes.description"
 = "Automatically sends anonymous reports containing crash data";
+"settings.advanced.accountBackup.title"
+= "Account Backup";
+
+"backup.header"
+= "Account Backup";
+"backup.setup.title"
+= "Setup your #backup service#.";
+"backup.config.title"
+= "Backup settings";
+"backup.subtitle"
+= "Back up your account to a cloud storage service, you can restore it along with only your contacts when you reinstall xx Messenger on another device.";
+"backup.config.backupNow"
+= "Backup now";
+"backup.config.disclaimer"
+= "Content backed up in %@ is not protected by xx network end-to-end encryption.";
+"backup.config.latestBackup"
+= "LATEST BACKUP";
+"backup.config.frequency"
+= "Backup to %@";
+"backup.config.infrastructure"
+= "Backup over";
+
+"backup.iCloud"
+= "iCloud";
+"backup.dropbox"
+= "Dropbox";
+"backup.googleDrive"
+= "Google Drive";
 
 // Settings - Delete Account
 
@@ -517,6 +545,10 @@
 = "Your Username";
 "onboarding.username.info.subtitle"
 = "Your chosen username will be registered with the #User Discovery Service# allowing your public keys to be accessible to anyone who knows your username. They will then be able to send a request to create an authenticated channel with you. You will then be able to reject unwanted requests.";
+"onboarding.username.restore.title"
+= "Already have an account?";
+"onboarding.username.restore.action"
+= "Restore From Backup";
 
 // OnboardingFeature - Email
 
@@ -588,8 +620,10 @@
 
 // OnboardingFeature - Success
 
-"onboarding.success.title"
-= "Your #%@# has been successfully #added#.";
+"onboarding.success.email.title"
+= "Your #email# has been successfully #added#.";
+"onboarding.success.phone.title"
+= "Your #phone# has been successfully #added#.";
 "onboarding.success.action"
 = "Next";
 
@@ -614,6 +648,49 @@
 = "Welcome";
 "onboarding.welcome.info.subtitle"
 = "Registration is completely optional. When registering an email or phone number, they will be evaluated by twilio, a 3rd party partner. Afterwards, salted hashes will be registered in #User Discovery# to allow other uses to search for you using the registered data completely privately.";
+
+"restore.warning.title"
+= "Warning";
+"restore.warning.subtitle"
+= "xx messenger account can only run on a single device at a time. Using the same account on multiple devices may permanently damage your account and make it impossible to converse with your contacts";
+"restore.warning.action"
+= "I understand";
+
+"restore.list.title"
+= "Restore your #account#.";
+"restore.list.firstSubtitle"
+= "Restore your account from a previous backup. You’ll be able to have access to all your contacts.";
+"restore.list.secondSubtitle"
+= "Select the cloud storage service you previously used to create a backup.";
+"restore.list.cancel"
+= "Cancel";
+
+"restore.header"
+= "Account restore";
+"restore.found.title"
+= "Backup found";
+"restore.found.subtitle"
+= "Restore your contacts from the following backup.";
+"restore.found.date"
+= "BACKUP DATE";
+"restore.found.size"
+= "FILE SIZE";
+"restore.found.restore"
+= "Restore account";
+"restore.found.cancel"
+= "Cancel";
+"restore.found.next"
+= "Next";
+"restore.notFound.title"
+= "Backup not found";
+"restore.notFound.subtitle"
+= "No account backup was found in %@";
+"restore.notFound.back"
+= "Go back";
+"restore.success.title"
+= "Your #account# has been successfully #restored#.";
+"restore.success.subtitle"
+= "You now have access to all your contacts.";
 
 // Shared
 

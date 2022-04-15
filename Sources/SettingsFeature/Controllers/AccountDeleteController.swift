@@ -7,7 +7,7 @@ import Defaults
 import ScrollViewController
 import DependencyInjection
 
-final class AccountDeleteController: UIViewController {
+public final class AccountDeleteController: UIViewController {
     @KeyObject(.username, defaultValue: "") var username: String
 
     @Dependency private var hud: HUDType
@@ -20,13 +20,13 @@ final class AccountDeleteController: UIViewController {
     private var cancellables = Set<AnyCancellable>()
     private var popupCancellables = Set<AnyCancellable>()
 
-    override func viewWillAppear(_ animated: Bool) {
+    public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.navigationBar
             .customize(backgroundColor: Asset.neutralWhite.color)
     }
 
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
         setupScrollView()

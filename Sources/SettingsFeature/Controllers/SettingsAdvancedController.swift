@@ -3,25 +3,25 @@ import Shared
 import Combine
 import DependencyInjection
 
-final class AdvancedController: UIViewController {
+public final class SettingsAdvancedController: UIViewController {
     @Dependency private var coordinator: SettingsCoordinating
 
-    lazy private var screenView = AdvancedView()
+    lazy private var screenView = SettingsAdvancedView()
 
-    private let viewModel = AdvancedViewModel()
     private var cancellables = Set<AnyCancellable>()
+    private let viewModel = SettingsAdvancedViewModel()
 
-    override func loadView() {
+    public override func loadView() {
         view = screenView
     }
 
-    override func viewWillAppear(_ animated: Bool) {
+    public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.navigationBar
             .customize(backgroundColor: Asset.neutralWhite.color)
     }
 
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
         setupBindings()
@@ -46,31 +46,31 @@ final class AdvancedController: UIViewController {
     }
 
     private func setupBindings() {
+        screenView.downloadLogsButton
+            .publisher(for: .touchUpInside)
+            .sink { [weak viewModel] in viewModel?.didTapDownloadLogs() }
+            .store(in: &cancellables)
+
+        screenView.logRecordingSwitcher.switcherView
+            .publisher(for: .valueChanged)
+            .sink { [weak viewModel] in viewModel?.didToggleRecordLogs() }
+            .store(in: &cancellables)
+
+        screenView.crashReportingSwitcher.switcherView
+            .publisher(for: .valueChanged)
+            .sink { [weak viewModel] in viewModel?.didToggleCrashReporting() }
+            .store(in: &cancellables)
+
         viewModel.sharePublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in coordinator.toActivityController(with: [$0], from: self) }
             .store(in: &cancellables)
 
-        screenView.downloadLogs
-            .publisher(for: .touchUpInside)
-            .sink { [weak viewModel] in viewModel?.didTapDownloadLogs() }
-            .store(in: &cancellables)
-
-        screenView.logs.switcherView
-            .publisher(for: .valueChanged)
-            .sink { [weak viewModel] in viewModel?.didToggleRecordLogs() }
-            .store(in: &cancellables)
-
-        screenView.crashes.switcherView
-            .publisher(for: .valueChanged)
-            .sink { [weak viewModel] in viewModel?.didToggleCrashReporting() }
-            .store(in: &cancellables)
-
         viewModel.state
             .removeDuplicates()
             .sink { [unowned self] state in
-                screenView.logs.switcherView.setOn(state.isRecordingLogs, animated: true)
-                screenView.crashes.switcherView.setOn(state.isCrashReporting, animated: true)
+                screenView.logRecordingSwitcher.switcherView.setOn(state.isRecordingLogs, animated: true)
+                screenView.crashReportingSwitcher.switcherView.setOn(state.isCrashReporting, animated: true)
             }.store(in: &cancellables)
     }
 

@@ -2,16 +2,12 @@ import UIKit
 import Shared
 
 public final class PopupStackView: PopupStackItem {
-    // MARK: Properties
-    
     let views: [UIView]
     let spacing: CGFloat
     let axis: NSLayoutConstraint.Axis
     let distribution: UIStackView.Distribution
     
     public var spacingAfter: CGFloat? = 10
-    
-    // MARK: Lifecycle
     
     public init(
         axis: NSLayoutConstraint.Axis = .horizontal,
@@ -24,8 +20,6 @@ public final class PopupStackView: PopupStackItem {
         self.spacing = spacing
         self.distribution = distribution
     }
-    
-    // MARK: Builder
     
     public func makeView() -> UIView {
         let stack = UIStackView()

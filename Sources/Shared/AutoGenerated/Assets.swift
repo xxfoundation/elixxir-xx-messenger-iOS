@@ -21,6 +21,7 @@ public typealias AssetImageTypeAlias = ImageAsset.Image
 
 // swiftlint:disable identifier_name line_length nesting type_body_length type_name
 public enum Asset {
+  public static let backupSuccess = ImageAsset(name: "backup_success")
   public static let chatAudioCloseSpeaker = ImageAsset(name: "chat_audio_close_speaker")
   public static let chatAudioOpenSpeaker = ImageAsset(name: "chat_audio_open_speaker")
   public static let chatAudioPause = ImageAsset(name: "chat_audio_pause")
@@ -87,6 +88,10 @@ public enum Asset {
   public static let requestsAccept = ImageAsset(name: "requests_accept")
   public static let requestsReceivedPlaceholder = ImageAsset(name: "requests_received_placeholder")
   public static let requestsReject = ImageAsset(name: "requests_reject")
+  public static let restoreDrive = ImageAsset(name: "restore_drive")
+  public static let restoreDropbox = ImageAsset(name: "restore_dropbox")
+  public static let restoreIcloud = ImageAsset(name: "restore_icloud")
+  public static let restoreSuccess = ImageAsset(name: "restore_success")
   public static let scanEmail = ImageAsset(name: "scan_email")
   public static let scanError = ImageAsset(name: "scan_error")
   public static let scanPhone = ImageAsset(name: "scan_phone")

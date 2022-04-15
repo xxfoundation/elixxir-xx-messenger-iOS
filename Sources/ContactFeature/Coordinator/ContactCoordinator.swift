@@ -13,57 +13,35 @@ public protocol ContactCoordinating: AnyObject {
 }
 
 public final class ContactCoordinator: ContactCoordinating {
-    public init(requestsFactory: @escaping () -> UIViewController) {
-        self.requestsFactory = requestsFactory
-    }
-
-    // MARK: Presenters
-
-    var pusher: Presenting = PushPresenter()
-    var presenter: Presenting = ModalPresenter()
+    var pushPresenter: Presenting = PushPresenter()
+    var modalPresenter: Presenting = ModalPresenter()
     var bottomPresenter: Presenting = BottomPresenter()
-    var replacer: Presenting = ReplacePresenter(mode: .replaceBackwards(SingleChatController.self))
-
-    // MARK: Factories
+    var replacePresenter: Presenting = ReplacePresenter(mode: .replaceBackwards(SingleChatController.self))
 
     var requestsFactory: () -> UIViewController
-
     var singleChatFactory: (Contact) -> UIViewController
-    = SingleChatController.init(_:)
-
     var imagePickerFactory: () -> UIImagePickerController
-    = UIImagePickerController.init
-
     var nicknameFactory: (String, @escaping StringClosure) -> UIViewController
-    = NickameController.init(prefilled:_:)
+
+    public init(
+        requestsFactory: @escaping () -> UIViewController,
+        singleChatFactory: @escaping (Contact) -> UIViewController,
+        imagePickerFactory: @escaping () -> UIImagePickerController,
+        nicknameFactory: @escaping (String, @escaping StringClosure) -> UIViewController
+    ) {
+        self.requestsFactory = requestsFactory
+        self.singleChatFactory = singleChatFactory
+        self.imagePickerFactory = imagePickerFactory
+        self.nicknameFactory = nicknameFactory
+    }
 }
 
 public extension ContactCoordinator {
-    func toRequests(from parent: UIViewController) {
-        let screen = requestsFactory()
-        pusher.present(screen, from: parent)
-    }
-
-    func toPopup(
-        _ popup: UIViewController,
-        from parent: UIViewController
-    ) {
-        bottomPresenter.present(popup, from: parent)
-    }
-
-    func toSingleChat(
-        with contact: Contact,
-        from parent: UIViewController
-    ) {
-        let screen = singleChatFactory(contact)
-        replacer.present(screen, from: parent)
-    }
-
     func toPhotos(from parent: UIViewController) {
         let screen = imagePickerFactory()
         screen.delegate = (parent as? (UIImagePickerControllerDelegate & UINavigationControllerDelegate))
         screen.allowsEditing = true
-        presenter.present(screen, from: parent)
+        modalPresenter.present(screen, from: parent)
     }
 
     func toNickname(
@@ -73,5 +51,19 @@ public extension ContactCoordinator {
     ) {
         let screen = nicknameFactory(prefilled, completion)
         bottomPresenter.present(screen, from: parent)
+    }
+
+    func toRequests(from parent: UIViewController) {
+        let screen = requestsFactory()
+        pushPresenter.present(screen, from: parent)
+    }
+
+    func toPopup(_ popup: UIViewController, from parent: UIViewController) {
+        bottomPresenter.present(popup, from: parent)
+    }
+
+    func toSingleChat(with contact: Contact, from parent: UIViewController) {
+        let screen = singleChatFactory(contact)
+        replacePresenter.present(screen, from: parent)
     }
 }

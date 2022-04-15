@@ -6,7 +6,7 @@ import Theme
 import DependencyInjection
 import ScrollViewController
 
-final class ProfileEmailController: UIViewController {
+public final class ProfileEmailController: UIViewController {
     @Dependency private var hud: HUDType
     @Dependency private var coordinator: ProfileCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
@@ -17,14 +17,14 @@ final class ProfileEmailController: UIViewController {
     private let viewModel = ProfileEmailViewModel()
     private var cancellables = Set<AnyCancellable>()
 
-    override func viewWillAppear(_ animated: Bool) {
+    public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         statusBarController.style.send(.darkContent)
         navigationController?.navigationBar
             .customize(backgroundColor: Asset.neutralWhite.color)
     }
 
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
         setupScrollView()

@@ -52,11 +52,6 @@ public final class SettingsController: UIViewController {
             .customize(backgroundColor: Asset.neutralWhite.color)
     }
 
-    public override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        viewModel.didAppear()
-    }
-
     public override func viewDidLoad() {
         super.viewDidLoad()
 
@@ -100,15 +95,6 @@ public final class SettingsController: UIViewController {
             .sink { [hud] in hud.update(with: $0) }
             .store(in: &cancellables)
 
-        viewModel.infoPopupPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in
-                presentInfo(
-                    title: Localized.Settings.InfoPopUp.Privacy.title,
-                    subtitle: Localized.Settings.InfoPopUp.Privacy.subtitle
-                )
-            }.store(in: &cancellables)
-
         screenView.inAppNotifications.switcherView
             .publisher(for: .valueChanged)
             .sink { [weak viewModel] in viewModel?.didToggleInAppNotifications() }
@@ -139,7 +125,7 @@ public final class SettingsController: UIViewController {
             .sink { [weak viewModel] in viewModel?.didToggleBiometrics() }
             .store(in: &cancellables)
 
-        screenView.privacyPolicy
+        screenView.privacyPolicyButton
             .publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
@@ -152,7 +138,7 @@ public final class SettingsController: UIViewController {
                     }
             }.store(in: &cancellables)
 
-        screenView.disclosures
+        screenView.disclosuresButton
             .publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
@@ -165,14 +151,19 @@ public final class SettingsController: UIViewController {
                     }
             }.store(in: &cancellables)
 
-        screenView.delete
+        screenView.deleteButton
             .publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in
-                coordinator.toAccountDelete(from: self)
-            }.store(in: &cancellables)
+            .sink { [unowned self] in coordinator.toDelete(from: self) }
+            .store(in: &cancellables)
 
-        screenView.advanced
+        screenView.accountBackupButton
+            .publisher(for: .touchUpInside)
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in coordinator.toBackup(from: self) }
+            .store(in: &cancellables)
+
+        screenView.advancedButton
             .publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in coordinator.toAdvanced(from: self) }

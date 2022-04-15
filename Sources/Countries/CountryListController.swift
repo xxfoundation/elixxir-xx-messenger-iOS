@@ -17,12 +17,12 @@ public final class CountryListController: UIViewController {
     private var cancellables = Set<AnyCancellable>()
     private var dataSource: UITableViewDiffableDataSource<SectionId, Country>!
 
-    public convenience init(_ didChoose: @escaping (Country) -> Void) {
-        logger.log("init()")
-
-        self.init()
+    public init(_ didChoose: @escaping (Country) -> Void) {
         self.didChoose = didChoose
+        super.init(nibName: nil, bundle: nil)
     }
+
+    required init?(coder: NSCoder) { nil }
 
     public override func viewWillAppear(_ animated: Bool) {
         logger.log("viewWillAppear()")
