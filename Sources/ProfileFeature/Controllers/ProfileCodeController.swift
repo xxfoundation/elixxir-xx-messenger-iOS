@@ -9,7 +9,7 @@ import ScrollViewController
 
 public typealias ControllerClosure = (UIViewController, AttributeConfirmation) -> Void
 
-final class ProfileCodeController: UIViewController {
+public final class ProfileCodeController: UIViewController {
     @Dependency private var hud: HUDType
 
     lazy private var screenView = ProfileCodeView()
@@ -20,13 +20,16 @@ final class ProfileCodeController: UIViewController {
     private var cancellables = Set<AnyCancellable>()
     lazy private var viewModel = ProfileCodeViewModel(confirmation)
 
-    override func viewWillAppear(_ animated: Bool) {
+    public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.navigationBar
             .customize(backgroundColor: Asset.neutralWhite.color)
     }
 
-    init(_ confirmation: AttributeConfirmation, _ completion: @escaping ControllerClosure) {
+    public init(
+        _ confirmation: AttributeConfirmation,
+        _ completion: @escaping ControllerClosure
+    ) {
         self.completion = completion
         self.confirmation = confirmation
         super.init(nibName: nil, bundle: nil)
@@ -34,9 +37,8 @@ final class ProfileCodeController: UIViewController {
 
     required init?(coder: NSCoder) { nil }
 
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
-
         setupNavigationBar()
         setupScrollView()
         setupBindings()

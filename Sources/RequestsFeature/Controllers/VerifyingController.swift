@@ -1,16 +1,16 @@
 import UIKit
 import Combine
 
-final class VerifyingController: UIViewController {
+public final class VerifyingController: UIViewController {
     lazy private var screenView = VerifyingView()
 
     private var cancellables = Set<AnyCancellable>()
 
-    override func loadView() {
+    public override func loadView() {
         view = screenView
     }
 
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
         screenView.action.publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)

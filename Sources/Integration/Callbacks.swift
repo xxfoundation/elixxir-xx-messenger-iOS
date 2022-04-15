@@ -102,7 +102,7 @@ final class RoundCallback: NSObject, BindingsRoundCompletionCallbackProtocol {
     }
 
     func eventCallback(_ rid: Int, success: Bool, timedOut: Bool) {
-        log(string: "Add/Confirm RoundCallback:\nid: \(rid)\nSuccessfull: \(success)\nTimed out: \(timedOut)", type: .info)
+        log(string: ">>> Add/Confirm RoundCallback:\nid: \(rid)\nSuccessfull: \(success)\nTimed out: \(timedOut)", type: .info)
         callback(success && !timedOut)
     }
 }
@@ -203,17 +203,14 @@ final class LookupCallback: NSObject, BindingsLookupCallbackProtocol {
     }
 
     func callback(_ contact: BindingsContact?, error: String?) {
-        guard let contact = contact else {
-            if let error = error {
-                if !error.isEmpty {
-                    callback(.failure(NSError.create(error).friendly()))
-                }
-            }
-
+        if let error = error, !error.isEmpty {
+            callback(.failure(NSError.create(error).friendly()))
             return
         }
 
-        callback(.success(contact))
+        if let contact = contact {
+            callback(.success(contact))
+        }
     }
 }
 
@@ -253,5 +250,46 @@ final class OutgoingTransferProgressCallback: NSObject, BindingsFileTransferSent
 
     func sentProgressCallback(_ completed: Bool, sent: Int, arrived: Int, total: Int, t: BindingsFilePartTracker?, err: Error?) {
         callback(completed, sent, arrived, total, err)
+    }
+}
+
+final class UpdateBackupCallback: NSObject, BindingsUpdateBackupFuncProtocol {
+    let callback: (Data) -> Void
+
+    init(_ callback: @escaping (Data) -> Void) {
+        self.callback = callback
+        super.init()
+    }
+
+    func updateBackup(_ encryptedBackup: Data?) {
+        guard let data = encryptedBackup else { return }
+        callback(data)
+    }
+}
+
+final class ResetCallback: NSObject, BindingsAuthResetNotificationCallbackProtocol {
+    let callback: (BindingsContact) -> Void
+
+    init(_ callback: @escaping (BindingsContact) -> Void) {
+        self.callback = callback
+        super.init()
+    }
+
+    func callback(_ requestor: BindingsContact?) {
+        guard let requestor = requestor else { return }
+        callback(requestor)
+    }
+}
+
+final class RestoreContactsCallback: NSObject, BindingsRestoreContactsUpdaterProtocol {
+    let callback: (Int, Int, Int, String?) -> Void
+
+    init(_ callback: @escaping (Int, Int, Int, String?) -> Void) {
+        self.callback = callback
+        super.init()
+    }
+
+    func restoreContactsCallback(_ numFound: Int, numRestored: Int, total: Int, err: String?) {
+        callback(numFound, numRestored, total, err)
     }
 }

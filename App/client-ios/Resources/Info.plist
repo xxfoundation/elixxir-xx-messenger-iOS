@@ -26,10 +26,26 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
+			<string></string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>db-ppx0de5f16p9aq2</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
 			<string>xxmessenger</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>xxmessenger</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.662236151640-30i07ubg6ukodg15u0bnpk322p030u3j</string>
 			</array>
 		</dict>
 	</array>
@@ -39,7 +55,8 @@
 	<false/>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>
-		<string>prelixxir</string>
+		<string>dbapi-8-emm</string>
+		<string>dbapi-2</string>
 	</array>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
@@ -58,6 +75,18 @@
 	<string>This permission is required to create voice notes</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This permission is required to send photos in chat and change your profile avatar.</string>
+	<key>NSUbiquitousContainers</key>
+	<dict>
+		<key>iCloud.xxm-icloud</key>
+		<dict>
+			<key>NSUbiquitousContainerIsDocumentScopePublic</key>
+			<true/>
+			<key>NSUbiquitousContainerName</key>
+			<string>xx messenger</string>
+			<key>NSUbiquitousContainerSupportedFolderLevels</key>
+			<string>Any</string>
+		</dict>
+	</dict>
 	<key>UIBackgroundModes</key>
 	<array>
 		<string>processing</string>

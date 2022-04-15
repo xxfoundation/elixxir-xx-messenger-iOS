@@ -25,61 +25,43 @@ public protocol ProfileCoordinating {
 }
 
 public struct ProfileCoordinator: ProfileCoordinating {
-    public init() {}
-
-    var pusher: Presenting = PushPresenter()
-    var presenter: Presenting = ModalPresenter()
+    var pushPresenter: Presenting = PushPresenter()
+    var modalPresenter: Presenting = ModalPresenter()
     var bottomPresenter: Presenting = BottomPresenter()
 
-    // MARK: Factories
-
     var emailFactory: () -> UIViewController
-        = ProfileEmailController.init
-
     var phoneFactory: () -> UIViewController
-        = ProfilePhoneController.init
-
     var imagePickerFactory: () -> UIImagePickerController
-        = UIImagePickerController.init
-
-    var permissionFactory: () -> RequestPermissionController = RequestPermissionController.init
-
+    var permissionFactory: () -> RequestPermissionController
     var countriesFactory: (@escaping (Country) -> Void) -> UIViewController
-        = CountryListController.init(_:)
-
     var codeFactory: (AttributeConfirmation, @escaping ControllerClosure) -> UIViewController
-        = ProfileCodeController.init(_:_:)
+
+    public init(
+        emailFactory: @escaping () -> UIViewController,
+        phoneFactory: @escaping () -> UIViewController,
+        imagePickerFactory: @escaping () -> UIImagePickerController,
+        permissionFactory: @escaping () -> RequestPermissionController, // ⚠️
+        countriesFactory: @escaping (@escaping (Country) -> Void) -> UIViewController,
+        codeFactory: @escaping (AttributeConfirmation, @escaping ControllerClosure) -> UIViewController
+    ) {
+        self.codeFactory = codeFactory
+        self.emailFactory = emailFactory
+        self.phoneFactory = phoneFactory
+        self.countriesFactory = countriesFactory
+        self.permissionFactory = permissionFactory
+        self.imagePickerFactory = imagePickerFactory
+    }
 }
 
 public extension ProfileCoordinator {
-    func toPermission(type: PermissionType, from parent: UIViewController) {
-        let screen = permissionFactory()
-        screen.setup(type: type)
-        pusher.present(screen, from: parent)
-    }
-
-    func toPopup(
-        _ popup: UIViewController,
-        from parent: UIViewController
-    ) {
-        bottomPresenter.present(popup, from: parent)
-    }
-
-    func toPhotos(from parent: UIViewController) {
-        let screen = imagePickerFactory()
-        screen.delegate = (parent as? (UIImagePickerControllerDelegate & UINavigationControllerDelegate))
-        screen.allowsEditing = true
-        presenter.present(screen, from: parent)
-    }
-
     func toEmail(from parent: UIViewController) {
         let screen = emailFactory()
-        pusher.present(screen, from: parent)
+        pushPresenter.present(screen, from: parent)
     }
 
     func toPhone(from parent: UIViewController) {
         let screen = phoneFactory()
-        pusher.present(screen, from: parent)
+        pushPresenter.present(screen, from: parent)
     }
 
     func toCode(
@@ -88,14 +70,28 @@ public extension ProfileCoordinator {
         _ completion: @escaping ControllerClosure
     ) {
         let screen = codeFactory(confirmation, completion)
-        pusher.present(screen, from: parent)
+        pushPresenter.present(screen, from: parent)
     }
 
-    func toCountries(
-        from parent: UIViewController,
-        _ onChoose: @escaping (Country) -> Void
-    ) {
+    func toPermission(type: PermissionType, from parent: UIViewController) {
+        let screen = permissionFactory()
+        screen.setup(type: type)
+        pushPresenter.present(screen, from: parent)
+    }
+
+    func toPopup(_ popup: UIViewController, from parent: UIViewController) {
+        bottomPresenter.present(popup, from: parent)
+    }
+
+    func toCountries(from parent: UIViewController, _ onChoose: @escaping (Country) -> Void) {
         let screen = countriesFactory(onChoose)
-        pusher.present(screen, from: parent)
+        pushPresenter.present(screen, from: parent)
+    }
+
+    func toPhotos(from parent: UIViewController) {
+        let screen = imagePickerFactory()
+        screen.delegate = (parent as? (UIImagePickerControllerDelegate & UINavigationControllerDelegate))
+        screen.allowsEditing = true
+        modalPresenter.present(screen, from: parent)
     }
 }

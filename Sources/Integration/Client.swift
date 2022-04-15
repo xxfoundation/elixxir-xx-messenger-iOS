@@ -3,42 +3,65 @@ import Models
 import Combine
 import Defaults
 import Foundation
+import Bindings
 
 public class Client {
     @KeyObject(.inappnotifications, defaultValue: true) var inappnotifications: Bool
 
     let bindings: BindingsInterface
+    var backupManager: BackupInterface?
     var dummyManager: DummyTrafficManaging?
     var groupManager: GroupManagerInterface?
     var userDiscovery: UserDiscoveryInterface?
     var transferManager: TransferManagerInterface?
 
+    var backup: AnyPublisher<Data, Never> { backupSubject.eraseToAnyPublisher() }
     var network: AnyPublisher<Bool, Never> { networkSubject.eraseToAnyPublisher() }
+    var resets: AnyPublisher<Contact, Never> { resetsSubject.eraseToAnyPublisher() }
     var messages: AnyPublisher<Message, Never> { messagesSubject.eraseToAnyPublisher() }
     var requests: AnyPublisher<Contact, Never> { requestsSubject.eraseToAnyPublisher() }
     var events: AnyPublisher<BackendEvent, Never> { eventsSubject.eraseToAnyPublisher() }
+    var requestsSent: AnyPublisher<Contact, Never> { requestsSentSubject.eraseToAnyPublisher() }
     var confirmations: AnyPublisher<Contact, Never> { confirmationsSubject.eraseToAnyPublisher() }
     var groupMessages: AnyPublisher<GroupMessage, Never> { groupMessagesSubject.eraseToAnyPublisher() }
     var incomingTransfers: AnyPublisher<FileTransfer, Never> { transfersSubject.eraseToAnyPublisher() }
     var groupRequests: AnyPublisher<(Group, [Data], String?), Never> { groupRequestsSubject.eraseToAnyPublisher() }
 
+    private let backupSubject = PassthroughSubject<Data, Never>()
     private let networkSubject = PassthroughSubject<Bool, Never>()
+    private let resetsSubject = PassthroughSubject<Contact, Never>()
     private let requestsSubject = PassthroughSubject<Contact, Never>()
     private let messagesSubject = PassthroughSubject<Message, Never>()
     private let eventsSubject = PassthroughSubject<BackendEvent, Never>()
+    private let requestsSentSubject = PassthroughSubject<Contact, Never>()
     private let confirmationsSubject = PassthroughSubject<Contact, Never>()
     private let transfersSubject = PassthroughSubject<FileTransfer, Never>()
     private let groupMessagesSubject = PassthroughSubject<GroupMessage, Never>()
     private let groupRequestsSubject = PassthroughSubject<(Group, [Data], String?), Never>()
 
+    private var isBackupInitialization = false
+    private var isBackupInitializationCompleted = false
+
     // MARK: Lifecycle
 
-    init(_ bindings: BindingsInterface) {
+    init(
+        _ bindings: BindingsInterface,
+        fromBackup: Bool,
+        email: String?,
+        phone: String?
+    ) {
         self.bindings = bindings
+        self.isBackupInitialization = fromBackup
 
         do {
             try registerListenersAndStart()
-            try instantiateUserDiscovery()
+
+            if fromBackup {
+                try instantiateUserDiscoveryFromBackup(email: email, phone: phone)
+            } else {
+                try instantiateUserDiscovery()
+            }
+
             try instantiateTransferManager()
             try instantiateDummyTrafficManager()
             updatePreImage()
@@ -47,18 +70,81 @@ public class Client {
         }
     }
 
-    // MARK: Public
+    public func listenBackup() {
+        backupManager = nil
+        backupManager = bindings.listenBackups { [weak backupSubject] in
+            backupSubject?.send($0)
+        }
+    }
+
+    public func addJson(_ string: String) {
+        guard let backupManager = backupManager else { return }
+        backupManager.addJson(string)
+    }
+
+    public func stopListeningBackup() {
+        guard let backupManager = backupManager else { return }
+        try? backupManager.stop()
+        self.backupManager = nil
+    }
+
+    public func restoreContacts(fromBackup backup: Data) {
+        var totalPendingRestoration: Int = 0
+
+        let report = bindings.restore(
+            ids: backup,
+            using: userDiscovery!) { [weak self] in
+                guard let self = self else { return }
+
+                switch $0 {
+                case .success(var contact):
+                    contact.status = .requested
+                    self.requestsSentSubject.send(contact)
+                    print(">>> Restored \(contact.username). Setting status as requested")
+                case .failure(let error):
+                    print(">>> \(error.localizedDescription)")
+                }
+            } restoreCallback: { numFound, numRestored, total, errorString in
+                totalPendingRestoration = total
+                let results =
+            """
+            >>> Results from within closure of RestoreContacts:
+            - numFound: \(numFound)
+            - numRestored: \(numRestored)
+            - total: \(total)
+            - errorString: \(errorString)
+            """
+                print(results)
+            }
+
+        guard totalPendingRestoration > 0 else { fatalError("Total is zero, why called restore contacts?") }
+
+        guard report.lenRestored() == totalPendingRestoration else {
+            print(">>> numRestored \(report.lenRestored()) is != than the total (\(totalPendingRestoration)). Going on recursion...\nnumFailed: \(report.lenFailed())\n\(report.getRestoreContactsError())")
+            restoreContacts(fromBackup: backup)
+            return
+        }
+
+        isBackupInitializationCompleted = true
+    }
 
     private func registerListenersAndStart() throws {
-        bindings.listenNetworkUpdates { [weak networkSubject] in
-            networkSubject?.send($0)
-        }
+        bindings.listenNetworkUpdates { [weak networkSubject] in networkSubject?.send($0) }
 
         bindings.listenRequests { [weak self] in
             guard let self = self else { return }
-            self.requestsSubject.send($0)
-        } confirmations: { [weak confirmationsSubject] in
+
+            if self.isBackupInitialization {
+                if self.isBackupInitializationCompleted {
+                    self.requestsSubject.send($0)
+                }
+            } else {
+                self.requestsSubject.send($0)
+            }
+        } _: { [weak confirmationsSubject] in
             confirmationsSubject?.send($0)
+        } _: { [weak resetsSubject] in
+            resetsSubject?.send($0)
         }
 
         bindings.listenEvents { [weak eventsSubject] in
@@ -112,6 +198,13 @@ public class Client {
         retry(max: 4, retryStrategy: .delay(seconds: 1)) { [weak self] in
             guard let self = self else { return }
             self.userDiscovery = try self.bindings.generateUD()
+        }
+    }
+
+    private func instantiateUserDiscoveryFromBackup(email: String?, phone: String?) throws {
+        retry(max: 4, retryStrategy: .delay(seconds: 1)) { [weak self] in
+            guard let self = self else { return }
+            self.userDiscovery = try self.bindings.generateUDFromBackup(email: email, phone: phone)
         }
     }
 

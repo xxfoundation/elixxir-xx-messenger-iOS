@@ -1,11 +1,16 @@
 import UIKit
 
 public final class PopupEmptyView: PopupStackItem {
-    // MARK: Lifecycle
+    private var height: CGFloat
 
-    public init() {}
+    public init(height: CGFloat) {
+        self.height = height
+    }
 
-    // MARK: Builder
+    public func makeView() -> UIView {
+        let view = UIView()
+        view.snp.makeConstraints { $0.height.equalTo(height) }
 
-    public func makeView() -> UIView { UIView() }
+        return view
+    }
 }

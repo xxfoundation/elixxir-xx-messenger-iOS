@@ -11,6 +11,24 @@
         }
       },
       {
+        "package": "Alamofire",
+        "repositoryURL": "https://github.com/Alamofire/Alamofire.git",
+        "state": {
+          "branch": null,
+          "revision": "f82c23a8a7ef8dc1a49a8bfc6a96883e79121864",
+          "version": "5.5.0"
+        }
+      },
+      {
+        "package": "AppAuth",
+        "repositoryURL": "https://github.com/openid/AppAuth-iOS.git",
+        "state": {
+          "branch": null,
+          "revision": "01131d68346c8ae552961c768d583c715fbe1410",
+          "version": "1.4.0"
+        }
+      },
+      {
         "package": "BoringSSL-GRPC",
         "repositoryURL": "https://github.com/firebase/boringssl-SwiftPM.git",
         "state": {
@@ -65,12 +83,30 @@
         }
       },
       {
+        "package": "FilesProvider",
+        "repositoryURL": "https://github.com/amosavian/FileProvider.git",
+        "state": {
+          "branch": null,
+          "revision": "abf68a62541a4193c8d106367ddb3648e8ab693f",
+          "version": "0.26.0"
+        }
+      },
+      {
         "package": "Firebase",
         "repositoryURL": "https://github.com/firebase/firebase-ios-sdk.git",
         "state": {
           "branch": null,
           "revision": "08686f04881483d2bc098b2696e674c0ba135e47",
           "version": "8.10.0"
+        }
+      },
+      {
+        "package": "GoogleAPIClientForREST",
+        "repositoryURL": "https://github.com/google/google-api-objectivec-client-for-rest",
+        "state": {
+          "branch": null,
+          "revision": "22e0bb02729d60db396e8b90d8189313cd86ba53",
+          "version": "1.6.0"
         }
       },
       {
@@ -89,6 +125,15 @@
           "branch": null,
           "revision": "15ccdfd25ac55b9239b82809531ff26605e7556e",
           "version": "9.1.2"
+        }
+      },
+      {
+        "package": "GoogleSignIn",
+        "repositoryURL": "https://github.com/google/GoogleSignIn-iOS",
+        "state": {
+          "branch": null,
+          "revision": "60ca2bfd218ccb194a746a79b41d9d50eb7e3af0",
+          "version": "6.1.0"
         }
       },
       {
@@ -125,6 +170,15 @@
           "branch": null,
           "revision": "bc6a19702ac76ac4e488b68148710eb815f9bc56",
           "version": "1.7.0"
+        }
+      },
+      {
+        "package": "GTMAppAuth",
+        "repositoryURL": "https://github.com/google/GTMAppAuth.git",
+        "state": {
+          "branch": null,
+          "revision": "40f4103fb52109032c05599a0c39ad43edbdf80a",
+          "version": "1.2.2"
         }
       },
       {
@@ -269,6 +323,15 @@
           "branch": null,
           "revision": "2c039501d6eeb4d4cd4aec4a8d884ad28862e044",
           "version": "1.9.5"
+        }
+      },
+      {
+        "package": "SwiftyDropbox",
+        "repositoryURL": "https://github.com/dropbox/SwiftyDropbox.git",
+        "state": {
+          "branch": null,
+          "revision": "7af87d903be1cf0af0e76e0394d992943055894e",
+          "version": "8.2.1"
         }
       },
       {

@@ -1,6 +1,9 @@
 // MARK: SDK
 
+import UIKit
 import Network
+import QuickLook
+import MobileCoreServices
 
 // MARK: Isolated features
 
@@ -10,22 +13,28 @@ import Bindings
 import XXLogger
 import Keychain
 import Defaults
+import Countries
+import Voxophone
 import Integration
 import Permissions
 import CrashService
+import iCloudFeature
 import CrashReporting
 import NetworkMonitor
+import DropboxFeature
 import VersionChecking
 import PushNotifications
+import GoogleDriveFeature
 import DependencyInjection
-import Voxophone
 
 // MARK: UI Features
 
 import ScanFeature
 import ChatFeature
 import MenuFeature
+import BackupFeature
 import SearchFeature
+import RestoreFeature
 import ContactFeature
 import ProfileFeature
 import ChatListFeature
@@ -49,21 +58,36 @@ struct DependencyRegistrator {
         container.register(MockPushHandler() as PushHandling)
         container.register(MockKeychainHandler() as KeychainHandling)
         container.register(MockPermissionHandler() as PermissionHandling)
+
+        /// Restore / Backup
+
+        container.register(iCloudServiceMock() as iCloudInterface)
+        container.register(DropboxServiceMock() as DropboxInterface)
+        container.register(GoogleDriveServiceMock() as GoogleDriveInterface)
+
         registerCommonDependencies()
     }
 
     // MARK: LIVE
 
     static func registerForLive() {
+        container.register(KeyObjectStore.userDefaults)
         container.register(XXLogger.live())
         container.register(CrashReporter.live)
         container.register(VersionChecker.live())
+
         container.register(XXNetwork<BindingsClient>() as XXNetworking)
         container.register(NetworkMonitor() as NetworkMonitoring)
-        container.register(KeyObjectStore.userDefaults)
         container.register(PushHandler() as PushHandling)
         container.register(KeychainHandler() as KeychainHandling)
         container.register(PermissionHandler() as PermissionHandling)
+
+        /// Restore / Backup
+
+        container.register(iCloudService() as iCloudInterface)
+        container.register(DropboxService() as DropboxInterface)
+        container.register(GoogleDriveService() as GoogleDriveInterface)
+
         registerCommonDependencies()
     }
 
@@ -71,6 +95,7 @@ struct DependencyRegistrator {
 
     static private func registerCommonDependencies() {
         container.register(Voxophone())
+        container.register(BackupService())
 
         // MARK: Isolated
 
@@ -80,29 +105,77 @@ struct DependencyRegistrator {
 
         // MARK: Coordinators
 
-        container.register(SearchCoordinator() as SearchCoordinating)
-        container.register(ProfileCoordinator() as ProfileCoordinating)
-        container.register(SettingsCoordinator() as SettingsCoordinating)
+        container.register(BackupCoordinator() as BackupCoordinating)
+
+        container.register(
+            SearchCoordinator(
+                contactFactory: ContactController.init(_:),
+                countriesFactory: CountryListController.init(_:)
+            ) as SearchCoordinating)
+
+        container.register(
+            ProfileCoordinator(
+                emailFactory: ProfileEmailController.init,
+                phoneFactory: ProfilePhoneController.init,
+                imagePickerFactory: UIImagePickerController.init,
+                permissionFactory: RequestPermissionController.init,
+                countriesFactory: CountryListController.init(_:),
+                codeFactory: ProfileCodeController.init(_:_:)
+            ) as ProfileCoordinating)
+
+        container.register(
+            SettingsCoordinator(
+                backupFactory: BackupController.init,
+                advancedFactory: SettingsAdvancedController.init,
+                accountDeleteFactory: AccountDeleteController.init
+            ) as SettingsCoordinating)
+
+        container.register(
+            RestoreCoordinator(
+                successFactory: RestoreSuccessController.init,
+                chatListFactory: ChatListController.init,
+                restoreFactory: RestoreController.init(_:_:)
+            ) as RestoreCoordinating)
 
         container.register(
             ChatCoordinator(
                 retryFactory: RetrySheetController.init,
-                contactFactory: ContactController.init(_:)
+                webFactory: WebScreen.init(url:),
+                previewFactory: QLPreviewController.init,
+                contactFactory: ContactController.init(_:),
+                imagePickerFactory: UIImagePickerController.init,
+                permissionFactory: RequestPermissionController.init
             ) as ChatCoordinating)
 
         container.register(
             ContactCoordinator(
-                requestsFactory: RequestsContainerController.init
+                requestsFactory: RequestsContainerController.init,
+                singleChatFactory: SingleChatController.init(_:),
+                imagePickerFactory: UIImagePickerController.init,
+                nicknameFactory: NickameController.init(_:_:)
             ) as ContactCoordinating)
 
         container.register(
             RequestsCoordinator(
-                searchFactory: SearchController.init
+                searchFactory: SearchController.init,
+                verifyingFactory: VerifyingController.init,
+                contactFactory: ContactController.init(_:),
+                nicknameFactory: NickameController.init(_:_:)
             ) as RequestsCoordinating)
 
         container.register(
             OnboardingCoordinator(
-                chatListFactory: ChatListController.init
+                emailFactory: OnboardingEmailController.init,
+                phoneFactory: OnboardingPhoneController.init,
+                welcomeFactory: OnboardingWelcomeController.init,
+                chatListFactory: ChatListController.init,
+                startFactory: OnboardingStartController.init(_:),
+                usernameFactory: OnboardingUsernameController.init(_:),
+                restoreListFactory: RestoreListController.init(_:),
+                successFactory: OnboardingSuccessController.init(_:),
+                countriesFactory: CountryListController.init(_:),
+                phoneConfirmationFactory: OnboardingPhoneConfirmationController.init(_:_:),
+                emailConfirmationFactory: OnboardingEmailConfirmationController.init(_:_:)
             ) as OnboardingCoordinating)
 
         container.register(
@@ -110,13 +183,17 @@ struct DependencyRegistrator {
                 scanFactory: ScanContainerController.init,
                 searchFactory: SearchController.init,
                 newGroupFactory: CreateGroupController.init,
-                requestsFactory: RequestsContainerController.init
+                requestsFactory: RequestsContainerController.init,
+                contactFactory: ContactController.init(_:),
+                groupChatFactory: GroupChatController.init(_:),
+                groupPopupFactory: CreatePopupController.init(_:_:)
             ) as ContactListCoordinating)
 
         container.register(
             ScanCoordinator(
                 contactsFactory: ContactListController.init,
-                requestsFactory: RequestsContainerController.init
+                requestsFactory: RequestsContainerController.init,
+                contactFactory: ContactController.init(_:)
             ) as ScanCoordinating)
 
         container.register(
@@ -126,7 +203,10 @@ struct DependencyRegistrator {
                 profileFactory: ProfileController.init,
                 settingsFactory: SettingsController.init,
                 contactsFactory: ContactListController.init,
-                requestsFactory: RequestsContainerController.init
+                requestsFactory: RequestsContainerController.init,
+                singleChatFactory: SingleChatController.init(_:),
+                sideMenuFactory: MenuController.init(_:),
+                groupChatFactory: GroupChatController.init(_:)
             ) as ChatListCoordinating)
     }
 }

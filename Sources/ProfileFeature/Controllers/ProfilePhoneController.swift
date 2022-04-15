@@ -8,7 +8,7 @@ import ScrollViewController
 
 #warning("TODO: Merge ProfilePhoneController/ProfileEmailController")
 
-final class ProfilePhoneController: UIViewController {
+public final class ProfilePhoneController: UIViewController {
     @Dependency private var hud: HUDType
     @Dependency private var coordinator: ProfileCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
@@ -19,14 +19,14 @@ final class ProfilePhoneController: UIViewController {
     private let viewModel = ProfilePhoneViewModel()
     private var cancellables = Set<AnyCancellable>()
 
-    override func viewWillAppear(_ animated: Bool) {
+    public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         statusBarController.style.send(.darkContent)
         navigationController?.navigationBar
         .customize(backgroundColor: Asset.neutralWhite.color)
     }
 
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
         setupScrollView()
@@ -107,8 +107,6 @@ final class ProfilePhoneController: UIViewController {
             .sink { [unowned self] in viewModel.didTapNext() }
             .store(in: &cancellables)
     }
-
-    // MARK: ObjC
 
     @objc private func didTapBack() {
         navigationController?.popViewController(animated: true)

@@ -68,6 +68,8 @@ class NotificationService: UNNotificationServiceExtension {
                     content.title = "New media received"
                 case "groupRq":
                     content.title = "Group request received"
+                case "reset":
+                    content.title = "One of your contacts has restored their account"
                 default:
                     break
                 }

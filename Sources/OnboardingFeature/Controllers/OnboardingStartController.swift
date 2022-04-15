@@ -5,7 +5,7 @@ import Shared
 import Combine
 import DependencyInjection
 
-final class OnboardingStartController: UIViewController {
+public final class OnboardingStartController: UIViewController {
     @Dependency private var hud: HUDType
     @Dependency private var coordinator: OnboardingCoordinating
 
@@ -14,23 +14,23 @@ final class OnboardingStartController: UIViewController {
     private let ndf: String
     private var cancellables = Set<AnyCancellable>()
 
-    override func loadView() {
+    public override func loadView() {
         view = screenView
     }
 
-    init(_ ndf: String) {
+    public init(_ ndf: String) {
         self.ndf = ndf
         super.init(nibName: nil, bundle: nil)
     }
 
     required init?(coder: NSCoder) { nil }
 
-    override func viewWillAppear(_ animated: Bool) {
+    public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.navigationBar.customize(translucent: true)
     }
 
-    override func viewDidLayoutSubviews() {
+    public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
         let gradient = CAGradientLayer()
@@ -48,7 +48,7 @@ final class OnboardingStartController: UIViewController {
         screenView.layer.insertSublayer(gradient, at: 0)
     }
 
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
 
         screenView.startButton.publisher(for: .touchUpInside)

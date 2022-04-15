@@ -1,0 +1,130 @@
+import UIKit
+import Models
+import Shared
+import Combine
+import Defaults
+import Foundation
+import Integration
+import BackupFeature
+import DependencyInjection
+
+import iCloudFeature
+import DropboxFeature
+import GoogleDriveFeature
+
+enum RestorationStep {
+    case idle(CloudService, Backup?)
+    case downloading(Float, Float)
+    case failDownload(Error)
+    case parsingData
+    case done
+}
+
+extension RestorationStep: Equatable {
+    static func ==(lhs: RestorationStep, rhs: RestorationStep) -> Bool {
+        switch (lhs, rhs) {
+        case (.done, .done):
+            return true
+        case let (.failDownload(a), .failDownload(b)):
+            return a.localizedDescription == b.localizedDescription
+        case let (.downloading(a, b), .downloading(c, d)):
+            return a == c && b == d
+        case (.idle, _), (.downloading, _), (.parsingData, _),
+            (.done, _), (.failDownload, _):
+            return false
+        }
+    }
+}
+
+final class RestoreViewModel {
+    @Dependency private var iCloudService: iCloudInterface
+    @Dependency private var dropboxService: DropboxInterface
+    @Dependency private var googleService: GoogleDriveInterface
+
+    @KeyObject(.username, defaultValue: nil) var username: String?
+
+    var step: AnyPublisher<RestorationStep, Never> { stepRelay.eraseToAnyPublisher() }
+
+    private let ndf: String
+    private let settings: RestoreSettings
+    private let stepRelay: CurrentValueSubject<RestorationStep, Never>
+
+    init(ndf: String, settings: RestoreSettings) {
+        self.ndf = ndf
+        self.settings = settings
+        self.stepRelay = .init(.idle(settings.cloudService, settings.backup))
+    }
+
+    func didTapRestore() {
+        guard let backup = settings.backup else { fatalError() }
+
+        stepRelay.send(.downloading(0.0, backup.size))
+
+        switch settings.cloudService {
+        case .drive:
+            downloadBackupForDrive(backup)
+        case .dropbox:
+            downloadBackupForDropbox(backup)
+        case .icloud:
+            downloadBackupForiCloud(backup)
+        }
+    }
+
+    private func downloadBackupForDropbox(_ backup: Backup) {
+        dropboxService.downloadBackup(backup.id) { [weak self] in
+            guard let self = self else { return }
+            self.stepRelay.send(.downloading(backup.size, backup.size))
+
+            switch $0 {
+            case .success(let data):
+                self.continueRestoring(data: data)
+            case .failure(let error):
+                self.stepRelay.send(.failDownload(error))
+            }
+        }
+    }
+
+    private func downloadBackupForiCloud(_ backup: Backup) {
+        iCloudService.downloadBackup(backup.id) { [weak self] in
+            guard let self = self else { return }
+            self.stepRelay.send(.downloading(backup.size, backup.size))
+
+            switch $0 {
+            case .success(let data):
+                self.continueRestoring(data: data)
+            case .failure(let error):
+                self.stepRelay.send(.failDownload(error))
+            }
+        }
+    }
+
+    private func downloadBackupForDrive(_ backup: Backup) {
+        googleService.downloadBackup(backup.id) { [weak self] in
+            if let stepRelay = self?.stepRelay {
+                stepRelay.send(.downloading($0, backup.size))
+            }
+        } _: { [weak self] in
+            guard let self = self else { return }
+
+            switch $0 {
+            case .success(let data):
+                self.continueRestoring(data: data)
+            case .failure(let error):
+                self.stepRelay.send(.failDownload(error))
+            }
+        }
+    }
+
+    private func continueRestoring(data: Data) {
+        stepRelay.send(.parsingData)
+
+        DispatchQueue.global().async { [weak self] in
+            guard let self = self else { return }
+
+            let session = try! Session(backupFile: data, ndf: self.ndf)
+            DependencyInjection.Container.shared.register(session as SessionType)
+
+            self.stepRelay.send(.done)
+        }
+    }
+}

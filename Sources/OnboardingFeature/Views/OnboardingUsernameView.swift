@@ -7,6 +7,7 @@ final class OnboardingUsernameView: UIView {
     let subtitleView = TextWithInfoView()
     let inputField = InputField()
     let nextButton = CapsuleButton()
+    let restoreView = OnboardingUsernameRestoreView()
 
     var didTapInfo: (() -> Void)?
 
@@ -31,6 +32,7 @@ final class OnboardingUsernameView: UIView {
         addSubview(subtitleView)
         addSubview(inputField)
         addSubview(nextButton)
+        addSubview(restoreView)
 
         titleLabel.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(30)
@@ -54,6 +56,12 @@ final class OnboardingUsernameView: UIView {
             make.top.greaterThanOrEqualTo(inputField.snp.bottom).offset(20)
             make.left.equalToSuperview().offset(40)
             make.right.equalToSuperview().offset(-40)
+        }
+
+        restoreView.snp.makeConstraints { make in
+            make.top.greaterThanOrEqualTo(nextButton.snp.bottom).offset(30)
+            make.left.equalToSuperview()
+            make.right.equalToSuperview()
             make.bottom.equalTo(safeAreaLayoutGuide).offset(-50)
         }
     }

@@ -35,10 +35,7 @@ public final class RowButton: UIControl {
         stack.spacing = 10
         stack.addArrangedSubview(icon)
         stack.addArrangedSubview(title.pinning(at: .left(0)))
-        stack.addArrangedSubview(
-            accessory
-                .pinning(at: .top(10))
-        )
+        stack.addArrangedSubview(accessory.pinning(at: .top(10)))
 
         addSubview(stack)
         addSubview(separator)
@@ -62,7 +59,7 @@ public final class RowButton: UIControl {
 
     required init?(coder: NSCoder) { nil }
 
-    public func set(
+    public func setup(
         title: String,
         icon: UIImage,
         style: RowButtonStyle = .clean,

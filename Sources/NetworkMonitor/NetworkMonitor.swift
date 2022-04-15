@@ -2,6 +2,7 @@
 
 import Network
 import Combine
+import Foundation
 
 public enum NetworkStatus: Equatable {
     case unknown
@@ -10,11 +11,19 @@ public enum NetworkStatus: Equatable {
     case internetNotAvailable
 }
 
+public enum ConnectionType {
+    case wifi
+    case ethernet
+    case cellular
+    case unknown
+}
+
 public protocol NetworkMonitoring {
     func start()
     func update(_ status: Bool)
 
     var xxStatus: NetworkStatus { get }
+    var connType: AnyPublisher<ConnectionType, Never> { get }
     var statusPublisher: AnyPublisher<NetworkStatus, Never> { get }
 }
 
@@ -24,9 +33,14 @@ public struct NetworkMonitor: NetworkMonitoring {
     private var monitor = NWPathMonitor()
     private let isXXAvailableRelay = CurrentValueSubject<Bool?, Never>(nil)
     private let isInternetAvailableRelay = CurrentValueSubject<Bool?, Never>(nil)
+    private let connTypeSubject = PassthroughSubject<ConnectionType, Never>()
 
     public var xxStatus: NetworkStatus {
         isXXAvailableRelay.value == true ? .available : .xxNotAvailable
+    }
+
+    public var connType: AnyPublisher<ConnectionType, Never> {
+        connTypeSubject.eraseToAnyPublisher()
     }
 
     public var statusPublisher: AnyPublisher<NetworkStatus, Never> {
@@ -50,7 +64,8 @@ public struct NetworkMonitor: NetworkMonitoring {
     }
 
     public func start() {
-        monitor.pathUpdateHandler = { [weak isInternetAvailableRelay] in
+        monitor.pathUpdateHandler = { [weak isInternetAvailableRelay, weak connTypeSubject] in
+            connTypeSubject?.send(checkConnectionTypeForPath($0))
             isInternetAvailableRelay?.send($0.status == .satisfied)
         }
 
@@ -59,5 +74,17 @@ public struct NetworkMonitor: NetworkMonitoring {
 
     public func update(_ status: Bool) {
         isXXAvailableRelay.send(status)
+    }
+
+    private func checkConnectionTypeForPath(_ path: NWPath) -> ConnectionType {
+        if path.usesInterfaceType(.wifi) {
+            return .wifi
+        } else if path.usesInterfaceType(.wiredEthernet) {
+            return .ethernet
+        } else if path.usesInterfaceType(.cellular) {
+            return .cellular
+        }
+
+        return .unknown
     }
 }

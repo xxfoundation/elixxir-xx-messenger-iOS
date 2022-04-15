@@ -5,11 +5,7 @@ import InputField
 import ScrollViewController
 
 public final class NickameController: UIViewController {
-    // MARK: UI
-
     lazy private var screenView = NickameView()
-
-    // MARK: Properties
 
     private let prefilled: String
     private let completion: StringClosure
@@ -17,9 +13,7 @@ public final class NickameController: UIViewController {
     private var cancellables = Set<AnyCancellable>()
     private let keyboardListener = KeyboardFrameChangeListener(notificationCenter: .default)
 
-    // MARK: Lifecycle
-
-    public init(prefilled: String, _ completion: @escaping StringClosure) {
+    public init(_ prefilled: String, _ completion: @escaping StringClosure) {
         self.prefilled = prefilled
         self.completion = completion
         super.init(nibName: nil, bundle: nil)
@@ -49,8 +43,6 @@ public final class NickameController: UIViewController {
         screenView.input.update(content: prefilled)
         viewModel.didInput(prefilled)
     }
-
-    // MARK: Private
 
     private func setupKeyboard() {
         keyboardListener.keyboardFrameWillChange = { [weak self] keyboard in

@@ -49,6 +49,16 @@ extension BindingsClient: BindingsInterface {
         log(string: string, type: .bindings)
     }
 
+    public func resetSessionWith(_ recipient: Data) {
+        var int: Int = 0
+
+        do {
+            try resetSession(recipient, meMarshaled: meMarshalled, message: "", ret0_: &int)
+        } catch {
+            print(">>> \(error.localizedDescription)")
+        }
+    }
+
     public func verify(marshaled: Data, verifiedMarshaled: Data) throws -> Bool {
         var bool: ObjCBool = false
         try verifyOwnership(marshaled, verifiedMarshaled: verifiedMarshaled, ret0_: &bool)
@@ -181,11 +191,13 @@ extension BindingsClient: BindingsInterface {
         return BindingsGetVersion()
     }()
 
+    public static let new: ClientNew = BindingsNewClient
+
+    public static let fromBackup: ClientFromBackup = BindingsNewClientFromBackup
+
     public static let secret: (Int) -> Data? = BindingsGenerateSecret
 
     public static let login: (String?, Data?, String?, NSErrorPointer) -> BindingsInterface? = BindingsLogin
-
-    public static let newClient: (String?, String?, Data?, String?, NSErrorPointer) -> Bool = BindingsNewClient
 
     public static func updateNDF(
         for env: NetworkEnvironment,
@@ -246,14 +258,14 @@ extension BindingsClient: BindingsInterface {
         registerErrorCallback(BindingsError())
 
         guard status == 0 else {
-            log(string: "Network is not ready yet. Let's give it a second...", type: .error)
+            log(string: ">>> Network is not ready yet. Let's give it a second...", type: .error)
             sleep(1)
             startNetwork()
             return
         }
 
         try! startNetworkFollower(10000)
-        log(string: "Starting the network...", type: .info)
+        log(string: ">>> Starting the network...", type: .info)
     }
 
     /// (Tries) to stop the network
@@ -528,21 +540,78 @@ extension BindingsClient: BindingsInterface {
         throw error.friendly()
     }
 
-    /// Instantiates user discovery
-    ///
-    /// - Returns: An instance of *UD (User discovery)*
-    ///
-    /// - Throws: `UDError.noInstance` if no error was thrown
-    ///            but also no instance was created
-    ///
+    public func generateUDFromBackup(email: String?, phone: String?) throws -> UserDiscoveryInterface {
+        var error: NSError?
+
+        let paramEmail = email != nil ? "E\(email!)" : nil
+        let paramPhone = phone != nil ? "P\(phone!)" : nil
+
+        let udb = BindingsNewUserDiscoveryFromBackup(self, paramEmail, paramPhone, &error)
+
+        /// Alternate udb
+
+//        guard let certPath = Bundle.module.path(forResource: "ud.elixxir.io", ofType: "crt") else {
+//            fatalError("Couldn't retrieve cert.")
+//        }
+//
+//        guard let contactFilePath = Bundle.module.path(forResource: "udContact-test", ofType: "bin") else {
+//            fatalError("Couldn't retrieve cert.")
+//        }
+//
+//        try! udb!.setAlternative(
+//            "18.198.117.203:11420".data(using: .utf8),
+//            cert: try! Data(contentsOf: URL(fileURLWithPath: certPath)),
+//            contactFile: try! Data(contentsOf: URL(fileURLWithPath: contactFilePath))
+//        )
+
+        guard let error = error else { return udb! }
+        throw error.friendly()
+    }
+
     public func generateUD() throws -> UserDiscoveryInterface {
         log(type: .crumbs)
 
         var error: NSError?
         let udb = BindingsNewUserDiscovery(self, &error)
 
+        /// Alternate udb
+
+//        guard let certPath = Bundle.module.path(forResource: "ud.elixxir.io", ofType: "crt") else {
+//            fatalError("Couldn't retrieve cert.")
+//        }
+//
+//        guard let contactFilePath = Bundle.module.path(forResource: "udContact-test", ofType: "bin") else {
+//            fatalError("Couldn't retrieve cert.")
+//        }
+//
+//        try! udb!.setAlternative(
+//            "18.198.117.203:11420".data(using: .utf8),
+//            cert: try! Data(contentsOf: URL(fileURLWithPath: certPath)),
+//            contactFile: try! Data(contentsOf: URL(fileURLWithPath: contactFilePath))
+//        )
+
         guard let error = error else { return udb! }
         throw error.friendly()
+    }
+
+    public func restore(
+        ids: Data,
+        using ud: UserDiscoveryInterface,
+        lookupCallback: @escaping (Result<Contact, Error>) -> Void,
+        restoreCallback: @escaping (Int, Int, Int, String?) -> Void
+    ) -> RestoreReportType {
+        let restoreCb = RestoreContactsCallback(restoreCallback)
+
+        let lookupCb = LookupCallback {
+            switch $0 {
+            case .success(let contact):
+                lookupCallback(.success(.init(with: contact, status: .stranger)))
+            case .failure(let error):
+                lookupCallback(.failure(error))
+            }
+        }
+
+        return BindingsRestoreContactsFromBackup(ids, self, ud as? BindingsUserDiscovery, lookupCb, restoreCb)!
     }
 }
 
@@ -585,7 +654,6 @@ extension BindingsSendReport: E2ESendReportType {
     public var roundURL: String { getRoundURL() }
 }
 
-
 public protocol DummyTrafficManaging {
     var status: Bool { get }
     func setStatus(status: Bool)
@@ -600,3 +668,7 @@ extension BindingsDummyTraffic: DummyTrafficManaging {
         try? setStatus(status)
     }
 }
+
+extension BindingsBackup: BackupInterface {}
+
+extension BindingsRestoreContactsReport: RestoreReportType {}

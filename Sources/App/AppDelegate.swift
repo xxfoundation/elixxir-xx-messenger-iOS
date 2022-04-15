@@ -6,17 +6,20 @@ import Theme
 import XXLogger
 import Defaults
 import Integration
+import SwiftyDropbox
 import CrashReporting
 import PushNotifications
 import DependencyInjection
 
 import OnboardingFeature
+import DropboxFeature
 
 let logger = Logger(subsystem: "logs_xxmessenger", category: "AppDelegate.swift")
 
 public class AppDelegate: UIResponder, UIApplicationDelegate {
     @Dependency private var pushHandler: PushHandling
     @Dependency private var crashReporter: CrashReporter
+    @Dependency private var dropboxService: DropboxInterface
 
     @KeyObject(.hideAppList, defaultValue: false) var hideAppList: Bool
     @KeyObject(.recordingLogs, defaultValue: true) var recordingLogs: Bool
@@ -147,6 +150,10 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     public func applicationDidBecomeActive(_ application: UIApplication) {
         application.applicationIconBadgeNumber = 0
         coverView?.removeFromSuperview()
+    }
+
+    public func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+        dropboxService.handleOpenUrl(url)
     }
 }
 

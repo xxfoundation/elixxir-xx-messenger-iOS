@@ -22,6 +22,10 @@ public enum Key: String {
 
     case theme
 
+    // MARK: Backup
+
+    case backupSettings
+
     // MARK: Settings
 
     case biometrics
@@ -29,7 +33,6 @@ public enum Key: String {
     case recordingLogs
     case crashReporting
     case icognitoKeyboard
-    case openedSettingsFirstTime
 
     case dummyTrafficOn
     case askedDummyTrafficOnce

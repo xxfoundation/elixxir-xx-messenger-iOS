@@ -8,6 +8,7 @@ import Permissions
 import VersionChecking
 import CombineSchedulers
 import DependencyInjection
+import DropboxFeature
 
 struct UpdatePopupModel {
     let body: String
@@ -28,6 +29,7 @@ final class OnboardingLaunchViewModel {
     @Dependency private var network: XXNetworking
     @Dependency private var versioning: VersionChecker
     @Dependency private var permissions: PermissionHandling
+    @Dependency private var dropboxService: DropboxInterface
 
     // MARK: Properties
 
@@ -61,7 +63,7 @@ final class OnboardingLaunchViewModel {
                     updateRelay.send(.init(
                         body: "There is a new version available that enhance the current performance and usability.",
                         updateTitle: "Update",
-                        updateStyle: .simplestColored,
+                        updateStyle: .simplestColoredRed,
                         notNowTitle: "Not now",
                         appUrl: info.appUrl
                     ))
@@ -107,6 +109,7 @@ final class OnboardingLaunchViewModel {
         guard network.hasClient == true else {
             hudRelay.send(.none)
             usernameRelay.send(ndf)
+            dropboxService.unlink()
             return
         }
 
@@ -114,6 +117,7 @@ final class OnboardingLaunchViewModel {
             network.purgeFiles()
             hudRelay.send(.none)
             usernameRelay.send(ndf)
+            dropboxService.unlink()
             return
         }
 

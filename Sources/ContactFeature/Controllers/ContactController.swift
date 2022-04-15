@@ -261,7 +261,7 @@ public final class ContactController: UIViewController {
                 screenView.confirmedView.stackView.addArrangedSubview(phoneAttribute)
 
                 let deleteButton = RowButton()
-                deleteButton.set(
+                deleteButton.setup(
                     title: "Delete Connection",
                     icon: Asset.settingsDelete.image,
                     style: .delete,

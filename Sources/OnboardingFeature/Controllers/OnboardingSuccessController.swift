@@ -6,31 +6,37 @@ import Combine
 import Countries
 import DependencyInjection
 
-final class OnboardingSuccessController: UIViewController {
+public struct OnboardingSuccessModel {
+    var title: String
+    var subtitle: String?
+    var nextController: (UIViewController) -> Void
+}
+
+public final class OnboardingSuccessController: UIViewController {
     @Dependency private var coordinator: OnboardingCoordinating
 
     lazy private var screenView = OnboardingSuccessView()
-
-    private let isEmail: Bool
     private var cancellables = Set<AnyCancellable>()
 
-    override func loadView() {
+    private var model: OnboardingSuccessModel
+
+    public override func loadView() {
         view = screenView
     }
 
-    init(_ isEmail: Bool) {
-        self.isEmail = isEmail
+    public init(_ model: OnboardingSuccessModel) {
+        self.model = model
         super.init(nibName: nil, bundle: nil)
     }
 
     required init?(coder: NSCoder) { nil }
 
-    override func viewWillAppear(_ animated: Bool) {
+    public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationController?.navigationBar.customize(translucent: true)
     }
 
-    override func viewDidLayoutSubviews() {
+    public override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
 
         let gradient = CAGradientLayer()
@@ -48,23 +54,15 @@ final class OnboardingSuccessController: UIViewController {
         screenView.layer.insertSublayer(gradient, at: 0)
     }
 
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
 
-        let type = isEmail ?
-            Localized.Onboarding.Email.input :
-            Localized.Onboarding.Phone.input
-
-        screenView.set(type: type.components(separatedBy: " ").first!)
+        screenView.setTitle(model.title)
+        screenView.setSubtitle(model.subtitle)
 
         screenView.nextButton
             .publisher(for: .touchUpInside)
-            .sink { [unowned self] in
-                if isEmail {
-                    coordinator.toPhone(from: self)
-                } else {
-                    coordinator.toChats(from: self)
-                }
-            }.store(in: &cancellables)
+            .sink { [unowned self] in model.nextController(self) }
+            .store(in: &cancellables)
     }
 }

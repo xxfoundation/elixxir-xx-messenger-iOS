@@ -21,7 +21,7 @@ final class BindingsError: NSObject, BindingsClientErrorProtocol {
 
 extension Error {
     func friendly() -> NSError {
-        log(string: "Switching to friendly error from: \(localizedDescription)", type: .error)
+        log(string: ">>> Switching to friendly error from: \(localizedDescription)", type: .error)
         
         let error = BindingsErrorStringToUserFriendlyMessage(localizedDescription)
         if error.hasPrefix("UR") {

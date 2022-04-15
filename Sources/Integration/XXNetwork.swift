@@ -15,17 +15,14 @@ public protocol XXNetworking {
     func purgeFiles()
     func updateErrors()
     func newClient(ndf: String) throws -> Client
-    func loadClient(with: Data) throws -> Client
     func updateNDF(_: @escaping (Result<String, Error>) -> Void)
+    func newClientFromBackup(data: Data, ndf: String) throws -> (Client, Data?)
+    func loadClient(with: Data, fromBackup: Bool, email: String?, phone: String?) throws -> Client
 }
 
 public struct XXNetwork<B: BindingsInterface> {
-    // MARK: Injected
-
     @Dependency private var logger: XXLogger
     @Dependency private var keychain: KeychainHandling
-
-    // MARK: Lifecycle
 
     public init() {}
 }
@@ -64,6 +61,30 @@ extension XXNetwork: XXNetworking {
         FileManager.xxCleanup()
     }
 
+    public func newClientFromBackup(data: Data, ndf: String) throws -> (Client, Data?) {
+        var error: NSError?
+
+        let password = B.secret(32)!
+        try keychain.store(password: password)
+
+        let backupData = B.fromBackup(ndf, FileManager.xxPath, password, nil, data, &error)
+        if let error = error { throw error }
+
+        var email: String?
+        var phone: String?
+
+        let report = try! JSONDecoder().decode(BackupReport.self, from: backupData!)
+
+        if !report.parameters.isEmpty {
+            let params = try! JSONDecoder().decode(BackupParameters.self, from: Data(report.parameters.utf8))
+            phone = params.phone
+            email = params.email
+        }
+
+        let client = try loadClient(with: password, fromBackup: true, email: email, phone: phone)
+        return (client, backupData)
+    }
+
     public func newClient(ndf: String) throws -> Client {
         var password: Data!
 
@@ -73,7 +94,7 @@ extension XXNetwork: XXNetworking {
             password = B.secret(32)
             try keychain.store(password: password)
 
-            _ = B.newClient(ndf, FileManager.xxPath, password, nil, &error)
+            _ = B.new(ndf, FileManager.xxPath, password, nil, &error)
             if let error = error { throw error }
         } else {
             guard let secret = try keychain.getPassword() else {
@@ -83,10 +104,15 @@ extension XXNetwork: XXNetworking {
             password = secret
         }
 
-        return try loadClient(with: password)
+        return try loadClient(with: password, fromBackup: false, email: nil, phone: nil)
     }
 
-    public func loadClient(with secret: Data) throws -> Client {
+    public func loadClient(
+        with secret: Data,
+        fromBackup: Bool,
+        email: String?,
+        phone: String?
+    ) throws -> Client {
         var error: NSError?
         let bindings = B.login(FileManager.xxPath, secret, "", &error)
         if let error = error { throw error }
@@ -95,10 +121,9 @@ extension XXNetwork: XXNetworking {
             defaults.set(bindings!.receptionId.base64EncodedString(), forKey: "receptionId")
         }
 
-        return Client(bindings!)
+        return Client(bindings!, fromBackup: fromBackup, email: email, phone: phone)
     }
 }
-
 
 extension NetworkEnvironment {
     var url: String {

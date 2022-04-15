@@ -6,7 +6,7 @@ import Combine
 import Defaults
 import DependencyInjection
 
-final class OnboardingWelcomeController: UIViewController {
+public final class OnboardingWelcomeController: UIViewController {
     @KeyObject(.username, defaultValue: "") var username: String
     @Dependency private var coordinator: OnboardingCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
@@ -16,17 +16,17 @@ final class OnboardingWelcomeController: UIViewController {
     private var cancellables = Set<AnyCancellable>()
     private var popupCancellables = Set<AnyCancellable>()
 
-    override func loadView() {
+    public override func loadView() {
         view = screenView
     }
 
-    override func viewWillAppear(_ animated: Bool) {
+    public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         statusBarController.style.send(.darkContent)
         navigationController?.navigationBar.customize(translucent: true)
     }
 
-    override func viewDidLoad() {
+    public override func viewDidLoad() {
         super.viewDidLoad()
         setupBindings()
 

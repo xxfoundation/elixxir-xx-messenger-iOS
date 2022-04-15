@@ -35,12 +35,11 @@ public final class BindingsMock: BindingsInterface {
 
     public static let version: String = "MOCK"
 
-    public static var login: (String?, Data?, String?, NSErrorPointer) -> BindingsInterface? = {
-        _,_,_,_ in BindingsMock()
-    }
-    public static var newClient: (String?, String?, Data?, String?, NSErrorPointer) -> Bool = {
-        _,_,_,_,_ in true
-    }
+    public static var new: ClientNew = { _,_,_,_,_ in true }
+
+    public static var fromBackup: ClientFromBackup = { _,_,_,_,_,_ in Data() }
+
+    public static var login: (String?, Data?, String?, NSErrorPointer) -> BindingsInterface? = { _,_,_,_ in BindingsMock() }
 
     public func meMarshalled(_: String, email: String?, phone: String?) -> Data {
         meMarshalled
@@ -70,6 +69,11 @@ public final class BindingsMock: BindingsInterface {
 
     public func generateUD() throws -> UserDiscoveryInterface { UserDiscoveryMock() }
 
+    public func generateUDFromBackup(
+        email: String?,
+        phone: String?
+    ) throws -> UserDiscoveryInterface { UserDiscoveryMock() }
+
     public func generateTransferManager(
         _: @escaping (Data, String?, String?, Data?) -> Void
     ) throws -> TransferManagerInterface {
@@ -79,6 +83,8 @@ public final class BindingsMock: BindingsInterface {
     public func listenEvents(_: @escaping (BackendEvent) -> Void) {}
 
     public func listenMessages(_: @escaping (Message) -> Void) throws {}
+
+    public func listenBackups(_: @escaping (Data) -> Void) -> BackupInterface { fatalError() }
 
     public func listenNetworkUpdates(_: @escaping (Bool) -> Void) {}
 
@@ -129,9 +135,12 @@ public final class BindingsMock: BindingsInterface {
 
     public func removeContact(_ data: Data) throws {}
 
+    public func resetSessionWith(_: Data) {}
+
     public func listenRequests(
         _ requests: @escaping (Contact) -> Void,
-        confirmations: @escaping (Contact) -> Void
+        _ confirmations: @escaping (Contact) -> Void,
+        _ resets: @escaping (Contact) -> Void
     ) {
         requestsSubject.sink(receiveValue: requests).store(in: &cancellables)
         confirmationsSubject.sink(receiveValue: confirmations).store(in: &cancellables)
@@ -142,6 +151,15 @@ public final class BindingsMock: BindingsInterface {
         groupMessages: @escaping (GroupMessage) -> Void
     ) throws -> GroupManagerInterface? {
         GroupManagerMock()
+    }
+
+    public func restore(
+        ids: Data,
+        using ud: UserDiscoveryInterface,
+        lookupCallback: @escaping (Result<Contact, Error>) -> Void,
+        restoreCallback: @escaping (Int, Int, Int, String?) -> Void
+    ) -> RestoreReportType {
+        fatalError()
     }
 
     public static func updateNDF(for: NetworkEnvironment, _ completion: @escaping (Result<Data?, Error>) -> Void) {
