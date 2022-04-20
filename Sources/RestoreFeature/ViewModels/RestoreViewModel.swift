@@ -16,6 +16,7 @@ enum RestorationStep {
     case idle(CloudService, Backup?)
     case downloading(Float, Float)
     case failDownload(Error)
+    case wrongPass
     case parsingData
     case done
 }
@@ -23,14 +24,14 @@ enum RestorationStep {
 extension RestorationStep: Equatable {
     static func ==(lhs: RestorationStep, rhs: RestorationStep) -> Bool {
         switch (lhs, rhs) {
-        case (.done, .done):
+        case (.done, .done), (.wrongPass, .wrongPass):
             return true
         case let (.failDownload(a), .failDownload(b)):
             return a.localizedDescription == b.localizedDescription
         case let (.downloading(a, b), .downloading(c, d)):
             return a == c && b == d
         case (.idle, _), (.downloading, _), (.parsingData, _),
-            (.done, _), (.failDownload, _):
+            (.done, _), (.failDownload, _), (.wrongPass, _):
             return false
         }
     }
@@ -45,7 +46,12 @@ final class RestoreViewModel {
 
     var step: AnyPublisher<RestorationStep, Never> { stepRelay.eraseToAnyPublisher() }
 
+    // TO REFACTOR:
+    //
+    private var pendingData: Data?
+
     private let ndf: String
+    private var passphrase: String!
     private let settings: RestoreSettings
     private let stepRelay: CurrentValueSubject<RestorationStep, Never>
 
@@ -55,7 +61,14 @@ final class RestoreViewModel {
         self.stepRelay = .init(.idle(settings.cloudService, settings.backup))
     }
 
-    func didTapRestore() {
+    func retryWith(passphrase: String) {
+        self.passphrase = passphrase
+        continueRestoring(data: pendingData!)
+    }
+
+    func didTapRestore(passphrase: String) {
+        self.passphrase = passphrase
+
         guard let backup = settings.backup else { fatalError() }
 
         stepRelay.send(.downloading(0.0, backup.size))
@@ -121,10 +134,19 @@ final class RestoreViewModel {
         DispatchQueue.global().async { [weak self] in
             guard let self = self else { return }
 
-            let session = try! Session(backupFile: data, ndf: self.ndf)
-            DependencyInjection.Container.shared.register(session as SessionType)
+            do {
+                let session = try Session(
+                    passphrase: self.passphrase,
+                    backupFile: data,
+                    ndf: self.ndf
+                )
 
-            self.stepRelay.send(.done)
+                DependencyInjection.Container.shared.register(session as SessionType)
+                self.stepRelay.send(.done)
+            } catch {
+                self.pendingData = data
+                self.stepRelay.send(.wrongPass)
+            }
         }
     }
 }

@@ -44,7 +44,7 @@ final class RequestsReceivedViewModel {
     // MARK: Public
 
     func didAccept(_ group: Group) {
-        hudRelay.send(.on)
+        hudRelay.send(.on(nil))
 
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }
@@ -59,7 +59,7 @@ final class RequestsReceivedViewModel {
     }
 
     func didAccept(_ contact: Contact) {
-        hudRelay.send(.on)
+        hudRelay.send(.on(nil))
 
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }

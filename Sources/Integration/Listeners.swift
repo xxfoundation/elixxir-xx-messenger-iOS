@@ -2,7 +2,7 @@ import Models
 import Shared
 import Bindings
 import Foundation
-
+import os.log
 import Combine
 
 public extension BindingsClient {
@@ -22,9 +22,17 @@ public extension BindingsClient {
         registerPreimageCallback(receptionId, pin: callback)
     }
 
-    func listenBackups(_ callback: @escaping (Data) -> Void) -> BackupInterface {
+    func initializeBackup(passphrase: String, callback: @escaping (Data) -> Void) -> BackupInterface {
         var error: NSError?
-        let backup = BindingsInitializeBackup("", UpdateBackupCallback(callback), self, &error)
+        os_signpost(.begin, log: logHandler, name: "Encrypting", "Calling BindingsInitializeBackup")
+        let backup = BindingsInitializeBackup(passphrase, UpdateBackupCallback(callback), self, &error)
+        os_signpost(.end, log: logHandler, name: "Encrypting", "Finished BindingsInitializeBackup")
+        return backup!
+    }
+
+    func resumeBackup(callback: @escaping (Data) -> Void) -> BackupInterface {
+        var error: NSError?
+        let backup = BindingsResumeBackup(UpdateBackupCallback(callback), self, &error)
         return backup!
     }
 

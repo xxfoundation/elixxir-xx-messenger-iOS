@@ -70,12 +70,24 @@ public class Client {
         }
     }
 
-    public func listenBackup() {
+    public func initializeBackup(passphrase: String) {
         backupManager = nil
-        backupManager = bindings.listenBackups { [weak backupSubject] in
+        backupManager = bindings.initializeBackup(passphrase: passphrase) { [weak backupSubject] in
             backupSubject?.send($0)
         }
     }
+
+    public func resumeBackup() {
+        backupManager = nil
+        backupManager = bindings.resumeBackup { [weak backupSubject] in
+            backupSubject?.send($0)
+        }
+    }
+
+    //    public func isBackupRunning() -> Bool {
+    //        guard let backupManager = backupManager else { return false }
+    //        return backupManager.isBackupRunning()
+    //    }
 
     public func addJson(_ string: String) {
         guard let backupManager = backupManager else { return }

@@ -38,7 +38,7 @@ final class RestoreListViewModel {
         drive.authorize(presenting: controller) { authResult in
             switch authResult {
             case .success:
-                self.hudSubject.send(.on)
+                self.hudSubject.send(.on(nil))
                 self.drive.downloadMetadata { downloadResult in
                     switch downloadResult {
                     case .success(let metadata):
@@ -63,7 +63,7 @@ final class RestoreListViewModel {
 
     private func didRequestICloudAuthorization() {
         if icloud.isAuthorized() {
-            self.hudSubject.send(.on)
+            self.hudSubject.send(.on(nil))
 
             icloud.downloadMetadata { result in
                 switch result {
@@ -95,7 +95,7 @@ final class RestoreListViewModel {
                 case .success(let bool):
                     guard bool == true else { return }
 
-                    self.hudSubject.send(.on)
+                    self.hudSubject.send(.on(nil))
                     dropbox.downloadMetadata { metadataResult in
                         switch metadataResult {
                         case .success(let metadata):

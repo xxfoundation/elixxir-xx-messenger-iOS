@@ -14,7 +14,7 @@ public final class BackupController: UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = Asset.neutralWhite.color
-        hud.update(with: .on)
+        hud.update(with: .on(nil))
 
         setupNavigationBar()
         setupBindings()

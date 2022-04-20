@@ -15,9 +15,23 @@ public protocol XXNetworking {
     func purgeFiles()
     func updateErrors()
     func newClient(ndf: String) throws -> Client
-    func updateNDF(_: @escaping (Result<String, Error>) -> Void)
-    func newClientFromBackup(data: Data, ndf: String) throws -> (Client, Data?)
-    func loadClient(with: Data, fromBackup: Bool, email: String?, phone: String?) throws -> Client
+
+    func updateNDF(
+        _: @escaping (Result<String, Error>) -> Void
+    )
+
+    func loadClient(
+        with: Data,
+        fromBackup: Bool,
+        email: String?,
+        phone: String?
+    ) throws -> Client
+
+    func newClientFromBackup(
+        passphrase: String,
+        data: Data,
+        ndf: String
+    ) throws -> (Client, Data?)
 }
 
 public struct XXNetwork<B: BindingsInterface> {
@@ -61,13 +75,26 @@ extension XXNetwork: XXNetworking {
         FileManager.xxCleanup()
     }
 
-    public func newClientFromBackup(data: Data, ndf: String) throws -> (Client, Data?) {
+    public func newClientFromBackup(
+        passphrase: String,
+        data: Data,
+        ndf: String
+    ) throws -> (Client, Data?) {
+
         var error: NSError?
 
         let password = B.secret(32)!
         try keychain.store(password: password)
 
-        let backupData = B.fromBackup(ndf, FileManager.xxPath, password, nil, data, &error)
+        let backupData = B.fromBackup(
+            ndf,
+            FileManager.xxPath,
+            password,
+            "\(passphrase)".data(using: .utf8),
+            data,
+            &error
+        )
+
         if let error = error { throw error }
 
         var email: String?

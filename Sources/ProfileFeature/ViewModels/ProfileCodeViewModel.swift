@@ -57,7 +57,7 @@ final class ProfileCodeViewModel {
     }
 
     func didTapNext() {
-        hudRelay.send(.on)
+        hudRelay.send(.on(nil))
 
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }

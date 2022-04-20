@@ -16,6 +16,8 @@ public final class BackupService {
 
     @KeyObject(.backupSettings, defaultValue: Data()) private var storedSettings: Data
 
+    public var passphrase: String?
+
     public var settingsPublisher: AnyPublisher<BackupSettings, Never> {
         settings.handleEvents(receiveSubscription: { [weak self] _ in
             guard let self = self else { return }

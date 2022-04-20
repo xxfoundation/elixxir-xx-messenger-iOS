@@ -52,6 +52,22 @@ public extension Validator where T == (String, String) {
 }
 
 public extension Validator where T == String {
+    static var backupPassphrase: Self {
+        Validator { passphrase -> ValidationResult in
+            guard passphrase.trimmingCharacters(in: .whitespacesAndNewlines).count >= 8 else {
+                return .failure("")
+            }
+
+            let regex = try? NSRegularExpression(pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$")
+
+            guard let regex = regex, regex.firstMatch(in: passphrase, options: [], range: passphrase.fullRange()) != nil else {
+                return .failure("")
+            }
+
+            return .success(nil)
+        }
+    }
+
     static var username: Self {
         Validator { username -> ValidationResult in
             guard username.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false else {
@@ -62,8 +78,8 @@ public extension Validator where T == String {
                   let last = username.last,
                   (first.isLetter || first.isNumber),
                   (last.isLetter || last.isNumber) else {
-                      return .failure(Constants.usernameStartEndInvalid)
-                  }
+                return .failure(Constants.usernameStartEndInvalid)
+            }
 
             guard username.trimmingCharacters(in: .whitespacesAndNewlines).count >= 4 else {
                 return .failure(Constants.usernameMinimum)

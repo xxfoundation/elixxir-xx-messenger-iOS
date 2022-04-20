@@ -10,7 +10,7 @@ private enum Constants {
 }
 
 public enum HUDStatus: Equatable {
-    case on
+    case on(String?)
     case none
     case error(HUDError)
 
@@ -55,14 +55,10 @@ public protocol HUDType {
 }
 
 public final class HUD: HUDType {
-    // MARK: UI
-
     private(set) var window: UIWindow?
     private(set) var errorView: ErrorView?
+    private(set) var titleLabel: UILabel?
     private(set) var animation: DotAnimation?
-
-    // MARK: Properties
-
     private var cancellables = Set<AnyCancellable>()
 
     private var status: HUDStatus = .none {
@@ -71,10 +67,16 @@ public final class HUD: HUDType {
                 self.errorView = nil
                 self.animation = nil
                 self.window = nil
+                self.titleLabel = nil
 
                 switch status {
-                case .on:
+                case .on(let text):
                     animation = DotAnimation()
+
+                    if let text = text {
+                        titleLabel = UILabel()
+                        titleLabel!.text = text
+                    }
                 case .error(let error):
                     errorView = ErrorView(with: error)
                 case .none:
@@ -86,8 +88,13 @@ public final class HUD: HUDType {
 
             if oldValue.isPresented == false && status.isPresented == true {
                 switch status {
-                case .on:
+                case .on(let text):
                     animation = DotAnimation()
+
+                    if let text = text {
+                        titleLabel = UILabel()
+                        titleLabel!.text = text
+                    }
                 case .error(let error):
                     errorView = ErrorView(with: error)
                 case .none:
@@ -103,17 +110,11 @@ public final class HUD: HUDType {
         }
     }
 
-    // MARK: Lifecycle
-
     public init() {}
-
-    // MARK: Public
 
     public func update(with status: HUDStatus) {
         self.status = status
     }
-
-    // MARK: Private
 
     private func showWindow() {
         window = Window()
@@ -124,6 +125,17 @@ public final class HUD: HUDType {
             window?.addSubview(animation)
             animation.setColor(.white)
             animation.snp.makeConstraints { $0.center.equalToSuperview() }
+        }
+
+        if let titleLabel = titleLabel {
+            window?.addSubview(titleLabel)
+            titleLabel.textAlignment = .center
+            titleLabel.numberOfLines = 0
+            titleLabel.snp.makeConstraints { make in
+                make.left.equalToSuperview().offset(18)
+                make.center.equalToSuperview().offset(50)
+                make.right.equalToSuperview().offset(-18)
+            }
         }
 
         if let errorView = errorView {
@@ -154,6 +166,7 @@ public final class HUD: HUDType {
             self.cancellables.removeAll()
             self.errorView = nil
             self.animation = nil
+            self.titleLabel = nil
             self.window = nil
         }
     }

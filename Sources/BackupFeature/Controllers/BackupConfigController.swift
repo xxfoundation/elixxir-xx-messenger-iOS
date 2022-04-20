@@ -97,17 +97,17 @@ final class BackupConfigController: UIViewController {
 
         screenView.googleDriveButton.switcherView
             .publisher(for: .valueChanged)
-            .sink { [unowned self] in viewModel.didToggleService(.drive, screenView.googleDriveButton.switcherView.isOn) }
+            .sink { [unowned self] in viewModel.didToggleService(self, .drive, screenView.googleDriveButton.switcherView.isOn) }
             .store(in: &cancellables)
 
         screenView.dropboxButton.switcherView
             .publisher(for: .valueChanged)
-            .sink { [unowned self] in viewModel.didToggleService(.dropbox, screenView.dropboxButton.switcherView.isOn) }
+            .sink { [unowned self] in viewModel.didToggleService(self, .dropbox, screenView.dropboxButton.switcherView.isOn) }
             .store(in: &cancellables)
 
         screenView.iCloudButton.switcherView
             .publisher(for: .valueChanged)
-            .sink { [unowned self] in viewModel.didToggleService(.icloud, screenView.iCloudButton.switcherView.isOn) }
+            .sink { [unowned self] in viewModel.didToggleService(self, .icloud, screenView.iCloudButton.switcherView.isOn) }
             .store(in: &cancellables)
 
         screenView.dropboxButton
