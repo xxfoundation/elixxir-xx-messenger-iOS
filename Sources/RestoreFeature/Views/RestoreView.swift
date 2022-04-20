@@ -90,6 +90,8 @@ final class RestoreView: UIView {
             progressView.isHidden = false
 
             progressView.update(downloaded: downloaded, total: total)
+        case .wrongPass:
+            progressView.descriptiveProgressLabel.text = "Incorrect password"
 
         case .failDownload(let error):
             progressView.descriptiveProgressLabel.text = error.localizedDescription

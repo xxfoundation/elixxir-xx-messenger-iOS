@@ -28,6 +28,7 @@ public protocol E2ESendReportType {
 public protocol BackupInterface {
     func stop() throws
     func addJson(_: String?)
+    func isBackupRunning() -> Bool
 }
 
 public protocol RestoreReportType {
@@ -137,7 +138,14 @@ public protocol BindingsInterface {
 
     func listenMessages(_: @escaping (Message) -> Void) throws
 
-    func listenBackups(_: @escaping (Data) -> Void) -> BackupInterface
+    func initializeBackup(
+        passphrase: String,
+        callback: @escaping (Data) -> Void
+    ) -> BackupInterface
+
+    func resumeBackup(
+        callback: @escaping (Data) -> Void
+    ) -> BackupInterface
 
     func listenRequests(
         _ requests: @escaping (Contact) -> Void,

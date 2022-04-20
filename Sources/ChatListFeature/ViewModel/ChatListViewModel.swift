@@ -204,7 +204,7 @@ final class ChatListViewModel: ChatListViewModelType {
         }
 
         do {
-            hudRelay.send(.on)
+            hudRelay.send(.on(nil))
             try session.leave(group: group)
             hudRelay.send(.none)
         } catch {

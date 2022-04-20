@@ -657,6 +657,7 @@ let package = Package(
                     "HUD",
                     "Shared",
                     "Models",
+                    "InputField",
                     "Presentation",
                     "GoogleDriveFeature",
                     "iCloudFeature",

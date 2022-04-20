@@ -105,7 +105,9 @@ struct DependencyRegistrator {
 
         // MARK: Coordinators
 
-        container.register(BackupCoordinator() as BackupCoordinating)
+        container.register(BackupCoordinator(
+            passphraseFactory: BackupPassphraseController.init(_:_:)
+        ) as BackupCoordinating)
 
         container.register(
             SearchCoordinator(
@@ -134,7 +136,8 @@ struct DependencyRegistrator {
             RestoreCoordinator(
                 successFactory: RestoreSuccessController.init,
                 chatListFactory: ChatListController.init,
-                restoreFactory: RestoreController.init(_:_:)
+                restoreFactory: RestoreController.init(_:_:),
+                passphraseFactory: RestorePassphraseController.init(_:)
             ) as RestoreCoordinating)
 
         container.register(

@@ -1,13 +1,9 @@
 import UIKit
 
 final class DotAnimation: UIView {
-    // MARK: UI
-
     let leftDot = UIView()
     let middleDot = UIView()
     let rightDot = UIView()
-
-    // MARK: Properties
 
     var leftInvert = false
     var middleInvert = false
@@ -19,16 +15,12 @@ final class DotAnimation: UIView {
 
     var displayLink: CADisplayLink?
 
-    // MARK: Lifecycle
-
     init() {
         super.init(frame: .zero)
         setup()
     }
 
     required init?(coder: NSCoder) { nil }
-
-    // MARK: Public
 
     func setColor(
         _ color: UIColor = UIColor(
@@ -42,8 +34,6 @@ final class DotAnimation: UIView {
         middleDot.backgroundColor = color
         rightDot.backgroundColor = color
     }
-
-    // MARK: Private
 
     private func setup() {
         setupCornerRadius()
@@ -85,8 +75,6 @@ final class DotAnimation: UIView {
             make.width.height.equalTo(15)
         }
     }
-
-    // MARK: Selectors
 
     @objc private func handleAnimations() {
         let factor: CGFloat = 70

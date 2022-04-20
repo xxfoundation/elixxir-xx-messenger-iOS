@@ -38,7 +38,7 @@ final class RequestsFailedViewModel {
     // MARK: Public
 
     func didTapRetry(_ contact: Contact) {
-        hudRelay.send(.on)
+        hudRelay.send(.on(nil))
 
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }

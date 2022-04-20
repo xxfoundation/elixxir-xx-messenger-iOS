@@ -3,14 +3,10 @@ import Shared
 import SnapKit
 
 final class ErrorView: UIView {
-    // MARK: UI
-
     let title = UILabel()
     let content = UILabel()
     let stack = UIStackView()
     let button = CapsuleButton()
-
-    // MARK: Lifecycle
 
     init(with model: HUDError) {
         super.init(frame: .zero)
@@ -18,9 +14,6 @@ final class ErrorView: UIView {
     }
 
     required init?(coder: NSCoder) { nil }
-    
-
-    // MARK: Private
 
     private func setup(with model: HUDError) {
         layer.cornerRadius = 6

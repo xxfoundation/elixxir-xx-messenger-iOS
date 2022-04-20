@@ -51,7 +51,7 @@ final class OnboardingLaunchViewModel {
     private var cancellables = Set<AnyCancellable>()
 
     func didFinishSplash() {
-        hudRelay.send(.on)
+        hudRelay.send(.on(nil))
 
         versioning()
             .sink { [unowned self] in
@@ -89,7 +89,7 @@ final class OnboardingLaunchViewModel {
     }
 
     func versionApproved() {
-        hudRelay.send(.on)
+        hudRelay.send(.on(nil))
         network.writeLogs()
 
         network.updateNDF { [weak self] in

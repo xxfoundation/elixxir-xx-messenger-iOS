@@ -110,7 +110,7 @@ final class SettingsViewModel {
     }
 
     private func pushNotifications(enable: Bool) {
-        hudRelay.send(.on)
+        hudRelay.send(.on(nil))
 
         if enable == true {
             pushHandler.didRequestAuthorization { [weak self] result in

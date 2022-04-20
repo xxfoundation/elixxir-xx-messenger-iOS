@@ -84,7 +84,14 @@ public final class BindingsMock: BindingsInterface {
 
     public func listenMessages(_: @escaping (Message) -> Void) throws {}
 
-    public func listenBackups(_: @escaping (Data) -> Void) -> BackupInterface { fatalError() }
+    public func initializeBackup(
+        passphrase: String,
+        callback: @escaping (Data) -> Void
+    ) -> BackupInterface { fatalError() }
+
+    public func resumeBackup(
+        callback: @escaping (Data) -> Void
+    ) -> BackupInterface { fatalError() }
 
     public func listenNetworkUpdates(_: @escaping (Bool) -> Void) {}
 

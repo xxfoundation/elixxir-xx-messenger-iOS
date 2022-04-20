@@ -69,7 +69,7 @@ final class CreateGroupViewModel {
     }
 
     func create(name: String, welcome: String?, members: [Contact]) {
-        hudRelay.send(.on)
+        hudRelay.send(.on(nil))
 
         session.createGroup(name: name, welcome: welcome, members: members) { [weak self] in
             guard let self = self else { return }

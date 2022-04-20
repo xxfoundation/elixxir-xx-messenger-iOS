@@ -55,6 +55,14 @@ public final class RestoreController: UIViewController {
             .sink { [unowned self] in
                 screenView.updateFor(step: $0)
 
+                if $0 == .wrongPass {
+                    coordinator.toPassphrase(from: self) { pass in
+                        self.viewModel.retryWith(passphrase: pass)
+                    }
+
+                    return
+                }
+
                 if $0 == .done {
                     coordinator.toSuccess(from: self)
                 }
@@ -72,8 +80,11 @@ public final class RestoreController: UIViewController {
 
         screenView.restoreButton
             .publisher(for: .touchUpInside)
-            .sink { [unowned self] in viewModel.didTapRestore() }
-            .store(in: &cancellables)
+            .sink { [unowned self] in
+                coordinator.toPassphrase(from: self) { passphrase in
+                    self.viewModel.didTapRestore(passphrase: passphrase)
+                }
+            }.store(in: &cancellables)
     }
 
     @objc private func didTapBack() {

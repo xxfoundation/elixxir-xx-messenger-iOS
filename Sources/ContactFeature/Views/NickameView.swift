@@ -3,15 +3,11 @@ import Shared
 import InputField
 
 final class NickameView: UIView {
-    // MARK: UI
-
     let title = UILabel()
     let icon = UIImageView()
     let input = InputField()
     let stack = UIStackView()
     let save = CapsuleButton()
-
-    // MARK: Lifecycle
 
     init() {
         super.init(frame: .zero)
@@ -30,8 +26,6 @@ final class NickameView: UIView {
             save.isEnabled = false
         }
     }
-
-    // MARK: Private
 
     private func setup() {
         layer.cornerRadius = 40

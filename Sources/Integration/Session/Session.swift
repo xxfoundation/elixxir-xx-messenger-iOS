@@ -9,6 +9,10 @@ import BackupFeature
 import NetworkMonitor
 import DependencyInjection
 
+import os.log
+
+let logHandler = OSLog(subsystem: "xx.network", category: "Performance debugging")
+
 struct BackupParameters: Codable {
     var email: String?
     var phone: String?
@@ -115,9 +119,17 @@ public final class Session: SessionType {
             .eraseToAnyPublisher()
     }
 
-    public init(backupFile: Data, ndf: String) throws {
+    public init(
+        passphrase: String,
+        backupFile: Data,
+        ndf: String
+    ) throws {
         let network = try! DependencyInjection.Container.shared.resolve() as XXNetworking
-        let (client, backupData) = try network.newClientFromBackup(data: backupFile, ndf: ndf)
+
+        os_signpost(.begin, log: logHandler, name: "Decrypting", "Calling newClientFromBackup")
+        let (client, backupData) = try network.newClientFromBackup(passphrase: passphrase, data: backupFile, ndf: ndf)
+        os_signpost(.end, log: logHandler, name: "Decrypting", "Finished newClientFromBackup")
+
         self.client = client
         dbManager = GRDBDatabaseManager()
 
@@ -319,9 +331,17 @@ public final class Session: SessionType {
             .removeDuplicates()
             .sink { [unowned self] in
                 if $0 == true {
-                    client.listenBackup()
+                    guard let passphrase = backupService.passphrase else {
+                        client.resumeBackup()
+                        updateFactsOnBackup()
+                        return
+                    }
+
+                    client.initializeBackup(passphrase: passphrase)
+                    backupService.passphrase = nil
                     updateFactsOnBackup()
                 } else {
+                    backupService.passphrase = nil
                     client.stopListeningBackup()
                 }
             }
