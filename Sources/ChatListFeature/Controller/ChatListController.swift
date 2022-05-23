@@ -1,5 +1,5 @@
 import HUD
-import Popup
+import DrawerFeature
 import UIKit
 import Theme
 import Shared
@@ -25,7 +25,7 @@ public final class ChatListController: UIViewController {
     private var shouldPresentMenu = false
     private let viewModel = ChatListViewModel()
     private var cancellables = Set<AnyCancellable>()
-    private var popupCancellables = Set<AnyCancellable>()
+    private var drawerCancellables = Set<AnyCancellable>()
 
     public override var canBecomeFirstResponder: Bool { true }
 
@@ -36,6 +36,12 @@ public final class ChatListController: UIViewController {
 
         return shouldPresentMenu ? menuView : nil
     }
+
+    public init() {
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) { nil }
 
     public override func loadView() {
         view = screenView
@@ -59,11 +65,6 @@ public final class ChatListController: UIViewController {
         updateNavigationItems(false)
 
         navigationController?.navigationBar.customize(backgroundColor: Asset.neutralWhite.color)
-    }
-
-    public override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        viewModel.viewDidAppear()
     }
 
     public override func viewDidLoad() {
@@ -143,30 +144,18 @@ public final class ChatListController: UIViewController {
             .sink { [unowned self] in coordinator.toScan(from: self) }
             .store(in: &cancellables)
 
-        viewModel.askDummyTrafficPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in
-                presentPopup(
-                    title: Localized.ChatList.Traffic.title,
-                    subtitle: Localized.ChatList.Traffic.subtitle,
-                    actionTitle: Localized.ChatList.Traffic.positive,
-                    cancelTitle: Localized.ChatList.Traffic.negative,
-                    action: { [weak self] in self?.viewModel.didEnableDummyTraffic() }
-                )
-            }.store(in: &cancellables)
-
         tableController.deletePublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] ip in
                 if viewModel.isGroup(indexPath: ip) {
-                    presentPopup(
+                    presentDrawer(
                         title: Localized.ChatList.DeleteGroup.title,
                         subtitle: Localized.ChatList.DeleteGroup.subtitle,
                         actionTitle: Localized.ChatList.DeleteGroup.action) { [weak self] in
                             self?.viewModel.deleteAndLeaveGroupFrom(indexPath: ip)
                         }
                 } else {
-                    presentPopup(
+                    presentDrawer(
                         title: Localized.ChatList.Delete.title,
                         subtitle: Localized.ChatList.Delete.subtitle,
                         actionTitle: Localized.ChatList.Delete.delete) { [weak self] in
@@ -227,53 +216,26 @@ public final class ChatListController: UIViewController {
         coordinator.toSideMenu(from: self)
     }
 
-    public func didSelect(item: MenuItem) {
-        switch item {
-        case .scan:
-            coordinator.toScan(from: self)
-        case .profile:
-            coordinator.toProfile(from: self)
-        case .contacts:
-            coordinator.toContacts(from: self)
-        case .settings:
-            coordinator.toSettings(from: self)
-        case .requests:
-            coordinator.toRequests(from: self)
-        case .join:
-            presentPopup(
-                title: Localized.ChatList.Join.title,
-                subtitle: Localized.ChatList.Join.subtitle,
-                actionTitle: Localized.ChatList.Dashboard.open) {
-                    guard let url = URL(string: "https://xx.network") else { return }
-                    UIApplication.shared.open(url, options: [:])
-                }
-        case .dashboard:
-            presentPopup(
-                title: Localized.ChatList.Dashboard.title,
-                subtitle: Localized.ChatList.Dashboard.subtitle,
-                actionTitle: Localized.ChatList.Dashboard.open) {
-                    guard let url = URL(string: "https://dashboard.xx.network") else { return }
-                    UIApplication.shared.open(url, options: [:])
-                }
-        }
-    }
-
-    private func presentPopup(
+    private func presentDrawer(
         title: String,
         subtitle: String,
         actionTitle: String,
         action: @escaping () -> Void
     ) {
-        let actionButton = PopupCapsuleButton(model: .init(title: actionTitle, style: .red))
-        let popup = BottomPopup(with: [
-            PopupLabel(
+        let actionButton = DrawerCapsuleButton(model: .init(
+            title: actionTitle,
+            style: .red
+        ))
+
+        let drawer = DrawerController(with: [
+            DrawerText(
                 font: Fonts.Mulish.bold.font(size: 26.0),
                 text: title,
                 color: Asset.neutralActive.color,
                 alignment: .left,
                 spacingAfter: 19
             ),
-            PopupLabel(
+            DrawerText(
                 font: Fonts.Mulish.regular.font(size: 16.0),
                 text: subtitle,
                 color: Asset.neutralBody.color,
@@ -286,77 +248,13 @@ public final class ChatListController: UIViewController {
 
         actionButton.action.receive(on: DispatchQueue.main)
             .sink {
-                popup.dismiss(animated: true) { [weak self] in
+                drawer.dismiss(animated: true) { [weak self] in
                     guard let self = self else { return }
-                    self.popupCancellables.removeAll()
+                    self.drawerCancellables.removeAll()
                     action()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
-        coordinator.toPopup(popup, from: self)
+        coordinator.toDrawer(drawer, from: self)
     }
-
-    private func presentPopup(
-        title: String,
-        subtitle: String,
-        actionTitle: String,
-        cancelTitle: String,
-        action: @escaping () -> Void
-    ) {
-        let actionButton = CapsuleButton()
-        actionButton.set(style: .brandColored, title: actionTitle)
-
-        let cancelButton = CapsuleButton()
-        cancelButton.set(style: .seeThrough, title: cancelTitle)
-
-        let popup = BottomPopup(with: [
-            PopupLabel(
-                font: Fonts.Mulish.bold.font(size: 26.0),
-                text: title,
-                color: Asset.neutralActive.color,
-                alignment: .left,
-                spacingAfter: 19
-            ),
-            PopupLabel(
-                font: Fonts.Mulish.regular.font(size: 16.0),
-                text: subtitle,
-                color: Asset.neutralBody.color,
-                alignment: .left,
-                lineHeightMultiple: 1.1,
-                spacingAfter: 39
-            ),
-            PopupStackView(
-                axis: .horizontal,
-                spacing: 20,
-                distribution: .fillEqually,
-                views: [actionButton, cancelButton]
-            )
-        ])
-
-        actionButton
-            .publisher(for: .touchUpInside)
-            .receive(on: DispatchQueue.main)
-            .sink {
-                popup.dismiss(animated: true) { [weak self] in
-                    guard let self = self else { return }
-                    self.popupCancellables.removeAll()
-                    action()
-                }
-            }.store(in: &popupCancellables)
-
-        cancelButton
-            .publisher(for: .touchUpInside)
-            .receive(on: DispatchQueue.main)
-            .sink {
-                popup.dismiss(animated: true) { [weak self] in
-                    guard let self = self else { return }
-                    self.popupCancellables.removeAll()
-                }
-            }.store(in: &popupCancellables)
-
-        coordinator.toPopup(popup, from: self)
-    }
-
 }
-
-extension ChatListController: MenuDelegate {}

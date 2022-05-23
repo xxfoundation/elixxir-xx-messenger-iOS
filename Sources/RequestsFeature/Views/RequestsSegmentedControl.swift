@@ -3,124 +3,92 @@ import Shared
 import SnapKit
 
 final class RequestsSegmentedControl: UIView {
-    enum Filter {
-        case received
-        case sent
-        case failed
-    }
-
-    // MARK: UI
-
-    let track = UIView()
-    let trackIndicator = UIView()
-    var leftConstraint: Constraint?
-    let received = UIButton()
-    let sent = UIButton()
-    let failed = UIButton()
-    let stack = UIStackView()
-
-    // MARK: Lifecycle
+    private let trackView = UIView()
+    private let stackView = UIStackView()
+    private var leftConstraint: Constraint?
+    private let trackIndicatorView = UIView()
+    private(set) var sentRequestsButton = RequestSegmentedButton()
+    private(set) var failedRequestsButton = RequestSegmentedButton()
+    private(set) var receivedRequestsButton = RequestSegmentedButton()
 
     init() {
         super.init(frame: .zero)
-        setup()
+        trackView.backgroundColor = Asset.neutralLine.color
+        trackIndicatorView.backgroundColor = Asset.brandPrimary.color
+
+        sentRequestsButton.titleLabel.text = Localized.Requests.Sent.title
+        failedRequestsButton.titleLabel.text = Localized.Requests.Failed.title
+        receivedRequestsButton.titleLabel.text = Localized.Requests.Received.title
+
+        sentRequestsButton.titleLabel.textColor = Asset.neutralDisabled.color
+        failedRequestsButton.titleLabel.textColor = Asset.neutralDisabled.color
+        receivedRequestsButton.titleLabel.textColor = Asset.brandPrimary.color
+
+        sentRequestsButton.imageView.tintColor = Asset.neutralDisabled.color
+        failedRequestsButton.imageView.tintColor = Asset.neutralDisabled.color
+        receivedRequestsButton.imageView.tintColor = Asset.brandPrimary.color
+
+        sentRequestsButton.imageView.image = Asset.requestsTabSent.image
+        failedRequestsButton.imageView.image = Asset.requestsTabFailed.image
+        receivedRequestsButton.imageView.image = Asset.requestsTabReceived.image
+        
+        stackView.addArrangedSubview(receivedRequestsButton)
+        stackView.addArrangedSubview(sentRequestsButton)
+        stackView.addArrangedSubview(failedRequestsButton)
+        stackView.distribution = .fillEqually
+        stackView.backgroundColor = Asset.neutralWhite.color
+
+        addSubview(stackView)
+        addSubview(trackView)
+        trackView.addSubview(trackIndicatorView)
+
+        stackView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+
+        trackView.snp.makeConstraints {
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
+            $0.bottom.equalToSuperview()
+            $0.height.equalTo(2)
+        }
+
+        trackIndicatorView.snp.makeConstraints {
+            $0.top.equalToSuperview()
+            leftConstraint = $0.left.equalToSuperview().constraint
+            $0.width.equalToSuperview().dividedBy(3)
+            $0.bottom.equalToSuperview()
+        }
+
+        sentRequestsButton.accessibilityIdentifier = Localized.Accessibility.Requests.Sent.tab
+        failedRequestsButton.accessibilityIdentifier = Localized.Accessibility.Requests.Failed.tab
+        receivedRequestsButton.accessibilityIdentifier = Localized.Accessibility.Requests.Received.tab
     }
 
     required init?(coder: NSCoder) { nil }
 
-    // MARK: Public
+    func updateSwipePercentage(_ percentageScrolled: CGFloat) {
+        let amountOfTabs = 3.0
+        let tabWidth = bounds.width / amountOfTabs
+        let leftOffset = percentageScrolled * tabWidth
 
-    func didChooseFilter(_ filter: Filter) {
-        switch filter {
-        case .received:
-            sent.setTitleColor(Asset.neutralWeak.color, for: .normal)
-            failed.setTitleColor(Asset.neutralWeak.color, for: .normal)
-            received.setTitleColor(Asset.brandPrimary.color, for: .normal)
+        leftConstraint?.update(offset: leftOffset)
 
-            sent.titleLabel?.font = Fonts.Mulish.regular.font(size: 14.0)
-            failed.titleLabel?.font = Fonts.Mulish.regular.font(size: 14.0)
-            received.titleLabel?.font = Fonts.Mulish.semiBold.font(size: 14.0)
+        let receivedPercentage = percentageScrolled > 1 ? 1 : percentageScrolled
+        let failedPercentage = percentageScrolled <= 1 ? 0 : percentageScrolled - 1
+        let sentPercentage = percentageScrolled > 1 ? 1 - (percentageScrolled-1) : percentageScrolled
 
-        case .sent:
-            sent.setTitleColor(Asset.brandPrimary.color, for: .normal)
-            failed.setTitleColor(Asset.neutralWeak.color, for: .normal)
-            received.setTitleColor(Asset.neutralWeak.color, for: .normal)
+        let sentColor = UIColor.fade(from: Asset.neutralDisabled.color, to: Asset.brandPrimary.color, pcent: sentPercentage)
+        let failedColor = UIColor.fade(from: Asset.neutralDisabled.color, to: Asset.brandPrimary.color, pcent: failedPercentage)
+        let receivedColor = UIColor.fade(from: Asset.brandPrimary.color, to: Asset.neutralDisabled.color, pcent: receivedPercentage)
 
-            sent.titleLabel?.font = Fonts.Mulish.semiBold.font(size: 14.0)
-            failed.titleLabel?.font = Fonts.Mulish.regular.font(size: 14.0)
-            received.titleLabel?.font = Fonts.Mulish.regular.font(size: 14.0)
+        sentRequestsButton.imageView.tintColor = sentColor
+        sentRequestsButton.titleLabel.textColor = sentColor
 
-        case .failed:
-            sent.setTitleColor(Asset.neutralWeak.color, for: .normal)
-            failed.setTitleColor(Asset.brandPrimary.color, for: .normal)
-            received.setTitleColor(Asset.neutralWeak.color, for: .normal)
+        failedRequestsButton.imageView.tintColor = failedColor
+        failedRequestsButton.titleLabel.textColor = failedColor
 
-            sent.titleLabel?.font = Fonts.Mulish.regular.font(size: 14.0)
-            failed.titleLabel?.font = Fonts.Mulish.semiBold.font(size: 14.0)
-            received.titleLabel?.font = Fonts.Mulish.regular.font(size: 14.0)
-        }
-    }
-
-    func updateLeftConstraint(_ percentage: CGFloat) {
-        leftConstraint?.update(offset: percentage * (bounds.width / 3))
-    }
-
-    // MARK: Private
-
-    private func setup() {
-        sent.setTitle(Localized.Requests.Sent.title, for: .normal)
-        failed.setTitle(Localized.Requests.Failed.title, for: .normal)
-        received.setTitle(Localized.Requests.Received.title, for: .normal)
-
-        sent.setTitleColor(Asset.neutralWeak.color, for: .normal)
-        failed.setTitleColor(Asset.neutralWeak.color, for: .normal)
-        received.setTitleColor(Asset.brandPrimary.color, for: .normal)
-
-        sent.titleLabel?.font = Fonts.Mulish.regular.font(size: 14.0)
-        failed.titleLabel?.font = Fonts.Mulish.regular.font(size: 14.0)
-        received.titleLabel?.font = Fonts.Mulish.semiBold.font(size: 14.0)
-
-        track.backgroundColor = Asset.neutralLine.color
-        trackIndicator.backgroundColor = Asset.brandPrimary.color
-
-        stack.addArrangedSubview(received)
-        stack.addArrangedSubview(sent)
-        stack.addArrangedSubview(failed)
-
-        stack.distribution = .fillEqually
-        stack.backgroundColor = Asset.neutralWhite.color
-
-        addSubview(stack)
-        addSubview(track)
-        track.addSubview(trackIndicator)
-
-        setupConstraints()
-
-        sent.accessibilityIdentifier = Localized.Accessibility.Requests.Sent.tab
-        failed.accessibilityIdentifier = Localized.Accessibility.Requests.Failed.tab
-        received.accessibilityIdentifier = Localized.Accessibility.Requests.Received.tab
-    }
-
-    private func setupConstraints() {
-        stack.snp.makeConstraints { make in
-            make.top.equalToSuperview()
-            make.left.equalToSuperview()
-            make.right.equalToSuperview()
-            make.bottom.equalToSuperview()
-        }
-
-        track.snp.makeConstraints { make in
-            make.left.equalToSuperview()
-            make.right.equalToSuperview()
-            make.bottom.equalToSuperview()
-            make.height.equalTo(1)
-        }
-
-        trackIndicator.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(-1)
-            leftConstraint = make.left.equalToSuperview().constraint
-            make.bottom.equalToSuperview()
-            make.width.equalTo(track).multipliedBy(0.3)
-        }
+        receivedRequestsButton.imageView.tintColor = receivedColor
+        receivedRequestsButton.titleLabel.textColor = receivedColor
     }
 }

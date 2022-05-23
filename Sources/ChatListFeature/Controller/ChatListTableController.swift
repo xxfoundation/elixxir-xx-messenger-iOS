@@ -89,61 +89,43 @@ final class ChatListTableController: UITableViewController {
         let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: ChatListCell.self)
         let chatInfo = rows[indexPath.row]
 
-        var name: String!
-
         if let contact = chatInfo.contact {
-            name = contact.nickname ?? contact.username
+            let name = contact.nickname ?? contact.username
+            cell.titleLabel.text = name
+            cell.avatarView.setupProfile(title: name, image: chatInfo.contact?.photo, size: .large)
         } else {
-            name = chatInfo.groupInfo!.group.name
+            cell.titleLabel.text = chatInfo.groupInfo!.group.name
+            cell.avatarView.setupGroup(size: .large)
         }
-
-        cell.title.text = name
-        cell.avatar.set(
-            cornerRadius: 16,
-            username: name,
-            image: chatInfo.contact?.photo
-        )
 
         cell.didLongPress = { [weak longPressRelay] in
             longPressRelay?.send()
         }
 
         if let latestGroupMessage = chatInfo.groupInfo?.lastMessage {
-            cell.title.alpha = 1.0
-            cell.avatar.alpha = 1.0
+            cell.titleLabel.alpha = 1.0
+            cell.avatarView.alpha = 1.0
             cell.date = Date.fromTimestamp(latestGroupMessage.timestamp)
-            cell.preview.text = latestGroupMessage.payload.text
-            cell.unread.backgroundColor = latestGroupMessage.unread ? Asset.brandPrimary.color : .clear
+            cell.previewLabel.text = latestGroupMessage.payload.text
+            cell.unreadView.backgroundColor = latestGroupMessage.unread ? Asset.brandPrimary.color : .clear
         }
 
         if let latestE2EMessage = chatInfo.latestE2EMessage {
-            cell.title.alpha = 1.0
-            cell.avatar.alpha = 1.0
+            cell.titleLabel.alpha = 1.0
+            cell.avatarView.alpha = 1.0
             cell.date = Date.fromTimestamp(latestE2EMessage.timestamp)
-            cell.preview.text = latestE2EMessage.payload.text
-            cell.unread.backgroundColor = latestE2EMessage.unread ? Asset.brandPrimary.color : .clear
+            cell.previewLabel.text = latestE2EMessage.payload.text
+            cell.unreadView.backgroundColor = latestE2EMessage.unread ? Asset.brandPrimary.color : .clear
         }
 
         return cell
     }
 
-    override func tableView(
-        _ tableView: UITableView,
-        numberOfRowsInSection section: Int
-    ) -> Int { rows.count }
+    override func tableView(_: UITableView, numberOfRowsInSection: Int) -> Int { rows.count }
 
-    // MARK: UITableViewDelegate
+    override func tableView(_: UITableView, heightForRowAt: IndexPath) -> CGFloat { 72 }
 
-    override func tableView(
-        _ tableView: UITableView,
-        heightForRowAt indexPath: IndexPath
-    ) -> CGFloat { 72 }
-
-    override func tableView(
-        _ tableView: UITableView,
-        trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath
-    ) -> UISwipeActionsConfiguration? {
-
+    override func tableView(_: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let delete = UIContextualAction(style: .normal, title: nil) { [weak self] _, _, complete in
             self?.deleteRelay.send(indexPath)
             complete(true)
@@ -171,7 +153,7 @@ final class ChatListTableController: UITableViewController {
         }
     }
 
-    override func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
+    override func tableView(_: UITableView, didDeselectRowAt: IndexPath) {
         numberOfSelectedRows -= 1
     }
 }

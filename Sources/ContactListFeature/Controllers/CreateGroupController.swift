@@ -83,12 +83,8 @@ public final class CreateGroupController: UIViewController {
             tableView: screenView.tableView
         ) { [weak self] tableView, indexPath, contact in
             let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: SmallAvatarAndTitleCell.self)
-            cell.title.text = contact.nickname ?? contact.username
-            cell.avatar.set(
-                cornerRadius: 10,
-                username: contact.nickname ?? contact.username,
-                image: contact.photo
-            )
+            cell.titleLabel.text = contact.nickname ?? contact.username
+            cell.avatarView.setupProfile(title: contact.nickname ?? contact.username, image: contact.photo, size: .medium)
 
             if let selectedElements = self?.selectedElements, selectedElements.contains(contact) {
                 tableView.selectRow(at: indexPath, animated: true, scrollPosition: .none)
@@ -159,7 +155,7 @@ public final class CreateGroupController: UIViewController {
             .publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
-                coordinator.toGroupPopup(
+                coordinator.toGroupDrawer(
                     with: count + 1,
                     from: self, { (name, welcome) in
                         viewModel.create(name: name, welcome: welcome, members: selectedElements)

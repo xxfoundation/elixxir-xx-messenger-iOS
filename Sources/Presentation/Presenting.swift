@@ -2,7 +2,7 @@ import UIKit
 import Theme
 
 public protocol Presenting {
-    func present(_ target: UIViewController, from parent: UIViewController)
+    func present(_ target: UIViewController..., from parent: UIViewController)
     func dismiss(from parent: UIViewController)
 }
 
@@ -15,16 +15,16 @@ public extension Presenting {
 public struct PushPresenter: Presenting {
     public init() {}
 
-    public func present(_ target: UIViewController, from parent: UIViewController) {
-        parent.navigationController?.pushViewController(target, animated: true)
+    public func present(_ target: UIViewController..., from parent: UIViewController) {
+        parent.navigationController?.pushViewController(target.first!, animated: true)
     }
 }
 
 public struct ModalPresenter: Presenting {
     public init() {}
 
-    public func present(_ target: UIViewController, from parent: UIViewController) {
-        let statusBarVC = StatusBarViewController(target)
+    public func present(_ target: UIViewController..., from parent: UIViewController) {
+        let statusBarVC = StatusBarViewController(target.first!)
         statusBarVC.modalPresentationStyle = .fullScreen
         parent.present(statusBarVC, animated: true)
     }
@@ -43,12 +43,12 @@ public struct ReplacePresenter: Presenting {
         self.mode = mode
     }
 
-    public func present(_ target: UIViewController, from parent: UIViewController) {
+    public func present(_ target: UIViewController..., from parent: UIViewController) {
         guard let navigationController = parent.navigationController else { return }
 
         switch mode {
         case .replaceAll:
-            navigationController.setViewControllers([target], animated: true)
+            navigationController.setViewControllers(target, animated: true)
 
         case .replaceBackwards(let OlderInStack):
             if let oldScreen = navigationController.viewControllers.filter({ $0.isKind(of: OlderInStack.self) }).first,
@@ -61,20 +61,20 @@ public struct ReplacePresenter: Presenting {
 
                 if let coordinator = navigationController.transitionCoordinator {
                     coordinator.animate(alongsideTransition: nil) { _ in
-                        navigationController.setViewControllers(viewControllersBefore + [target] , animated: true)
+                        navigationController.setViewControllers(viewControllersBefore + target , animated: true)
                     }
                 } else {
-                    navigationController.setViewControllers(viewControllersBefore + [target] , animated: true)
+                    navigationController.setViewControllers(viewControllersBefore + target , animated: true)
                 }
 
             } else {
-                navigationController.pushViewController(target, animated: true)
+                navigationController.pushViewController(target.first!, animated: true)
             }
         case .replaceLast:
             let viewControllersBefore = navigationController.viewControllers.dropLast()
 
             func replace() {
-                navigationController.setViewControllers(viewControllersBefore + [target] , animated: true)
+                navigationController.setViewControllers(viewControllersBefore + target , animated: true)
             }
 
             if let coordinator = navigationController.transitionCoordinator {
@@ -91,10 +91,10 @@ public struct ReplacePresenter: Presenting {
 public struct PopReplacePresenter: Presenting {
     public init() {}
 
-    public func present(_ target: UIViewController, from parent: UIViewController) {
+    public func present(_ target: UIViewController..., from parent: UIViewController) {
         if let lastViewController = parent.navigationController?.viewControllers.last {
-            parent.navigationController?.setViewControllers([target, lastViewController], animated: false)
-            parent.navigationController?.setViewControllers([target], animated: true)
+            parent.navigationController?.setViewControllers([target.first!, lastViewController], animated: false)
+            parent.navigationController?.setViewControllers([target.first!], animated: true)
         }
     }
 }

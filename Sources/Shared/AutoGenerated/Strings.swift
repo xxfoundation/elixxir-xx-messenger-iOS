@@ -35,13 +35,13 @@ public enum Localized {
     public enum CreateGroup {
       /// createGroup.create
       public static let create = Localized.tr("Localizable", "accessibility.createGroup.create")
-      public enum Popup {
-        /// createGroup.popup.create
-        public static let create = Localized.tr("Localizable", "accessibility.createGroup.popup.create")
-        /// createGroup.popup.input
-        public static let input = Localized.tr("Localizable", "accessibility.createGroup.popup.input")
-        /// createGroup.popup.otherInput
-        public static let otherInput = Localized.tr("Localizable", "accessibility.createGroup.popup.otherInput")
+      public enum Drawer {
+        /// createGroup.drawer.create
+        public static let create = Localized.tr("Localizable", "accessibility.createGroup.drawer.create")
+        /// createGroup.drawer.input
+        public static let input = Localized.tr("Localizable", "accessibility.createGroup.drawer.input")
+        /// createGroup.drawer.otherInput
+        public static let otherInput = Localized.tr("Localizable", "accessibility.createGroup.drawer.otherInput")
       }
     }
     public enum Menu {
@@ -181,12 +181,12 @@ public enum Localized {
     public static let header = Localized.tr("Localizable", "backup.header")
     /// iCloud
     public static let iCloud = Localized.tr("Localizable", "backup.iCloud")
-    /// Back up your account to a cloud storage service, you can restore it along with your contacts when you reinstall xx messenger on another device.
+    /// Back up your account to a cloud storage service, you can restore it along with only your contacts when you reinstall xx Messenger on another device.
     public static let subtitle = Localized.tr("Localizable", "backup.subtitle")
     public enum Config {
       /// Backup now
       public static let backupNow = Localized.tr("Localizable", "backup.config.backupNow")
-      /// Content backed up in %@ is not protected by xx network end-to-end encryption.
+      /// Content backed up in %@ is encrypted with your passphrase in a brute force resistant manner
       public static func disclaimer(_ p1: Any) -> String {
         return Localized.tr("Localizable", "backup.config.disclaimer", String(describing: p1))
       }
@@ -330,7 +330,7 @@ public enum Localized {
     public enum DeleteGroup {
       /// Leave group
       public static let action = Localized.tr("Localizable", "chatList.deleteGroup.action")
-      /// This will not only delete the messages sent to this group locally but will also remove you from it.
+      /// You will exit this group and you won’t receive any more messages from this group and your group messages will be lost.
       public static let subtitle = Localized.tr("Localizable", "chatList.deleteGroup.subtitle")
       /// Are you sure you want to delete a group?
       public static let title = Localized.tr("Localizable", "chatList.deleteGroup.title")
@@ -472,17 +472,37 @@ public enum Localized {
       /// Username
       public static let username = Localized.tr("Localizable", "contactSearch.filter.username")
     }
+    public enum NicknameDrawer {
+      /// Save
+      public static let save = Localized.tr("Localizable", "contactSearch.nicknameDrawer.save")
+      /// Edit your new contact’s nickname so you know who they are.
+      public static let subtitle = Localized.tr("Localizable", "contactSearch.nicknameDrawer.subtitle")
+      /// Add a nickname
+      public static let title = Localized.tr("Localizable", "contactSearch.nicknameDrawer.title")
+    }
     public enum Placeholder {
       /// Searching is private by nature. The network cannot identify who a search request came from.
       public static let title = Localized.tr("Localizable", "contactSearch.placeholder.title")
-      public enum Popup {
+      public enum Drawer {
         /// Got it
-        public static let action = Localized.tr("Localizable", "contactSearch.placeholder.popup.action")
+        public static let action = Localized.tr("Localizable", "contactSearch.placeholder.drawer.action")
         /// You can search for users by their username, email, or phone number using the xx network’s #Anonymous Data Retrieval protocol# which keeps a user’s identity anonymous while requesting data. All sent requests contain salted hashes of what you are searching for. Raw data on emails, usernames, and phone numbers do not leave your phone.
-        public static let subtitle = Localized.tr("Localizable", "contactSearch.placeholder.popup.subtitle")
+        public static let subtitle = Localized.tr("Localizable", "contactSearch.placeholder.drawer.subtitle")
         /// Search
-        public static let title = Localized.tr("Localizable", "contactSearch.placeholder.popup.title")
+        public static let title = Localized.tr("Localizable", "contactSearch.placeholder.drawer.title")
       }
+    }
+    public enum RequestDrawer {
+      /// Cancel
+      public static let cancel = Localized.tr("Localizable", "contactSearch.requestDrawer.cancel")
+      /// EMAIL ADDRESS
+      public static let email = Localized.tr("Localizable", "contactSearch.requestDrawer.email")
+      /// PHONE NUMBER
+      public static let phone = Localized.tr("Localizable", "contactSearch.requestDrawer.phone")
+      /// Send Contact Request
+      public static let send = Localized.tr("Localizable", "contactSearch.requestDrawer.send")
+      /// Request Contact
+      public static let title = Localized.tr("Localizable", "contactSearch.requestDrawer.title")
     }
   }
 
@@ -500,29 +520,29 @@ public enum Localized {
     public static func title(_ p1: Any) -> String {
       return Localized.tr("Localizable", "createGroup.title", String(describing: p1))
     }
-    public enum Popup {
+    public enum Drawer {
       /// Create Group
-      public static let action = Localized.tr("Localizable", "createGroup.popup.action")
+      public static let action = Localized.tr("Localizable", "createGroup.drawer.action")
       /// Cancel
-      public static let cancel = Localized.tr("Localizable", "createGroup.popup.cancel")
+      public static let cancel = Localized.tr("Localizable", "createGroup.drawer.cancel")
       /// Group Name
-      public static let input = Localized.tr("Localizable", "createGroup.popup.input")
+      public static let input = Localized.tr("Localizable", "createGroup.drawer.input")
       /// Needs to be 20 chars max or 256 bytes
-      public static let maximum = Localized.tr("Localizable", "createGroup.popup.maximum")
+      public static let maximum = Localized.tr("Localizable", "createGroup.drawer.maximum")
       /// Needs to be at least 4 chars
-      public static let minimum = Localized.tr("Localizable", "createGroup.popup.minimum")
+      public static let minimum = Localized.tr("Localizable", "createGroup.drawer.minimum")
       /// Initial Message
-      public static let otherInput = Localized.tr("Localizable", "createGroup.popup.otherInput")
+      public static let otherInput = Localized.tr("Localizable", "createGroup.drawer.otherInput")
       /// Say hi to your friends!
-      public static let otherPlaceholder = Localized.tr("Localizable", "createGroup.popup.otherPlaceholder")
+      public static let otherPlaceholder = Localized.tr("Localizable", "createGroup.drawer.otherPlaceholder")
       /// Secret Family
-      public static let placeholder = Localized.tr("Localizable", "createGroup.popup.placeholder")
+      public static let placeholder = Localized.tr("Localizable", "createGroup.drawer.placeholder")
       /// You are about to create a group message with %@ users. The information below will be visible to all members of the group.
       public static func subtitle(_ p1: Any) -> String {
-        return Localized.tr("Localizable", "createGroup.popup.subtitle", String(describing: p1))
+        return Localized.tr("Localizable", "createGroup.drawer.subtitle", String(describing: p1))
       }
       /// Create Group
-      public static let title = Localized.tr("Localizable", "createGroup.popup.title")
+      public static let title = Localized.tr("Localizable", "createGroup.drawer.title")
     }
   }
 
@@ -777,21 +797,105 @@ public enum Localized {
   public enum Requests {
     /// Requests
     public static let title = Localized.tr("Localizable", "requests.title")
+    public enum Cell {
+      /// Retry
+      public static let failedRequest = Localized.tr("Localizable", "requests.cell.failedRequest")
+      /// Failed to verify
+      public static let failedVerification = Localized.tr("Localizable", "requests.cell.failedVerification")
+      /// Resend
+      public static let requested = Localized.tr("Localizable", "requests.cell.requested")
+      /// Resent
+      public static let resent = Localized.tr("Localizable", "requests.cell.resent")
+      /// Verifying
+      public static let verifying = Localized.tr("Localizable", "requests.cell.verifying")
+    }
+    public enum Confirmations {
+      /// Accepted your request
+      public static let toaster = Localized.tr("Localizable", "requests.confirmations.toaster")
+    }
+    public enum Drawer {
+      public enum Group {
+        /// Accept
+        public static let accept = Localized.tr("Localizable", "requests.drawer.group.accept")
+        /// Hide Request
+        public static let hide = Localized.tr("Localizable", "requests.drawer.group.hide")
+        /// GROUP CHAT REQUEST
+        public static let title = Localized.tr("Localizable", "requests.drawer.group.title")
+        public enum Success {
+          /// Later
+          public static let later = Localized.tr("Localizable", "requests.drawer.group.success.later")
+          /// Go to Chat
+          public static let send = Localized.tr("Localizable", "requests.drawer.group.success.send")
+          /// You are now part of the group chat. Would you like to check it out?
+          public static let subtitle = Localized.tr("Localizable", "requests.drawer.group.success.subtitle")
+          /// ACCEPTED
+          public static let title = Localized.tr("Localizable", "requests.drawer.group.success.title")
+        }
+      }
+      public enum Single {
+        /// Accept and Save
+        public static let accept = Localized.tr("Localizable", "requests.drawer.single.accept")
+        /// EMAIL ADDRESS
+        public static let email = Localized.tr("Localizable", "requests.drawer.single.email")
+        /// Hide Request
+        public static let hide = Localized.tr("Localizable", "requests.drawer.single.hide")
+        /// Edit your new contact’s nickname.
+        public static let nickname = Localized.tr("Localizable", "requests.drawer.single.nickname")
+        /// PHONE NUMBER
+        public static let phone = Localized.tr("Localizable", "requests.drawer.single.phone")
+        /// REQUEST FROM
+        public static let title = Localized.tr("Localizable", "requests.drawer.single.title")
+        public enum Success {
+          /// Later
+          public static let later = Localized.tr("Localizable", "requests.drawer.single.success.later")
+          /// Send a Message
+          public static let send = Localized.tr("Localizable", "requests.drawer.single.success.send")
+          /// Is now a connection, would you like to send a message?
+          public static let subtitle = Localized.tr("Localizable", "requests.drawer.single.success.subtitle")
+          /// NEW CONNECTION
+          public static let title = Localized.tr("Localizable", "requests.drawer.single.success.title")
+        }
+      }
+    }
     public enum Failed {
+      /// There are no failed requests
+      public static let empty = Localized.tr("Localizable", "requests.failed.empty")
       /// Failed
       public static let title = Localized.tr("Localizable", "requests.failed.title")
+      /// Your contact request to %@ has failed.
+      public static func toast(_ p1: Any) -> String {
+        return Localized.tr("Localizable", "requests.failed.toast", String(describing: p1))
+      }
     }
     public enum Received {
-      /// No requests are currently waiting for review
+      /// Show hidden requests
+      public static let hidden = Localized.tr("Localizable", "requests.received.hidden")
+      /// No recent requests received
       public static let placeholder = Localized.tr("Localizable", "requests.received.placeholder")
       /// Received
       public static let title = Localized.tr("Localizable", "requests.received.title")
+      public enum Verifying {
+        /// OK
+        public static let action = Localized.tr("Localizable", "requests.received.verifying.action")
+        /// We are working on verifying the request to make sure it is not a spam. Please check again shortly.
+        public static let subtitle = Localized.tr("Localizable", "requests.received.verifying.subtitle")
+        /// Verifying
+        public static let title = Localized.tr("Localizable", "requests.received.verifying.title")
+      }
     }
     public enum Sent {
-      /// Add contact
+      /// Search for connections
       public static let action = Localized.tr("Localizable", "requests.sent.action")
+      /// You haven't sent any requests
+      public static let empty = Localized.tr("Localizable", "requests.sent.empty")
       /// Sent
       public static let title = Localized.tr("Localizable", "requests.sent.title")
+      public enum Toast {
+        /// Request successfully resent to %@
+        public static func resent(_ p1: Any) -> String {
+          return Localized.tr("Localizable", "requests.sent.toast.resent", String(describing: p1))
+        }
+      }
     }
   }
 
@@ -966,6 +1070,16 @@ public enum Localized {
         public static let title = Localized.tr("Localizable", "settings.delete.info.title")
       }
     }
+    public enum Drawer {
+      /// %@ will be opened using your default browser
+      public static func subtitle(_ p1: Any) -> String {
+        return Localized.tr("Localizable", "settings.drawer.subtitle", String(describing: p1))
+      }
+      /// Do you want to open %@?
+      public static func title(_ p1: Any) -> String {
+        return Localized.tr("Localizable", "settings.drawer.title", String(describing: p1))
+      }
+    }
     public enum HideActiveApps {
       /// Hide screen in recent apps list
       public static let description = Localized.tr("Localizable", "settings.hideActiveApps.description")
@@ -984,48 +1098,38 @@ public enum Localized {
       /// In-App Notifications
       public static let title = Localized.tr("Localizable", "settings.inAppNotifications.title")
     }
-    public enum InfoPopUp {
+    public enum InfoDrawer {
       /// Got it
-      public static let action = Localized.tr("Localizable", "settings.infoPopUp.action")
+      public static let action = Localized.tr("Localizable", "settings.infoDrawer.action")
       public enum Biometrics {
         /// Biometric authentication is stored through the native system on your phone, not by the xx messenger app. The xx network cannot access your biometric authentication data.
-        public static let subtitle = Localized.tr("Localizable", "settings.infoPopUp.biometrics.subtitle")
+        public static let subtitle = Localized.tr("Localizable", "settings.infoDrawer.biometrics.subtitle")
         /// Biometric Authentication
-        public static let title = Localized.tr("Localizable", "settings.infoPopUp.biometrics.title")
+        public static let title = Localized.tr("Localizable", "settings.infoDrawer.biometrics.title")
       }
       public enum Icognito {
         /// Predictive text is a feature offered by your phone’s operating system. It involves storing entered text within your phone’s operating system and may involve sending it to remote servers. As a result, it may significantly degrade your privacy.
-        public static let subtitle = Localized.tr("Localizable", "settings.infoPopUp.icognito.subtitle")
+        public static let subtitle = Localized.tr("Localizable", "settings.infoDrawer.icognito.subtitle")
         /// Predictive Text
-        public static let title = Localized.tr("Localizable", "settings.infoPopUp.icognito.title")
+        public static let title = Localized.tr("Localizable", "settings.infoDrawer.icognito.title")
       }
       public enum Notifications {
         /// Selecting this setting will share your account ID and unique phone identifiers with a notification service run by the xx network team. However, these details are obfuscated via an #ID collision system# when you receive a notification. As a result, both the notifications service and your notifications provider (Firebase on Android, Apple on iOS) cannot tell exactly when you receive a message.
-        public static let subtitle = Localized.tr("Localizable", "settings.infoPopUp.notifications.subtitle")
+        public static let subtitle = Localized.tr("Localizable", "settings.infoDrawer.notifications.subtitle")
         /// Notifications
-        public static let title = Localized.tr("Localizable", "settings.infoPopUp.notifications.title")
+        public static let title = Localized.tr("Localizable", "settings.infoDrawer.notifications.title")
       }
       public enum Privacy {
         /// Because xx messenger does not capture your personal data or save your private keys, we will not be able to, at this time, help new users recover their account in case of being locked out, changing devices, etc. Account recovery support that continues to protect your privacy and personal data will be coming soon.
-        public static let subtitle = Localized.tr("Localizable", "settings.infoPopUp.privacy.subtitle")
+        public static let subtitle = Localized.tr("Localizable", "settings.infoDrawer.privacy.subtitle")
         /// Please note
-        public static let title = Localized.tr("Localizable", "settings.infoPopUp.privacy.title")
+        public static let title = Localized.tr("Localizable", "settings.infoDrawer.privacy.title")
       }
       public enum Traffic {
         /// Cover Traffic hides when you are sending messages by randomly sending messages to random users.  Other user’s phones will pick up these messages but they will not see them or know you sent them. As a result, it not only hides when you send messages, but helps hide who you are talking to. #Read more about it#
-        public static let subtitle = Localized.tr("Localizable", "settings.infoPopUp.traffic.subtitle")
+        public static let subtitle = Localized.tr("Localizable", "settings.infoDrawer.traffic.subtitle")
         /// Cover Traffic
-        public static let title = Localized.tr("Localizable", "settings.infoPopUp.traffic.title")
-      }
-    }
-    public enum Popup {
-      /// %@ will be opened using your default browser
-      public static func subtitle(_ p1: Any) -> String {
-        return Localized.tr("Localizable", "settings.popup.subtitle", String(describing: p1))
-      }
-      /// Do you want to open %@?
-      public static func title(_ p1: Any) -> String {
-        return Localized.tr("Localizable", "settings.popup.title", String(describing: p1))
+        public static let title = Localized.tr("Localizable", "settings.infoDrawer.traffic.title")
       }
     }
     public enum RemoteNotifications {

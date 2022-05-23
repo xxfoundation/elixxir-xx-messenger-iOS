@@ -3,7 +3,7 @@ import Shared
 import Presentation
 
 public protocol BackupCoordinating {
-    func toPopup(
+    func toDrawer(
         _: UIViewController,
         from: UIViewController
     )
@@ -34,7 +34,7 @@ public struct BackupCoordinator: BackupCoordinating {
 }
 
 public extension BackupCoordinator {
-    func toPopup(
+    func toDrawer(
         _ screen: UIViewController,
         from parent: UIViewController
     ) {

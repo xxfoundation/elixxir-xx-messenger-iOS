@@ -14,7 +14,9 @@ public protocol SessionType {
     var singleMessages: (Contact) -> AnyPublisher<[Message], Never> { get }
     var singleChats: (SingleChatInfo.Request) -> AnyPublisher<[SingleChatInfo], Never> { get }
 
-    var groups: (Group.Request) -> AnyPublisher<[Group], Never> { get }
+    func groupMembers(_: GroupMember.Request) -> AnyPublisher<[GroupMember], Never>
+
+    func groups(_: Group.Request) -> AnyPublisher<[Group], Never>
     var groupMessages: (Group) -> AnyPublisher<[GroupMessage], Never> { get }
     var groupChats: (GroupChatInfo.Request) -> AnyPublisher<[GroupChatInfo], Never> { get }
 
@@ -22,6 +24,10 @@ public protocol SessionType {
     func getId(from: Data) -> Data?
 
     func forceFailMessages()
+
+    func hideRequestOf(group: Group)
+
+    func hideRequestOf(contact: Contact)
 
     func send(imageData: Data, to: Contact, completion: @escaping (Result<Void, Error>) -> Void)
 
@@ -73,6 +79,7 @@ public protocol SessionType {
     func deleteContact(_: Contact) throws
 
     func retryRequest(_: Contact) throws
+    func scanStrangers(_: @escaping () -> Void)
 
     // Groups
 

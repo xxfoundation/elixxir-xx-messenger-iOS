@@ -34,16 +34,19 @@ public final class ContactListController: UIViewController {
     private func setupNavigationBar() {
         navigationItem.backButtonTitle = " "
 
-        let title = UILabel()
-        title.text = Localized.ContactList.title
-        title.textColor = Asset.neutralActive.color
-        title.font = Fonts.Mulish.semiBold.font(size: 18.0)
+        let titleLabel = UILabel()
+        titleLabel.text = Localized.ContactList.title
+        titleLabel.textColor = Asset.neutralActive.color
+        titleLabel.font = Fonts.Mulish.semiBold.font(size: 18.0)
 
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
+        let menuButton = UIButton()
+        menuButton.tintColor = Asset.neutralDark.color
+        menuButton.setImage(Asset.chatListMenu.image, for: .normal)
+        menuButton.addTarget(self, action: #selector(didTapMenu), for: .touchUpInside)
+        menuButton.snp.makeConstraints { $0.width.equalTo(50) }
 
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-            customView: UIStackView(arrangedSubviews: [back, title])
+            customView: UIStackView(arrangedSubviews: [menuButton, titleLabel])
         )
 
         let search = UIButton()
@@ -81,7 +84,7 @@ public final class ContactListController: UIViewController {
     private func setupBindings() {
         tableController.didTap
             .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in coordinator.toContact($0, from: self) }
+            .sink { [unowned self] in coordinator.toSingleChat(with: $0, from: self) }
             .store(in: &cancellables)
 
         screenView.requestsButton
@@ -94,18 +97,6 @@ public final class ContactListController: UIViewController {
             .publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in coordinator.toNewGroup(from: self) }
-            .store(in: &cancellables)
-
-        screenView.searchView
-            .rightPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in coordinator.toScan(from: self) }
-            .store(in: &cancellables)
-
-        screenView.searchView
-            .textPublisher
-            .removeDuplicates()
-            .sink { [unowned self] in tableController.filter($0) }
             .store(in: &cancellables)
 
         screenView.searchButton
@@ -138,7 +129,7 @@ public final class ContactListController: UIViewController {
         coordinator.toScan(from: self)
     }
 
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
+    @objc private func didTapMenu() {
+        coordinator.toSideMenu(from: self)
     }
 }

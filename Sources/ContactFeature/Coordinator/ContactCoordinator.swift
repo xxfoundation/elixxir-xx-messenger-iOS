@@ -8,7 +8,7 @@ public protocol ContactCoordinating: AnyObject {
     func toPhotos(from: UIViewController)
     func toRequests(from: UIViewController)
     func toSingleChat(with: Contact, from: UIViewController)
-    func toPopup(_: UIViewController, from: UIViewController)
+    func toDrawer(_: UIViewController, from: UIViewController)
     func toNickname(from: UIViewController, prefilled: String, _: @escaping StringClosure)
 }
 
@@ -58,8 +58,8 @@ public extension ContactCoordinator {
         pushPresenter.present(screen, from: parent)
     }
 
-    func toPopup(_ popup: UIViewController, from parent: UIViewController) {
-        bottomPresenter.present(popup, from: parent)
+    func toDrawer(_ drawer: UIViewController, from parent: UIViewController) {
+        bottomPresenter.present(drawer, from: parent)
     }
 
     func toSingleChat(with contact: Contact, from parent: UIViewController) {

@@ -72,7 +72,8 @@ extension BindingsGroupChat: GroupManagerInterface {
                             leader: me,
                             name: name,
                             groupId: group.getID()!,
-                            accepted: true,
+                            status: .participating,
+                            createdAt: Date(),
                             serialize: group.serialize()!
                         )))
                     return

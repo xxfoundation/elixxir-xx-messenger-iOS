@@ -259,7 +259,7 @@ extension Session {
         var message = Message(
             sender: transfer.contact,
             receiver: client.bindings.meMarshalled,
-            payload: .init(text: "Sent you a \(transfer.fileType)", reply: nil, attachment: attachment),
+            payload: .init(text: "Sent you a \(fileExtension.writtenExtended)", reply: nil, attachment: attachment),
             unread: true,
             timestamp: Date.asTimestamp,
             uniqueId: nil,

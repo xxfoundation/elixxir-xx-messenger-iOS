@@ -8,7 +8,6 @@ final class ContactListView: UIView {
     let stackView = UIStackView()
     let emptyTitleLabel = UILabel()
     let searchButton = CapsuleButton()
-    let searchView = SearchComponent()
 
     init() {
         super.init(frame: .zero)
@@ -41,11 +40,6 @@ final class ContactListView: UIView {
         searchButton.setStyle(.brandColored)
         searchButton.setTitle(Localized.ContactList.Empty.action, for: .normal)
 
-        searchView.set(
-            placeholder: "Search connections",
-            imageAtRight: UIImage.color(.clear)
-        )
-
         stackView.spacing = 24
         stackView.axis = .vertical
         stackView.alignment = .center
@@ -56,7 +50,6 @@ final class ContactListView: UIView {
         topStackView.addArrangedSubview(newGroupButton)
         topStackView.addArrangedSubview(requestsButton)
 
-        addSubview(searchView)
         addSubview(topStackView)
         addSubview(stackView)
 
@@ -64,14 +57,8 @@ final class ContactListView: UIView {
     }
 
     private func setupConstraints() {
-        searchView.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(20)
-            make.left.equalToSuperview().offset(20)
-            make.right.equalToSuperview().offset(-20)
-        }
-
         topStackView.snp.makeConstraints { make in
-            make.top.equalTo(searchView.snp.bottom).offset(6)
+            make.top.equalToSuperview().offset(20)
             make.left.equalToSuperview()
             make.right.equalToSuperview()
         }

@@ -49,12 +49,7 @@ final class SearchTableController: UITableViewController {
         let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: SearchCell.self)
         cell.title.text = dataSource[indexPath.row].username
         cell.subtitle.text = dataSource[indexPath.row].username
-
-        cell.avatar.set(
-            username: dataSource[indexPath.row].username,
-            image: nil
-        )
-
+        cell.avatar.setupProfile(title: dataSource[indexPath.row].username, image: nil, size: .large)
         return cell
     }
 

@@ -63,7 +63,7 @@ final class ScanView: UIView {
             animationView.isHidden = true
             actionButton.isHidden = true
             iconImageView.isHidden = false
-            iconImageView.image = Asset.scanSuccess.image
+            iconImageView.image = Asset.sharedSuccess.image
             text = Localized.Scan.Status.success
             overlay.updateCornerColor(Asset.accentSuccess.color)
 

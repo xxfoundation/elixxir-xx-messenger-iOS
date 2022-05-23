@@ -40,7 +40,6 @@ public extension DatabaseManager {
 
 public final class GRDBDatabaseManager {
     var databaseQueue: DatabaseQueue!
-    var databaseMigrator: DatabaseMigrator!
 
     public init() {}
 }
@@ -114,6 +113,8 @@ extension GRDBDatabaseManager: DatabaseManager {
     }
 
     public func setup() throws {
+        var migrator = DatabaseMigrator()
+
         let path = NSSearchPathForDirectoriesInDomains(
             .documentDirectory, .userDomainMask, true
         )[0]
@@ -124,7 +125,7 @@ extension GRDBDatabaseManager: DatabaseManager {
             .protectionKey : FileProtectionType.completeUntilFirstUserAuthentication
         ], ofItemAtPath: path)
 
-        try databaseQueue.write { db in
+        migrator.registerMigration("v1") { db in
             try db.create(table: Contact.databaseTableName, ifNotExists: true) { table in
                 table.autoIncrementedPrimaryKey(Contact.Column.id.rawValue, onConflict: .replace)
                 table.column(Contact.Column.photo.rawValue, .blob)
@@ -197,5 +198,45 @@ extension GRDBDatabaseManager: DatabaseManager {
                 table.column(FileTransfer.Column.isIncoming.rawValue, .boolean).notNull()
             }
         }
+
+        migrator.registerMigration("v1: Updating contact/group requests UI") { db in
+            try db.create(table: "temp_\(Group.databaseTableName)") { table in
+                table.autoIncrementedPrimaryKey(Group.Column.id.rawValue, onConflict: .replace)
+                table.column(Group.Column.groupId.rawValue, .blob).unique()
+                table.column(Group.Column.name.rawValue, .text).notNull()
+                table.column(Group.Column.leader.rawValue, .blob).notNull()
+                table.column(Group.Column.serialize.rawValue, .blob).notNull()
+                table.column(Group.Column.status.rawValue, .integer).notNull()
+                table.column(Group.Column.createdAt.rawValue, .datetime).notNull()
+            }
+
+            let oldRows = try Row.fetchCursor(db, sql: "SELECT * FROM \(Group.databaseTableName)")
+            while let row = try oldRows.next() {
+                let status: Group.Status
+
+                if row["accepted"] == true {
+                    status = .participating
+                } else {
+                    status = .pending
+                }
+
+                try db.execute(
+                    sql: "INSERT INTO temp_\(Group.databaseTableName) (id, groupId, name, leader, serialize, status, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                    arguments:
+                        [row["id"],
+                         row["groupId"],
+                         row["name"],
+                         row["leader"],
+                         row["serialize"],
+                         status.rawValue,
+                         Date()
+                        ])
+            }
+
+            try db.drop(table: Group.databaseTableName)
+            try db.rename(table: "temp_\(Group.databaseTableName)", to: Group.databaseTableName)
+        }
+
+        try migrator.migrate(databaseQueue)
     }
 }

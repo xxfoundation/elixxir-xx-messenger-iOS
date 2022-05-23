@@ -11,7 +11,6 @@ let package = Package(
         .library(name: "App", targets: ["App"]),
         .library(name: "HUD", targets: ["HUD"]),
         .library(name: "Theme", targets: ["Theme"]),
-        .library(name: "Popup", targets: ["Popup"]),
         .library(name: "Shared", targets: ["Shared"]),
         .library(name: "Models", targets: ["Models"]),
         .library(name: "XXLogger", targets: ["XXLogger"]),
@@ -33,6 +32,7 @@ let package = Package(
         .library(name: "BackupFeature", targets: ["BackupFeature"]),
         .library(name: "iCloudFeature", targets: ["iCloudFeature"]),
         .library(name: "SearchFeature", targets: ["SearchFeature"]),
+        .library(name: "DrawerFeature", targets: ["DrawerFeature"]),
         .library(name: "RestoreFeature", targets: ["RestoreFeature"]),
         .library(name: "CrashReporting", targets: ["CrashReporting"]),
         .library(name: "ProfileFeature", targets: ["ProfileFeature"]),
@@ -152,6 +152,7 @@ let package = Package(
                 "ScanFeature",
                 "ChatFeature",
                 "MenuFeature",
+                "ToastFeature",
                 "CrashService",
                 "BackupFeature",
                 "SearchFeature",
@@ -163,6 +164,7 @@ let package = Package(
                 "CrashReporting",
                 "ChatListFeature",
                 "SettingsFeature",
+                "RequestsFeature",
                 "PushNotifications",
                 "OnboardingFeature",
                 "GoogleDriveFeature",
@@ -253,6 +255,15 @@ let package = Package(
                 ]
             ),
 
+        // MARK: - ToastFeature
+
+            .target(
+                name: "ToastFeature",
+                dependencies: [
+                    "Shared"
+                ]
+            ),
+
         // MARK: - CrashService
 
             .target(
@@ -330,12 +341,13 @@ let package = Package(
                 ]
             ),
 
-        // MARK: - Popup
+        // MARK: - DrawerFeature
 
             .target(
-                name: "Popup",
+                name: "DrawerFeature",
                 dependencies: [
                     "Shared",
+                    "InputField",
                     .product(
                         name: "ScrollViewController",
                         package: "ScrollViewController"
@@ -500,15 +512,15 @@ let package = Package(
                 dependencies: [
                     "HUD",
                     "Theme",
-                    "Popup",
                     "Shared",
                     "Defaults",
                     "Keychain",
-                    "Integration",
-                    "ChatInputFeature",
-                    "Permissions",
                     "Voxophone",
+                    "Integration",
+                    "Permissions",
                     "Presentation",
+                    "DrawerFeature",
+                    "ChatInputFeature",
                     "DependencyInjection",
                     .product(
                         name: "DifferenceKit",
@@ -548,6 +560,7 @@ let package = Package(
                     "Theme",
                     "Shared",
                     "Integration",
+                    "ToastFeature",
                     "ContactFeature",
                     "DependencyInjection",
                     .product(
@@ -564,15 +577,16 @@ let package = Package(
                 dependencies: [
                     "HUD",
                     "Theme",
-                    "Popup",
                     "Shared",
                     "Keychain",
                     "Defaults",
                     "Countries",
                     "InputField",
+                    "MenuFeature",
                     "Permissions",
                     "Integration",
                     "Presentation",
+                    "DrawerFeature",
                     "DependencyInjection",
                     .product(
                         name: "ScrollViewController",
@@ -612,7 +626,6 @@ let package = Package(
                 name: "OnboardingFeature",
                 dependencies: [
                     "HUD",
-                    "Popup",
                     "Shared",
                     "Defaults",
                     "Keychain",
@@ -621,6 +634,7 @@ let package = Package(
                     "Permissions",
                     "Integration",
                     "Presentation",
+                    "DrawerFeature",
                     "VersionChecking",
                     "PushNotifications",
                     "DependencyInjection",
@@ -640,12 +654,12 @@ let package = Package(
             .target(
                 name: "MenuFeature",
                 dependencies: [
+                    "Theme",
+                    "Shared",
                     "Defaults",
+                    "Integration",
                     "Presentation",
-                    "ProfileFeature",
-                    "RequestsFeature",
-                    "SettingsFeature",
-                    "ContactListFeature"
+                    "DependencyInjection"
                 ]
             ),
 
@@ -711,14 +725,15 @@ let package = Package(
                 dependencies: [
                     "HUD",
                     "Theme",
-                    "Popup",
                     "Shared",
                     "Defaults",
                     "Keychain",
                     "InputField",
                     "Permissions",
+                    "MenuFeature",
                     "Integration",
                     "Presentation",
+                    "DrawerFeature",
                     "PushNotifications",
                     "DependencyInjection",
                     .product(

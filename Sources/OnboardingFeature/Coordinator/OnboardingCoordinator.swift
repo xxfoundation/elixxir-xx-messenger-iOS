@@ -13,10 +13,9 @@ public protocol OnboardingCoordinating {
     func toWelcome(from: UIViewController)
     func toStart(with: String, from: UIViewController)
     func toUsername(with: String, from: UIViewController)
-    func toPopup(_: UIViewController, from: UIViewController)
-
-    func toSuccess(with: OnboardingSuccessModel, from: UIViewController)
     func toRestoreList(with: String, from: UIViewController)
+    func toDrawer(_: UIViewController, from: UIViewController)
+    func toSuccess(with: OnboardingSuccessModel, from: UIViewController)
 
     func toEmailConfirmation(
         with: AttributeConfirmation,
@@ -43,6 +42,7 @@ public struct OnboardingCoordinator: OnboardingCoordinating {
 
     var emailFactory: () -> UIViewController
     var phoneFactory: () -> UIViewController
+    var searchFactory: () -> UIViewController
     var welcomeFactory: () -> UIViewController
     var chatListFactory: () -> UIViewController
     var startFactory: (String) -> UIViewController
@@ -56,6 +56,7 @@ public struct OnboardingCoordinator: OnboardingCoordinating {
     public init(
         emailFactory: @escaping () -> UIViewController,
         phoneFactory: @escaping () -> UIViewController,
+        searchFactory: @escaping () -> UIViewController,
         welcomeFactory: @escaping () -> UIViewController,
         chatListFactory: @escaping () -> UIViewController,
         startFactory: @escaping (String) -> UIViewController,
@@ -69,12 +70,13 @@ public struct OnboardingCoordinator: OnboardingCoordinating {
         self.emailFactory = emailFactory
         self.phoneFactory = phoneFactory
         self.startFactory = startFactory
+        self.searchFactory = searchFactory
         self.welcomeFactory = welcomeFactory
+        self.successFactory = successFactory
         self.usernameFactory = usernameFactory
         self.chatListFactory = chatListFactory
-        self.restoreListFactory = restoreListFactory
-        self.successFactory = successFactory
         self.countriesFactory = countriesFactory
+        self.restoreListFactory = restoreListFactory
         self.phoneConfirmationFactory = phoneConfirmationFactory
         self.emailConfirmationFactory = emailConfirmationFactory
     }
@@ -88,11 +90,6 @@ public extension OnboardingCoordinator {
 
     func toPhone(from parent: UIViewController) {
         let screen = phoneFactory()
-        replacePresenter.present(screen, from: parent)
-    }
-
-    func toChats(from parent: UIViewController) {
-        let screen = chatListFactory()
         replacePresenter.present(screen, from: parent)
     }
 
@@ -121,8 +118,14 @@ public extension OnboardingCoordinator {
         replacePresenter.present(screen, from: parent)
     }
 
-    func toPopup(_ popup: UIViewController, from parent: UIViewController) {
-        bottomPresenter.present(popup, from: parent)
+    func toDrawer(_ drawer: UIViewController, from parent: UIViewController) {
+        bottomPresenter.present(drawer, from: parent)
+    }
+
+    func toChats(from parent: UIViewController) {
+        let searchScreen = searchFactory()
+        let chatListScreen = chatListFactory()
+        replacePresenter.present(chatListScreen, searchScreen, from: parent)
     }
 
     func toCountries(from parent: UIViewController, _ onChoose: @escaping (Country) -> Void) {

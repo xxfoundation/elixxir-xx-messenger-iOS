@@ -18,6 +18,7 @@ import Voxophone
 import Integration
 import Permissions
 import CrashService
+import ToastFeature
 import iCloudFeature
 import CrashReporting
 import NetworkMonitor
@@ -101,13 +102,25 @@ struct DependencyRegistrator {
 
         container.register(HUD() as HUDType)
         container.register(ThemeController() as ThemeControlling)
+        container.register(ToastController())
         container.register(StatusBarController() as StatusBarStyleControlling)
 
         // MARK: Coordinators
 
-        container.register(BackupCoordinator(
-            passphraseFactory: BackupPassphraseController.init(_:_:)
-        ) as BackupCoordinating)
+        container.register(
+            BackupCoordinator(
+                passphraseFactory: BackupPassphraseController.init(_:_:)
+            ) as BackupCoordinating)
+
+        container.register(
+            MenuCoordinator(
+                scanFactory: ScanContainerController.init,
+                chatsFactory: ChatListController.init,
+                profileFactory: ProfileController.init,
+                settingsFactory: SettingsController.init,
+                contactsFactory: ContactListController.init,
+                requestsFactory: RequestsContainerController.init
+            ) as MenuCoordinating)
 
         container.register(
             SearchCoordinator(
@@ -121,6 +134,7 @@ struct DependencyRegistrator {
                 phoneFactory: ProfilePhoneController.init,
                 imagePickerFactory: UIImagePickerController.init,
                 permissionFactory: RequestPermissionController.init,
+                sideMenuFactory: MenuController.init(_:_:),
                 countriesFactory: CountryListController.init(_:),
                 codeFactory: ProfileCodeController.init(_:_:)
             ) as ProfileCoordinating)
@@ -129,7 +143,8 @@ struct DependencyRegistrator {
             SettingsCoordinator(
                 backupFactory: BackupController.init,
                 advancedFactory: SettingsAdvancedController.init,
-                accountDeleteFactory: AccountDeleteController.init
+                accountDeleteFactory: AccountDeleteController.init,
+                sideMenuFactory: MenuController.init(_:_:)
             ) as SettingsCoordinating)
 
         container.register(
@@ -155,21 +170,24 @@ struct DependencyRegistrator {
                 requestsFactory: RequestsContainerController.init,
                 singleChatFactory: SingleChatController.init(_:),
                 imagePickerFactory: UIImagePickerController.init,
-                nicknameFactory: NickameController.init(_:_:)
+                nicknameFactory: NicknameController.init(_:_:)
             ) as ContactCoordinating)
 
         container.register(
             RequestsCoordinator(
                 searchFactory: SearchController.init,
-                verifyingFactory: VerifyingController.init,
                 contactFactory: ContactController.init(_:),
-                nicknameFactory: NickameController.init(_:_:)
+                singleChatFactory: SingleChatController.init(_:),
+                groupChatFactory: GroupChatController.init(_:),
+                sideMenuFactory: MenuController.init(_:_:),
+                nicknameFactory: NicknameController.init(_:_:)
             ) as RequestsCoordinating)
 
         container.register(
             OnboardingCoordinator(
                 emailFactory: OnboardingEmailController.init,
                 phoneFactory: OnboardingPhoneController.init,
+                searchFactory: SearchController.init,
                 welcomeFactory: OnboardingWelcomeController.init,
                 chatListFactory: ChatListController.init,
                 startFactory: OnboardingStartController.init(_:),
@@ -188,28 +206,28 @@ struct DependencyRegistrator {
                 newGroupFactory: CreateGroupController.init,
                 requestsFactory: RequestsContainerController.init,
                 contactFactory: ContactController.init(_:),
+                singleChatFactory: SingleChatController.init(_:),
                 groupChatFactory: GroupChatController.init(_:),
-                groupPopupFactory: CreatePopupController.init(_:_:)
+                sideMenuFactory: MenuController.init(_:_:),
+                groupDrawerFactory: CreateDrawerController.init(_:_:)
             ) as ContactListCoordinating)
 
         container.register(
             ScanCoordinator(
                 contactsFactory: ContactListController.init,
                 requestsFactory: RequestsContainerController.init,
-                contactFactory: ContactController.init(_:)
+                contactFactory: ContactController.init(_:),
+                sideMenuFactory: MenuController.init(_:_:)
             ) as ScanCoordinating)
 
         container.register(
             ChatListCoordinator(
                 scanFactory: ScanContainerController.init,
                 searchFactory: SearchController.init,
-                profileFactory: ProfileController.init,
-                settingsFactory: SettingsController.init,
                 contactsFactory: ContactListController.init,
-                requestsFactory: RequestsContainerController.init,
                 singleChatFactory: SingleChatController.init(_:),
-                sideMenuFactory: MenuController.init(_:),
-                groupChatFactory: GroupChatController.init(_:)
+                groupChatFactory: GroupChatController.init(_:),
+                sideMenuFactory: MenuController.init(_:_:)
             ) as ChatListCoordinating)
     }
 }

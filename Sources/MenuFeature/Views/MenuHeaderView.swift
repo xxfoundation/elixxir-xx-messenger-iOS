@@ -2,7 +2,7 @@ import UIKit
 import Shared
 
 final class MenuHeaderView: UIView {
-    let nameLabel = UILabel()
+    let nameButton = UIButton()
     let scanButton = UIButton()
     let stackView = UIStackView()
     let avatarView = AvatarView()
@@ -16,14 +16,14 @@ final class MenuHeaderView: UIView {
         helloLabel.textColor = Asset.neutralWeak.color
         helloLabel.font = Fonts.Mulish.semiBold.font(size: 14.0)
 
-        nameLabel.textColor = Asset.neutralLine.color
-        nameLabel.font = Fonts.Mulish.bold.font(size: 18.0)
+        nameButton.titleLabel?.font = Fonts.Mulish.bold.font(size: 18.0)
+        nameButton.setTitleColor(Asset.neutralLine.color, for: .normal)
 
         let spacingView = UIView()
         verticalStackView.axis = .vertical
         verticalStackView.addArrangedSubview(spacingView)
         verticalStackView.addArrangedSubview(helloLabel)
-        verticalStackView.addArrangedSubview(nameLabel.pinning(at: .top(0)))
+        verticalStackView.addArrangedSubview(nameButton.pinning(at: .left(0)))
 
         verticalStackView.setCustomSpacing(15, after: spacingView)
         verticalStackView.setCustomSpacing(5, after: helloLabel)
@@ -47,7 +47,7 @@ final class MenuHeaderView: UIView {
     required init?(coder: NSCoder) { nil  }
 
     func set(username: String, image: Data? = nil) {
-        nameLabel.text = username
-        avatarView.set(username: username, image: image)
+        nameButton.setTitle(username, for: .normal)
+        avatarView.setupProfile(title: username, image: image, size: .large)
     }
 }

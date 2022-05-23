@@ -1,9 +1,12 @@
 import HUD
-import Combine
+import UIKit
 import Models
+import Combine
+import Defaults
 import Countries
 import Foundation
 import Integration
+import PushNotifications
 import CombineSchedulers
 import DependencyInjection
 
@@ -32,64 +35,158 @@ struct SearchViewState: Equatable {
 }
 
 final class SearchViewModel {
+    @KeyObject(.dummyTrafficOn, defaultValue: false) var isCoverTrafficEnabled: Bool
+    @KeyObject(.pushNotifications, defaultValue: false) private var pushNotifications
+    @KeyObject(.askedDummyTrafficOnce, defaultValue: false) var offeredCoverTraffic: Bool
+
     @Dependency private var session: SessionType
+    @Dependency private var pushHandler: PushHandling
+
+    var hudPublisher: AnyPublisher<HUDStatus, Never> {
+        hudSubject.eraseToAnyPublisher()
+    }
+
+    var placeholderPublisher: AnyPublisher<Bool, Never> {
+        placeholderSubject.eraseToAnyPublisher()
+    }
+
+    var coverTrafficPublisher: AnyPublisher<Void, Never> {
+        coverTrafficSubject.eraseToAnyPublisher()
+    }
+
+    var statePublisher: AnyPublisher<SearchViewState, Never> {
+        stateSubject.eraseToAnyPublisher()
+    }
+
+    var successPublisher: AnyPublisher<Contact, Never> {
+        successSubject.eraseToAnyPublisher()
+    }
+
+    var backgroundScheduler: AnySchedulerOf<DispatchQueue>
+    = DispatchQueue.global().eraseToAnyScheduler()
 
     let itemsRelay = CurrentValueSubject<[Contact], Never>([])
-    private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
-    private let placeholderRelay = CurrentValueSubject<Bool, Never>(true)
-    private let stateRelay = CurrentValueSubject<SearchViewState, Never>(.init())
+    private let successSubject = PassthroughSubject<Contact, Never>()
+    private let coverTrafficSubject = PassthroughSubject<Void, Never>()
+    private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
+    private let placeholderSubject = CurrentValueSubject<Bool, Never>(true)
+    private let stateSubject = CurrentValueSubject<SearchViewState, Never>(.init())
 
-    var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
-    var state: AnyPublisher<SearchViewState, Never> { stateRelay.eraseToAnyPublisher() }
-    var placeholderPublisher: AnyPublisher<Bool, Never> { placeholderRelay.eraseToAnyPublisher() }
-    var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
+    func didAppear() {
+        verifyCoverTraffic()
+        verifyNotifications()
+    }
 
     func didSelect(filter: SelectedFilter) {
-        stateRelay.value.selectedFilter = filter
+        stateSubject.value.selectedFilter = filter
     }
 
     func didInput(_ string: String) {
-        stateRelay.value.input = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        stateSubject.value.input = string.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func didInputPhone(_ string: String) {
-        stateRelay.value.phoneInput = string.trimmingCharacters(in: .whitespacesAndNewlines)
+        stateSubject.value.phoneInput = string.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     func didChooseCountry(_ country: Country) {
-        stateRelay.value.country = country
+        stateSubject.value.country = country
+    }
+
+    func didEnableCoverTraffic() {
+        isCoverTrafficEnabled = true
+        session.setDummyTraffic(status: true)
     }
 
     func didTapSearch() {
-        hudRelay.send(.on(nil))
+        hudSubject.send(.on(nil))
 
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }
 
             do {
-                var content = self.stateRelay.value.selectedFilter.prefix
+                var content = self.stateSubject.value.selectedFilter.prefix
 
-                if self.stateRelay.value.selectedFilter == .phone {
-                    content += self.stateRelay.value.phoneInput + self.stateRelay.value.country.code
+                if self.stateSubject.value.selectedFilter == .phone {
+                    content += self.stateSubject.value.phoneInput + self.stateSubject.value.country.code
                 } else {
-                    content += self.stateRelay.value.input
+                    content += self.stateSubject.value.input
                 }
 
                 try self.session.search(fact: content) { result in
-                    self.placeholderRelay.send(false)
+                    self.placeholderSubject.send(false)
 
                     switch result {
                     case .success(let searched):
-                        self.hudRelay.send(.none)
+                        self.hudSubject.send(.none)
                         self.itemsRelay.send([searched])
                     case .failure(let error):
-                        self.hudRelay.send(.error(.init(with: error)))
+                        self.hudSubject.send(.error(.init(with: error)))
                         self.itemsRelay.send([])
                     }
                 }
             } catch {
-                self.hudRelay.send(.error(.init(with: error)))
+                self.hudSubject.send(.error(.init(with: error)))
             }
         }
+    }
+
+    private func verifyCoverTraffic() {
+        guard offeredCoverTraffic == false else {
+            return
+        }
+
+        offeredCoverTraffic = true
+        coverTrafficSubject.send()
+    }
+
+    private func verifyNotifications() {
+        guard pushNotifications == false else { return }
+
+        pushHandler.didRequestAuthorization { [weak self] result in
+            guard let self = self else { return }
+
+            switch result {
+            case .success(let granted):
+                if granted {
+                    DispatchQueue.main.async {
+                        UIApplication.shared.registerForRemoteNotifications()
+                    }
+                }
+
+                self.pushNotifications = granted
+            case .failure:
+                self.pushNotifications = false
+            }
+        }
+    }
+
+    func didSet(nickname: String, for contact: Contact) {
+        var contact = contact
+        contact.nickname = nickname
+
+        backgroundScheduler.schedule { [weak self] in
+            guard let self = self else { return }
+            self.session.update(contact)
+        }
+    }
+
+    func didTapRequest(contact: Contact) {
+        hudSubject.send(.on(nil))
+        var contact = contact
+        contact.nickname = contact.username
+
+        backgroundScheduler.schedule { [weak self] in
+            guard let self = self else { return }
+
+            do {
+                try self.session.add(contact)
+                self.hudSubject.send(.none)
+                self.successSubject.send(contact)
+            } catch {
+                self.hudSubject.send(.error(.init(with: error)))
+            }
+        }
+
     }
 }

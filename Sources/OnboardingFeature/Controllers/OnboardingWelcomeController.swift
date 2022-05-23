@@ -1,4 +1,4 @@
-import Popup
+import DrawerFeature
 import Theme
 import UIKit
 import Shared
@@ -14,7 +14,7 @@ public final class OnboardingWelcomeController: UIViewController {
     lazy private var screenView = OnboardingWelcomeView()
 
     private var cancellables = Set<AnyCancellable>()
-    private var popupCancellables = Set<AnyCancellable>()
+    private var drawerCancellables = Set<AnyCancellable>()
 
     public override func loadView() {
         view = screenView
@@ -59,34 +59,37 @@ public final class OnboardingWelcomeController: UIViewController {
         let actionButton = CapsuleButton()
         actionButton.set(
             style: .seeThrough,
-            title: Localized.Settings.InfoPopUp.action
+            title: Localized.Settings.InfoDrawer.action
         )
 
-        let popup = BottomPopup(with: [
-            PopupLabel(
+        let drawer = DrawerController(with: [
+            DrawerText(
                 font: Fonts.Mulish.bold.font(size: 26.0),
                 text: title,
                 color: Asset.neutralActive.color,
                 alignment: .left,
                 spacingAfter: 19
             ),
-            PopupLinkText(
+            DrawerLinkText(
                 text: subtitle,
                 urlString: urlString,
                 spacingAfter: 37
             ),
-            PopupStackView(views: [actionButton, FlexibleSpace()])
+            DrawerStack(views: [
+                actionButton,
+                FlexibleSpace()
+            ])
         ])
 
         actionButton.publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink {
-                popup.dismiss(animated: true) { [weak self] in
+                drawer.dismiss(animated: true) { [weak self] in
                     guard let self = self else { return }
-                    self.popupCancellables.removeAll()
+                    self.drawerCancellables.removeAll()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
-        coordinator.toPopup(popup, from: self)
+        coordinator.toDrawer(drawer, from: self)
     }
 }

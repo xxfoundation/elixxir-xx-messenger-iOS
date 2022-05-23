@@ -183,7 +183,7 @@ public final class InputField: UIView {
         }
     }
 
-    private func set(rightView: RightView?) {
+    public func set(rightView: RightView?) {
         switch rightView {
         case.image(let image):
             field.rightView = UIImageView(image: image)

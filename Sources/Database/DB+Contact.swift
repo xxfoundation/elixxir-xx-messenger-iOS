@@ -21,6 +21,8 @@ extension Contact: Persistable {
     
     public static func query(_ request: Request) -> QueryInterfaceRequest<Contact> {
         switch request {
+        case .all:
+            return Contact.all()
         case .verificationInProgress:
             return Contact.filter(Column.status == Contact.Status.verificationInProgress.rawValue)
         case .failed:
@@ -35,6 +37,7 @@ extension Contact: Persistable {
             )
         case .received:
             return Contact.filter(
+                Column.status == Contact.Status.hidden.rawValue ||
                 Column.status == Contact.Status.verified.rawValue ||
                 Column.status == Contact.Status.verificationFailed.rawValue ||
                 Column.status == Contact.Status.verificationInProgress.rawValue

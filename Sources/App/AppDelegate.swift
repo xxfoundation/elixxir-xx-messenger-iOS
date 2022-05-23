@@ -6,6 +6,7 @@ import Theme
 import XXLogger
 import Defaults
 import Integration
+import ToastFeature
 import SwiftyDropbox
 import CrashReporting
 import PushNotifications
@@ -51,8 +52,13 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
 
         UNUserNotificationCenter.current().delegate = self
 
-        let rootScreen = StatusBarViewController(
-            UINavigationController(rootViewController: OnboardingLaunchController())
+        let rootScreen =
+        StatusBarViewController(
+            ToastViewController(
+                UINavigationController(
+                    rootViewController: OnboardingLaunchController()
+                )
+            )
         )
 
         window = Window()

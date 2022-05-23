@@ -5,9 +5,17 @@ import Shared
 import Combine
 import DependencyInjection
 import ScrollViewController
-import Popup
+import DrawerFeature
+import Models
+import Defaults
+import Countries
 
 public final class SearchController: UIViewController {
+    @KeyObject(.email, defaultValue: nil) var email: String?
+    @KeyObject(.phone, defaultValue: nil) var phone: String?
+    @KeyObject(.sharingEmail, defaultValue: false) var isSharingEmail: Bool
+    @KeyObject(.sharingPhone, defaultValue: false) var isSharingPhone: Bool
+
     @Dependency private var hud: HUDType
     @Dependency private var coordinator: SearchCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
@@ -17,40 +25,43 @@ public final class SearchController: UIViewController {
         let actionButton = CapsuleButton()
         actionButton.set(
             style: .seeThrough,
-            title: Localized.ContactSearch.Placeholder.Popup.action
+            title: Localized.ContactSearch.Placeholder.Drawer.action
         )
 
-        let popup = BottomPopup(with: [
-            PopupLabel(
+        let drawer = DrawerController(with: [
+            DrawerText(
                 font: Fonts.Mulish.bold.font(size: 26.0),
-                text: Localized.ContactSearch.Placeholder.Popup.title,
+                text: Localized.ContactSearch.Placeholder.Drawer.title,
                 color: Asset.neutralActive.color,
                 alignment: .left,
                 spacingAfter: 19
             ),
-            PopupLinkText(
-                text: Localized.ContactSearch.Placeholder.Popup.subtitle,
+            DrawerLinkText(
+                text: Localized.ContactSearch.Placeholder.Drawer.subtitle,
                 urlString: "https://links.xx.network/adrp",
                 spacingAfter: 37
             ),
-            PopupStackView(views: [actionButton, FlexibleSpace()])
+            DrawerStack(views: [
+                actionButton,
+                FlexibleSpace()
+            ])
         ])
 
         actionButton.publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink {
-                popup.dismiss(animated: true) { [weak self] in
+                drawer.dismiss(animated: true) { [weak self] in
                     guard let self = self else { return }
-                    self.popupCancellables.removeAll()
+                    self.drawerCancellables.removeAll()
                 }
-            }.store(in: &self.popupCancellables)
+            }.store(in: &self.drawerCancellables)
 
-        self.coordinator.toPopup(popup, from: self)
+        self.coordinator.toDrawer(drawer, from: self)
     }
 
     private let viewModel = SearchViewModel()
     private var cancellables = Set<AnyCancellable>()
-    private var popupCancellables = Set<AnyCancellable>()
+    private var drawerCancellables = Set<AnyCancellable>()
 
     public override func loadView() {
         view = screenView
@@ -66,6 +77,11 @@ public final class SearchController: UIViewController {
         )
     }
 
+    public override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        viewModel.didAppear()
+    }
+
     public override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
@@ -78,9 +94,9 @@ public final class SearchController: UIViewController {
         addChild(tableController)
         screenView.addSubview(tableController.view)
 
-        tableController.view.snp.makeConstraints { make in
-            make.top.equalTo(screenView.stack.snp.bottom).offset(20)
-            make.left.bottom.right.equalToSuperview()
+        tableController.view.snp.makeConstraints {
+            $0.top.equalTo(screenView.stack.snp.bottom).offset(20)
+            $0.left.bottom.right.equalToSuperview()
         }
 
         tableController.didMove(toParent: self)
@@ -92,23 +108,33 @@ public final class SearchController: UIViewController {
     private func setupNavigationBar() {
         navigationItem.backButtonTitle = " "
 
-        let title = UILabel()
-        title.text = Localized.ContactSearch.title
-        title.textColor = Asset.neutralActive.color
-        title.font = Fonts.Mulish.semiBold.font(size: 18.0)
+        let titleLabel = UILabel()
+        titleLabel.text = Localized.ContactSearch.title
+        titleLabel.textColor = Asset.neutralActive.color
+        titleLabel.font = Fonts.Mulish.semiBold.font(size: 18.0)
 
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
+        let backButton = UIButton.back()
+        backButton.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
 
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-            customView: UIStackView(arrangedSubviews: [back, title])
+            customView: UIStackView(arrangedSubviews: [backButton, titleLabel])
         )
     }
 
     private func setupBindings() {
-        viewModel.hud
+        viewModel.successPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in presentSucessDrawerFor(contact: $0) }
+            .store(in: &cancellables)
+
+        viewModel.hudPublisher
             .receive(on: DispatchQueue.main)
             .sink { [hud] in hud.update(with: $0) }
+            .store(in: &cancellables)
+
+        viewModel.coverTrafficPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in presentCoverTrafficDrawer() }
             .store(in: &cancellables)
 
         viewModel
@@ -124,7 +150,7 @@ public final class SearchController: UIViewController {
             .sink { [unowned self] in screenView.placeholder.isHidden = !$0 }
             .store(in: &cancellables)
 
-        viewModel.state
+        viewModel.statePublisher
             .map(\.country)
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
@@ -163,8 +189,11 @@ public final class SearchController: UIViewController {
             .phoneInput
             .codePublisher
             .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in coordinator.toCountries(from: self) { viewModel.didChooseCountry($0) }}
-            .store(in: &cancellables)
+            .sink { [unowned self] in
+                coordinator.toCountries(from: self) {
+                    self.viewModel.didChooseCountry($0)
+                }
+            }.store(in: &cancellables)
     }
 
     private func setupFilterBindings() {
@@ -183,13 +212,13 @@ public final class SearchController: UIViewController {
             .sink { [unowned self] _ in viewModel.didSelect(filter: .email) }
             .store(in: &cancellables)
 
-        viewModel.state
+        viewModel.statePublisher
             .map(\.selectedFilter)
             .removeDuplicates()
             .sink { [unowned self] in screenView.alternateFieldsOver(filter: $0) }
             .store(in: &cancellables)
 
-        viewModel.state
+        viewModel.statePublisher
             .map(\.selectedFilter)
             .removeDuplicates()
             .dropFirst()
@@ -201,10 +230,268 @@ public final class SearchController: UIViewController {
         navigationController?.popViewController(animated: true)
     }
 
-    public func tableView(_ tableView: UITableView,
-                          didSelectRowAt indexPath: IndexPath) {
-        coordinator.toContact(viewModel.itemsRelay.value[indexPath.row], from: self)
+    public func tableView(_: UITableView, didSelectRowAt indexPath: IndexPath) {
+        let contact = viewModel.itemsRelay.value[indexPath.row]
+
+        guard contact.status == .stranger else {
+            coordinator.toContact(contact, from: self)
+            return
+        }
+
+        presentRequestDrawer(forContact: contact)
     }
 }
 
 extension SearchController: UITableViewDelegate {}
+
+// MARK: - Contact Request Drawer
+
+extension SearchController {
+    private func presentRequestDrawer(forContact contact: Contact) {
+        var items: [DrawerItem] = []
+
+        let drawerTitle = DrawerText(
+            font: Fonts.Mulish.extraBold.font(size: 26.0),
+            text: Localized.ContactSearch.RequestDrawer.title,
+            color: Asset.neutralDark.color,
+            spacingAfter: 20
+        )
+
+        var subtitleFragment = "Share your information with #\(contact.username)"
+
+        if let email = contact.email {
+            subtitleFragment.append(contentsOf: " (\(email))#")
+        } else if let phone = contact.phone {
+            subtitleFragment.append(contentsOf: " (\(Country.findFrom(phone).prefix) \(phone.dropLast(2)))#")
+        } else {
+            subtitleFragment.append(contentsOf: "#")
+        }
+
+        subtitleFragment.append(contentsOf: " so they know its you.")
+
+        let drawerSubtitle = DrawerText(
+            font: Fonts.Mulish.regular.font(size: 16.0),
+            text: subtitleFragment,
+            color: Asset.neutralDark.color,
+            spacingAfter: 31.5,
+            customAttributes: [
+                .font: Fonts.Mulish.regular.font(size: 16.0) as Any,
+                .foregroundColor: Asset.brandPrimary.color
+            ]
+        )
+
+        items.append(contentsOf: [
+            drawerTitle,
+            drawerSubtitle
+        ])
+
+        if let email = email {
+            let drawerEmail = DrawerSwitch(
+                title: Localized.ContactSearch.RequestDrawer.email,
+                content: email,
+                spacingAfter: phone != nil ? 23 : 31,
+                isInitiallyOn: isSharingEmail
+            )
+
+            items.append(drawerEmail)
+
+            drawerEmail.isOnPublisher
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] in self?.isSharingEmail = $0 }
+                .store(in: &drawerCancellables)
+        }
+
+        if let phone = phone {
+            let drawerPhone = DrawerSwitch(
+                title: Localized.ContactSearch.RequestDrawer.phone,
+                content: "\(Country.findFrom(phone).prefix) \(phone.dropLast(2))",
+                spacingAfter: 31,
+                isInitiallyOn: isSharingPhone
+            )
+
+            items.append(drawerPhone)
+
+            drawerPhone.isOnPublisher
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] in self?.isSharingPhone = $0 }
+                .store(in: &drawerCancellables)
+        }
+
+        let drawerSendButton = DrawerCapsuleButton(
+            model: .init(
+                title: Localized.ContactSearch.RequestDrawer.send,
+                style: .brandColored
+            ), spacingAfter: 5
+        )
+
+        let drawerCancelButton = DrawerCapsuleButton(
+            model: .init(
+                title: Localized.ContactSearch.RequestDrawer.cancel,
+                style: .simplestColoredBrand
+            ), spacingAfter: 5
+        )
+
+        items.append(contentsOf: [drawerSendButton, drawerCancelButton])
+        let drawer = DrawerController(with: items)
+
+        drawerSendButton.action
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                drawer.dismiss(animated: true) {
+                    self.viewModel.didTapRequest(contact: contact)
+                }
+            }.store(in: &drawerCancellables)
+
+        drawerCancelButton.action
+            .receive(on: DispatchQueue.main)
+            .sink { drawer.dismiss(animated: true) }
+            .store(in: &drawerCancellables)
+
+        coordinator.toDrawer(drawer, from: self)
+    }
+}
+
+// MARK: - Cover Traffic Drawer
+
+extension SearchController {
+    private func presentCoverTrafficDrawer() {
+        let enableButton = CapsuleButton()
+        enableButton.set(
+            style: .brandColored,
+            title: Localized.ChatList.Traffic.positive
+        )
+
+        let dismissButton = CapsuleButton()
+        dismissButton.set(
+            style: .seeThrough,
+            title: Localized.ChatList.Traffic.negative
+        )
+
+        let drawer = DrawerController(with: [
+            DrawerText(
+                font: Fonts.Mulish.bold.font(size: 26.0),
+                text: Localized.ChatList.Traffic.title,
+                color: Asset.neutralActive.color,
+                alignment: .left,
+                spacingAfter: 19
+            ),
+            DrawerText(
+                font: Fonts.Mulish.regular.font(size: 16.0),
+                text: Localized.ChatList.Traffic.subtitle,
+                color: Asset.neutralBody.color,
+                alignment: .left,
+                lineHeightMultiple: 1.1,
+                spacingAfter: 39
+            ),
+            DrawerStack(
+                axis: .horizontal,
+                spacing: 20,
+                distribution: .fillEqually,
+                views: [enableButton, dismissButton]
+            )
+        ])
+
+        enableButton
+            .publisher(for: .touchUpInside)
+            .receive(on: DispatchQueue.main)
+            .sink {
+                drawer.dismiss(animated: true) { [weak self] in
+                    guard let self = self else { return }
+                    self.drawerCancellables.removeAll()
+                    self.viewModel.didEnableCoverTraffic()
+                }
+            }.store(in: &drawerCancellables)
+
+        dismissButton
+            .publisher(for: .touchUpInside)
+            .receive(on: DispatchQueue.main)
+            .sink {
+                drawer.dismiss(animated: true) { [weak self] in
+                    guard let self = self else { return }
+                    self.drawerCancellables.removeAll()
+                }
+            }.store(in: &drawerCancellables)
+
+        coordinator.toDrawer(drawer, from: self)
+    }
+}
+
+extension SearchController {
+    private func presentSucessDrawerFor(contact: Contact) {
+        var items: [DrawerItem] = []
+
+        let drawerTitle = DrawerText(
+            font: Fonts.Mulish.extraBold.font(size: 26.0),
+            text: Localized.ContactSearch.NicknameDrawer.title,
+            color: Asset.neutralDark.color,
+            spacingAfter: 20
+        )
+
+        let drawerSubtitle = DrawerText(
+            font: Fonts.Mulish.regular.font(size: 16.0),
+            text: Localized.ContactSearch.NicknameDrawer.subtitle,
+            color: Asset.neutralDark.color,
+            spacingAfter: 20
+        )
+
+        items.append(contentsOf: [
+            drawerTitle,
+            drawerSubtitle
+        ])
+
+        let drawerNicknameInput = DrawerInput(
+            placeholder: contact.username,
+            validator: .init(
+                wrongIcon: .image(Asset.sharedError.image),
+                correctIcon: .image(Asset.sharedSuccess.image),
+                shouldAcceptPlaceholder: true
+            ),
+            spacingAfter: 29
+        )
+
+        items.append(drawerNicknameInput)
+
+        let drawerSaveButton = DrawerCapsuleButton(
+            model: .init(
+                title: Localized.ContactSearch.NicknameDrawer.save,
+                style: .brandColored
+            ), spacingAfter: 5
+        )
+
+        items.append(drawerSaveButton)
+
+        let drawer = DrawerController(with: items)
+        var nickname: String?
+        var allowsSave = true
+
+        drawerNicknameInput.validationPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { allowsSave = $0 }
+            .store(in: &drawerCancellables)
+
+        drawerNicknameInput.inputPublisher
+            .receive(on: DispatchQueue.main)
+            .sink {
+                guard !$0.isEmpty else {
+                    nickname = contact.username
+                    return
+                }
+
+                nickname = $0
+            }
+            .store(in: &drawerCancellables)
+
+        drawerSaveButton.action
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                guard allowsSave else { return }
+
+                drawer.dismiss(animated: true) {
+                    self.viewModel.didSet(nickname: nickname ?? contact.username, for: contact)
+                }
+            }
+            .store(in: &drawerCancellables)
+
+        coordinator.toNicknameDrawer(drawer, from: self)
+    }
+}

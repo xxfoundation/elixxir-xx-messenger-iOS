@@ -1,134 +1,59 @@
 import HUD
 import UIKit
-import Models
 import Shared
 import Combine
-import DifferenceKit
+import DependencyInjection
 
-final class RequestsSentController: UITableViewController {
-    lazy private(set) var emptyView = UIView()
+final class RequestsSentController: UIViewController {
+    @Dependency private var hud: HUDType
 
-    var tapPublisher: AnyPublisher<Contact, Never> {
-        tapRelay.eraseToAnyPublisher()
+    var connectionsPublisher: AnyPublisher<Void, Never> {
+        connectionSubject.eraseToAnyPublisher()
     }
 
-    var hudPublisher: AnyPublisher<HUDStatus, Never> {
-        hudRelay.eraseToAnyPublisher()
-    }
-
-    var emptyTapPublisher: AnyPublisher<Void, Never> {
-        emptyTapRelay.eraseToAnyPublisher()
-    }
-
-    private var items = [Contact]()
+    lazy private var screenView = RequestsSentView()
     private let viewModel = RequestsSentViewModel()
     private var cancellables = Set<AnyCancellable>()
-    private let tapRelay = PassthroughSubject<Contact, Never>()
-    private let emptyTapRelay = PassthroughSubject<Void, Never>()
-    private let hudRelay = PassthroughSubject<HUDStatus, Never>()
+    private let tapSubject = PassthroughSubject<Request, Never>()
+    private let connectionSubject = PassthroughSubject<Void, Never>()
+    private var dataSource: UICollectionViewDiffableDataSource<Section, RequestSent>?
 
-    override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        emptyView.frame = view.frame
+    override func loadView() {
+        view = screenView
     }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupTableView()
-        setupEmptyState()
-        setupBindings()
-    }
 
-    private func setupTableView() {
-        tableView.separatorStyle = .none
-        tableView.register(RequestSentCell.self)
-        tableView.backgroundColor = Asset.neutralWhite.color
-        tableView.contentInset = .init(top: 15, left: 0, bottom: 0, right: 0)
-    }
+        screenView.collectionView.register(RequestCell.self)
+        dataSource = UICollectionViewDiffableDataSource<Section, RequestSent>(
+            collectionView: screenView.collectionView
+        ) { collectionView, indexPath, requestSent in
 
-    private func setupEmptyState() {
-        let icon = UIImageView()
-        icon.contentMode = .center
-        icon.image = Asset.requestsReceivedPlaceholder.image
-
-        let button = CapsuleButton()
-        button.setStyle(.brandColored)
-        button.setTitle(Localized.Requests.Sent.action, for: .normal)
-
-        button.publisher(for: .touchUpInside)
-            .sink { [weak emptyTapRelay] in emptyTapRelay?.send() }
-            .store(in: &cancellables)
-
-        let stack = UIStackView()
-        stack.spacing = 24
-        stack.axis = .vertical
-        stack.alignment = .center
-        stack.addArrangedSubview(icon)
-        stack.addArrangedSubview(button)
-
-        emptyView.addSubview(stack)
-
-        stack.snp.makeConstraints { make in
-            make.centerY.equalToSuperview().multipliedBy(0.8)
-            make.left.equalToSuperview().offset(24)
-            make.right.equalToSuperview().offset(-24)
+            let cell: RequestCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
+            cell.setupFor(requestSent: requestSent)
+            cell.didTapStateButton = { [weak self] in
+                guard let self = self else { return }
+                self.viewModel.didTapStateButtonFor(request: requestSent)
+            }
+            return cell
         }
-    }
 
-    private func setupBindings() {
-        viewModel.items
+        viewModel.itemsPublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
-                let changeSet = StagedChangeset(source: self.items, target: $0)
-
-                self.tableView.reload(
-                    using: changeSet,
-                    deleteSectionsAnimation: .none,
-                    insertSectionsAnimation: .none,
-                    reloadSectionsAnimation: .none,
-                    deleteRowsAnimation: .none,
-                    insertRowsAnimation: .none,
-                    reloadRowsAnimation: .none
-                ) { [unowned self] in
-                    self.items = $0
-                }
+                dataSource?.apply($0, animatingDifferences: false)
+                screenView.collectionView.isHidden = $0.numberOfItems == 0
             }.store(in: &cancellables)
 
-        viewModel.items
+        viewModel.hudPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in emptyView.isHidden = !$0.isEmpty }
+            .sink { [hud] in hud.update(with: $0) }
             .store(in: &cancellables)
 
-        viewModel.hud
-            .sink { [weak hudRelay] in hudRelay?.send($0) }
-            .store(in: &cancellables)
-    }
-
-    override func tableView(_ tableView: UITableView,
-                            cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell: RequestSentCell = tableView.dequeueReusableCell(forIndexPath: indexPath)
-        let contact = items[indexPath.row]
-
-        cell.setup(
-            username: contact.username,
-            nickname: contact.nickname,
-            createdAt: contact.createdAt,
-            photo: contact.photo
-        )
-
-        cell.button
+        screenView.connectionsButton
             .publisher(for: .touchUpInside)
-            .sink { [unowned self] in viewModel.didTapResend(contact) }
-            .store(in: &cell.cancellables)
-
-        return cell
-    }
-
-    override func tableView(_: UITableView, numberOfRowsInSection: Int) -> Int {
-        items.count
-    }
-
-    override func tableView(_: UITableView, heightForRowAt: IndexPath) -> CGFloat {
-        56
+            .sink { [unowned self] in connectionSubject.send() }
+            .store(in: &cancellables)
     }
 }

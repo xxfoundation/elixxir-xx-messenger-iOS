@@ -10,14 +10,11 @@ public typealias ChatListSheetClosure = (ChatListSheetController.Action) -> Void
 public protocol ChatListCoordinating {
     func toScan(from: UIViewController)
     func toSearch(from: UIViewController)
-    func toProfile(from: UIViewController)
-    func toSettings(from: UIViewController)
     func toContacts(from: UIViewController)
-    func toRequests(from: UIViewController)
+    func toSideMenu(from: UIViewController)
     func toSingleChat(with: Contact, from: UIViewController)
-    func toPopup(_: UIViewController, from: UIViewController)
+    func toDrawer(_: UIViewController, from: UIViewController)
     func toGroupChat(with: GroupChatInfo, from: UIViewController)
-    func toSideMenu<T: UIViewController>(from: T) where T: MenuDelegate
 }
 
 public struct ChatListCoordinator: ChatListCoordinating {
@@ -28,31 +25,22 @@ public struct ChatListCoordinator: ChatListCoordinating {
 
     var scanFactory: () -> UIViewController
     var searchFactory: () -> UIViewController
-    var profileFactory: () -> UIViewController
-    var settingsFactory: () -> UIViewController
     var contactsFactory: () -> UIViewController
-    var requestsFactory: () -> UIViewController
     var singleChatFactory: (Contact) -> UIViewController
-    var sideMenuFactory: (MenuDelegate) -> UIViewController
     var groupChatFactory: (GroupChatInfo) -> UIViewController
+    var sideMenuFactory: (MenuItem, UIViewController) -> UIViewController
 
     public init(
         scanFactory: @escaping () -> UIViewController,
         searchFactory: @escaping () -> UIViewController,
-        profileFactory: @escaping () -> UIViewController,
-        settingsFactory: @escaping () -> UIViewController,
         contactsFactory: @escaping () -> UIViewController,
-        requestsFactory: @escaping () -> UIViewController,
         singleChatFactory: @escaping (Contact) -> UIViewController,
-        sideMenuFactory: @escaping (MenuDelegate) -> UIViewController,
-        groupChatFactory: @escaping (GroupChatInfo) -> UIViewController
+        groupChatFactory: @escaping (GroupChatInfo) -> UIViewController,
+        sideMenuFactory: @escaping (MenuItem, UIViewController) -> UIViewController
     ) {
         self.scanFactory = scanFactory
         self.searchFactory = searchFactory
-        self.profileFactory = profileFactory
-        self.settingsFactory = settingsFactory
         self.contactsFactory = contactsFactory
-        self.requestsFactory = requestsFactory
         self.sideMenuFactory = sideMenuFactory
         self.groupChatFactory = groupChatFactory
         self.singleChatFactory = singleChatFactory
@@ -70,23 +58,8 @@ public extension ChatListCoordinator {
         pushPresenter.present(screen, from: parent)
     }
 
-    func toProfile(from parent: UIViewController) {
-        let screen = profileFactory()
-        pushPresenter.present(screen, from: parent)
-    }
-
     func toContacts(from parent: UIViewController) {
         let screen = contactsFactory()
-        pushPresenter.present(screen, from: parent)
-    }
-
-    func toSettings(from parent: UIViewController) {
-        let screen = settingsFactory()
-        pushPresenter.present(screen, from: parent)
-    }
-
-    func toRequests(from parent: UIViewController) {
-        let screen = requestsFactory()
         pushPresenter.present(screen, from: parent)
     }
 
@@ -100,12 +73,12 @@ public extension ChatListCoordinator {
         pushPresenter.present(screen, from: parent)
     }
 
-    func toSideMenu<T: UIViewController>(from parent: T) where T: MenuDelegate {
-        let screen = sideMenuFactory(parent)
+    func toSideMenu(from parent: UIViewController) {
+        let screen = sideMenuFactory(.chats, parent)
         sidePresenter.present(screen, from: parent)
     }
 
-    func toPopup(_ popup: UIViewController, from parent: UIViewController) {
-        bottomPresenter.present(popup, from: parent)
+    func toDrawer(_ drawer: UIViewController, from parent: UIViewController) {
+        bottomPresenter.present(drawer, from: parent)
     }
 }

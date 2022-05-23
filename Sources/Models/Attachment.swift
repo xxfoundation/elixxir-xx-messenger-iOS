@@ -18,6 +18,15 @@ public struct Attachment: Codable, Equatable, Hashable {
                 return "m4a"
             }
         }
+
+        public var writtenExtended: String {
+            switch self {
+            case .image:
+                return "image"
+            case .audio:
+                return "voice message"
+            }
+        }
     }
 
     public let data: Data?

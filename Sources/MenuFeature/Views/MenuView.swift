@@ -6,7 +6,6 @@ final class MenuView: UIView {
     let stackView = UIStackView()
     let scanButton = MenuSectionButton()
     let chatsButton = MenuSectionButton()
-    let profileButton = MenuSectionButton()
     let contactsButton = MenuSectionButton()
     let requestsButton = MenuSectionButton()
     let settingsButton = MenuSectionButton()
@@ -35,7 +34,6 @@ final class MenuView: UIView {
 
         scanButton.set(title: Localized.Menu.scan, image: Asset.menuScan.image)
         requestsButton.set(title: Localized.Menu.requests, image: Asset.menuRequests.image)
-        profileButton.set(title: Localized.Menu.profile, image: Asset.menuProfile.image)
         contactsButton.set(title: Localized.Menu.contacts, image: Asset.menuContacts.image)
         settingsButton.set(title: Localized.Menu.settings, image: Asset.menuSettings.image)
         dashboardButton.set(title: Localized.Menu.dashboard, image: Asset.menuDashboard.image)
@@ -44,7 +42,6 @@ final class MenuView: UIView {
         stackView.addArrangedSubview(chatsButton)
         stackView.addArrangedSubview(contactsButton)
         stackView.addArrangedSubview(requestsButton)
-        stackView.addArrangedSubview(profileButton)
         stackView.addArrangedSubview(scanButton)
         stackView.addArrangedSubview(settingsButton)
         stackView.addArrangedSubview(dashboardButton)
@@ -92,7 +89,6 @@ final class MenuView: UIView {
         scanButton.accessibilityIdentifier = Localized.Accessibility.Menu.scan
         chatsButton.accessibilityIdentifier = Localized.Accessibility.Menu.chats
         headerView.accessibilityIdentifier = Localized.Accessibility.Menu.header
-        profileButton.accessibilityIdentifier = Localized.Accessibility.Menu.profile
         contactsButton.accessibilityIdentifier = Localized.Accessibility.Menu.contacts
         requestsButton.accessibilityIdentifier = Localized.Accessibility.Menu.requests
         settingsButton.accessibilityIdentifier = Localized.Accessibility.Menu.settings

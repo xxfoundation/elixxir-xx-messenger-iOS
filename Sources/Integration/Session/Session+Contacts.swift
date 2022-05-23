@@ -1,5 +1,6 @@
 import Retry
 import Models
+import Shared
 import Database
 import Foundation
 
@@ -149,7 +150,11 @@ extension Session {
 
         contactToOperate.status = .requesting
 
-        let myself = client.bindings.meMarshalled(username!, email: nil, phone: nil)
+        let myself = client.bindings.meMarshalled(
+            username!,
+            email: isSharingEmail ? email : nil,
+            phone: isSharingPhone ? phone : nil
+        )
 
         client.bindings.add(contactToOperate.marshaled, from: myself) { [weak self, contactToOperate] in
             guard let self = self, var contactToOperate = contactToOperate else { return }
@@ -169,6 +174,12 @@ extension Session {
                     contactToOperate = try self.dbManager.save(contactToOperate)
 
                     log(string: "Failed when adding \(title):\n\(error.localizedDescription)", type: .error)
+
+                    self.toastController.enqueueToast(model: .init(
+                        title: Localized.Requests.Failed.toast(contactToOperate.nickname ?? contact.username),
+                        color: Asset.accentDanger.color,
+                        leftImage: Asset.requestFailedToaster.image
+                    ))
                 }
             } catch {
                 log(string: "Error adding \(title):\n\(error.localizedDescription)", type: .error)

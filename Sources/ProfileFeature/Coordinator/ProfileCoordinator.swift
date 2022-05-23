@@ -2,14 +2,16 @@ import UIKit
 import Shared
 import Models
 import Countries
-import Presentation
 import Permissions
+import MenuFeature
+import Presentation
 
 public protocol ProfileCoordinating {
     func toEmail(from: UIViewController)
     func toPhone(from: UIViewController)
     func toPhotos(from: UIViewController)
-    func toPopup(_: UIViewController, from: UIViewController)
+    func toSideMenu(from: UIViewController)
+    func toDrawer(_: UIViewController, from: UIViewController)
     func toPermission(type: PermissionType, from: UIViewController)
 
     func toCode(
@@ -27,12 +29,14 @@ public protocol ProfileCoordinating {
 public struct ProfileCoordinator: ProfileCoordinating {
     var pushPresenter: Presenting = PushPresenter()
     var modalPresenter: Presenting = ModalPresenter()
+    var sidePresenter: Presenting = SideMenuPresenter()
     var bottomPresenter: Presenting = BottomPresenter()
 
     var emailFactory: () -> UIViewController
     var phoneFactory: () -> UIViewController
     var imagePickerFactory: () -> UIImagePickerController
     var permissionFactory: () -> RequestPermissionController
+    var sideMenuFactory: (MenuItem, UIViewController) -> UIViewController
     var countriesFactory: (@escaping (Country) -> Void) -> UIViewController
     var codeFactory: (AttributeConfirmation, @escaping ControllerClosure) -> UIViewController
 
@@ -41,12 +45,14 @@ public struct ProfileCoordinator: ProfileCoordinating {
         phoneFactory: @escaping () -> UIViewController,
         imagePickerFactory: @escaping () -> UIImagePickerController,
         permissionFactory: @escaping () -> RequestPermissionController, // ⚠️
+        sideMenuFactory: @escaping (MenuItem, UIViewController) -> UIViewController,
         countriesFactory: @escaping (@escaping (Country) -> Void) -> UIViewController,
         codeFactory: @escaping (AttributeConfirmation, @escaping ControllerClosure) -> UIViewController
     ) {
         self.codeFactory = codeFactory
         self.emailFactory = emailFactory
         self.phoneFactory = phoneFactory
+        self.sideMenuFactory = sideMenuFactory
         self.countriesFactory = countriesFactory
         self.permissionFactory = permissionFactory
         self.imagePickerFactory = imagePickerFactory
@@ -79,8 +85,8 @@ public extension ProfileCoordinator {
         pushPresenter.present(screen, from: parent)
     }
 
-    func toPopup(_ popup: UIViewController, from parent: UIViewController) {
-        bottomPresenter.present(popup, from: parent)
+    func toDrawer(_ drawer: UIViewController, from parent: UIViewController) {
+        bottomPresenter.present(drawer, from: parent)
     }
 
     func toCountries(from parent: UIViewController, _ onChoose: @escaping (Country) -> Void) {
@@ -93,5 +99,10 @@ public extension ProfileCoordinator {
         screen.delegate = (parent as? (UIImagePickerControllerDelegate & UINavigationControllerDelegate))
         screen.allowsEditing = true
         modalPresenter.present(screen, from: parent)
+    }
+
+    func toSideMenu(from parent: UIViewController) {
+        let screen = sideMenuFactory(.profile, parent)
+        sidePresenter.present(screen, from: parent)
     }
 }

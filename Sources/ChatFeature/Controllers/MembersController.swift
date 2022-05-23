@@ -34,7 +34,7 @@ final class MembersController: UIViewController {
         for member in members {
             let memberView = MemberView()
             memberView.titleLabel.text = member.username
-            memberView.avatarView.set(username: member.username, image: member.photo)
+            memberView.avatarView.setupProfile(title: member.username, image: member.photo, size: .small)
             stackView.addArrangedSubview(memberView)
         }
     }

@@ -1,5 +1,5 @@
 import HUD
-import Popup
+import DrawerFeature
 import UIKit
 import Theme
 import Shared
@@ -18,7 +18,7 @@ public final class ContactController: UIViewController {
 
     private let viewModel: ContactViewModel
     private var cancellables = Set<AnyCancellable>()
-    private var popupCancellables = Set<AnyCancellable>()
+    private var drawerCancellables = Set<AnyCancellable>()
 
     public init(_ model: Contact) {
         self.viewModel = ContactViewModel(model)
@@ -277,11 +277,11 @@ public final class ContactController: UIViewController {
 
         screenView.confirmedView.clearButton
             .publisher(for: .touchUpInside)
-            .sink { [unowned self] in presentClearPopup() }
+            .sink { [unowned self] in presentClearDrawer() }
             .store(in: &cancellables)
     }
 
-    private func presentClearPopup() {
+    private func presentClearDrawer() {
         let clearButton = CapsuleButton()
         clearButton.setStyle(.red)
         clearButton.setTitle(Localized.Contact.Clear.action, for: .normal)
@@ -290,48 +290,47 @@ public final class ContactController: UIViewController {
         cancelButton.setStyle(.seeThrough)
         cancelButton.setTitle(Localized.Contact.Clear.cancel, for: .normal)
 
-        let popup = BottomPopup(with: [
-            PopupImage(image: Asset.popupNegative.image),
-            PopupLabel(
+        let drawer = DrawerController(with: [
+            DrawerImage(
+                image: Asset.drawerNegative.image
+            ),
+            DrawerText(
                 font: Fonts.Mulish.semiBold.font(size: 18.0),
                 text: Localized.Contact.Clear.title,
                 color: Asset.neutralActive.color
             ),
-            PopupLabel(
+            DrawerText(
                 font: Fonts.Mulish.semiBold.font(size: 14.0),
                 text: Localized.Contact.Clear.subtitle,
                 color: Asset.neutralWeak.color,
                 lineHeightMultiple: 1.35,
                 spacingAfter: 25
             ),
-            PopupStackView(
+            DrawerStack(
                 spacing: 20.0,
-                views: [
-                    clearButton,
-                    cancelButton
-                ]
+                views: [clearButton, cancelButton]
             )
         ])
 
         clearButton.publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink {
-                popup.dismiss(animated: true) { [weak self] in
+                drawer.dismiss(animated: true) { [weak self] in
                     guard let self = self else { return }
-                    self.popupCancellables.removeAll()
+                    self.drawerCancellables.removeAll()
                     self.viewModel.didTapClear()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
         cancelButton.publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink {
-                popup.dismiss(animated: true) { [weak self] in
-                    self?.popupCancellables.removeAll()
+                drawer.dismiss(animated: true) { [weak self] in
+                    self?.drawerCancellables.removeAll()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
-        coordinator.toPopup(popup, from: self)
+        coordinator.toDrawer(drawer, from: self)
     }
 
     @objc private func didTapBack() {
@@ -375,69 +374,71 @@ extension ContactController {
         let actionButton = CapsuleButton()
         actionButton.set(
             style: .seeThrough,
-            title: Localized.Settings.InfoPopUp.action
+            title: Localized.Settings.InfoDrawer.action
         )
 
-        let popup = BottomPopup(with: [
-            PopupLabel(
+        let drawer = DrawerController(with: [
+            DrawerText(
                 font: Fonts.Mulish.bold.font(size: 26.0),
                 text: title,
                 color: Asset.neutralActive.color,
                 alignment: .left,
                 spacingAfter: 19
             ),
-            PopupLinkText(
+            DrawerLinkText(
                 text: subtitle,
                 urlString: urlString,
                 spacingAfter: 37
             ),
-            PopupStackView(views: [actionButton, FlexibleSpace()])
+            DrawerStack(views: [
+                actionButton,
+                FlexibleSpace()
+            ])
         ])
 
         actionButton.publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink {
-                popup.dismiss(animated: true) { [weak self] in
+                drawer.dismiss(animated: true) { [weak self] in
                     guard let self = self else { return }
-                    self.popupCancellables.removeAll()
+                    self.drawerCancellables.removeAll()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
-        coordinator.toPopup(popup, from: self)
+        coordinator.toDrawer(drawer, from: self)
     }
 
     private func presentDeleteInfo() {
-        let actionButton = CapsuleButton()
-        actionButton.set(
-            style: .red,
-            title: "Delete Connection"
-        )
+        let actionButton = DrawerCapsuleButton(model: .init(
+            title: "Delete Connection",
+            style: .red
+        ))
 
-        let popup = BottomPopup(with: [
-            PopupLabel(
+        let drawer = DrawerController(with: [
+            DrawerText(
                 font: Fonts.Mulish.bold.font(size: 26.0),
                 text: "Delete Connection?",
                 color: Asset.neutralActive.color,
                 alignment: .left,
                 spacingAfter: 19
             ),
-            PopupLabelAttributed(
+            DrawerText(
                 text: "This is a silent deletion, \(viewModel.contact.username) will not know you deleted them. This action will remove all information on your phone about this user, including your communications. You #cannot undo this step, and cannot re-add them unless they delete you as a connection as well.#",
                 spacingAfter: 37
                 ),
-            PopupStackView(views: [actionButton])
+            actionButton
         ])
 
-        actionButton.publisher(for: .touchUpInside)
+        actionButton.action
             .receive(on: DispatchQueue.main)
             .sink {
-                popup.dismiss(animated: true) { [weak self] in
+                drawer.dismiss(animated: true) { [weak self] in
                     guard let self = self else { return }
-                    self.popupCancellables.removeAll()
+                    self.drawerCancellables.removeAll()
                     self.viewModel.didTapDelete()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
-        coordinator.toPopup(popup, from: self)
+        coordinator.toDrawer(drawer, from: self)
     }
 }

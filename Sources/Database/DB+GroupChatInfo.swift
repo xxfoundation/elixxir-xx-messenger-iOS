@@ -19,7 +19,7 @@ extension GroupChatInfo: Requestable  {
         switch request {
         case .accepted:
             return Group
-                .filter(Group.Column.accepted == true)
+                .filter(Group.Column.status == Group.Status.participating.rawValue)
                 .with(lastMessageCTE)
                 .including(optional: lastMessage)
                 .including(all: Group.members.forKey("members"))

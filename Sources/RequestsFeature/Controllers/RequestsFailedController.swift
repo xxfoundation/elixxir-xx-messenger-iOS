@@ -2,105 +2,47 @@ import HUD
 import UIKit
 import Shared
 import Combine
-import Models
-import DifferenceKit
+import DependencyInjection
 
-final class RequestsFailedController: UITableViewController {
-    // MARK: Properties
+final class RequestsFailedController: UIViewController {
+    @Dependency private var hud: HUDType
 
-    var hudPublisher: AnyPublisher<HUDStatus, Never> {
-        hudRelay.eraseToAnyPublisher()
-    }
-
-    var didTap: AnyPublisher<Contact, Never> {
-        tapRelay.eraseToAnyPublisher()
-    }
-
-    private let tapRelay = PassthroughSubject<Contact, Never>()
-    private let hudRelay = PassthroughSubject<HUDStatus, Never>()
-
-    private var items = [Contact]()
+    lazy private var screenView = RequestsFailedView()
     private var cancellables = Set<AnyCancellable>()
     private let viewModel = RequestsFailedViewModel()
+    private var dataSource: UICollectionViewDiffableDataSource<Section, Request>?
 
-    // MARK: Lifecycle
+    override func loadView() {
+        view = screenView
+    }
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupTableView()
-        setupBindings()
-    }
 
-    // MARK: Private
+        screenView.collectionView.register(RequestCell.self)
+        dataSource = UICollectionViewDiffableDataSource<Section, Request>(
+            collectionView: screenView.collectionView
+        ) { collectionView, indexPath, request in
 
-    private func setupTableView() {
-        tableView.separatorStyle = .none
-        tableView.register(RequestFailedCell.self)
-        tableView.backgroundColor = Asset.neutralWhite.color
-    }
+            let cell: RequestCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
+            cell.setupFor(requestFailed: request)
+            cell.didTapStateButton = { [weak self] in
+                guard let self = self else { return }
+                self.viewModel.didTapStateButtonFor(request: request)
+            }
+            return cell
+        }
 
-    private func setupBindings() {
-        viewModel.items
+        viewModel.itemsPublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
-                let changeSet = StagedChangeset(source: self.items, target: $0)
-
-                self.tableView.reload(
-                    using: changeSet,
-                    deleteSectionsAnimation: .none,
-                    insertSectionsAnimation: .none,
-                    reloadSectionsAnimation: .none,
-                    deleteRowsAnimation: .none,
-                    insertRowsAnimation: .none,
-                    reloadRowsAnimation: .none
-                ) { [unowned self] in
-                    self.items = $0
-                }
+                dataSource?.apply($0, animatingDifferences: false)
+                screenView.collectionView.isHidden = $0.numberOfItems == 0
             }.store(in: &cancellables)
 
-        viewModel.hud
-            .sink { [weak hudRelay] in hudRelay?.send($0) }
+        viewModel.hudPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [hud] in hud.update(with: $0) }
             .store(in: &cancellables)
     }
-
-    // MARK: UITableViewDataSource
-
-    override func tableView(_ tableView: UITableView,
-                            cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell: RequestFailedCell = tableView.dequeueReusableCell(forIndexPath: indexPath)
-        let contact = items[indexPath.row]
-
-        cell.setup(
-            username: contact.username,
-            nickname: contact.nickname,
-            createdAt: contact.createdAt,
-            photo: contact.photo
-        )
-
-        cell.button
-            .publisher(for: .touchUpInside)
-            .sink { [unowned self] in viewModel.didTapRetry(contact) }
-            .store(in: &cell.cancellables)
-
-        return cell
-    }
-
-    // MARK: UITableViewDelegate
-
-    override func tableView(
-        _ tableView: UITableView,
-        didSelectRowAt indexPath: IndexPath
-    ) {
-        tapRelay.send(items[indexPath.row])
-    }
-
-    override func tableView(
-        _ tableView: UITableView,
-        numberOfRowsInSection section: Int
-    ) -> Int { items.count }
-
-    override func tableView(
-        _ tableView: UITableView,
-        heightForRowAt indexPath: IndexPath
-    ) -> CGFloat { 72 }
 }

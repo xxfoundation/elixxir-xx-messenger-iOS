@@ -67,7 +67,7 @@
 "chatList.deleteGroup.title"
 = "Are you sure you want to delete a group?";
 "chatList.deleteGroup.subtitle"
-= "This will not only delete the messages sent to this group locally but will also remove you from it.";
+= "You will exit this group and you won’t receive any more messages from this group and your group messages will be lost.";
 "chatList.deleteGroup.action"
 = "Leave group";
 
@@ -289,25 +289,93 @@
 
 "requests.title"
 = "Requests";
+"requests.cell.resent"
+= "Resent";
+"requests.cell.verifying"
+= "Verifying";
+"requests.cell.failedVerification"
+= "Failed to verify";
+"requests.cell.requested"
+= "Resend";
+"requests.cell.failedRequest"
+= "Retry";
 
 // RequestsFeature - Received
 
 "requests.received.title"
 = "Received";
 "requests.received.placeholder"
-= "No requests are currently waiting for review";
+= "No recent requests received";
+"requests.received.hidden"
+= "Show hidden requests";
+
+"requests.received.verifying.title"
+= "Verifying";
+"requests.received.verifying.subtitle"
+= "We are working on verifying the request to make sure it is not a spam. Please check again shortly.";
+"requests.received.verifying.action"
+= "OK";
+
+"requests.confirmations.toaster"
+= "Accepted your request";
 
 // RequestsFeature - Sent
 
 "requests.sent.title"
 = "Sent";
 "requests.sent.action"
-= "Add contact";
+= "Search for connections";
+"requests.sent.empty"
+= "You haven't sent any requests";
+"requests.sent.toast.resent"
+= "Request successfully resent to %@";
 
 // RequestsFeature - Failed
 
 "requests.failed.title"
 = "Failed";
+"requests.failed.empty"
+= "There are no failed requests";
+"requests.failed.toast"
+= "Your contact request to %@ has failed.";
+
+"requests.drawer.single.title"
+= "REQUEST FROM";
+"requests.drawer.single.email"
+= "EMAIL ADDRESS";
+"requests.drawer.single.phone"
+= "PHONE NUMBER";
+"requests.drawer.single.nickname"
+= "Edit your new contact’s nickname.";
+"requests.drawer.single.accept"
+= "Accept and Save";
+"requests.drawer.single.hide"
+= "Hide Request";
+
+"requests.drawer.group.title"
+= "GROUP CHAT REQUEST";
+"requests.drawer.group.accept"
+= "Accept";
+"requests.drawer.group.hide"
+= "Hide Request";
+
+"requests.drawer.single.success.title"
+= "NEW CONNECTION";
+"requests.drawer.single.success.subtitle"
+= "Is now a connection, would you like to send a message?";
+"requests.drawer.single.success.send"
+= "Send a Message";
+"requests.drawer.single.success.later"
+= "Later";
+
+"requests.drawer.group.success.title"
+= "ACCEPTED";
+"requests.drawer.group.success.subtitle"
+= "You are now part of the group chat. Would you like to check it out?";
+"requests.drawer.group.success.send"
+= "Go to Chat";
+"requests.drawer.group.success.later"
+= "Later";
 
 // ProfileFeature
 
@@ -413,9 +481,9 @@
 "settings.delete"
 = "Delete account";
 
-"settings.popup.title"
+"settings.drawer.title"
 = "Do you want to open %@?";
-"settings.popup.subtitle"
+"settings.drawer.subtitle"
 = "%@ will be opened using your default browser";
 
 "settings.advanced.title"
@@ -442,7 +510,7 @@
 "backup.config.backupNow"
 = "Backup now";
 "backup.config.disclaimer"
-= "Content backed up in %@ is not protected by xx network end-to-end encryption.";
+= "Content backed up in %@ is encrypted with your passphrase in a brute force resistant manner";
 "backup.config.latestBackup"
 = "LATEST BACKUP";
 "backup.config.frequency"
@@ -475,27 +543,27 @@
 "settings.delete.info.subtitle"
 = "On deletion, all keys for your account are purged from your phone. This action will not notify your contacts. Your keys and any registered emails or phone numbers are removed from the user discovery system.";
 
-"settings.infoPopUp.notifications.title"
+"settings.infoDrawer.notifications.title"
 = "Notifications";
-"settings.infoPopUp.notifications.subtitle"
+"settings.infoDrawer.notifications.subtitle"
 = "Selecting this setting will share your account ID and unique phone identifiers with a notification service run by the xx network team. However, these details are obfuscated via an #ID collision system# when you receive a notification. As a result, both the notifications service and your notifications provider (Firebase on Android, Apple on iOS) cannot tell exactly when you receive a message.";
-"settings.infoPopUp.biometrics.title"
+"settings.infoDrawer.biometrics.title"
 = "Biometric Authentication";
-"settings.infoPopUp.biometrics.subtitle"
+"settings.infoDrawer.biometrics.subtitle"
 = "Biometric authentication is stored through the native system on your phone, not by the xx messenger app. The xx network cannot access your biometric authentication data.";
-"settings.infoPopUp.icognito.title"
+"settings.infoDrawer.icognito.title"
 = "Predictive Text";
-"settings.infoPopUp.icognito.subtitle"
+"settings.infoDrawer.icognito.subtitle"
 = "Predictive text is a feature offered by your phone’s operating system. It involves storing entered text within your phone’s operating system and may involve sending it to remote servers. As a result, it may significantly degrade your privacy.";
-"settings.infoPopUp.traffic.title"
+"settings.infoDrawer.traffic.title"
 = "Cover Traffic";
-"settings.infoPopUp.traffic.subtitle"
+"settings.infoDrawer.traffic.subtitle"
 = "Cover Traffic hides when you are sending messages by randomly sending messages to random users.  Other user’s phones will pick up these messages but they will not see them or know you sent them. As a result, it not only hides when you send messages, but helps hide who you are talking to. #Read more about it#";
-"settings.infoPopUp.privacy.title"
+"settings.infoDrawer.privacy.title"
 = "Please note";
-"settings.infoPopUp.privacy.subtitle"
+"settings.infoDrawer.privacy.subtitle"
 = "Because xx messenger does not capture your personal data or save your private keys, we will not be able to, at this time, help new users recover their account in case of being locked out, changing devices, etc. Account recovery support that continues to protect your privacy and personal data will be coming soon.";
-"settings.infoPopUp.action"
+"settings.infoDrawer.action"
 = "Got it";
 
 // Validator
@@ -733,25 +801,25 @@
 = "Contacts";
 "createGroup.create"
 = "Create";
-"createGroup.popup.title"
+"createGroup.drawer.title"
 = "Create Group";
-"createGroup.popup.subtitle"
+"createGroup.drawer.subtitle"
 = "You are about to create a group message with %@ users. The information below will be visible to all members of the group.";
-"createGroup.popup.input"
+"createGroup.drawer.input"
 = "Group Name";
-"createGroup.popup.otherInput"
+"createGroup.drawer.otherInput"
 = "Initial Message";
-"createGroup.popup.placeholder"
+"createGroup.drawer.placeholder"
 = "Secret Family";
-"createGroup.popup.otherPlaceholder"
+"createGroup.drawer.otherPlaceholder"
 = "Say hi to your friends!";
-"createGroup.popup.minimum"
+"createGroup.drawer.minimum"
 = "Needs to be at least 4 chars";
-"createGroup.popup.maximum"
+"createGroup.drawer.maximum"
 = "Needs to be 20 chars max or 256 bytes";
-"createGroup.popup.action"
+"createGroup.drawer.action"
 = "Create Group";
-"createGroup.popup.cancel"
+"createGroup.drawer.cancel"
 = "Cancel";
 
 // SearchFeature
@@ -760,11 +828,11 @@
 = "Search";
 "contactSearch.placeholder.title"
 = "Searching is private by nature. The network cannot identify who a search request came from.";
-"contactSearch.placeholder.popup.title"
+"contactSearch.placeholder.drawer.title"
 = "Search";
-"contactSearch.placeholder.popup.subtitle"
+"contactSearch.placeholder.drawer.subtitle"
 = "You can search for users by their username, email, or phone number using the xx network’s #Anonymous Data Retrieval protocol# which keeps a user’s identity anonymous while requesting data. All sent requests contain salted hashes of what you are searching for. Raw data on emails, usernames, and phone numbers do not leave your phone.";
-"contactSearch.placeholder.popup.action"
+"contactSearch.placeholder.drawer.action"
 = "Got it";
 "contactSearch.filter.phone"
 = "Phone";
@@ -776,6 +844,22 @@
 = "User";
 "contactSearch.noneFound"
 = "There are no users with that %@.";
+"contactSearch.requestDrawer.title"
+= "Request Contact";
+"contactSearch.requestDrawer.email"
+= "EMAIL ADDRESS";
+"contactSearch.requestDrawer.phone"
+= "PHONE NUMBER";
+"contactSearch.requestDrawer.send"
+= "Send Contact Request";
+"contactSearch.requestDrawer.cancel"
+= "Cancel";
+"contactSearch.nicknameDrawer.title"
+= "Add a nickname";
+"contactSearch.nicknameDrawer.subtitle"
+= "Edit your new contact’s nickname so you know who they are.";
+"contactSearch.nicknameDrawer.save"
+= "Save";
 
 // Countries
 
@@ -903,12 +987,12 @@
 
 "accessibility.createGroup.create"
 = "createGroup.create";
-"accessibility.createGroup.popup.input"
-= "createGroup.popup.input";
-"accessibility.createGroup.popup.otherInput"
-= "createGroup.popup.otherInput";
-"accessibility.createGroup.popup.create"
-= "createGroup.popup.create";
+"accessibility.createGroup.drawer.input"
+= "createGroup.drawer.input";
+"accessibility.createGroup.drawer.otherInput"
+= "createGroup.drawer.otherInput";
+"accessibility.createGroup.drawer.create"
+= "createGroup.drawer.create";
 
 // - Search
 
