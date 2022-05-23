@@ -19,11 +19,14 @@ public final class SideMenuPresenter: NSObject,
     
     // MARK: Presenting
 
-    public func present(_ target: UIViewController,
-                        from parent: UIViewController) {
-        target.modalPresentationStyle = .overFullScreen
-        target.transitioningDelegate = self
-        parent.present(target, animated: true)
+    public func present(_ viewControllers: UIViewController..., from parent: UIViewController) {
+        guard let screen = viewControllers.first else {
+            fatalError("Tried to present empty list of view controllers")
+        }
+
+        screen.modalPresentationStyle = .overFullScreen
+        screen.transitioningDelegate = self
+        parent.present(screen, animated: true)
     }
 
     // MARK: UIViewControllerTransitioningDelegate

@@ -5,8 +5,6 @@ import Shared
 import Combine
 import DependencyInjection
 
-private let logger = Logger(subsystem: "logs_xxmessenger", category: "Countries.CountryListController.swift")
-
 public final class CountryListController: UIViewController {
     @Dependency private var statusBarController: StatusBarStyleControlling
     
@@ -25,8 +23,6 @@ public final class CountryListController: UIViewController {
     required init?(coder: NSCoder) { nil }
 
     public override func viewWillAppear(_ animated: Bool) {
-        logger.log("viewWillAppear()")
-
         super.viewWillAppear(animated)
         statusBarController.style.send(.darkContent)
 
@@ -37,13 +33,10 @@ public final class CountryListController: UIViewController {
     }
 
     public override func loadView() {
-        logger.log("loadView()")
         view = screenView
     }
 
     public override func viewDidLoad() {
-        logger.log("viewDidLoad()")
-
         super.viewDidLoad()
         screenView.tableView.register(CountryListCell.self)
         setupNavigationBar()
@@ -53,8 +46,6 @@ public final class CountryListController: UIViewController {
     }
     
     private func setupNavigationBar() {
-        logger.log("setupNavigationBar()")
-
         navigationItem.backButtonTitle = " "
 
         let title = UILabel()
@@ -71,8 +62,6 @@ public final class CountryListController: UIViewController {
     }
 
     private func setupBindings() {
-        logger.log("setupBindings()")
-
         viewModel.countries
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in dataSource.apply($0, animatingDifferences: false) }
@@ -82,9 +71,9 @@ public final class CountryListController: UIViewController {
             tableView: screenView.tableView
         ) { tableView, indexPath, country in
             let cell: CountryListCell = tableView.dequeueReusableCell(forIndexPath: indexPath)
-            cell.flag.text = country.flag
-            cell.name.text = country.name
-            cell.prefix.text = country.prefix
+            cell.flagLabel.text = country.flag
+            cell.nameLabel.text = country.name
+            cell.prefixLabel.text = country.prefix
             return cell
         }
 
@@ -99,13 +88,10 @@ public final class CountryListController: UIViewController {
     }
     
     @objc private func didTapBack() {
-        logger.log("didTapBack()")
         navigationController?.popViewController(animated: true)
     }
 
     public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        logger.log("tableView(didSelectRowAt indexPath.row: \(indexPath.row, privacy: .public)()")
-
         if let country = dataSource.itemIdentifier(for: indexPath) {
             didChoose(country)
             navigationController?.popViewController(animated: true)

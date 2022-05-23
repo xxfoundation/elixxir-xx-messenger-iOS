@@ -17,10 +17,16 @@ extension GroupMember: Persistable {
 
     public static func query(_ request: Request) -> QueryInterfaceRequest<GroupMember> {
         switch request {
+        case .all:
+            return GroupMember.all()
         case let .withUserId(userId):
             return GroupMember.filter(Column.userId == userId)
+        case .fromGroup(let groupId):
+            return GroupMember.filter(Column.groupId == groupId)
         case .strangers:
-            return GroupMember.filter(Column.status == GroupMember.Status.pendingUsername.rawValue)
+            return GroupMember.filter(
+                Column.status == GroupMember.Status.pendingUsername.rawValue
+            )
         }
     }
 }

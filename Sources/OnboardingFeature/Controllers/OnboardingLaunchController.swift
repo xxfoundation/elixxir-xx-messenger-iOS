@@ -76,20 +76,20 @@ public final class OnboardingLaunchController: UIViewController {
         viewModel.updatePublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] updateModel in
-                let popupView = UIView()
-                popupView.backgroundColor = Asset.neutralSecondary.color
-                popupView.layer.cornerRadius = 5
+                let drawerView = UIView()
+                drawerView.backgroundColor = Asset.neutralSecondary.color
+                drawerView.layer.cornerRadius = 5
 
                 let vStack = UIStackView()
                 vStack.axis = .vertical
                 vStack.spacing = 10
-                popupView.addSubview(vStack)
+                drawerView.addSubview(vStack)
 
-                vStack.snp.makeConstraints { make in
-                    make.top.equalToSuperview().offset(18)
-                    make.left.equalToSuperview().offset(18)
-                    make.right.equalToSuperview().offset(-18)
-                    make.bottom.equalToSuperview().offset(-18)
+                vStack.snp.makeConstraints {
+                    $0.top.equalToSuperview().offset(18)
+                    $0.left.equalToSuperview().offset(18)
+                    $0.right.equalToSuperview().offset(-18)
+                    $0.bottom.equalToSuperview().offset(-18)
                 }
 
                 let title = UILabel()
@@ -130,11 +130,11 @@ public final class OnboardingLaunchController: UIViewController {
                     vStack.addArrangedSubview(notNow)
                 }
 
-                blocker.window?.addSubview(popupView)
-                popupView.snp.makeConstraints { make in
-                    make.left.equalToSuperview().offset(18)
-                    make.center.equalToSuperview()
-                    make.right.equalToSuperview().offset(-18)
+                blocker.window?.addSubview(drawerView)
+                drawerView.snp.makeConstraints {
+                    $0.left.equalToSuperview().offset(18)
+                    $0.center.equalToSuperview()
+                    $0.right.equalToSuperview().offset(-18)
                 }
 
                 blocker.showWindow()

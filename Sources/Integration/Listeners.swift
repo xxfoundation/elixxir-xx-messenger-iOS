@@ -135,7 +135,8 @@ public extension BindingsClient {
                 leader: members.first!,
                 name: String(data: name, encoding: .utf8)!,
                 groupId: id,
-                accepted: false,
+                status: .pending,
+                createdAt: Date(),
                 serialize: serialize
             ), members, welcomeMessage)
         }

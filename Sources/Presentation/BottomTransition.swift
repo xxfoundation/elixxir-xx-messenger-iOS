@@ -62,7 +62,11 @@ final class BottomTransition: NSObject, UIViewControllerAnimatedTransitioning {
         presentedConstraints = [
             presentedView.leftAnchor.constraint(equalTo: context.containerView.leftAnchor),
             presentedView.rightAnchor.constraint(equalTo: context.containerView.rightAnchor),
-            presentedView.bottomAnchor.constraint(equalTo: context.containerView.bottomAnchor)
+            presentedView.bottomAnchor.constraint(equalTo: context.containerView.bottomAnchor),
+            presentedView.topAnchor.constraint(
+                greaterThanOrEqualTo: context.containerView.safeAreaLayoutGuide.topAnchor,
+                constant: 60
+            )
         ]
 
         dismissedConstraints = [

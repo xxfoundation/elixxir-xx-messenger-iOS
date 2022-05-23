@@ -435,7 +435,7 @@
         "name": "Cyprus",
         "code": "CY",
         "flag": "🇨🇾",
-        "prefix": "+537",
+        "prefix": "+357",
         "example": "96 123456",
         "regex": "9[4-79]\\d{6}"
     },

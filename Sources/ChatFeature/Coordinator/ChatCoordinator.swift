@@ -12,7 +12,7 @@ public protocol ChatCoordinating {
     func toRetrySheet(from: UIViewController)
     func toContact(_: Contact, from: UIViewController)
     func toWebview(with: String, from: UIViewController)
-    func toPopup(_: UIViewController, from: UIViewController)
+    func toDrawer(_: UIViewController, from: UIViewController)
     func toMenuSheet(_: UIViewController, from: UIViewController)
     func toPermission(type: PermissionType, from: UIViewController)
     func toMembersList(_: UIViewController, from: UIViewController)
@@ -95,8 +95,8 @@ public extension ChatCoordinator {
         bottomPresenter.present(screen, from: parent)
     }
 
-    func toPopup(_ popup: UIViewController, from parent: UIViewController) {
-        bottomPresenter.present(popup, from: parent)
+    func toDrawer(_ drawer: UIViewController, from parent: UIViewController) {
+        bottomPresenter.present(drawer, from: parent)
     }
 
     func toMenuSheet(_ screen: UIViewController, from parent: UIViewController) {

@@ -3,11 +3,14 @@ import UIKit
 public final class BottomPresenter: NSObject, Presenting {
     private var transition: BottomTransition?
     
-    public func present(_ viewController: UIViewController, from parent: UIViewController) {
-        viewController.modalPresentationStyle = .overFullScreen
-        viewController.transitioningDelegate = self
-        
-        parent.present(viewController, animated: true)
+    public func present(_ viewControllers: UIViewController..., from parent: UIViewController) {
+        guard let screen = viewControllers.first else {
+            fatalError("Tried to present empty list of view controllers")
+        }
+
+        screen.modalPresentationStyle = .overFullScreen
+        screen.transitioningDelegate = self
+        parent.present(screen, animated: true)
     }
 }
 

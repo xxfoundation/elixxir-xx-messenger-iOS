@@ -2,7 +2,9 @@ import Foundation
 
 public struct GroupMember {
     public enum Request {
+        case all
         case strangers
+        case fromGroup(Data)
         case withUserId(Data)
     }
 

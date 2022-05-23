@@ -438,8 +438,8 @@ struct ActionFactory {
 
         return UIAction(
             title: action.title,
-            state: .on,
-            handler: { _ in closure(item)}
+            state: .off,
+            handler: { _ in closure(item) }
         )
     }
 }

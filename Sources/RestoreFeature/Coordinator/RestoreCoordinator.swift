@@ -6,7 +6,7 @@ import Presentation
 public protocol RestoreCoordinating {
     func toChats(from: UIViewController)
     func toSuccess(from: UIViewController)
-    func toPopup(_: UIViewController, from: UIViewController)
+    func toDrawer(_: UIViewController, from: UIViewController)
     func toPassphrase(from: UIViewController, _: @escaping StringClosure)
     func toRestore(using: String, with: RestoreSettings, from: UIViewController)
 }
@@ -54,8 +54,8 @@ public extension RestoreCoordinator {
         replacePresenter.present(screen, from: parent)
     }
 
-    func toPopup(_ popup: UIViewController, from parent: UIViewController) {
-        bottomPresenter.present(popup, from: parent)
+    func toDrawer(_ drawer: UIViewController, from parent: UIViewController) {
+        bottomPresenter.present(drawer, from: parent)
     }
 
     func toPassphrase(

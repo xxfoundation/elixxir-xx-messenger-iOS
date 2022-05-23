@@ -1,12 +1,10 @@
 import HUD
-import UIKit
 import Shared
-import Combine
 import Models
+import Combine
 import Defaults
 import Foundation
 import Integration
-import PushNotifications
 import DependencyInjection
 
 protocol ChatListViewModelType {
@@ -24,12 +22,8 @@ protocol ChatListViewModelType {
 
 final class ChatListViewModel: ChatListViewModelType {
     @Dependency private var session: SessionType
-    @Dependency private var pushHandler: PushHandling
 
     @KeyObject(.username, defaultValue: "") var myUsername: String
-    @KeyObject(.dummyTrafficOn, defaultValue: false) var isDummyTrafficOn: Bool
-    @KeyObject(.pushNotifications, defaultValue: false) private var pushNotifications
-    @KeyObject(.askedDummyTrafficOnce, defaultValue: false) var askedDummyTraffic: Bool
 
     let editState = EditStateHandler()
     let chatsRelay = CurrentValueSubject<[GenericChatInfo], Never>([])
@@ -38,9 +32,6 @@ final class ChatListViewModel: ChatListViewModelType {
 
     var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
     private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
-
-    var askDummyTrafficPublisher: AnyPublisher<Void, Never> { askDummyTrafficSubject.eraseToAnyPublisher() }
-    private let askDummyTrafficSubject = PassthroughSubject<Void, Never>()
 
     var badgeCount: AnyPublisher<Int, Never> {
         Publishers.CombineLatest(
@@ -162,38 +153,6 @@ final class ChatListViewModel: ChatListViewModelType {
         .store(in: &cancellables)
     }
 
-    func viewDidAppear() {
-        verifyDummyTraffic()
-        verifyNotifications()
-    }
-
-    private func verifyDummyTraffic() {
-        guard askedDummyTraffic == false else { return }
-        askedDummyTraffic = true
-        askDummyTrafficSubject.send()
-    }
-
-    private func verifyNotifications() {
-        guard pushNotifications == false else { return }
-
-        pushHandler.didRequestAuthorization { [weak self] result in
-            guard let self = self else { return }
-
-            switch result {
-            case .success(let granted):
-                if granted {
-                    DispatchQueue.main.async {
-                        UIApplication.shared.registerForRemoteNotifications()
-                    }
-                }
-
-                self.pushNotifications = granted
-            case .failure:
-                self.pushNotifications = false
-            }
-        }
-    }
-
     func isGroup(indexPath: IndexPath) -> Bool {
         chatsRelay.value[indexPath.row].contact == nil
     }
@@ -227,10 +186,5 @@ final class ChatListViewModel: ChatListViewModelType {
 
         groups.forEach(session.deleteAll(from:))
         contacts.forEach(session.deleteAll(from:))
-    }
-
-    func didEnableDummyTraffic() {
-        isDummyTrafficOn = true
-        session.setDummyTraffic(status: true)
     }
 }

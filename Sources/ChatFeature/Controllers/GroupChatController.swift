@@ -57,7 +57,7 @@ public final class GroupChatController: UIViewController {
 
         super.init(nibName: nil, bundle: nil)
 
-        header.setup(title: info.group.name, members: info.members)
+        header.setup(title: info.group.name, memberList: info.members.map { ($0.username, $0.photo) })
     }
 
     public required init?(coder: NSCoder) { nil }
@@ -490,19 +490,19 @@ extension GroupChatController: UICollectionViewDelegate {
 
             let item = self.sections[indexPath.section].elements[indexPath.item]
 
-            let copy = UIAction(title: Localized.Chat.BubbleMenu.copy, state: .on) { _ in
+            let copy = UIAction(title: Localized.Chat.BubbleMenu.copy, state: .off) { _ in
                 UIPasteboard.general.string = item.payload.text
             }
 
-            let reply = UIAction(title: Localized.Chat.BubbleMenu.reply, state: .on) { [weak self] _ in
+            let reply = UIAction(title: Localized.Chat.BubbleMenu.reply, state: .off) { [weak self] _ in
                 self?.viewModel.didRequestReply(item)
             }
 
-            let delete = UIAction(title: Localized.Chat.BubbleMenu.delete, state: .on) { [weak self] _ in
+            let delete = UIAction(title: Localized.Chat.BubbleMenu.delete, state: .off) { [weak self] _ in
                 self?.viewModel.didRequestDelete([item])
             }
 
-            let retry = UIAction(title: Localized.Chat.BubbleMenu.retry, state: .on) { [weak self] _ in
+            let retry = UIAction(title: Localized.Chat.BubbleMenu.retry, state: .off) { [weak self] _ in
                 self?.viewModel.retry(item)
             }
 

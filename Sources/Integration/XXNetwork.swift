@@ -80,7 +80,6 @@ extension XXNetwork: XXNetworking {
         data: Data,
         ndf: String
     ) throws -> (Client, Data?) {
-
         var error: NSError?
 
         let password = B.secret(32)!

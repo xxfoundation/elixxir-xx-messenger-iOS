@@ -9,8 +9,8 @@ extension Session {
 
         try manager.join(group.serialize)
         var group = group
-        group.accepted = true
-        scanStrangers()
+        group.status = .participating
+        scanStrangers {}
         try dbManager.save(group)
     }
 
@@ -63,7 +63,7 @@ extension Session {
                     userId: stranger.element,
                     groupId: group.groupId,
                     status: .pendingUsername,
-                    username: "Unknown user nº \(stranger.offset)",
+                    username: "Fetching username...",
                     photo: nil
                 ))
             }
@@ -76,7 +76,7 @@ extension Session {
             DeviceFeedback.shake(.notification)
         }
 
-        scanStrangers()
+        scanStrangers {}
         return members
     }
 }
@@ -158,11 +158,18 @@ extension Session {
         }
     }
 
-    private func scanStrangers() {
+    public func scanStrangers(_ completion: @escaping () -> Void) {
         DispatchQueue.global().async { [weak self] in
             guard let self = self, let ud = self.client.userDiscovery else { return }
 
-            guard let strangers: [GroupMember] = try? self.dbManager.fetch(.strangers) else { return }
+            guard let strangers: [GroupMember] = try? self.dbManager.fetch(.strangers) else {
+                DispatchQueue.main.async {
+                    completion()
+                }
+
+                return
+            }
+
             let ids = strangers.map { $0.userId }
 
             var updatedStrangers: [GroupMember] = []
@@ -173,6 +180,7 @@ extension Session {
                     strangers.forEach { stranger in
                         if let found = contacts.first(where: { contact in contact.userId == stranger.userId }) {
                             var updatedStranger = stranger
+                            updatedStranger.status = .usernameSet
                             updatedStranger.username = found.username
                             updatedStrangers.append(updatedStranger)
                         }
@@ -188,10 +196,12 @@ extension Session {
                         }
 
                         log(string: "Scanned unknown group members", type: .info)
+                        completion()
                     }
                 case .failure(let error):
                     DispatchQueue.main.async {
                         log(string: error.localizedDescription, type: .error)
+                        completion()
                     }
                 }
             }

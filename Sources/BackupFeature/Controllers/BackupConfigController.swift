@@ -1,8 +1,8 @@
 import UIKit
-import Popup
 import Models
 import Shared
 import Combine
+import DrawerFeature
 import DependencyInjection
 
 final class BackupConfigController: UIViewController {
@@ -12,7 +12,7 @@ final class BackupConfigController: UIViewController {
 
     private let viewModel: BackupConfigViewModel
     private var cancellables = Set<AnyCancellable>()
-    private var popupCancellables = Set<AnyCancellable>()
+    private var drawerCancellables = Set<AnyCancellable>()
 
     private var wifiOnly = false
     private var manualBackups = false
@@ -82,12 +82,12 @@ final class BackupConfigController: UIViewController {
 
         screenView.frequencyDetailView
             .publisher(for: .touchUpInside)
-            .sink { [unowned self] in presentFrequencyPopup(manual: manualBackups) }
+            .sink { [unowned self] in presentFrequencyDrawer(manual: manualBackups) }
             .store(in: &cancellables)
 
         screenView.infrastructureDetailView
             .publisher(for: .touchUpInside)
-            .sink { [unowned self] in presentInfrastructurePopup(wifiOnly: wifiOnly) }
+            .sink { [unowned self] in presentInfrastructureDrawer(wifiOnly: wifiOnly) }
             .store(in: &cancellables)
 
         screenView.googleDriveButton
@@ -193,16 +193,25 @@ final class BackupConfigController: UIViewController {
         }
     }
 
-    private func presentInfrastructurePopup(wifiOnly: Bool) {
-        let cancelButton = CapsuleButton()
-        cancelButton.setStyle(.seeThrough)
-        cancelButton.setTitle(Localized.ChatList.Dashboard.cancel, for: .normal)
+    private func presentInfrastructureDrawer(wifiOnly: Bool) {
+        let cancelButton = DrawerCapsuleButton(model: .init(
+            title: Localized.ChatList.Dashboard.cancel,
+            style: .seeThrough
+        ))
 
-        let wifiOnlyButton = PopupRadioButton(title: "Wi-Fi Only", isSelected: wifiOnly)
-        let wifiAndCellularButton = PopupRadioButton(title: "Wi-Fi and Cellular", isSelected: !wifiOnly)
+        let wifiOnlyButton = DrawerRadio(
+            title: "Wi-Fi Only",
+            isSelected: wifiOnly
+        )
 
-        let popup = BottomPopup(with: [
-            PopupLabel(
+        let wifiAndCellularButton = DrawerRadio(
+            title: "Wi-Fi and Cellular",
+            isSelected: !wifiOnly,
+            spacingAfter: 40
+        )
+
+        let drawer = DrawerController(with: [
+            DrawerText(
                 font: Fonts.Mulish.extraBold.font(size: 28.0),
                 text: Localized.Backup.Config.infrastructure,
                 color: Asset.neutralActive.color,
@@ -211,49 +220,57 @@ final class BackupConfigController: UIViewController {
             ),
             wifiOnlyButton,
             wifiAndCellularButton,
-            PopupEmptyView(height: 20.0),
-            PopupStackView(spacing: 20.0, views: [cancelButton])
+            cancelButton
         ])
 
         wifiOnlyButton.action
             .sink { [unowned self] in
                 viewModel.didChooseWifiOnly(true)
 
-                popup.dismiss(animated: true) { [weak self] in
-                    self?.popupCancellables.removeAll()
+                drawer.dismiss(animated: true) { [weak self] in
+                    self?.drawerCancellables.removeAll()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
         wifiAndCellularButton.action
             .sink { [unowned self] in
                 viewModel.didChooseWifiOnly(false)
 
-                popup.dismiss(animated: true) { [weak self] in
-                    self?.popupCancellables.removeAll()
+                drawer.dismiss(animated: true) { [weak self] in
+                    self?.drawerCancellables.removeAll()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
-        cancelButton.publisher(for: .touchUpInside)
+        cancelButton.action
             .receive(on: DispatchQueue.main)
             .sink {
-                popup.dismiss(animated: true) { [weak self] in
-                    self?.popupCancellables.removeAll()
+                drawer.dismiss(animated: true) { [weak self] in
+                    self?.drawerCancellables.removeAll()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
-        coordinator.toPopup(popup, from: self)
+        coordinator.toDrawer(drawer, from: self)
     }
 
-    private func presentFrequencyPopup(manual: Bool) {
-        let cancelButton = CapsuleButton()
-        cancelButton.setStyle(.seeThrough)
-        cancelButton.setTitle(Localized.ChatList.Dashboard.cancel, for: .normal)
+    private func presentFrequencyDrawer(manual: Bool) {
+        let cancelButton = DrawerCapsuleButton(model: .init(
+            title: Localized.ChatList.Dashboard.cancel,
+            style: .seeThrough
+        ))
 
-        let manualButton = PopupRadioButton(title: "Manual", isSelected: manual)
-        let automaticButton = PopupRadioButton(title: "Automatic", isSelected: !manual)
+        let manualButton = DrawerRadio(
+            title: "Manual",
+            isSelected: manual
+        )
 
-        let popup = BottomPopup(with: [
-            PopupLabel(
+        let automaticButton = DrawerRadio(
+            title: "Automatic",
+            isSelected: !manual,
+            spacingAfter: 40
+        )
+
+        let drawer = DrawerController(with: [
+            DrawerText(
                 font: Fonts.Mulish.extraBold.font(size: 28.0),
                 text: Localized.Backup.Config.frequency(serviceName),
                 color: Asset.neutralActive.color,
@@ -262,36 +279,35 @@ final class BackupConfigController: UIViewController {
             ),
             manualButton,
             automaticButton,
-            PopupEmptyView(height: 20.0),
-            PopupStackView(spacing: 20.0, views: [cancelButton])
+            cancelButton
         ])
 
         manualButton.action
             .sink { [unowned self] in
                 viewModel.didChooseAutomatic(false)
 
-                popup.dismiss(animated: true) { [weak self] in
-                    self?.popupCancellables.removeAll()
+                drawer.dismiss(animated: true) { [weak self] in
+                    self?.drawerCancellables.removeAll()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
         automaticButton.action
             .sink { [unowned self] in
                 viewModel.didChooseAutomatic(true)
 
-                popup.dismiss(animated: true) { [weak self] in
-                    self?.popupCancellables.removeAll()
+                drawer.dismiss(animated: true) { [weak self] in
+                    self?.drawerCancellables.removeAll()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
-        cancelButton.publisher(for: .touchUpInside)
+        cancelButton.action
             .receive(on: DispatchQueue.main)
             .sink {
-                popup.dismiss(animated: true) { [weak self] in
-                    self?.popupCancellables.removeAll()
+                drawer.dismiss(animated: true) { [weak self] in
+                    self?.drawerCancellables.removeAll()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
-        coordinator.toPopup(popup, from: self)
+        coordinator.toDrawer(drawer, from: self)
     }
 }

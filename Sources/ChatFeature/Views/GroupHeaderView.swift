@@ -1,63 +1,54 @@
 import UIKit
 import Shared
-import Models
 
 final class GroupHeaderView: UIView {
-    let container = UIView()
-    let title = UILabel()
-    let stack = UIStackView()
+    let titleLabel = UILabel()
+    let containerView = UIView()
+    let stackView = UIStackView()
 
     init() {
         super.init(frame: .zero)
-        setup()
+
+        stackView.spacing = -8
+        titleLabel.textColor = Asset.neutralActive.color
+        titleLabel.font = Fonts.Mulish.semiBold.font(size: 15.0)
+
+        containerView.addSubview(titleLabel)
+        containerView.addSubview(stackView)
+        addSubview(containerView)
+
+        titleLabel.snp.makeConstraints {
+            $0.top.equalToSuperview()
+            $0.centerX.equalToSuperview()
+            $0.left.greaterThanOrEqualToSuperview()
+            $0.right.lessThanOrEqualToSuperview()
+        }
+
+        stackView.snp.makeConstraints {
+            $0.top.equalTo(titleLabel.snp.bottom)
+            $0.centerX.equalToSuperview()
+            $0.left.greaterThanOrEqualToSuperview()
+            $0.right.lessThanOrEqualToSuperview()
+            $0.bottom.equalToSuperview()
+        }
+
+        containerView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
     }
 
     required init?(coder: NSCoder) { nil }
 
-    func setup(title: String, members: [GroupMember]) {
-        self.title.text = title
+    func setup(title: String, memberList: [(String, Data?)]) {
+        titleLabel.text = title
 
-        for member in members {
-            let avatar = AvatarView()
-            avatar.set(
-                cornerRadius: 25/2.0,
-                fontSize: 10.0,
-                username: member.username,
-                image: member.photo
-            )
-
-            avatar.layer.borderWidth = 3
-            avatar.layer.borderColor = UIColor.white.cgColor
-
-            avatar.snp.makeConstraints { $0.width.height.equalTo(25.0) }
-            stack.addArrangedSubview(avatar)
+        for member in memberList {
+            let avatarView = AvatarView()
+            avatarView.layer.borderWidth = 3
+            avatarView.layer.borderColor = UIColor.white.cgColor
+            avatarView.setupProfile(title: member.0, image: member.1, size: .small)
+            avatarView.snp.makeConstraints { $0.width.height.equalTo(25.0) }
+            stackView.addArrangedSubview(avatarView)
         }
-    }
-
-    private func setup() {
-        title.textColor = Asset.neutralActive.color
-        title.font = Fonts.Mulish.semiBold.font(size: 15.0)
-
-        container.addSubview(title)
-        container.addSubview(stack)
-        stack.spacing = -8
-
-        title.snp.makeConstraints { make in
-            make.top.equalToSuperview()
-            make.centerX.equalToSuperview()
-            make.left.greaterThanOrEqualToSuperview()
-            make.right.lessThanOrEqualToSuperview()
-        }
-
-        stack.snp.makeConstraints { make in
-            make.top.equalTo(title.snp.bottom)
-            make.centerX.equalToSuperview()
-            make.left.greaterThanOrEqualToSuperview()
-            make.right.lessThanOrEqualToSuperview()
-            make.bottom.equalToSuperview()
-        }
-
-        addSubview(container)
-        container.snp.makeConstraints { $0.edges.equalToSuperview() }
     }
 }

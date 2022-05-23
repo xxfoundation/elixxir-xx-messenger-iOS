@@ -10,7 +10,7 @@ import CombineSchedulers
 import DependencyInjection
 import DropboxFeature
 
-struct UpdatePopupModel {
+struct UpdateDrawerModel {
     let body: String
     let updateTitle: String
     let updateStyle: CapsuleButtonStyle
@@ -19,19 +19,13 @@ struct UpdatePopupModel {
 }
 
 final class OnboardingLaunchViewModel {
-    // MARK: Stored
-
     @KeyObject(.username, defaultValue: nil) var username: String?
     @KeyObject(.biometrics, defaultValue: false) var isBiometricsEnabled: Bool
-
-    // MARK: Injected
 
     @Dependency private var network: XXNetworking
     @Dependency private var versioning: VersionChecker
     @Dependency private var permissions: PermissionHandling
     @Dependency private var dropboxService: DropboxInterface
-
-    // MARK: Properties
 
     var getSession: (String) throws -> SessionType = Session.init
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
@@ -45,8 +39,8 @@ final class OnboardingLaunchViewModel {
     var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
     private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
 
-    var updatePublisher: AnyPublisher<UpdatePopupModel, Never> { updateRelay.eraseToAnyPublisher() }
-    private let updateRelay = PassthroughSubject<UpdatePopupModel, Never>()
+    var updatePublisher: AnyPublisher<UpdateDrawerModel, Never> { updateRelay.eraseToAnyPublisher() }
+    private let updateRelay = PassthroughSubject<UpdateDrawerModel, Never>()
 
     private var cancellables = Set<AnyCancellable>()
 

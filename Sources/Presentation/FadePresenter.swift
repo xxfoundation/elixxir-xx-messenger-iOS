@@ -3,11 +3,14 @@ import UIKit
 public final class FadePresenter: NSObject, Presenting {
     private var transition: FadeTransition?
 
-    public func present(_ target: UIViewController, from parent: UIViewController) {
-        target.modalPresentationStyle = .overFullScreen
-        target.transitioningDelegate = self
+    public func present(_ viewControllers: UIViewController..., from parent: UIViewController) {
+        guard let screen = viewControllers.first else {
+            fatalError("Tried to present empty list of view controllers")
+        }
 
-        parent.present(target, animated: true)
+        screen.modalPresentationStyle = .overFullScreen
+        screen.transitioningDelegate = self
+        parent.present(screen, animated: true)
     }
 }
 

@@ -132,7 +132,13 @@
 @end
 
 @protocol BindingsListener <NSObject>
+/**
+ * Hear is called to receive a message in the UI
+ */
 - (void)hear:(BindingsMessage* _Nullable)message;
+/**
+ * Returns a name, used for debugging
+ */
 - (NSString* _Nonnull)name;
 @end
 
@@ -161,6 +167,13 @@
 @end
 
 @protocol BindingsRestoreContactsUpdater <NSObject>
+/**
+ * RestoreContactsCallback is called to report the current # of contacts
+that have been found and how many have been restored
+against the total number that need to be
+processed. If an error occurs it it set on the err variable as a
+plain string.
+ */
 - (void)restoreContactsCallback:(long)numFound numRestored:(long)numRestored total:(long)total err:(NSString* _Nullable)err;
 @end
 

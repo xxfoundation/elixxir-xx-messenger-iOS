@@ -10,6 +10,7 @@ import NetworkMonitor
 import DependencyInjection
 
 import os.log
+import ToastFeature
 
 let logHandler = OSLog(subsystem: "xx.network", category: "Performance debugging")
 
@@ -47,6 +48,7 @@ public final class Session: SessionType {
     @KeyObject(.inappnotifications, defaultValue: true) var inappnotifications: Bool
 
     @Dependency var backupService: BackupService
+    @Dependency var toastController: ToastController
     @Dependency var networkMonitor: NetworkMonitoring
 
     public let client: Client
@@ -74,8 +76,18 @@ public final class Session: SessionType {
         networkMonitor.statusPublisher.map { $0 == .available }.eraseToAnyPublisher()
     }
 
-    lazy public var groups: (Group.Request) -> AnyPublisher<[Group], Never> = {
-        self.dbManager.publisher(fetch: Group.self, $0).catch { _ in Just([]) }.eraseToAnyPublisher()
+    public func groups(_ request: Group.Request) -> AnyPublisher<[Group], Never> {
+        self.dbManager
+            .publisher(fetch: Group.self, request)
+            .catch { _ in Just([]) }
+            .eraseToAnyPublisher()
+    }
+
+    public func groupMembers(_ request: GroupMember.Request) -> AnyPublisher<[GroupMember], Never> {
+        self.dbManager
+            .publisher(fetch: GroupMember.self, request)
+            .catch { _ in Just([]) }
+            .eraseToAnyPublisher()
     }
 
     lazy public var contacts: (Contact.Request) -> AnyPublisher<[Contact], Never> = {
@@ -216,6 +228,18 @@ public final class Session: SessionType {
         icognitoKeyboard = false
         pushNotifications = false
         inappnotifications = true
+    }
+
+    public func hideRequestOf(group: Group) {
+        var group = group
+        group.status = .hidden
+        _ = try? dbManager.save(group)
+    }
+
+    public func hideRequestOf(contact: Contact) {
+        var contact = contact
+        contact.status = .hidden
+        _ = try? dbManager.save(contact)
     }
 
     public func forceFailMessages() {
@@ -381,6 +405,12 @@ public final class Session: SessionType {
                 if var contact: Contact = try? dbManager.fetch(.withUserId($0.userId)).first {
                     contact.status = .friend
                     _ = try? dbManager.save(contact)
+
+                    toastController.enqueueToast(model: .init(
+                        title: contact.nickname ?? contact.username,
+                        subtitle: Localized.Requests.Confirmations.toaster,
+                        leftImage: Asset.sharedSuccess.image
+                    ))
                 }
             }.store(in: &cancellables)
     }

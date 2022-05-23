@@ -1,5 +1,5 @@
 import HUD
-import Popup
+import DrawerFeature
 import UIKit
 import Theme
 import Shared
@@ -17,25 +17,25 @@ public final class SettingsController: UIViewController {
         switch $0 {
         case .icognitoKeyboard:
             self.presentInfo(
-                title: Localized.Settings.InfoPopUp.Icognito.title,
-                subtitle: Localized.Settings.InfoPopUp.Icognito.subtitle
+                title: Localized.Settings.InfoDrawer.Icognito.title,
+                subtitle: Localized.Settings.InfoDrawer.Icognito.subtitle
             )
         case .biometrics:
             self.presentInfo(
-                title: Localized.Settings.InfoPopUp.Biometrics.title,
-                subtitle: Localized.Settings.InfoPopUp.Biometrics.subtitle
+                title: Localized.Settings.InfoDrawer.Biometrics.title,
+                subtitle: Localized.Settings.InfoDrawer.Biometrics.subtitle
             )
         case .notifications:
             self.presentInfo(
-                title: Localized.Settings.InfoPopUp.Notifications.title,
-                subtitle: Localized.Settings.InfoPopUp.Notifications.subtitle,
+                title: Localized.Settings.InfoDrawer.Notifications.title,
+                subtitle: Localized.Settings.InfoDrawer.Notifications.subtitle,
                 urlString: "https://links.xx.network/denseids"
             )
 
         case .dummyTraffic:
             self.presentInfo(
-                title: Localized.Settings.InfoPopUp.Traffic.title,
-                subtitle: Localized.Settings.InfoPopUp.Traffic.subtitle,
+                title: Localized.Settings.InfoDrawer.Traffic.title,
+                subtitle: Localized.Settings.InfoDrawer.Traffic.subtitle,
                 urlString: "https://links.xx.network/covertraffic"
             )
         }
@@ -43,7 +43,7 @@ public final class SettingsController: UIViewController {
 
     private let viewModel = SettingsViewModel()
     private var cancellables = Set<AnyCancellable>()
-    private var popupCancellables = Set<AnyCancellable>()
+    private var drawerCancellables = Set<AnyCancellable>()
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -65,16 +65,19 @@ public final class SettingsController: UIViewController {
     private func setupNavigationBar() {
         navigationItem.backButtonTitle = ""
 
-        let title = UILabel()
-        title.text = Localized.Settings.title
-        title.textColor = Asset.neutralActive.color
-        title.font = Fonts.Mulish.semiBold.font(size: 18.0)
+        let titleLabel = UILabel()
+        titleLabel.text = Localized.Settings.title
+        titleLabel.textColor = Asset.neutralActive.color
+        titleLabel.font = Fonts.Mulish.semiBold.font(size: 18.0)
 
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
+        let menuButton = UIButton()
+        menuButton.tintColor = Asset.neutralDark.color
+        menuButton.setImage(Asset.chatListMenu.image, for: .normal)
+        menuButton.addTarget(self, action: #selector(didTapMenu), for: .touchUpInside)
+        menuButton.snp.makeConstraints { $0.width.equalTo(50) }
 
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-            customView: UIStackView(arrangedSubviews: [back, title])
+            customView: UIStackView(arrangedSubviews: [menuButton, titleLabel])
         )
     }
 
@@ -129,9 +132,9 @@ public final class SettingsController: UIViewController {
             .publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
-                presentPopup(
-                    title: Localized.Settings.Popup.title(Localized.Settings.privacyPolicy),
-                    subtitle: Localized.Settings.Popup.subtitle(Localized.Settings.privacyPolicy),
+                presentDrawer(
+                    title: Localized.Settings.Drawer.title(Localized.Settings.privacyPolicy),
+                    subtitle: Localized.Settings.Drawer.subtitle(Localized.Settings.privacyPolicy),
                     actionTitle: Localized.ChatList.Dashboard.open) {
                         guard let url = URL(string: "https://xx.network/privategrity-corporation-privacy-policy") else { return }
                         UIApplication.shared.open(url, options: [:])
@@ -142,9 +145,9 @@ public final class SettingsController: UIViewController {
             .publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
-                presentPopup(
-                    title: Localized.Settings.Popup.title(Localized.Settings.disclosures),
-                    subtitle: Localized.Settings.Popup.subtitle(Localized.Settings.disclosures),
+                presentDrawer(
+                    title: Localized.Settings.Drawer.title(Localized.Settings.disclosures),
+                    subtitle: Localized.Settings.Drawer.subtitle(Localized.Settings.disclosures),
                     actionTitle: Localized.ChatList.Dashboard.open) {
                         guard let url = URL(string: "https://xx.network/privategrity-corporation-terms-of-use") else { return }
                         UIApplication.shared.open(url, options: [:])
@@ -189,7 +192,7 @@ public final class SettingsController: UIViewController {
             }.store(in: &cancellables)
     }
 
-    private func presentPopup(
+    private func presentDrawer(
         title: String,
         subtitle: String,
         actionTitle: String,
@@ -203,53 +206,52 @@ public final class SettingsController: UIViewController {
         cancelButton.setStyle(.seeThrough)
         cancelButton.setTitle(Localized.ChatList.Dashboard.cancel, for: .normal)
 
-        let popup = BottomPopup(with: [
-            PopupImage(image: Asset.popupNegative.image),
-            PopupLabel(
+        let drawer = DrawerController(with: [
+            DrawerImage(
+                image: Asset.drawerNegative.image
+            ),
+            DrawerText(
                 font: Fonts.Mulish.semiBold.font(size: 18.0),
                 text: title,
                 color: Asset.neutralActive.color
             ),
-            PopupLabel(
+            DrawerText(
                 font: Fonts.Mulish.semiBold.font(size: 14.0),
                 text: subtitle,
                 color: Asset.neutralWeak.color,
                 lineHeightMultiple: 1.35,
                 spacingAfter: 25
             ),
-            PopupStackView(
+            DrawerStack(
                 spacing: 20.0,
-                views: [
-                    actionButton,
-                    cancelButton
-                ]
+                views: [actionButton, cancelButton]
             )
         ])
 
         actionButton.publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink {
-                popup.dismiss(animated: true) { [weak self] in
+                drawer.dismiss(animated: true) { [weak self] in
                     guard let self = self else { return }
-                    self.popupCancellables.removeAll()
+                    self.drawerCancellables.removeAll()
 
                     action()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
         cancelButton.publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink {
-                popup.dismiss(animated: true) { [weak self] in
-                    self?.popupCancellables.removeAll()
+                drawer.dismiss(animated: true) { [weak self] in
+                    self?.drawerCancellables.removeAll()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
-        coordinator.toPopup(popup, from: self)
+        coordinator.toDrawer(drawer, from: self)
     }
 
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
+    @objc private func didTapMenu() {
+        coordinator.toSideMenu(from: self)
     }
 }
 
@@ -262,34 +264,37 @@ extension SettingsController {
         let actionButton = CapsuleButton()
         actionButton.set(
             style: .seeThrough,
-            title: Localized.Settings.InfoPopUp.action
+            title: Localized.Settings.InfoDrawer.action
         )
 
-        let popup = BottomPopup(with: [
-            PopupLabel(
+        let drawer = DrawerController(with: [
+            DrawerText(
                 font: Fonts.Mulish.bold.font(size: 26.0),
                 text: title,
                 color: Asset.neutralActive.color,
                 alignment: .left,
                 spacingAfter: 19
             ),
-            PopupLinkText(
+            DrawerLinkText(
                 text: subtitle,
                 urlString: urlString,
                 spacingAfter: 37
             ),
-            PopupStackView(views: [actionButton, FlexibleSpace()])
+            DrawerStack(views: [
+                actionButton,
+                FlexibleSpace()
+            ])
         ])
 
         actionButton.publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink {
-                popup.dismiss(animated: true) { [weak self] in
+                drawer.dismiss(animated: true) { [weak self] in
                     guard let self = self else { return }
-                    self.popupCancellables.removeAll()
+                    self.drawerCancellables.removeAll()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
-        coordinator.toPopup(popup, from: self)
+        coordinator.toDrawer(drawer, from: self)
     }
 }

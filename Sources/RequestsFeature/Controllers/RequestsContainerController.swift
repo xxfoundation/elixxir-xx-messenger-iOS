@@ -1,4 +1,3 @@
-import HUD
 import UIKit
 import Theme
 import Shared
@@ -7,35 +6,23 @@ import ContactFeature
 import DependencyInjection
 
 public final class RequestsContainerController: UIViewController {
-    // MARK: UI
-
-    lazy private var screenView = RequestsContainerView()
-
-    // MARK: Injected
-
-    @Dependency private var hud: HUDType
     @Dependency private var coordinator: RequestsCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
 
-    // MARK: Properties
-
+    lazy private var screenView = RequestsContainerView()
     private var cancellables = Set<AnyCancellable>()
-    private let viewModel = RequestsContainerViewModel()
-
-    // MARK: Lifecycle
 
     public override func loadView() {
         view = screenView
-
         screenView.scrollView.delegate = self
 
-        addChild(screenView.sent)
-        addChild(screenView.failed)
-        addChild(screenView.received)
+        addChild(screenView.sentController)
+        addChild(screenView.failedController)
+        addChild(screenView.receivedController)
 
-        screenView.sent.didMove(toParent: self)
-        screenView.failed.didMove(toParent: self)
-        screenView.received.didMove(toParent: self)
+        screenView.sentController.didMove(toParent: self)
+        screenView.failedController.didMove(toParent: self)
+        screenView.receivedController.didMove(toParent: self)
 
         screenView.bringSubviewToFront(screenView.segmentedControl)
     }
@@ -46,10 +33,6 @@ public final class RequestsContainerController: UIViewController {
 
         navigationController?.navigationBar
             .customize(backgroundColor: Asset.neutralWhite.color)
-    }
-
-    public override func viewDidAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
     }
 
     public override func viewDidLoad() {
@@ -64,112 +47,72 @@ public final class RequestsContainerController: UIViewController {
 
                     let point = CGPoint(x: self.screenView.frame.width, y: 0.0)
                     self.screenView.scrollView.setContentOffset(point, animated: true)
-                    self.screenView.segmentedControl.didChooseFilter(.sent)
-
                 }
             }
         }
     }
 
-    // MARK: Private
-
     private func setupNavigationBar() {
         navigationItem.backButtonTitle = ""
 
-        let title = UILabel()
-        title.text = Localized.Requests.title
-        title.textColor = Asset.neutralActive.color
-        title.font = Fonts.Mulish.semiBold.font(size: 18.0)
+        let titleLabel = UILabel()
+        titleLabel.text = Localized.Requests.title
+        titleLabel.textColor = Asset.neutralActive.color
+        titleLabel.font = Fonts.Mulish.semiBold.font(size: 18.0)
 
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
+        let menuButton = UIButton()
+        menuButton.tintColor = Asset.neutralDark.color
+        menuButton.setImage(Asset.chatListMenu.image, for: .normal)
+        menuButton.addTarget(self, action: #selector(didTapMenu), for: .touchUpInside)
+        menuButton.snp.makeConstraints { $0.width.equalTo(50) }
 
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-            customView: UIStackView(arrangedSubviews: [back, title])
+            customView: UIStackView(arrangedSubviews: [menuButton, titleLabel])
         )
     }
 
     private func setupBindings() {
-        viewModel.hud
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { [hud] in hud.update(with: $0) }
-            .store(in: &cancellables)
-
-        screenView.received
-            .hudPublisher
-            .sink { [weak viewModel] in viewModel?.didReceive(hud: $0) }
-            .store(in: &cancellables)
-
-        screenView.sent
-            .hudPublisher
-            .sink { [weak viewModel] in viewModel?.didReceive(hud: $0) }
-            .store(in: &cancellables)
-
-        screenView.failed
-            .hudPublisher
-            .sink { [weak viewModel] in viewModel?.didReceive(hud: $0) }
-            .store(in: &cancellables)
-
-        screenView.received.verifyingPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in coordinator.toVerifying(from: self) }
-            .store(in: &cancellables)
-
-        screenView.sent.tapPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in coordinator.toContact($0, from: self) }
-            .store(in: &cancellables)
-
-        screenView.failed.didTap
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in coordinator.toContact($0, from: self) }
-            .store(in: &cancellables)
-
-        screenView.sent.emptyTapPublisher
+        screenView
+            .sentController
+            .connectionsPublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in coordinator.toSearch(from: self) }
             .store(in: &cancellables)
 
         screenView
-            .segmentedControl.received
+            .segmentedControl
+            .receivedRequestsButton
             .publisher(for: .touchUpInside)
             .sink { [unowned self] _ in
                 screenView.scrollView.setContentOffset(.zero, animated: true)
-                screenView.segmentedControl.didChooseFilter(.received)
             }.store(in: &cancellables)
 
         screenView
-            .segmentedControl.sent
+            .segmentedControl
+            .sentRequestsButton
             .publisher(for: .touchUpInside)
             .sink { [unowned self] _ in
                 let point = CGPoint(x: screenView.frame.width, y: 0.0)
                 screenView.scrollView.setContentOffset(point, animated: true)
-                screenView.segmentedControl.didChooseFilter(.sent)
             }.store(in: &cancellables)
 
         screenView
-            .segmentedControl.failed
+            .segmentedControl
+            .failedRequestsButton
             .publisher(for: .touchUpInside)
             .sink { [unowned self] _ in
                 let point = CGPoint(x: screenView.frame.width * 2.0, y: 0.0)
                 screenView.scrollView.setContentOffset(point, animated: true)
-                screenView.segmentedControl.didChooseFilter(.failed)
             }.store(in: &cancellables)
     }
 
-    // MARK: ObjC
-
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
-    }
-
-    // MARK: UIScrollViewDelegate
-
-    public func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let percentage = scrollView.contentOffset.x / view.frame.width
-        screenView.segmentedControl.updateLeftConstraint(percentage)
+    @objc private func didTapMenu() {
+        coordinator.toSideMenu(from: self)
     }
 }
 
-extension RequestsContainerController: UIScrollViewDelegate {}
+extension RequestsContainerController: UIScrollViewDelegate {
+    public func scrollViewDidScroll(_ scrollView: UIScrollView) {
+        screenView.segmentedControl.updateSwipePercentage(scrollView.contentOffset.x / view.frame.width)
+    }
+}

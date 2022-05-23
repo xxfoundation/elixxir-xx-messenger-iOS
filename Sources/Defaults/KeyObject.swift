@@ -22,6 +22,10 @@ public enum Key: String {
 
     case theme
 
+    // MARK: Requests
+
+    case isShowingHiddenRequests
+
     // MARK: Backup
 
     case backupSettings

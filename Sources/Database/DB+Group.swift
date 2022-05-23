@@ -9,8 +9,10 @@ extension Group: Persistable {
         case name
         case leader
         case groupId
-        case accepted
+        case status
         case serialize
+        case createdAt
+        case accepted // Deprecated
     }
 
     public mutating func didInsert(with rowID: Int64, for column: String?) {
@@ -22,9 +24,12 @@ extension Group: Persistable {
         case .withGroupId(let id):
             return Group.filter(Column.groupId == id)
         case .accepted:
-            return Group.filter(Column.accepted == true)
+            return Group.filter(Column.status == Group.Status.participating.rawValue)
         case .pending:
-            return Group.filter(Column.accepted == false)
+            return Group.filter(
+                Column.status == Group.Status.pending.rawValue ||
+                Column.status == Group.Status.hidden.rawValue
+            )
         }
     }
 }

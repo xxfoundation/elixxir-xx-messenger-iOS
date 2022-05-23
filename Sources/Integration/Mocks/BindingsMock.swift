@@ -5,6 +5,7 @@ import Foundation
 public final class BindingsMock: BindingsInterface {
     private var cancellables = Set<AnyCancellable>()
     private let requestsSubject = PassthroughSubject<Contact, Never>()
+    private let groupRequestsSubject = PassthroughSubject<Group, Never>()
     private let confirmationsSubject = PassthroughSubject<Contact, Never>()
 
     public var hasRunningTasks: Bool {
@@ -87,11 +88,11 @@ public final class BindingsMock: BindingsInterface {
     public func initializeBackup(
         passphrase: String,
         callback: @escaping (Data) -> Void
-    ) -> BackupInterface { fatalError() }
+    ) -> BackupInterface { BindingsBackupMock() }
 
     public func resumeBackup(
         callback: @escaping (Data) -> Void
-    ) -> BackupInterface { fatalError() }
+    ) -> BackupInterface { BindingsBackupMock() }
 
     public func listenNetworkUpdates(_: @escaping (Bool) -> Void) {}
 
@@ -112,7 +113,10 @@ public final class BindingsMock: BindingsInterface {
                 return
             }
 
+            self?.requestsSubject.send(.carlRequested)
             self?.requestsSubject.send(.angelinaRequested)
+            self?.requestsSubject.send(.elonRequested)
+            self?.groupRequestsSubject.send(.mockGroup)
 
             DispatchQueue.global().asyncAfter(deadline: .now() + 1) { [weak self] in
                 self?.confirmationsSubject.send(.georgeDiscovered)
@@ -154,10 +158,14 @@ public final class BindingsMock: BindingsInterface {
     }
 
     public func listenGroupRequests(
-        _: @escaping (Group, [Data], String?) -> Void,
+        _ groupRequests: @escaping (Group, [Data], String?) -> Void,
         groupMessages: @escaping (GroupMessage) -> Void
     ) throws -> GroupManagerInterface? {
-        GroupManagerMock()
+        groupRequestsSubject
+            .sink { groupRequests($0, [], nil) }
+            .store(in: &cancellables)
+
+        return GroupManagerMock()
     }
 
     public func restore(
@@ -172,6 +180,17 @@ public final class BindingsMock: BindingsInterface {
     public static func updateNDF(for: NetworkEnvironment, _ completion: @escaping (Result<Data?, Error>) -> Void) {
         completion(.success(Data()))
     }
+}
+
+extension Group {
+    static let mockGroup = Group(
+        leader: "mockGroupLeader".data(using: .utf8)!,
+        name: "Bruno's birthday 6/1",
+        groupId: "mockGroup".data(using: .utf8)!,
+        status: .pending,
+        createdAt: Date.distantPast,
+        serialize: "mockGroup".data(using: .utf8)!
+    )
 }
 
 extension Contact {
@@ -198,13 +217,37 @@ extension Contact {
     static let angelinaRequested = Contact(
         photo: nil,
         userId: "angelinajolie".data(using: .utf8)!,
-        email: "angelina@xx.io",
-        phone: "81982022255BR",
-        status: .verified,
+        email: nil,
+        phone: nil,
+        status: .verificationInProgress,
         marshaled: "angelinajolie".data(using: .utf8)!,
         username: "angelinajolie",
-        nickname: "Angelina Jolie",
+        nickname: "Angelica Jolie",
         createdAt: Date()
+    )
+
+    static let carlRequested = Contact(
+        photo: nil,
+        userId: "carlsagan".data(using: .utf8)!,
+        email: "carl@jpl.nasa",
+        phone: "81982022244BR",
+        status: .verified,
+        marshaled: "carlsagan".data(using: .utf8)!,
+        username: "carlsagan",
+        nickname: "Carl Sagan",
+        createdAt: Date.distantPast
+    )
+
+    static let elonRequested = Contact(
+        photo: nil,
+        userId: "elonmusk".data(using: .utf8)!,
+        email: "elon@tesla.com",
+        phone: nil,
+        status: .verified,
+        marshaled: "elonmusk".data(using: .utf8)!,
+        username: "elonmusk",
+        nickname: "Elon Musk",
+        createdAt: Date.distantPast
     )
 
     static let georgeDiscovered = Contact(
@@ -232,5 +275,19 @@ public struct MockDummyManager: DummyTrafficManaging {
 
     public func setStatus(status: Bool) {
         print("Dummy manager status set to \(status)")
+    }
+}
+
+public struct BindingsBackupMock: BackupInterface {
+    public func stop() throws {
+        // TODO
+    }
+
+    public func addJson(_: String?) {
+        // TODO
+    }
+
+    public func isBackupRunning() -> Bool {
+        return true
     }
 }

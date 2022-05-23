@@ -80,15 +80,6 @@ extension BindingsClient: BindingsInterface {
         }
 
         guard let compressed = compressed else {
-            let extensiveLog =
-            """
-            #### Important: No error was written but CompressJpeg() returned nothing.
-            - Params:
-            -- imageData = \(image.base64EncodedString())
-            - Error description: \(error!.localizedDescription)
-            """
-            log(string: extensiveLog, type: .error)
-            log(string: "An image compression failed without any specific error", type: .error)
             completion(.failure(NSError.create("Image compression failed without error")))
             return
         }
@@ -123,67 +114,25 @@ extension BindingsClient: BindingsInterface {
     }
 
     public func meMarshalled(_ username: String, email: String?, phone: String?) -> Data {
-        guard let user = getUser(), let contact = user.getContact(), let factList = contact.getFactList() else {
-            let extensiveLog =
-            """
-            #### Important: It was impossible to get the fact list of my own contact.
-            - getUser was nil? = \(getUser() == nil)
-            - getContact was nil? = \(getUser()?.getContact() == nil)
-            """
-            log(string: extensiveLog, type: .error)
-            dumpThreads()
-            fatalError(extensiveLog)
-        }
+        guard let user = getUser(),
+              let contact = user.getContact(),
+              let factList = contact.getFactList() else { fatalError() }
 
-        do {
-            try factList.add(username, factType: FactType.username.rawValue)
-        } catch {
-            log(string: error.localizedDescription, type: .error)
-            dumpThreads()
-            fatalError()
-        }
+        try! factList.add(username, factType: FactType.username.rawValue)
 
         if let email = email {
-            do {
-                try factList.add(email, factType: FactType.email.rawValue)
-            } catch {
-                log(string: error.localizedDescription, type: .error)
-                dumpThreads()
-                fatalError()
-            }
+            try! factList.add(email, factType: FactType.email.rawValue)
         }
 
         if let phone = phone {
-            do {
-                try factList.add(phone, factType: FactType.phone.rawValue)
-            } catch {
-                log(string: error.localizedDescription, type: .error)
-                dumpThreads()
-                fatalError()
-            }
+            try! factList.add(phone, factType: FactType.phone.rawValue)
         }
 
-        do {
-            return try contact.marshal()
-        } catch {
-            log(string: error.localizedDescription, type: .error)
-            dumpThreads()
-            fatalError()
-        }
+        return try! contact.marshal()
     }
 
     public var receptionId: Data {
-        guard let user = getUser(), let recId = user.getReceptionID() else {
-            let extendedLog =
-            """
-            #### Important: It was impossible to get my own reception id.
-            - getUser was nil? = \(getUser() == nil)
-            """
-            log(string: extendedLog, type: .error)
-            dumpThreads()
-            fatalError(extendedLog)
-        }
-
+        guard let user = getUser(), let recId = user.getReceptionID() else { fatalError() }
         return recId
     }
 
@@ -550,19 +499,19 @@ extension BindingsClient: BindingsInterface {
 
         /// Alternate udb
 
-//        guard let certPath = Bundle.module.path(forResource: "ud.elixxir.io", ofType: "crt") else {
-//            fatalError("Couldn't retrieve cert.")
-//        }
-//
-//        guard let contactFilePath = Bundle.module.path(forResource: "udContact-test", ofType: "bin") else {
-//            fatalError("Couldn't retrieve cert.")
-//        }
-//
-//        try! udb!.setAlternative(
-//            "18.198.117.203:11420".data(using: .utf8),
-//            cert: try! Data(contentsOf: URL(fileURLWithPath: certPath)),
-//            contactFile: try! Data(contentsOf: URL(fileURLWithPath: contactFilePath))
-//        )
+        guard let certPath = Bundle.module.path(forResource: "ud.elixxir.io", ofType: "crt") else {
+            fatalError("Couldn't retrieve cert.")
+        }
+
+        guard let contactFilePath = Bundle.module.path(forResource: "udContact-test", ofType: "bin") else {
+            fatalError("Couldn't retrieve cert.")
+        }
+
+        try! udb!.setAlternative(
+            "18.198.117.203:11420".data(using: .utf8),
+            cert: try! Data(contentsOf: URL(fileURLWithPath: certPath)),
+            contactFile: try! Data(contentsOf: URL(fileURLWithPath: contactFilePath))
+        )
 
         guard let error = error else { return udb! }
         throw error.friendly()
@@ -576,19 +525,19 @@ extension BindingsClient: BindingsInterface {
 
         /// Alternate udb
 
-//        guard let certPath = Bundle.module.path(forResource: "ud.elixxir.io", ofType: "crt") else {
-//            fatalError("Couldn't retrieve cert.")
-//        }
-//
-//        guard let contactFilePath = Bundle.module.path(forResource: "udContact-test", ofType: "bin") else {
-//            fatalError("Couldn't retrieve cert.")
-//        }
-//
-//        try! udb!.setAlternative(
-//            "18.198.117.203:11420".data(using: .utf8),
-//            cert: try! Data(contentsOf: URL(fileURLWithPath: certPath)),
-//            contactFile: try! Data(contentsOf: URL(fileURLWithPath: contactFilePath))
-//        )
+        guard let certPath = Bundle.module.path(forResource: "ud.elixxir.io", ofType: "crt") else {
+            fatalError("Couldn't retrieve cert.")
+        }
+
+        guard let contactFilePath = Bundle.module.path(forResource: "udContact-test", ofType: "bin") else {
+            fatalError("Couldn't retrieve cert.")
+        }
+
+        try! udb!.setAlternative(
+            "18.198.117.203:11420".data(using: .utf8),
+            cert: try! Data(contentsOf: URL(fileURLWithPath: certPath)),
+            contactFile: try! Data(contentsOf: URL(fileURLWithPath: contactFilePath))
+        )
 
         guard let error = error else { return udb! }
         throw error.friendly()

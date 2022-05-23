@@ -5,11 +5,14 @@ public protocol CenterPresenterNonDismissingTarget: UIViewController {}
 public final class CenterPresenter: NSObject, Presenting {
     private var transition: CenterTransition?
 
-    public func present(_ viewController: UIViewController, from parent: UIViewController) {
-        viewController.modalPresentationStyle = .overFullScreen
-        viewController.transitioningDelegate = self
+    public func present(_ viewControllers: UIViewController..., from parent: UIViewController) {
+        guard let screen = viewControllers.first else {
+            fatalError("Tried to present empty list of view controllers")
+        }
 
-        parent.present(viewController, animated: true)
+        screen.modalPresentationStyle = .overFullScreen
+        screen.transitioningDelegate = self
+        parent.present(screen, animated: true)
     }
 }
 

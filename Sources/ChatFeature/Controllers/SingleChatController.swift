@@ -1,5 +1,5 @@
 import HUD
-import Popup
+import DrawerFeature
 import UIKit
 import Theme
 import Models
@@ -25,10 +25,13 @@ public final class SingleChatController: UIViewController {
     @Dependency private var coordinator: ChatCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
 
-    lazy private var name = UILabel()
-    lazy private var more = UIButton()
-    lazy private var back = UIButton.back()
-    lazy private var avatar = AvatarView()
+
+    lazy private var infoView = UIControl()
+    lazy private var nameLabel = UILabel()
+    lazy private var avatarView = AvatarView()
+
+    lazy private var moreButton = UIButton()
+    lazy private var backButton = UIButton.back()
     lazy private var screenView = ChatView()
     lazy private var sheet = SheetController()
 
@@ -40,7 +43,7 @@ public final class SingleChatController: UIViewController {
     private let viewModel: SingleChatViewModel
     private let layoutDelegate = LayoutDelegate()
     private var cancellables = Set<AnyCancellable>()
-    private var popupCancellables = Set<AnyCancellable>()
+    private var drawerCancellables = Set<AnyCancellable>()
     private var sections = [ArraySection<ChatSection, ChatItem>]()
     private var currentInterfaceActions: SetActor<Set<InterfaceActions>, ReactionTypes> = SetActor()
 
@@ -151,32 +154,39 @@ public final class SingleChatController: UIViewController {
 
     private func setupNavigationBar(contact: Contact) {
         screenView.set(name: contact.nickname ?? contact.username)
-        avatar.snp.makeConstraints { $0.width.height.equalTo(35) }
+        avatarView.snp.makeConstraints { $0.width.height.equalTo(35) }
+        avatarView.setupProfile(title: contact.nickname ?? contact.username, image: contact.photo, size: .small)
 
-        avatar.set(
-            cornerRadius: 10,
-            username: contact.nickname ?? contact.username,
-            image: contact.photo
-        )
+        nameLabel.text = contact.nickname ?? contact.username
+        nameLabel.textColor = Asset.neutralActive.color
+        nameLabel.font = Fonts.Mulish.semiBold.font(size: 18.0)
 
-        name.text = contact.nickname ?? contact.username
-        name.textColor = Asset.neutralActive.color
-        name.font = Fonts.Mulish.semiBold.font(size: 18.0)
+        backButton.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
 
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
+        moreButton.setImage(Asset.chatMore.image, for: .normal)
+        moreButton.addTarget(self, action: #selector(didTapDots), for: .touchUpInside)
 
-        more.setImage(Asset.chatMore.image, for: .normal)
-        more.addTarget(self, action: #selector(didTapDots), for: .touchUpInside)
+        infoView.addTarget(self, action: #selector(didTapInfo), for: .touchUpInside)
 
-        let stack = UIStackView()
-        stack.addArrangedSubview(back)
-        stack.addArrangedSubview(avatar)
-        stack.addArrangedSubview(name)
+        infoView.addSubview(avatarView)
+        infoView.addSubview(nameLabel)
 
-        stack.setCustomSpacing(13, after: avatar)
+        avatarView.snp.makeConstraints {
+            $0.top.left.bottom.equalToSuperview()
+        }
 
-        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: more)
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: stack)
+        nameLabel.snp.makeConstraints {
+            $0.centerY.equalToSuperview()
+            $0.left.equalTo(avatarView.snp.right).offset(13)
+            $0.right.lessThanOrEqualToSuperview()
+        }
+
+        let stackView = UIStackView()
+        stackView.addArrangedSubview(backButton)
+        stackView.addArrangedSubview(infoView)
+
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: moreButton)
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: stackView)
     }
 
     private func setupInputController() {
@@ -232,7 +242,7 @@ public final class SingleChatController: UIViewController {
             .sink { [unowned self] in
                 switch $0 {
                 case .clear:
-                    presentDeleteAllPopup()
+                    presentDeleteAllDrawer()
                 case .details:
                     coordinator.toContact(viewModel.contact, from: self)
                 }
@@ -341,57 +351,56 @@ public final class SingleChatController: UIViewController {
         }
     }
 
-    private func presentDeleteAllPopup() {
-        let clear = CapsuleButton()
-        clear.setStyle(.red)
-        clear.setTitle(Localized.Chat.Clear.action, for: .normal)
+    private func presentDeleteAllDrawer() {
+        let clearButton = CapsuleButton()
+        clearButton.setStyle(.red)
+        clearButton.setTitle(Localized.Chat.Clear.action, for: .normal)
 
-        let cancel = CapsuleButton()
-        cancel.setStyle(.seeThrough)
-        cancel.setTitle(Localized.Chat.Clear.cancel, for: .normal)
+        let cancelButton = CapsuleButton()
+        cancelButton.setStyle(.seeThrough)
+        cancelButton.setTitle(Localized.Chat.Clear.cancel, for: .normal)
 
-        let popup = BottomPopup(with: [
-            PopupImage(image: Asset.popupNegative.image),
-            PopupLabel(
+        let drawer = DrawerController(with: [
+            DrawerImage(
+                image: Asset.drawerNegative.image
+            ),
+            DrawerText(
                 font: Fonts.Mulish.semiBold.font(size: 18.0),
                 text: Localized.Chat.Clear.title,
                 color: Asset.neutralActive.color
             ),
-            PopupLabel(
+            DrawerText(
                 font: Fonts.Mulish.semiBold.font(size: 14.0),
                 text: Localized.Chat.Clear.subtitle,
                 color: Asset.neutralWeak.color,
                 lineHeightMultiple: 1.35,
                 spacingAfter: 25
             ),
-            PopupStackView(
+            DrawerStack(
                 spacing: 20.0,
-                views: [
-                    clear,
-                    cancel
-                ]
+                views: [clearButton, cancelButton]
             )
         ])
 
-        clear.publisher(for: .touchUpInside)
+        clearButton.publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink {
-                popup.dismiss(animated: true) { [weak self] in
+                drawer.dismiss(animated: true) { [weak self] in
                     guard let self = self else { return }
-                    self.popupCancellables.removeAll()
+                    self.drawerCancellables.removeAll()
                     self.viewModel.didRequestDeleteAll()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
-        cancel.publisher(for: .touchUpInside)
+        cancelButton.publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink {
-                popup.dismiss(animated: true) { [weak self] in
-                    self?.popupCancellables.removeAll()
+                drawer.dismiss(animated: true) { [weak self] in
+                    self?.drawerCancellables.removeAll()
                 }
-            }.store(in: &popupCancellables)
+            }.store(in: &drawerCancellables)
 
-        coordinator.toPopup(popup, from: self)
+        coordinator.toDrawer(drawer, from: self)
     }
 
     private func previewItemAt(_ indexPath: IndexPath) {
@@ -405,6 +414,10 @@ public final class SingleChatController: UIViewController {
 
     @objc private func didTapDots() {
         coordinator.toMenuSheet(sheet, from: self)
+    }
+
+    @objc private func didTapInfo() {
+        coordinator.toContact(viewModel.contact, from: self)
     }
 
     @objc private func didTapBack() {
