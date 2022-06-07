@@ -1,190 +1,141 @@
 import HUD
+import UIKit
 import Shared
 import Models
 import Combine
 import Defaults
-import Foundation
 import Integration
 import DependencyInjection
 
-protocol ChatListViewModelType {
-    var myId: Data { get }
-    var username: String { get }
-    var editState: EditStateHandler { get }
-    var searchQueryRelay: CurrentValueSubject<String, Never> { get }
-    var chatsRelay: CurrentValueSubject<[GenericChatInfo], Never> { get }
-
-    var isOnline: AnyPublisher<Bool, Never> { get }
-    var badgeCount: AnyPublisher<Int, Never> { get }
-
-    func delete(indexPaths: [IndexPath]?)
+enum SearchSection {
+    case chats
+    case connections
 }
 
-final class ChatListViewModel: ChatListViewModelType {
+enum SearchItem: Equatable, Hashable {
+    case chat(Chat)
+    case connection(Contact)
+}
+
+typealias RecentsSnapshot = NSDiffableDataSourceSnapshot<SectionId, Contact>
+typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchItem>
+
+final class ChatListViewModel {
     @Dependency private var session: SessionType
 
-    @KeyObject(.username, defaultValue: "") var myUsername: String
+    var isOnline: AnyPublisher<Bool, Never> {
+        session.isOnline
+    }
 
-    let editState = EditStateHandler()
-    let chatsRelay = CurrentValueSubject<[GenericChatInfo], Never>([])
-    let searchQueryRelay = CurrentValueSubject<String, Never>("")
-    private var cancellables = Set<AnyCancellable>()
+    var chatsPublisher: AnyPublisher<[Chat], Never> {
+        chatsSubject.eraseToAnyPublisher()
+    }
 
-    var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
-    private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
+    var hudPublisher: AnyPublisher<HUDStatus, Never> {
+        hudSubject.eraseToAnyPublisher()
+    }
 
-    var badgeCount: AnyPublisher<Int, Never> {
+    var recentsPublisher: AnyPublisher<RecentsSnapshot, Never> {
+        session.contacts(.isRecent).map {
+            let section = SectionId()
+            var snapshot = RecentsSnapshot()
+            snapshot.appendSections([section])
+            snapshot.appendItems($0, toSection: section)
+            return snapshot
+        }.eraseToAnyPublisher()
+    }
+
+    var searchPublisher: AnyPublisher<SearchSnapshot, Never> {
+        Publishers.CombineLatest3(
+            session.contacts(.all),
+            chatsPublisher,
+            searchSubject
+                .removeDuplicates()
+                .debounce(for: .milliseconds(100), scheduler: DispatchQueue.main)
+                .eraseToAnyPublisher()
+        )
+            .map { (contacts, chats, query) in
+                let connectionItems = contacts.filter {
+                    let username = $0.username.lowercased().contains(query.lowercased())
+                    let nickname = $0.nickname?.lowercased().contains(query.lowercased()) ?? false
+                    return username || nickname
+                }.map(SearchItem.connection)
+
+                let chatItems = chats.filter {
+                    switch $0 {
+                    case .contact(let info):
+                        let username = info.contact.username.lowercased().contains(query.lowercased())
+                        let nickname = info.contact.nickname?.lowercased().contains(query.lowercased()) ?? false
+                        let lastMessage = info.lastMessage?.payload.text.lowercased().contains(query.lowercased()) ?? false
+                        return username || nickname || lastMessage
+
+                    case .group(let info):
+                        let name = info.group.name.lowercased().contains(query.lowercased())
+                        let last = info.lastMessage?.payload.text.lowercased().contains(query.lowercased()) ?? false
+                        return name || last
+                    }
+                }.map(SearchItem.chat)
+
+                var snapshot = SearchSnapshot()
+
+                if connectionItems.count > 0 {
+                    snapshot.appendSections([.connections])
+                    snapshot.appendItems(connectionItems, toSection: .connections)
+                }
+
+                if chatItems.count > 0 {
+                    snapshot.appendSections([.chats])
+                    snapshot.appendItems(chatItems, toSection: .chats)
+                }
+
+                return snapshot
+            }.eraseToAnyPublisher()
+    }
+
+    var badgeCountPublisher: AnyPublisher<Int, Never> {
         Publishers.CombineLatest(
             session.contacts(.received),
             session.groups(.pending)
-        ).map { $0.0.count + $0.1.count }
+        )
+        .map { $0.0.count + $0.1.count }
         .eraseToAnyPublisher()
     }
 
-    var isOnline: AnyPublisher<Bool, Never> { session.isOnline }
-
-    var myId: Data { session.myId }
-
-    var username: String { myUsername }
+    private var cancellables = Set<AnyCancellable>()
+    private let searchSubject = CurrentValueSubject<String, Never>("")
+    private let chatsSubject = CurrentValueSubject<[Chat], Never>([])
+    private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
 
     init() {
-        let searchStream = searchQueryRelay
-            .removeDuplicates()
-            .debounce(for: .milliseconds(100), scheduler: DispatchQueue.main)
-            .eraseToAnyPublisher()
-
-        Publishers.CombineLatest3(
+        Publishers.CombineLatest(
             session.singleChats(.all),
-            session.groupChats(.accepted),
-            searchStream
-        ).map { data -> [GenericChatInfo] in
-            let singles = data.0
-            let groupies = data.1
-            let searched = data.2
-
-            var generics = [GenericChatInfo]()
-
-            for single in singles {
-                generics.append(
-                    GenericChatInfo(
-                        contact: single.contact,
-                        groupInfo: nil,
-                        latestE2EMessage: single.lastMessage
-                    )
-                )
-            }
-
-            for group in groupies {
-                generics.append(
-                    GenericChatInfo(
-                        contact: nil,
-                        groupInfo: group,
-                        latestE2EMessage: nil
-                    )
-                )
-            }
-
-            if !searched.isEmpty {
-                generics = generics.filter { filtering in
-                    if let contact = filtering.contact {
-                        let username = contact.username.lowercased().contains(searched.lowercased())
-                        let nickname = contact.nickname?.lowercased().contains(searched.lowercased()) ?? false
-                        let lastMessage = filtering.latestE2EMessage?.payload.text.lowercased().contains(searched.lowercased()) ?? false
-
-                        return username || nickname || lastMessage
-                    } else {
-                        if let group = filtering.groupInfo?.group {
-                            let name = group.name.lowercased().contains(searched.lowercased())
-                            let last = filtering.groupInfo?.lastMessage?.payload.text.lowercased().contains(searched.lowercased()) ?? false
-                            return name || last
-                        }
-                    }
-
-                    return false
-                }
-            }
-
-            #warning("TODO: Use enum to differentiate chats")
-
-            return generics.sorted { infoA, infoB in
-                if let singleA = infoA.latestE2EMessage {
-                    if let singleB = infoB.latestE2EMessage {
-                        /// aSingle bSingle
-                        return singleA.timestamp > singleB.timestamp
-                    } else {
-                        /// aSingle bGroup
-                        let groupB = infoB.groupInfo!
-
-                        if let lastGM = groupB.lastMessage {
-                            /// aSingle bGroup w/ message
-                            return singleA.timestamp > lastGM.timestamp
-                        } else {
-                            /// aSingle bGroup w/out message
-                            return true
-                        }
-                    }
-                } else {
-                    let groupA = infoA.groupInfo!
-
-                    if let lastGM = groupA.lastMessage {
-                        /// aGroup w/ message
-
-                        if let singleB = infoB.latestE2EMessage {
-                            /// aGroup w/ message bSingle
-
-                            return lastGM.timestamp > singleB.timestamp
-                        } else {
-                            let groupB = infoB.groupInfo!
-                            /// aGroup w/ message bGroup
-
-                            if let lastGM2 = groupB.lastMessage {
-                                return lastGM.timestamp > lastGM2.timestamp
-                            } else {
-                                return true
-                            }
-                        }
-                    } else {
-                        /// aGroup w/out message b?
-                        return false
-                    }
-                }
-            }
-        }.sink { [unowned self] in chatsRelay.send($0)  }
+            session.groupChats(.accepted)
+        ).map {
+            let groups = $0.1.map(Chat.group)
+            let chats = $0.0.map(Chat.contact)
+            return (chats + groups).sorted { $0.orderingDate > $1.orderingDate }
+        }
+        .sink { [unowned self] in chatsSubject.send($0) }
         .store(in: &cancellables)
     }
 
-    func isGroup(indexPath: IndexPath) -> Bool {
-        chatsRelay.value[indexPath.row].contact == nil
+    func updateSearch(query: String) {
+        searchSubject.send(query)
     }
 
-    func deleteAndLeaveGroupFrom(indexPath: IndexPath) {
-        guard let group = chatsRelay.value[indexPath.row].groupInfo?.group else {
-            fatalError("Tried to delete a group from an index path that is not one")
-        }
+    func leave(_ group: Group) {
+        hudSubject.send(.on(nil))
 
         do {
-            hudRelay.send(.on(nil))
             try session.leave(group: group)
-            hudRelay.send(.none)
+            session.deleteAll(from: group)
+            hudSubject.send(.none)
         } catch {
-            hudRelay.send(.error(.init(with: error)))
+            hudSubject.send(.error(.init(with: error)))
         }
     }
 
-    func delete(indexPaths: [IndexPath]?) {
-        guard let selectedIndexPaths = indexPaths else {
-            let contacts = chatsRelay.value.compactMap { $0.contact }
-            let groups = chatsRelay.value.compactMap { $0.groupInfo?.group }
-
-            groups.forEach(session.deleteAll(from:))
-            contacts.forEach(session.deleteAll(from:))
-            return
-        }
-
-        let contacts = selectedIndexPaths.compactMap { chatsRelay.value[$0.row].contact }
-        let groups = selectedIndexPaths.compactMap { chatsRelay.value[$0.row].groupInfo?.group }
-
-        groups.forEach(session.deleteAll(from:))
-        contacts.forEach(session.deleteAll(from:))
+    func clear(_ contact: Contact) {
+        session.deleteAll(from: contact)
     }
 }

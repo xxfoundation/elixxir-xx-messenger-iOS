@@ -2,16 +2,16 @@ import UIKit
 import Shared
 
 final class ScanView: UIView {
-    let overlay = ScanOverlayView()
-    let animationView = DotAnimation()
-    let iconImageView = UIImageView()
-    let statusLabel = UILabel()
-    let actionButton = CapsuleButton()
-    let stackView = UIStackView()
+    private let statusLabel = UILabel()
+    private let imageView = UIImageView()
+    private let stackView = UIStackView()
+    private let animationView = DotAnimation()
+    private let overlayView = ScanOverlayView()
+    private(set) var actionButton = CapsuleButton()
 
     init() {
         super.init(frame: .zero)
-        iconImageView.contentMode = .center
+        imageView.contentMode = .center
         actionButton.setStyle(.brandColored)
 
         statusLabel.numberOfLines = 0
@@ -22,28 +22,28 @@ final class ScanView: UIView {
         stackView.spacing = 15
         stackView.axis = .vertical
         stackView.addArrangedSubview(animationView)
-        stackView.addArrangedSubview(iconImageView)
+        stackView.addArrangedSubview(imageView)
         stackView.addArrangedSubview(statusLabel)
         stackView.addArrangedSubview(actionButton)
 
-        animationView.isHidden = false
-        iconImageView.isHidden = true
+        imageView.isHidden = true
         actionButton.isHidden = true
+        animationView.isHidden = false
 
-        addSubview(overlay)
+        addSubview(overlayView)
         addSubview(stackView)
 
-        overlay.snp.makeConstraints { make in
-            make.top.equalToSuperview()
-            make.left.equalToSuperview()
-            make.right.equalToSuperview()
-            make.bottom.equalToSuperview()
+        overlayView.snp.makeConstraints {
+            $0.top.equalToSuperview()
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
+            $0.bottom.equalToSuperview()
         }
 
-        stackView.snp.makeConstraints { make in
-            make.left.equalToSuperview().offset(57)
-            make.right.equalToSuperview().offset(-57)
-            make.bottom.equalTo(safeAreaLayoutGuide).offset(-100)
+        stackView.snp.makeConstraints {
+            $0.left.equalToSuperview().offset(57)
+            $0.right.equalToSuperview().offset(-57)
+            $0.bottom.equalTo(safeAreaLayoutGuide).offset(-100)
         }
     }
 
@@ -54,24 +54,24 @@ final class ScanView: UIView {
 
         switch state {
         case .reading, .processing:
-            iconImageView.isHidden = true
+            imageView.isHidden = true
             actionButton.isHidden = true
             text = Localized.Scan.Status.reading
-            overlay.updateCornerColor(Asset.brandPrimary.color)
+            overlayView.updateCornerColor(Asset.brandPrimary.color)
 
         case .success:
             animationView.isHidden = true
             actionButton.isHidden = true
-            iconImageView.isHidden = false
-            iconImageView.image = Asset.sharedSuccess.image
+            imageView.isHidden = false
+            imageView.image = Asset.sharedSuccess.image
             text = Localized.Scan.Status.success
-            overlay.updateCornerColor(Asset.accentSuccess.color)
+            overlayView.updateCornerColor(Asset.accentSuccess.color)
 
         case .failed(let error):
             animationView.isHidden = true
-            iconImageView.image = Asset.scanError.image
-            iconImageView.isHidden = false
-            overlay.updateCornerColor(Asset.accentDanger.color)
+            imageView.image = Asset.scanError.image
+            imageView.isHidden = false
+            overlayView.updateCornerColor(Asset.accentDanger.color)
 
             switch error {
             case .requestOpened:
@@ -101,7 +101,7 @@ final class ScanView: UIView {
 
         attString.addAttribute(.paragraphStyle, value: paragraph)
         attString.addAttribute(.foregroundColor, value: Asset.neutralWhite.color)
-        attString.addAttribute(.font, value: Fonts.Mulish.semiBold.font(size: 18.0) as Any)
+        attString.addAttribute(.font, value: Fonts.Mulish.regular.font(size: 14.0) as Any)
 
         if text.contains("#") {
             attString.addAttribute(name: .foregroundColor, value: Asset.brandPrimary.color, betweenCharacters: "#")

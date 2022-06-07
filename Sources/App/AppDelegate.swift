@@ -1,23 +1,20 @@
 import UIKit
-import OSLog
 import BackgroundTasks
 
 import Theme
 import XXLogger
 import Defaults
 import Integration
+import PushFeature
 import ToastFeature
 import SwiftyDropbox
+import LaunchFeature
+import DropboxFeature
 import CrashReporting
-import PushNotifications
 import DependencyInjection
 
-import OnboardingFeature
-import DropboxFeature
-
-let logger = Logger(subsystem: "logs_xxmessenger", category: "AppDelegate.swift")
-
 public class AppDelegate: UIResponder, UIApplicationDelegate {
+    @Dependency private var pushRouter: PushRouter
     @Dependency private var pushHandler: PushHandling
     @Dependency private var crashReporter: CrashReporter
     @Dependency private var dropboxService: DropboxInterface
@@ -52,21 +49,17 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
 
         UNUserNotificationCenter.current().delegate = self
 
-        let rootScreen =
-        StatusBarViewController(
-            ToastViewController(
-                UINavigationController(
-                    rootViewController: OnboardingLaunchController()
-                )
-            )
+        let window = Window()
+        let navController = UINavigationController(rootViewController: LaunchController())
+        window.rootViewController = StatusBarViewController(ToastViewController(navController))
+        window.backgroundColor = UIColor.white
+        window.makeKeyAndVisible()
+        self.window = window
+
+        DependencyInjection.Container.shared.register(
+            PushRouter.live(navigationController: navController)
         )
 
-        window = Window()
-        window?.rootViewController = rootScreen
-        window?.backgroundColor = UIColor.white
-        window?.makeKeyAndVisible()
-
-        UserDefaults.standard.set(false, forKey: "_UIConstraintBasedLayoutLogUnsatisfiable")
         return true
     }
 
@@ -76,25 +69,19 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
 
     public func applicationDidEnterBackground(_ application: UIApplication) {
         if let session = try? DependencyInjection.Container.shared.resolve() as SessionType {
-            let backgroundTask = application.beginBackgroundTask(withName: "xx.stop.network") {
-                logger.log("Background task will expire")
-            }
+            let backgroundTask = application.beginBackgroundTask(withName: "xx.stop.network") {}
 
             // An option here would be: create async completion closure
 
             backgroundTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
-                logger.log("Background time remaining: \(UIApplication.shared.backgroundTimeRemaining)")
-
                 guard UIApplication.shared.backgroundTimeRemaining > 8 else {
                     if !self.calledStopNetwork {
                         self.calledStopNetwork = true
                         session.stop()
-                        logger.log("Stopping client threads...")
                     } else {
                         if session.hasRunningTasks == false {
                             application.endBackgroundTask(backgroundTask)
                             timer.invalidate()
-                            logger.log("Finished background processes")
                         }
                     }
 
@@ -104,10 +91,7 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
                 guard UIApplication.shared.backgroundTimeRemaining > 9 else {
                     if !self.forceFailedPendingMessages {
                         self.forceFailedPendingMessages = true
-                        logger.log("Background time is running out. Will force-fail all pending messages")
                         session.forceFailMessages()
-                    } else {
-                        logger.log("Background time is running out without pending messages")
                     }
 
                     return
@@ -127,27 +111,18 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     
     public func applicationWillTerminate(_ application: UIApplication) {
         if let session = try? DependencyInjection.Container.shared.resolve() as SessionType {
-            logger.log("applicationWillTerminate but has an ongoing session. Calling stopNetwork...")
             session.stop()
-        } else {
-            logger.log("applicationWillTerminate without any session")
         }
     }
 
     public func applicationWillEnterForeground(_ application: UIApplication) {
         if backgroundTimer != nil {
-            logger.log("Invalidating background timer...")
             backgroundTimer?.invalidate()
             backgroundTimer = nil
         }
 
         if let session = try? DependencyInjection.Container.shared.resolve() as SessionType {
-            guard self.calledStopNetwork == true else {
-                logger.log("A client instance is already running. Moving on...")
-                return
-            }
-
-            logger.log("A client instance is stopped. Starting network...")
+            guard self.calledStopNetwork == true else { return }
             session.start()
             self.calledStopNetwork = false
         }
@@ -158,7 +133,11 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
         coverView?.removeFromSuperview()
     }
 
-    public func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey : Any] = [:]) -> Bool {
+    public func application(
+        _ app: UIApplication,
+        open url: URL,
+        options: [UIApplication.OpenURLOptionsKey : Any] = [:]
+    ) -> Bool {
         dropboxService.handleOpenUrl(url)
     }
 }
@@ -166,18 +145,27 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
 // MARK: Notifications
 
 extension AppDelegate: UNUserNotificationCenterDelegate {
+    public func userNotificationCenter(
+        _ center: UNUserNotificationCenter,
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
+        let userInfo = response.notification.request.content.userInfo
+        pushHandler.handleAction(pushRouter, userInfo, completionHandler)
+    }
+
     public func application(
-        _: UIApplication,
+        _ application: UIApplication,
         didReceiveRemoteNotification notification: [AnyHashable: Any],
         fetchCompletionHandler completionHandler: @escaping (UIBackgroundFetchResult) -> Void
     ) {
-        pushHandler.didReceiveRemote(notification, completionHandler)
+        pushHandler.handlePush(notification, completionHandler)
     }
 
     public func application(
         _: UIApplication,
         didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data
     ) {
-        pushHandler.didRegisterWith(deviceToken)
+        pushHandler.registerToken(deviceToken)
     }
 }

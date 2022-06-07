@@ -6,14 +6,15 @@ typealias OutgoingTextCell = CollectionCell<FlexibleSpace, StackMessageView>
 typealias OutgoingFailedTextCell = CollectionCell<FlexibleSpace, StackMessageView>
 
 final class StackMessageView: UIView, CollectionCellContent {
-    let roundButton = UIButton()
-    let dateLabel = UILabel()
-    let textView = TextView()
-    let lockerView = LockerView()
-    let senderLabel = UILabel()
     private let stackView = UIStackView()
     private let shapeLayer = CAShapeLayer()
     private let bottomStack = UIStackView()
+
+    private(set) var dateLabel = UILabel()
+    private(set) var textView = TextView()
+    private(set) var senderLabel = UILabel()
+    private(set) var roundButton = UIButton()
+    private(set) var lockerImageView = UIImageView()
 
     var didTapShowRound: (() -> Void)?
 
@@ -34,7 +35,6 @@ final class StackMessageView: UIView, CollectionCellContent {
         textView.text = nil
         senderLabel.text = nil
         textView.resignFirstResponder()
-        lockerView.icon.layer.removeAllAnimations()
         didTapShowRound = nil
     }
 
@@ -44,6 +44,9 @@ final class StackMessageView: UIView, CollectionCellContent {
     }
 
     private func setup() {
+        lockerImageView.contentMode = .center
+        lockerImageView.image = Asset.chatLocker.image
+
         roundButton.addTarget(
             self,
             action: #selector(didTapRoundButton),
@@ -70,7 +73,8 @@ final class StackMessageView: UIView, CollectionCellContent {
         bottomStack.addArrangedSubview(FlexibleSpace())
         bottomStack.addArrangedSubview(roundButton)
         bottomStack.addArrangedSubview(dateLabel)
-        bottomStack.addArrangedSubview(lockerView)
+        bottomStack.addArrangedSubview(lockerImageView)
+        bottomStack.setCustomSpacing(8, after: dateLabel)
 
         stackView.spacing = 6
         stackView.axis = .vertical

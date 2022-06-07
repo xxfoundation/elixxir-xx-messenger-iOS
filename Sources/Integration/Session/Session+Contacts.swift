@@ -198,6 +198,8 @@ extension Session {
 
             switch $0 {
             case .success(let confirmed):
+                contact.isRecent = true
+                contact.createdAt = Date()
                 contact.status = confirmed ? .friend : .confirmationFailed
                 log(string: "Confirming request from \(title) = \(confirmed)", type: confirmed ? .info : .error)
             case .failure(let error):
@@ -216,6 +218,8 @@ extension Session {
                 stored.photo = contact.photo
                 stored.phone = contact.phone
                 stored.nickname = contact.nickname
+                stored.isRecent = contact.isRecent
+                stored.createdAt = contact.createdAt
                 try dbManager.save(stored)
 
                 try dbManager.updateAll(

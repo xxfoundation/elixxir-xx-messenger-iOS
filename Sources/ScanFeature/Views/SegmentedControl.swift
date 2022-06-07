@@ -3,26 +3,32 @@ import Shared
 import SnapKit
 
 final class SegmentedControl: UIView {
-    let trackView = UIView()
-    let trackIndicatorView = UIView()
-    var leftConstraint: Constraint?
-    let leftButton = SegmentedControlButton()
-    let rightButton = SegmentedControlButton()
-    let stackView = UIStackView()
+    private let trackHeight = 2.0
+    private let numberOfTabs = 2.0
+    private let trackView = UIView()
+    private let stackView = UIStackView()
+    private var leftConstraint: Constraint?
+    private let trackIndicatorView = UIView()
+    private(set) var leftButton = SegmentedControlButton()
+    private(set) var rightButton = SegmentedControlButton()
 
     init() {
         super.init(frame: .zero)
 
-        rightButton.icon.image = Asset.scanQr.image
-        leftButton.title.text = Localized.Scan.SegmentedControl.left
-        rightButton.title.text = Localized.Scan.SegmentedControl.right
+        rightButton.setup(
+            title: Localized.Scan.SegmentedControl.right,
+            icon: Asset.scanQr.image
+        )
 
-        leftButton.title.font = Fonts.Mulish.semiBold.font(size: 14.0)
-        rightButton.title.font = Fonts.Mulish.semiBold.font(size: 14.0)
+        leftButton.setup(
+            title: Localized.Scan.SegmentedControl.left,
+            icon: Asset.scanScan.image
+        )
 
+        trackView.backgroundColor = Asset.neutralLine.color
         trackIndicatorView.backgroundColor = Asset.brandPrimary.color
 
-        stackView.spacing = 40
+        stackView.distribution = .fillEqually
         stackView.addArrangedSubview(leftButton)
         stackView.addArrangedSubview(rightButton)
 
@@ -30,30 +36,45 @@ final class SegmentedControl: UIView {
         addSubview(trackView)
         trackView.addSubview(trackIndicatorView)
 
-        stackView.snp.makeConstraints { make in
-            make.top.equalTo(trackView.snp.bottom).offset(2)
-            make.left.equalToSuperview()
-            make.right.equalToSuperview()
-            make.bottom.equalToSuperview()
+        stackView.snp.makeConstraints {
+            $0.top.equalToSuperview()
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
+            $0.bottom.equalTo(trackView.snp.top)
         }
 
-        trackView.snp.makeConstraints { make in
-            make.top.equalToSuperview()
-            make.left.equalTo(stackView)
-            make.right.equalTo(stackView)
-            make.height.equalTo(3)
+        trackView.snp.makeConstraints {
+            $0.height.equalTo(trackHeight)
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
+            $0.bottom.equalToSuperview()
         }
 
-        trackIndicatorView.snp.makeConstraints { make in
-            leftConstraint = make.left.equalToSuperview().constraint
-            make.top.bottom.equalToSuperview()
-            make.width.equalTo(75)
+        trackIndicatorView.snp.makeConstraints {
+            $0.top.equalToSuperview()
+            leftConstraint = $0.left.equalToSuperview().constraint
+            $0.width.equalToSuperview().dividedBy(numberOfTabs)
+            $0.bottom.equalToSuperview()
         }
     }
 
     required init?(coder: NSCoder) { nil }
 
-    func updateLeftConstraint(_ percentage: CGFloat) {
-        leftConstraint?.update(offset: percentage * 125)
+    func updateLeftConstraint(_ percentageScrolled: CGFloat) {
+        let tabWidth = bounds.width / numberOfTabs
+        let leftOffset = percentageScrolled * tabWidth
+        leftConstraint?.update(offset: leftOffset)
+
+        leftButton.update(color: .fade(
+            from: Asset.brandPrimary.color,
+            to: Asset.neutralLine.color,
+            pcent: percentageScrolled
+        ))
+
+        rightButton.update(color: .fade(
+            from: Asset.brandPrimary.color,
+            to: Asset.neutralLine.color,
+            pcent: 1 - percentageScrolled
+        ))
     }
 }

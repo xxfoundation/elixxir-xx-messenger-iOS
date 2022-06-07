@@ -17,6 +17,7 @@ import Countries
 import Voxophone
 import Integration
 import Permissions
+import PushFeature
 import CrashService
 import ToastFeature
 import iCloudFeature
@@ -24,7 +25,6 @@ import CrashReporting
 import NetworkMonitor
 import DropboxFeature
 import VersionChecking
-import PushNotifications
 import GoogleDriveFeature
 import DependencyInjection
 
@@ -35,6 +35,7 @@ import ChatFeature
 import MenuFeature
 import BackupFeature
 import SearchFeature
+import LaunchFeature
 import RestoreFeature
 import ContactFeature
 import ProfileFeature
@@ -106,6 +107,15 @@ struct DependencyRegistrator {
         container.register(StatusBarController() as StatusBarStyleControlling)
 
         // MARK: Coordinators
+
+        container.register(
+            LaunchCoordinator(
+                requestsFactory: RequestsContainerController.init,
+                chatListFactory: ChatListController.init,
+                onboardingFactory: OnboardingStartController.init(_:),
+                singleChatFactory: SingleChatController.init(_:),
+                groupChatFactory: GroupChatController.init(_:)
+            ) as LaunchCoordinating)
 
         container.register(
             BackupCoordinator(
@@ -190,7 +200,6 @@ struct DependencyRegistrator {
                 searchFactory: SearchController.init,
                 welcomeFactory: OnboardingWelcomeController.init,
                 chatListFactory: ChatListController.init,
-                startFactory: OnboardingStartController.init(_:),
                 usernameFactory: OnboardingUsernameController.init(_:),
                 restoreListFactory: RestoreListController.init(_:),
                 successFactory: OnboardingSuccessController.init(_:),
@@ -214,20 +223,60 @@ struct DependencyRegistrator {
 
         container.register(
             ScanCoordinator(
+                emailFactory: ProfileEmailController.init,
+                phoneFactory: ProfilePhoneController.init,
                 contactsFactory: ContactListController.init,
                 requestsFactory: RequestsContainerController.init,
                 contactFactory: ContactController.init(_:),
                 sideMenuFactory: MenuController.init(_:_:)
             ) as ScanCoordinating)
 
+
         container.register(
             ChatListCoordinator(
                 scanFactory: ScanContainerController.init,
                 searchFactory: SearchController.init,
+                newGroupFactory: CreateGroupController.init,
                 contactsFactory: ContactListController.init,
+                contactFactory: ContactController.init(_:),
                 singleChatFactory: SingleChatController.init(_:),
                 groupChatFactory: GroupChatController.init(_:),
                 sideMenuFactory: MenuController.init(_:_:)
             ) as ChatListCoordinating)
+    }
+}
+
+extension PushRouter {
+    static func live(navigationController: UINavigationController) -> PushRouter {
+        PushRouter { route, completion in
+            if let launchController = navigationController.viewControllers.last as? LaunchController {
+                launchController.pendingPushRoute = route
+            } else {
+                switch route {
+                case .requests:
+                    if (navigationController.viewControllers.last as? RequestsContainerController) == nil {
+                        navigationController.setViewControllers([RequestsContainerController()], animated: true)
+                    }
+                case .contactChat(id: let id):
+                    if let session = try? DependencyInjection.Container.shared.resolve() as SessionType,
+                       let contact = session.getContactWith(userId: id) {
+                        navigationController.setViewControllers([
+                            ChatListController(),
+                            SingleChatController(contact)
+                        ], animated: true)
+                    }
+                case .groupChat(id: let id):
+                    if let session = try? DependencyInjection.Container.shared.resolve() as SessionType,
+                       let info = session.getGroupChatInfoWith(groupId: id) {
+                        navigationController.setViewControllers([
+                            ChatListController(),
+                            GroupChatController(info)
+                        ], animated: true)
+                    }
+                }
+            }
+
+            completion()
+        }
     }
 }

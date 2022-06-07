@@ -56,6 +56,11 @@ public final class SettingsAdvancedController: UIViewController {
             .sink { [weak viewModel] in viewModel?.didToggleRecordLogs() }
             .store(in: &cancellables)
 
+        screenView.showUsernamesSwitcher.switcherView
+            .publisher(for: .valueChanged)
+            .sink { [weak viewModel] in viewModel?.didToggleShowUsernames() }
+            .store(in: &cancellables)
+
         screenView.crashReportingSwitcher.switcherView
             .publisher(for: .valueChanged)
             .sink { [weak viewModel] in viewModel?.didToggleCrashReporting() }
@@ -71,6 +76,7 @@ public final class SettingsAdvancedController: UIViewController {
             .sink { [unowned self] state in
                 screenView.logRecordingSwitcher.switcherView.setOn(state.isRecordingLogs, animated: true)
                 screenView.crashReportingSwitcher.switcherView.setOn(state.isCrashReporting, animated: true)
+                screenView.showUsernamesSwitcher.switcherView.setOn(state.isShowingUsernames, animated: true)
             }.store(in: &cancellables)
     }
 

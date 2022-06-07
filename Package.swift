@@ -27,9 +27,11 @@ let package = Package(
         .library(name: "MenuFeature", targets: ["MenuFeature"]),
         .library(name: "Integration", targets: ["Integration"]),
         .library(name: "ChatFeature", targets: ["ChatFeature"]),
+        .library(name: "PushFeature", targets: ["PushFeature"]),
         .library(name: "CrashService", targets: ["CrashService"]),
         .library(name: "Presentation", targets: ["Presentation"]),
         .library(name: "BackupFeature", targets: ["BackupFeature"]),
+        .library(name: "LaunchFeature", targets: ["LaunchFeature"]),
         .library(name: "iCloudFeature", targets: ["iCloudFeature"]),
         .library(name: "SearchFeature", targets: ["SearchFeature"]),
         .library(name: "DrawerFeature", targets: ["DrawerFeature"]),
@@ -44,7 +46,6 @@ let package = Package(
         .library(name: "ChatListFeature", targets: ["ChatListFeature"]),
         .library(name: "RequestsFeature", targets: ["RequestsFeature"]),
         .library(name: "ChatInputFeature", targets: ["ChatInputFeature"]),
-        .library(name: "PushNotifications", targets: ["PushNotifications"]),
         .library(name: "OnboardingFeature", targets: ["OnboardingFeature"]),
         .library(name: "GoogleDriveFeature", targets: ["GoogleDriveFeature"]),
         .library(name: "ContactListFeature", targets: ["ContactListFeature"]),
@@ -152,10 +153,12 @@ let package = Package(
                 "ScanFeature",
                 "ChatFeature",
                 "MenuFeature",
+                "PushFeature",
                 "ToastFeature",
                 "CrashService",
                 "BackupFeature",
                 "SearchFeature",
+                "LaunchFeature",
                 "iCloudFeature",
                 "DropboxFeature",
                 "ContactFeature",
@@ -165,7 +168,6 @@ let package = Package(
                 "ChatListFeature",
                 "SettingsFeature",
                 "RequestsFeature",
-                "PushNotifications",
                 "OnboardingFeature",
                 "GoogleDriveFeature",
                 "ContactListFeature"
@@ -178,7 +180,7 @@ let package = Package(
         .target(name: "InputField", dependencies: ["Shared"]),
         .binaryTarget(name: "Bindings", path: "XCFrameworks/Bindings.xcframework"),
 
-        // MARK: - PushNotifications
+        // MARK: - Permissions
 
             .target(
                 name: "Permissions",
@@ -189,10 +191,13 @@ let package = Package(
                 ]
             ),
 
+        // MARK: - PushFeature
+
             .target(
-                name: "PushNotifications",
+                name: "PushFeature",
                 dependencies: [
-                    "XXLogger",
+                    "Models",
+                    "Database",
                     "Defaults",
                     "Integration",
                     "DependencyInjection"
@@ -430,6 +435,7 @@ let package = Package(
                     "Shared",
                     "Database",
                     "Bindings",
+                    "ToastFeature",
                     "BackupFeature",
                     "CrashReporting",
                     "NetworkMonitor",
@@ -552,6 +558,24 @@ let package = Package(
                 ]
             ),
 
+        // MARK: - LaunchFeature
+
+            .target(
+                name: "LaunchFeature",
+                dependencies: [
+                    "HUD",
+                    "Theme",
+                    "Shared",
+                    "Defaults",
+                    "PushFeature",
+                    "Integration",
+                    "Permissions",
+                    "DropboxFeature",
+                    "VersionChecking",
+                    "DependencyInjection"
+                ]
+            ),
+
         // MARK: - RequestsFeature
 
             .target(
@@ -632,11 +656,11 @@ let package = Package(
                     "Countries",
                     "InputField",
                     "Permissions",
+                    "PushFeature",
                     "Integration",
                     "Presentation",
                     "DrawerFeature",
                     "VersionChecking",
-                    "PushNotifications",
                     "DependencyInjection",
                     .product(
                         name: "ScrollViewController",
@@ -729,12 +753,12 @@ let package = Package(
                     "Defaults",
                     "Keychain",
                     "InputField",
+                    "PushFeature",
                     "Permissions",
                     "MenuFeature",
                     "Integration",
                     "Presentation",
                     "DrawerFeature",
-                    "PushNotifications",
                     "DependencyInjection",
                     .product(
                         name: "ScrollViewController",

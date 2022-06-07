@@ -172,6 +172,61 @@ public enum Localized {
     }
   }
 
+  public enum AccountRestore {
+    /// Account restore
+    public static let header = Localized.tr("Localizable", "accountRestore.header")
+    public enum Found {
+      /// Cancel
+      public static let cancel = Localized.tr("Localizable", "accountRestore.found.cancel")
+      /// BACKUP DATE
+      public static let date = Localized.tr("Localizable", "accountRestore.found.date")
+      /// Next
+      public static let next = Localized.tr("Localizable", "accountRestore.found.next")
+      /// Restore account
+      public static let restore = Localized.tr("Localizable", "accountRestore.found.restore")
+      /// FILE SIZE
+      public static let size = Localized.tr("Localizable", "accountRestore.found.size")
+      /// Restore your contacts from the following backup.
+      public static let subtitle = Localized.tr("Localizable", "accountRestore.found.subtitle")
+      /// Backup found
+      public static let title = Localized.tr("Localizable", "accountRestore.found.title")
+    }
+    public enum List {
+      /// Cancel
+      public static let cancel = Localized.tr("Localizable", "accountRestore.list.cancel")
+      /// Restore your account from a previous backup. You’ll be able to have access to all your contacts.
+      public static let firstSubtitle = Localized.tr("Localizable", "accountRestore.list.firstSubtitle")
+      /// Select the cloud storage service you previously used to create a backup.
+      public static let secondSubtitle = Localized.tr("Localizable", "accountRestore.list.secondSubtitle")
+      /// Restore your #account#.
+      public static let title = Localized.tr("Localizable", "accountRestore.list.title")
+    }
+    public enum NotFound {
+      /// Go back
+      public static let back = Localized.tr("Localizable", "accountRestore.notFound.back")
+      /// No account backup was found in %@
+      public static func subtitle(_ p1: Any) -> String {
+        return Localized.tr("Localizable", "accountRestore.notFound.subtitle", String(describing: p1))
+      }
+      /// Backup not found
+      public static let title = Localized.tr("Localizable", "accountRestore.notFound.title")
+    }
+    public enum Success {
+      /// You now have access to all your contacts.
+      public static let subtitle = Localized.tr("Localizable", "accountRestore.success.subtitle")
+      /// Your #account# has been successfully #restored#.
+      public static let title = Localized.tr("Localizable", "accountRestore.success.title")
+    }
+    public enum Warning {
+      /// I understand
+      public static let action = Localized.tr("Localizable", "accountRestore.warning.action")
+      /// xx messenger account can only run on a single device at a time. Using the same account on multiple devices may permanently damage your account and make it impossible to converse with your contacts
+      public static let subtitle = Localized.tr("Localizable", "accountRestore.warning.subtitle")
+      /// Warning
+      public static let title = Localized.tr("Localizable", "accountRestore.warning.title")
+    }
+  }
+
   public enum Backup {
     /// Dropbox
     public static let dropbox = Localized.tr("Localizable", "backup.dropbox")
@@ -267,13 +322,15 @@ public enum Localized {
       public static let title = Localized.tr("Localizable", "chat.clear.title")
     }
     public enum E2e {
-      /// You and %@ now have a #quantum-secure#, completely private channel for messaging.\n#Say hello#!
+      /// You and %@ now have a #quantum-secure#, completely private channel for messaging.
+      /// #Say hello#!
       public static func placeholder(_ p1: Any) -> String {
         return Localized.tr("Localizable", "chat.e2e.placeholder", String(describing: p1))
       }
     }
     public enum Menu {
-      /// Delete\nAll
+      /// Delete
+      /// All
       public static let deleteAll = Localized.tr("Localizable", "chat.menu.deleteAll")
     }
     public enum RetrySheet {
@@ -283,6 +340,12 @@ public enum Localized {
       public static let delete = Localized.tr("Localizable", "chat.retrySheet.delete")
       /// Try again
       public static let retry = Localized.tr("Localizable", "chat.retrySheet.retry")
+    }
+    public enum RoundDrawer {
+      /// OK
+      public static let action = Localized.tr("Localizable", "chat.roundDrawer.action")
+      /// The mix for this message will be available shortly, please check again later.
+      public static let title = Localized.tr("Localizable", "chat.roundDrawer.title")
     }
     public enum SheetMenu {
       /// Clear chat
@@ -322,7 +385,9 @@ public enum Localized {
     public enum DeleteAll {
       /// Delete All Chats
       public static let delete = Localized.tr("Localizable", "chatList.deleteAll.delete")
-      /// All chats will be deleted from this phone. However, your contacts and their copies of your chats will remain unchanged. Encrypted copies may remain on the decentralized network for up to three weeks.\n\nThis will only delete chats locally—they can remain on the network (only decryptable by you) for up to three weeks, and they will also remain on the recipient(s) device(s).
+      /// All chats will be deleted from this phone. However, your contacts and their copies of your chats will remain unchanged. Encrypted copies may remain on the decentralized network for up to three weeks.
+      /// 
+      /// This will only delete chats locally—they can remain on the network (only decryptable by you) for up to three weeks, and they will also remain on the recipient(s) device(s).
       public static let subtitle = Localized.tr("Localizable", "chatList.deleteAll.subtitle")
       /// Delete All Chats?
       public static let title = Localized.tr("Localizable", "chatList.deleteAll.title")
@@ -555,6 +620,25 @@ public enum Localized {
     }
   }
 
+  public enum Launch {
+    public enum Version {
+      /// Failed checking app version
+      public static let failed = Localized.tr("Localizable", "launch.version.failed")
+      public enum Recommended {
+        /// Not now
+        public static let negative = Localized.tr("Localizable", "launch.version.recommended.negative")
+        /// Update
+        public static let positive = Localized.tr("Localizable", "launch.version.recommended.positive")
+        /// There is a new version available that enhance the current performance and usability.
+        public static let title = Localized.tr("Localizable", "launch.version.recommended.title")
+      }
+      public enum Required {
+        /// Okay
+        public static let positive = Localized.tr("Localizable", "launch.version.required.positive")
+      }
+    }
+  }
+
   public enum Menu {
     /// Build %@
     public static func build(_ p1: Any) -> String {
@@ -712,7 +796,9 @@ public enum Localized {
       public static let skip = Localized.tr("Localizable", "onboarding.welcome.skip")
       /// Would you like to register an email or phone number to help other users find your account? If not, you can still be found by your username, or completely off the grid using QR codes.
       public static let subtitle = Localized.tr("Localizable", "onboarding.welcome.subtitle")
-      /// %@,\nwelcome to\n#xx network#
+      /// %@,
+      /// welcome to
+      /// #xx network#
       public static func title(_ p1: Any) -> String {
         return Localized.tr("Localizable", "onboarding.welcome.title", String(describing: p1))
       }
@@ -733,7 +819,8 @@ public enum Localized {
       public static func resend(_ p1: Any) -> String {
         return Localized.tr("Localizable", "profile.code.resend", String(describing: p1))
       }
-      /// Enter the code we just sent to\n%@
+      /// Enter the code we just sent to
+      /// %@
       public static func subtitle(_ p1: Any) -> String {
         return Localized.tr("Localizable", "profile.code.subtitle", String(describing: p1))
       }
@@ -899,77 +986,33 @@ public enum Localized {
     }
   }
 
-  public enum Restore {
-    /// Account restore
-    public static let header = Localized.tr("Localizable", "restore.header")
-    public enum Found {
-      /// Cancel
-      public static let cancel = Localized.tr("Localizable", "restore.found.cancel")
-      /// BACKUP DATE
-      public static let date = Localized.tr("Localizable", "restore.found.date")
-      /// Next
-      public static let next = Localized.tr("Localizable", "restore.found.next")
-      /// Restore account
-      public static let restore = Localized.tr("Localizable", "restore.found.restore")
-      /// FILE SIZE
-      public static let size = Localized.tr("Localizable", "restore.found.size")
-      /// Restore your contacts from the following backup.
-      public static let subtitle = Localized.tr("Localizable", "restore.found.subtitle")
-      /// Backup found
-      public static let title = Localized.tr("Localizable", "restore.found.title")
-    }
-    public enum List {
-      /// Cancel
-      public static let cancel = Localized.tr("Localizable", "restore.list.cancel")
-      /// Restore your account from a previous backup. You’ll be able to have access to all your contacts.
-      public static let firstSubtitle = Localized.tr("Localizable", "restore.list.firstSubtitle")
-      /// Select the cloud storage service you previously used to create a backup.
-      public static let secondSubtitle = Localized.tr("Localizable", "restore.list.secondSubtitle")
-      /// Restore your #account#.
-      public static let title = Localized.tr("Localizable", "restore.list.title")
-    }
-    public enum NotFound {
-      /// Go back
-      public static let back = Localized.tr("Localizable", "restore.notFound.back")
-      /// No account backup was found in %@
-      public static func subtitle(_ p1: Any) -> String {
-        return Localized.tr("Localizable", "restore.notFound.subtitle", String(describing: p1))
-      }
-      /// Backup not found
-      public static let title = Localized.tr("Localizable", "restore.notFound.title")
-    }
-    public enum Success {
-      /// You now have access to all your contacts.
-      public static let subtitle = Localized.tr("Localizable", "restore.success.subtitle")
-      /// Your #account# has been successfully #restored#.
-      public static let title = Localized.tr("Localizable", "restore.success.title")
-    }
-    public enum Warning {
-      /// I understand
-      public static let action = Localized.tr("Localizable", "restore.warning.action")
-      /// xx messenger account can only run on a single device at a time. Using the same account on multiple devices may permanently damage your account and make it impossible to converse with your contacts
-      public static let subtitle = Localized.tr("Localizable", "restore.warning.subtitle")
-      /// Warning
-      public static let title = Localized.tr("Localizable", "restore.warning.title")
-    }
-  }
-
   public enum Scan {
     /// Go to contact
     public static let contact = Localized.tr("Localizable", "scan.contact")
     /// Check requests
     public static let requests = Localized.tr("Localizable", "scan.requests")
-    /// Sending as\n#%@#
+    /// Sending as
+    /// #%@#
     public static func sendingAs(_ p1: Any) -> String {
       return Localized.tr("Localizable", "scan.sendingAs", String(describing: p1))
     }
     /// Go to settings
     public static let settings = Localized.tr("Localizable", "scan.settings")
     public enum Display {
+      /// Copied!
+      public static let copied = Localized.tr("Localizable", "scan.display.copied")
+      /// Tap code to copy
+      public static let copy = Localized.tr("Localizable", "scan.display.copy")
       public enum Share {
+        /// Add
+        public static let add = Localized.tr("Localizable", "scan.display.share.add")
         /// EMAIL ADDRESS
         public static let email = Localized.tr("Localizable", "scan.display.share.email")
-        /// PHONE
+        /// ・・・・・・・・・・
+        public static let hidden = Localized.tr("Localizable", "scan.display.share.hidden")
+        /// Not added
+        public static let notAdded = Localized.tr("Localizable", "scan.display.share.notAdded")
+        /// PHONE NUMBER
         public static let phone = Localized.tr("Localizable", "scan.display.share.phone")
         /// Select what you'd like to share
         public static let title = Localized.tr("Localizable", "scan.display.share.title")
@@ -978,7 +1021,8 @@ public enum Localized {
     public enum Error {
       /// Camera needs permission to be used
       public static let denied = Localized.tr("Localizable", "scan.error.denied")
-      /// You've already added \n#%@#
+      /// You've already added 
+      /// #%@#
       public static func friends(_ p1: Any) -> String {
         return Localized.tr("Localizable", "scan.error.friends", String(describing: p1))
       }
@@ -1045,6 +1089,12 @@ public enum Localized {
         /// Record logs
         public static let title = Localized.tr("Localizable", "settings.advanced.logs.title")
       }
+      public enum ShowUsername {
+        /// Allow us to show a more detailed push notification
+        public static let description = Localized.tr("Localizable", "settings.advanced.showUsername.description")
+        /// Rich notifications
+        public static let title = Localized.tr("Localizable", "settings.advanced.showUsername.title")
+      }
     }
     public enum Biometrics {
       /// Enable unlocking with your device biometrics.
@@ -1059,7 +1109,9 @@ public enum Localized {
       public static let delete = Localized.tr("Localizable", "settings.delete.delete")
       /// Your username
       public static let input = Localized.tr("Localizable", "settings.delete.input")
-      /// A deleted account cannot be recovered. The username associated with this account cannot be reused in the future.\n\nTo confirm your account deletion, type in your username.
+      /// A deleted account cannot be recovered. The username associated with this account cannot be reused in the future.
+      /// 
+      /// To confirm your account deletion, type in your username.
       public static let subtitle = Localized.tr("Localizable", "settings.delete.subtitle")
       /// Delete Account
       public static let title = Localized.tr("Localizable", "settings.delete.title")
@@ -1158,6 +1210,10 @@ public enum Localized {
     public enum Search {
       /// Search
       public static let placeholder = Localized.tr("Localizable", "shared.search.placeholder")
+    }
+    public enum SnackBar {
+      /// Connecting to xx network...
+      public static let title = Localized.tr("Localizable", "shared.snackBar.title")
     }
   }
 

@@ -2,99 +2,74 @@ import UIKit
 import Shared
 
 final class ChatListCell: UITableViewCell {
-    let titleLabel = UILabel()
-    let unreadView = UIView()
-    let previewLabel = UILabel()
-    let dateLabel = UILabel()
-    let avatarView = AvatarView()
-    let coloringView = UIView()
+    private let titleLabel = UILabel()
+    private let unreadView = UIView()
+    private let previewLabel = UILabel()
+    private let dateLabel = UILabel()
+    private let avatarView = AvatarView()
+    private var lastDate: Date? {
+        didSet { updateTimeAgoLabel() }
+    }
 
     private var timer: Timer?
 
-    var date: Date? {
-        didSet {
-            updateTimeAgoLabel()
-        }
-    }
-
-    deinit {
-        timer?.invalidate()
-    }
-
-    var didLongPress: EmptyClosure?
-    private let longPressGesture = UILongPressGestureRecognizer(target: nil, action: nil)
+    deinit { timer?.invalidate() }
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
 
-        longPressGesture.addTarget(self, action: #selector(longAction))
-        addGestureRecognizer(longPressGesture)
+        previewLabel.numberOfLines = 2
+        dateLabel.textAlignment = .right
 
-        backgroundColor = .clear
+        unreadView.layer.cornerRadius = 8
+        avatarView.layer.cornerRadius = 21
+        avatarView.layer.masksToBounds = true
+
+        dateLabel.textAlignment = .right
         selectedBackgroundView = UIView()
-        multipleSelectionBackgroundView = UIView()
+        unreadView.backgroundColor = .clear
+        backgroundColor = Asset.neutralWhite.color
+        dateLabel.textColor = Asset.neutralWeak.color
+        titleLabel.textColor = Asset.neutralActive.color
+
+        dateLabel.font = Fonts.Mulish.semiBold.font(size: 13.0)
+        titleLabel.font = Fonts.Mulish.semiBold.font(size: 16.0)
+
 
         timer = Timer.scheduledTimer(withTimeInterval: 59, repeats: true) { [weak self] _ in
             self?.updateTimeAgoLabel()
         }
 
-        previewLabel.numberOfLines = 2
-        unreadView.layer.cornerRadius = 8
-        avatarView.layer.cornerRadius = 21
-        dateLabel.textAlignment = .right
-        avatarView.layer.masksToBounds = true
+        dateLabel.setContentCompressionResistancePriority(.defaultHigh, for: .horizontal)
 
-        dateLabel.setContentHuggingPriority(.init(rawValue: 251), for: .vertical)
-        dateLabel.setContentHuggingPriority(.init(rawValue: 251), for: .horizontal)
-        dateLabel.setContentCompressionResistancePriority(.init(rawValue: 751), for: .vertical)
-        dateLabel.setContentCompressionResistancePriority(.init(rawValue: 751), for: .horizontal)
-
-        unreadView.backgroundColor = .clear
-        backgroundColor = Asset.neutralWhite.color
-        titleLabel.textColor = Asset.neutralActive.color
-        previewLabel.textColor = Asset.neutralDisabled.color
-        dateLabel.textColor = Asset.neutralWeak.color
-
-        titleLabel.font = Fonts.Mulish.semiBold.font(size: 14.0)
-        previewLabel.font = Fonts.Mulish.regular.font(size: 12.0)
-        dateLabel.font = Fonts.Mulish.regular.font(size: 10.0)
-
-        insertSubview(coloringView, belowSubview: contentView)
         contentView.addSubview(titleLabel)
         contentView.addSubview(unreadView)
         contentView.addSubview(avatarView)
         contentView.addSubview(previewLabel)
         contentView.addSubview(dateLabel)
 
-        coloringView.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(6)
-            $0.left.equalToSuperview()
-            $0.right.equalToSuperview()
-            $0.bottom.equalToSuperview().offset(-6)
-        }
-
         avatarView.snp.makeConstraints {
-            $0.top.equalTo(coloringView).offset(6)
-            $0.left.equalToSuperview().offset(28)
+            $0.top.equalToSuperview().offset(14)
+            $0.left.equalToSuperview().offset(24)
             $0.width.height.equalTo(48)
-            $0.bottom.equalTo(coloringView).offset(-6)
         }
 
         titleLabel.snp.makeConstraints {
-            $0.top.equalTo(coloringView).offset(4)
+            $0.top.equalToSuperview().offset(10)
             $0.left.equalTo(avatarView.snp.right).offset(16)
             $0.right.lessThanOrEqualTo(dateLabel.snp.left).offset(-10)
         }
 
         dateLabel.snp.makeConstraints {
             $0.top.equalTo(titleLabel)
-            $0.right.equalToSuperview().offset(-24)
+            $0.right.equalToSuperview().offset(-25)
         }
 
         previewLabel.snp.makeConstraints {
             $0.left.equalTo(titleLabel)
-            $0.top.equalTo(titleLabel.snp.bottom).offset(3)
+            $0.top.equalTo(titleLabel.snp.bottom).offset(2)
             $0.right.lessThanOrEqualTo(unreadView.snp.left).offset(-3)
+            $0.bottom.lessThanOrEqualToSuperview().offset(-10)
         }
 
         unreadView.snp.makeConstraints {
@@ -108,43 +83,65 @@ final class ChatListCell: UITableViewCell {
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        date = nil
+        lastDate = nil
         titleLabel.text = nil
-        previewLabel.text = nil
+        previewLabel.attributedText = nil
         avatarView.prepareForReuse()
     }
 
-    override func willTransition(to state: UITableViewCell.StateMask) {
-        super.willTransition(to: state)
-
-        UIView.transition(with: coloringView, duration: 0.4, options: .transitionCrossDissolve) {
-            let isEditing = state == .showingEditControl
-            self.coloringView.backgroundColor = isEditing ?
-                Asset.neutralSecondary.color : Asset.neutralWhite.color
-        }
-
-        UIView.transition(with: dateLabel, duration: 0.4, options: .transitionCrossDissolve) {
-            let isEditing = state == .showingEditControl
-            self.dateLabel.alpha = isEditing ? 0.0 : 1.0
-        }
-
-        UIView.transition(with: avatarView, duration: 0.1, options: .transitionCrossDissolve) {
-            let isEditing = state == .showingEditControl
-
-            self.avatarView.snp.updateConstraints {
-                $0.left.equalToSuperview().offset(isEditing ? 16 : 28)
-            }
-        }
-    }
-
     private func updateTimeAgoLabel() {
-        guard let date = date else { return }
-        dateLabel.text = date.asRelativeFromNow()
+        if let date = lastDate {
+            dateLabel.text = date.asRelativeFromNow()
+        }
     }
 
-    @objc private func longAction(_ sender: UILongPressGestureRecognizer) {
-        if sender.state == .began {
-            didLongPress?()
+    func setupContact(
+        name: String,
+        image: Data?,
+        date: Date?,
+        hasUnread: Bool,
+        preview: String
+    ) {
+        titleLabel.text = name
+        setPreview(string: preview)
+        avatarView.setupProfile(title: name, image: image, size: .large)
+        unreadView.backgroundColor = hasUnread ? Asset.brandPrimary.color : .clear
+
+        if let date = date {
+            lastDate = date
+        } else {
+            dateLabel.text = nil
         }
+    }
+
+    func setupGroup(
+        name: String,
+        date: Date,
+        preview: String?,
+        hasUnread: Bool
+    ) {
+        lastDate = date
+        titleLabel.text = name
+        setPreview(string: preview)
+        avatarView.setupGroup(size: .large)
+        unreadView.backgroundColor = hasUnread ? Asset.brandPrimary.color : .clear
+    }
+
+    private func setPreview(string: String?) {
+        guard let preview = string else {
+            previewLabel.attributedText = nil
+            return
+        }
+
+        let paragraphStyle = NSMutableParagraphStyle()
+        paragraphStyle.lineHeightMultiple = 1.1
+
+        previewLabel.attributedText = NSAttributedString(
+            string: preview,
+            attributes: [
+                .paragraphStyle: paragraphStyle,
+                .font: Fonts.Mulish.regular.font(size: 14.0),
+                .foregroundColor: Asset.neutralSecondaryAlternative.color
+            ])
     }
 }

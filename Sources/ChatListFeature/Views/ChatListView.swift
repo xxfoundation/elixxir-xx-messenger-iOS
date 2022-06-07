@@ -2,93 +2,75 @@ import UIKit
 import Shared
 
 final class ChatListView: UIView {
-    let titleLabel = UILabel()
     let snackBar = SnackBar()
-    let stackView = UIStackView()
-    let contactsButton = CapsuleButton()
+    let containerView = UIView()
     let searchView = SearchComponent()
-
-    var networkIssueVisibleConstraint: NSLayoutConstraint?
-    var networkIssueInvisibleConstraint: NSLayoutConstraint?
+    let listContainerView = ChatListContainerView()
+    let searchListContainerView = ChatSearchListContainerView()
 
     init() {
         super.init(frame: .zero)
-        setup()
+
+        backgroundColor = Asset.neutralWhite.color
+        listContainerView.backgroundColor = Asset.neutralWhite.color
+        searchListContainerView.backgroundColor = Asset.neutralWhite.color
+        searchView.update(placeholder: "Search chats")
+
+        addSubview(snackBar)
+        addSubview(searchView)
+        addSubview(containerView)
+        containerView.addSubview(searchListContainerView)
+        containerView.addSubview(listContainerView)
+
+        snackBar.snp.makeConstraints {
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
+            $0.bottom.equalTo(snp.top)
+        }
+
+        searchView.snp.makeConstraints {
+            $0.top.equalTo(snackBar.snp.bottom).offset(20)
+            $0.left.equalToSuperview().offset(20)
+            $0.right.equalToSuperview().offset(-20)
+        }
+
+        containerView.snp.makeConstraints {
+            $0.top.equalTo(searchView.snp.bottom)
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
+            $0.bottom.equalToSuperview()
+        }
+
+        listContainerView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+
+        searchListContainerView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
     }
 
     required init?(coder: NSCoder) { nil }
 
-    func displayNetworkIssue(_ flag: Bool) {
-        self.networkIssueInvisibleConstraint?.isActive = !flag
-        self.networkIssueVisibleConstraint?.isActive = flag
+    func showConnectingBanner(_ show: Bool) {
+        if show == true {
+            snackBar.alpha = 0.0
+            snackBar.snp.updateConstraints {
+                $0.bottom
+                    .equalTo(snp.top)
+                    .offset(snackBar.bounds.height)
+            }
+        } else {
+            snackBar.alpha = 1.0
+            snackBar.snp.updateConstraints {
+                $0.bottom.equalTo(snp.top)
+            }
+        }
 
-        snackBar.alpha = flag ? 0 : 1
-
-        UIView.animate(withDuration: 0.5) {
+        UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
             self.setNeedsLayout()
             self.layoutIfNeeded()
-            self.snackBar.alpha = flag ? 1 : 0
-        }
-    }
-
-    private func setup() {
-        snackBar.alpha = 0.0
-        backgroundColor = Asset.neutralWhite.color
-
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.lineHeightMultiple = 1.2
-        paragraph.alignment = .center
-
-        titleLabel.numberOfLines = 0
-        titleLabel.attributedText = NSAttributedString(
-            string: Localized.ChatList.emptyTitle,
-            attributes: [
-                .paragraphStyle: paragraph,
-                .foregroundColor: Asset.neutralActive.color,
-                .font: Fonts.Mulish.bold.font(size: 24.0)
-            ]
-        )
-
-        contactsButton.setStyle(.brandColored)
-        contactsButton.setTitle(Localized.ChatList.action, for: .normal)
-
-        searchView.update(placeholder: "Search chats")
-
-        stackView.spacing = 24
-        stackView.axis = .vertical
-        stackView.alignment = .center
-        stackView.addArrangedSubview(titleLabel)
-        stackView.addArrangedSubview(contactsButton)
-
-        addSubview(snackBar)
-        addSubview(searchView)
-        addSubview(stackView)
-
-        setupConstraints()
-    }
-
-    private func setupConstraints() {
-        NSLayoutConstraint.activate([
-            snackBar.leftAnchor.constraint(equalTo: leftAnchor),
-            snackBar.rightAnchor.constraint(equalTo: rightAnchor)
-        ])
-
-        networkIssueVisibleConstraint = snackBar.topAnchor.constraint(equalTo: topAnchor)
-        networkIssueInvisibleConstraint = snackBar.bottomAnchor.constraint(equalTo: topAnchor)
-
-        networkIssueInvisibleConstraint?.isActive = true
-        snackBar.translatesAutoresizingMaskIntoConstraints = false
-
-        searchView.snp.makeConstraints { make in
-            make.top.equalTo(snackBar.snp.bottom).offset(20)
-            make.left.equalToSuperview().offset(20)
-            make.right.equalToSuperview().offset(-20)
-        }
-
-        stackView.snp.makeConstraints { make in
-            make.centerY.equalToSuperview()
-            make.left.equalToSuperview().offset(24)
-            make.right.equalToSuperview().offset(-24)
+            self.snackBar.alpha = show ? 1.0 : 0.0
         }
     }
 }

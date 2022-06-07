@@ -143,7 +143,7 @@ extension XXNetwork: XXNetworking {
         let bindings = B.login(FileManager.xxPath, secret, "", &error)
         if let error = error { throw error }
 
-        if let defaults = UserDefaults(suiteName: "group.io.xxlabs.notification") {
+        if let defaults = UserDefaults(suiteName: "group.elixxir.messenger") {
             defaults.set(bindings!.receptionId.base64EncodedString(), forKey: "receptionId")
         }
 

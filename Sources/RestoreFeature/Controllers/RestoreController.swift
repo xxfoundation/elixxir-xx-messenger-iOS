@@ -36,7 +36,7 @@ public final class RestoreController: UIViewController {
         navigationItem.backButtonTitle = ""
 
         let title = UILabel()
-        title.text = Localized.Restore.header
+        title.text = Localized.AccountRestore.header
         title.textColor = Asset.neutralActive.color
         title.font = Fonts.Mulish.semiBold.font(size: 18.0)
 
@@ -95,20 +95,20 @@ public final class RestoreController: UIViewController {
 extension RestoreController {
     private func presentWarning() {
         let actionButton = DrawerCapsuleButton(model: .init(
-            title: Localized.Restore.Warning.action,
+            title: Localized.AccountRestore.Warning.action,
             style: .brandColored
         ))
 
         let drawer = DrawerController(with: [
             DrawerText(
                 font: Fonts.Mulish.bold.font(size: 26.0),
-                text: Localized.Restore.Warning.title,
+                text: Localized.AccountRestore.Warning.title,
                 color: Asset.neutralActive.color,
                 alignment: .left,
                 spacingAfter: 19
             ),
             DrawerText(
-                text: Localized.Restore.Warning.subtitle,
+                text: Localized.AccountRestore.Warning.subtitle,
                 spacingAfter: 37
             ),
             actionButton

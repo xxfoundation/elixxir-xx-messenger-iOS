@@ -46,7 +46,7 @@ public protocol SessionType {
     // Notifications
 
     func unregisterNotifications() throws
-    func registerNotifications(_ string: String) throws
+    func registerNotifications(_ token: Data) throws
 
     // Network
 
@@ -93,4 +93,7 @@ public protocol SessionType {
         members: [Contact],
         _ completion: @escaping (Result<(Group, [GroupMember]), Error>) -> Void
     )
+
+    func getContactWith(userId: Data) -> Contact?
+    func getGroupChatInfoWith(groupId: Data) -> GroupChatInfo?
 }

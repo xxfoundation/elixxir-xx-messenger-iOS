@@ -3,6 +3,7 @@ import Foundation
 public struct GroupChatInfo: Codable, Equatable, Hashable {
     public enum Request {
         case accepted
+        case fromGroup(Data)
     }
 
     public var group: Group

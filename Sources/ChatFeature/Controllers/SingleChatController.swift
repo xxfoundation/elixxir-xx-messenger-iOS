@@ -25,7 +25,6 @@ public final class SingleChatController: UIViewController {
     @Dependency private var coordinator: ChatCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
 
-
     lazy private var infoView = UIControl()
     lazy private var nameLabel = UILabel()
     lazy private var avatarView = AvatarView()
@@ -89,6 +88,7 @@ public final class SingleChatController: UIViewController {
         super.viewDidAppear(animated)
         collectionView.collectionViewLayout.invalidateLayout()
         becomeFirstResponder()
+        viewModel.viewDidAppear()
     }
 
     private var isFirstAppearance = true
@@ -223,6 +223,8 @@ public final class SingleChatController: UIViewController {
                     coordinator.toPermission(type: .library, from: self)
                 case .webview(let urlString):
                     coordinator.toWebview(with: urlString, from: self)
+                case .waitingRound:
+                    coordinator.toDrawer(makeWaitingRoundDrawer(), from: self)
                 case .none:
                     break
                 }
@@ -349,6 +351,34 @@ public final class SingleChatController: UIViewController {
                 completion?()
             })
         }
+    }
+
+    private func makeWaitingRoundDrawer() -> UIViewController {
+        let text = DrawerText(
+            font: Fonts.Mulish.semiBold.font(size: 14.0),
+            text: Localized.Chat.RoundDrawer.title,
+            color: Asset.neutralWeak.color,
+            lineHeightMultiple: 1.35,
+            spacingAfter: 25
+        )
+
+        let button = DrawerCapsuleButton(model: .init(
+            title: Localized.Chat.RoundDrawer.action,
+            style: .brandColored
+        ))
+
+        let drawer = DrawerController(with: [text, button])
+
+        button.action
+            .receive(on: DispatchQueue.main)
+            .sink { [weak drawer] in
+                drawer?.dismiss(animated: true) { [weak self] in
+                    guard let self = self else { return }
+                    self.drawerCancellables.removeAll()
+                }
+            }.store(in: &drawerCancellables)
+
+        return drawer
     }
 
     private func presentDeleteAllDrawer() {

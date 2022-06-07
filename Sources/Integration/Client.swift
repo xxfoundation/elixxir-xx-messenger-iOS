@@ -225,7 +225,7 @@ public class Client {
     }
 
     private func updatePreImage() {
-        if let defaults = UserDefaults(suiteName: "group.io.xxlabs.notification") {
+        if let defaults = UserDefaults(suiteName: "group.elixxir.messenger") {
             defaults.set(bindings.getPreImages(), forKey: "preImage")
         }
     }

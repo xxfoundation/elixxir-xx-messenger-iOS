@@ -90,10 +90,6 @@ final class ScanController: UIViewController {
             .sink { [unowned self] in
                 status = $0
                 screenView.update(with: $0)
-
-                if case .failed(_) = $0 {
-                    camera.stop()
-                }
             }.store(in: &cancellables)
 
         screenView.actionButton.publisher(for: .touchUpInside)

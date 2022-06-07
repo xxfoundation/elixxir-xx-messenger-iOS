@@ -89,6 +89,11 @@
 
 // ChatFeature
 
+"chat.roundDrawer.title"
+= "The mix for this message will be available shortly, please check again later.";
+"chat.roundDrawer.action"
+= "OK";
+
 "chat.cancel"
 = "Cancel";
 "chat.bubbleMenu.copy"
@@ -167,13 +172,23 @@
 = "Place QR code inside frame to scan";
 "scan.status.success"
 = "Success";
+"scan.display.copied"
+= "Copied!";
 
 "scan.display.share.title"
 = "Select what you'd like to share";
 "scan.display.share.email"
 = "EMAIL ADDRESS";
 "scan.display.share.phone"
-= "PHONE";
+= "PHONE NUMBER";
+"scan.display.share.add"
+= "Add";
+"scan.display.share.notAdded"
+= "Not added";
+"scan.display.share.hidden"
+= "・・・・・・・・・・";
+"scan.display.copy"
+= "Tap code to copy";
 "scan.sendingAs"
 = "Sending as\n#%@#";
 "scan.segmentedControl.left"
@@ -377,6 +392,82 @@
 "requests.drawer.group.success.later"
 = "Later";
 
+"requests.drawer.single.title"
+= "REQUEST FROM";
+"requests.drawer.single.email"
+= "EMAIL ADDRESS";
+"requests.drawer.single.phone"
+= "PHONE NUMBER";
+"requests.drawer.single.nickname"
+= "Edit your new contact’s nickname.";
+"requests.drawer.single.accept"
+= "Accept and Save";
+"requests.drawer.single.hide"
+= "Hide Request";
+
+"requests.drawer.group.title"
+= "GROUP CHAT REQUEST";
+"requests.drawer.group.accept"
+= "Accept";
+"requests.drawer.group.hide"
+= "Hide Request";
+
+"requests.drawer.single.success.title"
+= "NEW CONNECTION";
+"requests.drawer.single.success.subtitle"
+= "Is now a connection, would you like to send a message?";
+"requests.drawer.single.success.send"
+= "Send a Message";
+"requests.drawer.single.success.later"
+= "Later";
+
+"requests.drawer.group.success.title"
+= "ACCEPTED";
+"requests.drawer.group.success.subtitle"
+= "You are now part of the group chat. Would you like to check it out?";
+"requests.drawer.group.success.send"
+= "Go to Chat";
+"requests.drawer.group.success.later"
+= "Later";
+
+"requests.drawer.single.title"
+= "REQUEST FROM";
+"requests.drawer.single.email"
+= "EMAIL ADDRESS";
+"requests.drawer.single.phone"
+= "PHONE NUMBER";
+"requests.drawer.single.nickname"
+= "Edit your new contact’s nickname.";
+"requests.drawer.single.accept"
+= "Accept and Save";
+"requests.drawer.single.hide"
+= "Hide Request";
+
+"requests.drawer.group.title"
+= "GROUP CHAT REQUEST";
+"requests.drawer.group.accept"
+= "Accept";
+"requests.drawer.group.hide"
+= "Hide Request";
+
+"requests.drawer.single.success.title"
+= "NEW CONNECTION";
+"requests.drawer.single.success.subtitle"
+= "Is now a connection, would you like to send a message?";
+"requests.drawer.single.success.send"
+= "Send a Message";
+"requests.drawer.single.success.later"
+= "Later";
+
+"requests.drawer.group.success.title"
+= "ACCEPTED";
+"requests.drawer.group.success.subtitle"
+= "You are now part of the group chat. Would you like to check it out?";
+"requests.drawer.group.success.send"
+= "Go to Chat";
+"requests.drawer.group.success.later"
+= "Later";
+
 // ProfileFeature
 
 "profile.email.title"
@@ -480,6 +571,11 @@
 = "Advanced Settings";
 "settings.delete"
 = "Delete account";
+
+"settings.advanced.showUsername.title"
+= "Rich notifications";
+"settings.advanced.showUsername.description"
+= "Allow us to show a more detailed push notification";
 
 "settings.drawer.title"
 = "Do you want to open %@?";
@@ -717,47 +813,47 @@
 "onboarding.welcome.info.subtitle"
 = "Registration is completely optional. When registering an email or phone number, they will be evaluated by twilio, a 3rd party partner. Afterwards, salted hashes will be registered in #User Discovery# to allow other uses to search for you using the registered data completely privately.";
 
-"restore.warning.title"
+"accountRestore.warning.title"
 = "Warning";
-"restore.warning.subtitle"
+"accountRestore.warning.subtitle"
 = "xx messenger account can only run on a single device at a time. Using the same account on multiple devices may permanently damage your account and make it impossible to converse with your contacts";
-"restore.warning.action"
+"accountRestore.warning.action"
 = "I understand";
 
-"restore.list.title"
+"accountRestore.list.title"
 = "Restore your #account#.";
-"restore.list.firstSubtitle"
+"accountRestore.list.firstSubtitle"
 = "Restore your account from a previous backup. You’ll be able to have access to all your contacts.";
-"restore.list.secondSubtitle"
+"accountRestore.list.secondSubtitle"
 = "Select the cloud storage service you previously used to create a backup.";
-"restore.list.cancel"
+"accountRestore.list.cancel"
 = "Cancel";
 
-"restore.header"
+"accountRestore.header"
 = "Account restore";
-"restore.found.title"
+"accountRestore.found.title"
 = "Backup found";
-"restore.found.subtitle"
+"accountRestore.found.subtitle"
 = "Restore your contacts from the following backup.";
-"restore.found.date"
+"accountRestore.found.date"
 = "BACKUP DATE";
-"restore.found.size"
+"accountRestore.found.size"
 = "FILE SIZE";
-"restore.found.restore"
+"accountRestore.found.restore"
 = "Restore account";
-"restore.found.cancel"
+"accountRestore.found.cancel"
 = "Cancel";
-"restore.found.next"
+"accountRestore.found.next"
 = "Next";
-"restore.notFound.title"
+"accountRestore.notFound.title"
 = "Backup not found";
-"restore.notFound.subtitle"
+"accountRestore.notFound.subtitle"
 = "No account backup was found in %@";
-"restore.notFound.back"
+"accountRestore.notFound.back"
 = "Go back";
-"restore.success.title"
+"accountRestore.success.title"
 = "Your #account# has been successfully #restored#.";
-"restore.success.subtitle"
+"accountRestore.success.subtitle"
 = "You now have access to all your contacts.";
 
 // Shared
@@ -772,6 +868,8 @@
 = "Resend";
 "shared.done"
 = "Done";
+"shared.snackBar.title"
+= "Connecting to xx network...";
 
 // HUD
 
@@ -860,6 +958,19 @@
 = "Edit your new contact’s nickname so you know who they are.";
 "contactSearch.nicknameDrawer.save"
 = "Save";
+
+// LaunchFeature
+
+"launch.version.failed"
+= "Failed checking app version";
+"launch.version.required.positive"
+= "Okay";
+"launch.version.recommended.title"
+= "There is a new version available that enhance the current performance and usability.";
+"launch.version.recommended.positive"
+= "Update";
+"launch.version.recommended.negative"
+= "Not now";
 
 // Countries
 

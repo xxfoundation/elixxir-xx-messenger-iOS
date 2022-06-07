@@ -258,7 +258,6 @@ extension CellFactory {
 
                 cell.canReply = item.status.canReply
                 cell.performReply = performReply
-                cell.rightView.roundButton.isHidden = item.roundURL == nil
                 cell.rightView.didTapShowRound = { showRound(item.roundURL) }
                 return cell
             }
@@ -290,7 +289,6 @@ extension CellFactory {
                 )
                 cell.canReply = item.status.canReply
                 cell.performReply = performReply
-                cell.leftView.roundButton.isHidden = item.roundURL == nil
                 cell.leftView.didTapShowRound = { showRound(item.roundURL) }
                 cell.leftView.revertBottomStackOrder()
                 return cell
@@ -346,7 +344,6 @@ extension CellFactory {
                 Bubbler.build(bubble: cell.leftView, with: item)
                 cell.canReply = item.status.canReply
                 cell.performReply = performReply
-                cell.leftView.roundButton.isHidden = item.roundURL == nil
                 cell.leftView.didTapShowRound = { showRound(item.roundURL) }
                 cell.leftView.revertBottomStackOrder()
                 return cell
@@ -370,7 +367,6 @@ extension CellFactory {
                 Bubbler.build(bubble: cell.rightView, with: item)
                 cell.canReply = item.status.canReply
                 cell.performReply = performReply
-                cell.rightView.roundButton.isHidden = item.roundURL == nil
                 cell.rightView.didTapShowRound = { showRound(item.roundURL) }
 
                 return cell

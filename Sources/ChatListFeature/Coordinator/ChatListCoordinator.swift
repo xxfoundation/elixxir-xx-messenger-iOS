@@ -11,7 +11,9 @@ public protocol ChatListCoordinating {
     func toScan(from: UIViewController)
     func toSearch(from: UIViewController)
     func toContacts(from: UIViewController)
+    func toNewGroup(from: UIViewController)
     func toSideMenu(from: UIViewController)
+    func toContact(_: Contact, from: UIViewController)
     func toSingleChat(with: Contact, from: UIViewController)
     func toDrawer(_: UIViewController, from: UIViewController)
     func toGroupChat(with: GroupChatInfo, from: UIViewController)
@@ -25,7 +27,9 @@ public struct ChatListCoordinator: ChatListCoordinating {
 
     var scanFactory: () -> UIViewController
     var searchFactory: () -> UIViewController
+    var newGroupFactory: () -> UIViewController
     var contactsFactory: () -> UIViewController
+    var contactFactory: (Contact) -> UIViewController
     var singleChatFactory: (Contact) -> UIViewController
     var groupChatFactory: (GroupChatInfo) -> UIViewController
     var sideMenuFactory: (MenuItem, UIViewController) -> UIViewController
@@ -33,13 +37,17 @@ public struct ChatListCoordinator: ChatListCoordinating {
     public init(
         scanFactory: @escaping () -> UIViewController,
         searchFactory: @escaping () -> UIViewController,
+        newGroupFactory: @escaping () -> UIViewController,
         contactsFactory: @escaping () -> UIViewController,
+        contactFactory: @escaping (Contact) -> UIViewController,
         singleChatFactory: @escaping (Contact) -> UIViewController,
         groupChatFactory: @escaping (GroupChatInfo) -> UIViewController,
         sideMenuFactory: @escaping (MenuItem, UIViewController) -> UIViewController
     ) {
         self.scanFactory = scanFactory
         self.searchFactory = searchFactory
+        self.contactFactory = contactFactory
+        self.newGroupFactory = newGroupFactory
         self.contactsFactory = contactsFactory
         self.sideMenuFactory = sideMenuFactory
         self.groupChatFactory = groupChatFactory
@@ -63,6 +71,11 @@ public extension ChatListCoordinator {
         pushPresenter.present(screen, from: parent)
     }
 
+    func toContact(_ contact: Contact, from parent: UIViewController) {
+        let screen = contactFactory(contact)
+        pushPresenter.present(screen, from: parent)
+    }
+
     func toSingleChat(with contact: Contact, from parent: UIViewController) {
         let screen = singleChatFactory(contact)
         pushPresenter.present(screen, from: parent)
@@ -76,6 +89,11 @@ public extension ChatListCoordinator {
     func toSideMenu(from parent: UIViewController) {
         let screen = sideMenuFactory(.chats, parent)
         sidePresenter.present(screen, from: parent)
+    }
+
+    func toNewGroup(from parent: UIViewController) {
+        let screen = newGroupFactory()
+        pushPresenter.present(screen, from: parent)
     }
 
     func toDrawer(_ drawer: UIViewController, from parent: UIViewController) {

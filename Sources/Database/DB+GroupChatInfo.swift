@@ -17,6 +17,15 @@ extension GroupChatInfo: Requestable  {
         }.order(GroupMessage.Column.timestamp.desc)
 
         switch request {
+        case .fromGroup(let groupId):
+            return Group
+                .filter(Group.Column.status == Group.Status.participating.rawValue)
+                .filter(Group.Column.groupId == groupId)
+                .with(lastMessageCTE)
+                .including(optional: lastMessage)
+                .including(all: Group.members.forKey("members"))
+                .asRequest(of: Self.self)
+
         case .accepted:
             return Group
                 .filter(Group.Column.status == Group.Status.participating.rawValue)

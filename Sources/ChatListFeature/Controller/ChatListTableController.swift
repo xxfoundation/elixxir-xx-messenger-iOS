@@ -1,38 +1,21 @@
 import UIKit
 import Shared
-import Combine
 import Models
+import Combine
 import DifferenceKit
+import DrawerFeature
 import DependencyInjection
 
 final class ChatListTableController: UITableViewController {
-    // MARK: Injected
-
     @Dependency private var coordinator: ChatListCoordinating
 
-    // MARK: Published
-
-    @Published var numberOfSelectedRows = 0
-
-    // MARK: Properties
-
-    var longPressPublisher: AnyPublisher<Void, Never> {
-        longPressRelay.eraseToAnyPublisher()
-    }
-
-    var deletePublisher: AnyPublisher<IndexPath, Never> {
-        deleteRelay.eraseToAnyPublisher()
-    }
-
-    private var rows = [GenericChatInfo]()
-    private let viewModel: ChatListViewModelType
+    private var rows = [Chat]()
+    private let viewModel: ChatListViewModel
+    private let cellHeight: CGFloat = 83.0
     private var cancellables = Set<AnyCancellable>()
-    private let longPressRelay = PassthroughSubject<Void, Never>()
-    private let deleteRelay = PassthroughSubject<IndexPath, Never>()
+    private var drawerCancellables = Set<AnyCancellable>()
 
-    // MARK: Lifecycle
-
-    init(_ viewModel: ChatListViewModelType) {
+    init(_ viewModel: ChatListViewModel) {
         self.viewModel = viewModel
         super.init(style: .grouped)
     }
@@ -41,25 +24,15 @@ final class ChatListTableController: UITableViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupTableView()
-        setupBindings()
-    }
 
-    // MARK: Private
-
-    private func setupTableView() {
         tableView.separatorStyle = .none
         tableView.backgroundColor = .clear
         tableView.alwaysBounceVertical = true
         tableView.register(ChatListCell.self)
-        tableView.tintColor = Asset.brandPrimary.color
-        tableView.allowsMultipleSelectionDuringEditing = true
         tableView.tableFooterView = UIView()
-    }
 
-    private func setupBindings() {
         viewModel
-            .chatsRelay
+            .chatsPublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
                 guard !self.rows.isEmpty else {
@@ -81,79 +54,144 @@ final class ChatListTableController: UITableViewController {
                 }
             }.store(in: &cancellables)
     }
+}
 
-    // MARK: UITableViewDataSource
-
-    override func tableView(_ tableView: UITableView,
-                            cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: ChatListCell.self)
-        let chatInfo = rows[indexPath.row]
-
-        if let contact = chatInfo.contact {
-            let name = contact.nickname ?? contact.username
-            cell.titleLabel.text = name
-            cell.avatarView.setupProfile(title: name, image: chatInfo.contact?.photo, size: .large)
-        } else {
-            cell.titleLabel.text = chatInfo.groupInfo!.group.name
-            cell.avatarView.setupGroup(size: .large)
-        }
-
-        cell.didLongPress = { [weak longPressRelay] in
-            longPressRelay?.send()
-        }
-
-        if let latestGroupMessage = chatInfo.groupInfo?.lastMessage {
-            cell.titleLabel.alpha = 1.0
-            cell.avatarView.alpha = 1.0
-            cell.date = Date.fromTimestamp(latestGroupMessage.timestamp)
-            cell.previewLabel.text = latestGroupMessage.payload.text
-            cell.unreadView.backgroundColor = latestGroupMessage.unread ? Asset.brandPrimary.color : .clear
-        }
-
-        if let latestE2EMessage = chatInfo.latestE2EMessage {
-            cell.titleLabel.alpha = 1.0
-            cell.avatarView.alpha = 1.0
-            cell.date = Date.fromTimestamp(latestE2EMessage.timestamp)
-            cell.previewLabel.text = latestE2EMessage.payload.text
-            cell.unreadView.backgroundColor = latestE2EMessage.unread ? Asset.brandPrimary.color : .clear
-        }
-
-        return cell
+extension ChatListTableController {
+    override func tableView(
+        _ tableView: UITableView,
+        numberOfRowsInSection: Int
+    ) -> Int {
+        return rows.count
     }
 
-    override func tableView(_: UITableView, numberOfRowsInSection: Int) -> Int { rows.count }
+    override func tableView(
+        _ tableView: UITableView,
+        heightForRowAt: IndexPath
+    ) -> CGFloat {
+        return cellHeight
+    }
 
-    override func tableView(_: UITableView, heightForRowAt: IndexPath) -> CGFloat { 72 }
+    override func tableView(
+        _ tableView: UITableView,
+        trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath
+    ) -> UISwipeActionsConfiguration? {
 
-    override func tableView(_: UITableView, trailingSwipeActionsConfigurationForRowAt indexPath: IndexPath) -> UISwipeActionsConfiguration? {
         let delete = UIContextualAction(style: .normal, title: nil) { [weak self] _, _, complete in
-            self?.deleteRelay.send(indexPath)
+            guard let self = self else { return }
+            self.didRequestDeletionOf(self.rows[indexPath.row])
             complete(true)
         }
 
         delete.image = Asset.chatListDeleteSwipe.image
         delete.backgroundColor = Asset.accentDanger.color
-
         return UISwipeActionsConfiguration(actions: [delete])
     }
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if !tableView.isEditing {
-            let genericChat = viewModel.chatsRelay.value[indexPath.row]
-
-            guard let contact = genericChat.contact else {
-                coordinator.toGroupChat(with: genericChat.groupInfo!, from: self)
-                return
-            }
-
-            guard contact.status == .friend else { return }
-            coordinator.toSingleChat(with: contact, from: self)
-        } else {
-            numberOfSelectedRows += 1
+        switch rows[indexPath.row] {
+        case .contact(let info):
+            guard info.contact.status == .friend else { return }
+            coordinator.toSingleChat(with: info.contact, from: self)
+        case .group(let info):
+            coordinator.toGroupChat(with: info, from: self)
         }
     }
 
-    override func tableView(_: UITableView, didDeselectRowAt: IndexPath) {
-        numberOfSelectedRows -= 1
+    override func tableView(
+        _ tableView: UITableView,
+        cellForRowAt indexPath: IndexPath
+    ) -> UITableViewCell {
+
+        let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: ChatListCell.self)
+
+        if case .contact(let info) = rows[indexPath.row] {
+            cell.setupContact(
+                name: info.contact.nickname ?? info.contact.username,
+                image: info.contact.photo,
+                date: Date.fromTimestamp(info.lastMessage!.timestamp),
+                hasUnread: info.lastMessage!.unread,
+                preview: info.lastMessage!.payload.text
+            )
+        }
+
+        if case .group(let info) = rows[indexPath.row] {
+            let date: Date = {
+                guard let lastMessage = info.lastMessage else {
+                    return info.group.createdAt
+                }
+
+                return Date.fromTimestamp(lastMessage.timestamp)
+            }()
+
+            let hasUnread: Bool = {
+                guard let lastMessage = info.lastMessage else {
+                    return false
+                }
+
+                return lastMessage.unread
+            }()
+
+            cell.setupGroup(
+                name: info.group.name,
+                date: date,
+                preview: info.lastMessage?.payload.text,
+                hasUnread: hasUnread
+            )
+        }
+
+        return cell
+    }
+
+    private func didRequestDeletionOf(_ item: Chat) {
+        let title: String
+        let subtitle: String
+        let actionTitle: String
+        let actionClosure: () -> Void
+
+        switch item {
+        case .group(let info):
+            title = Localized.ChatList.DeleteGroup.title
+            subtitle = Localized.ChatList.DeleteGroup.subtitle
+            actionTitle = Localized.ChatList.DeleteGroup.action
+            actionClosure = { [weak viewModel] in viewModel?.leave(info.group) }
+
+        case .contact(let info):
+            title = Localized.ChatList.Delete.title
+            subtitle = Localized.ChatList.Delete.subtitle
+            actionTitle = Localized.ChatList.Delete.delete
+            actionClosure = { [weak viewModel] in viewModel?.clear(info.contact) }
+        }
+
+        let actionButton = DrawerCapsuleButton(model: .init(title: actionTitle, style: .red))
+
+        let drawer = DrawerController(with: [
+            DrawerText(
+                font: Fonts.Mulish.bold.font(size: 26.0),
+                text: title,
+                color: Asset.neutralActive.color,
+                alignment: .left,
+                spacingAfter: 19
+            ),
+            DrawerText(
+                font: Fonts.Mulish.regular.font(size: 16.0),
+                text: subtitle,
+                color: Asset.neutralBody.color,
+                alignment: .left,
+                lineHeightMultiple: 1.1,
+                spacingAfter: 39
+            ),
+            actionButton
+        ])
+
+        actionButton.action.receive(on: DispatchQueue.main)
+            .sink {
+                drawer.dismiss(animated: true) { [weak self] in
+                    guard let self = self else { return }
+                    self.drawerCancellables.removeAll()
+                    actionClosure()
+                }
+            }.store(in: &drawerCancellables)
+
+        coordinator.toDrawer(drawer, from: self)
     }
 }

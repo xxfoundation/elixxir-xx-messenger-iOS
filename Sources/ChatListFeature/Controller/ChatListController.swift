@@ -1,260 +1,228 @@
-import HUD
-import DrawerFeature
 import UIKit
 import Theme
+import Models
 import Shared
 import Combine
 import MenuFeature
 import DependencyInjection
 
 public final class ChatListController: UIViewController {
-    @Dependency private var hud: HUDType
     @Dependency private var coordinator: ChatListCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
 
-    lazy private var menu = UIButton()
-    lazy private var cancel = UIButton()
-    lazy private var menuBadge = UILabel()
-    lazy private var titleLabel = UILabel()
     lazy private var screenView = ChatListView()
-    lazy private var menuView = ChatListMenuView()
-    lazy private var contactListButton = UIButton()
-    lazy private var contactSearchButton = UIButton()
+    lazy private var topLeftView = ChatListTopLeftNavView()
+    lazy private var topRightView = ChatListTopRightNavView()
     lazy private var tableController = ChatListTableController(viewModel)
+    lazy private var searchTableController = ChatSearchTableController(viewModel)
+    private var collectionDataSource: UICollectionViewDiffableDataSource<SectionId, Contact>!
 
-    private var shouldPresentMenu = false
     private let viewModel = ChatListViewModel()
     private var cancellables = Set<AnyCancellable>()
     private var drawerCancellables = Set<AnyCancellable>()
 
-    public override var canBecomeFirstResponder: Bool { true }
-
-    public override var inputAccessoryView: UIView? {
-        if shouldPresentMenu {
-            tableController.numberOfSelectedRows = 0
+    private var isEditingSearch = false {
+        didSet {
+            screenView.listContainerView
+                .showRecentsCollection(isEditingSearch ? false : shouldBeShowingRecents)
         }
-
-        return shouldPresentMenu ? menuView : nil
     }
 
-    public init() {
-        super.init(nibName: nil, bundle: nil)
+    private var shouldBeShowingRecents = false {
+        didSet {
+            screenView.listContainerView
+                .showRecentsCollection(isEditingSearch ? false : shouldBeShowingRecents)
+        }
     }
-
-    required init?(coder: NSCoder) { nil }
 
     public override func loadView() {
         view = screenView
-
-        addChild(tableController)
-        screenView.insertSubview(tableController.view, belowSubview: screenView)
-
-        tableController.view.snp.makeConstraints { make in
-            make.top.equalTo(screenView.searchView.snp.bottom)
-            make.left.equalToSuperview()
-            make.right.equalToSuperview()
-            make.bottom.equalToSuperview()
-        }
-
-        tableController.didMove(toParent: self)
     }
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         statusBarController.style.send(.darkContent)
-        updateNavigationItems(false)
-
         navigationController?.navigationBar.customize(backgroundColor: Asset.neutralWhite.color)
     }
 
     public override func viewDidLoad() {
         super.viewDidLoad()
-        setupNavigationBar()
+        setupChatList()
         setupBindings()
+        setupNavigationBar()
+        setupRecentContacts()
     }
 
     private func setupNavigationBar() {
         navigationItem.backButtonTitle = ""
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: topLeftView)
+        navigationItem.rightBarButtonItem = UIBarButtonItem(customView: topRightView)
 
-        contactSearchButton.tintColor = Asset.neutralDark.color
-        contactSearchButton.setImage(Asset.contactListSearch.image, for: .normal)
-        contactSearchButton.addTarget(self, action: #selector(didTapContactSearchButton), for: .touchUpInside)
-
-        contactListButton.tintColor = Asset.neutralDark.color
-        contactListButton.setImage(Asset.chatListNew.image, for: .normal)
-        contactListButton.addTarget(self, action: #selector(didTapContactListButton), for: .touchUpInside)
-
-        titleLabel.text = Localized.ChatList.title
-        titleLabel.textColor = Asset.neutralActive.color
-        titleLabel.font = Fonts.Mulish.semiBold.font(size: 18.0)
-
-        menu.tintColor = Asset.neutralDark.color
-        menu.setImage(Asset.chatListMenu.image, for: .normal)
-        menu.addTarget(self, action: #selector(didTapMenu), for: .touchUpInside)
-        menu.snp.makeConstraints { $0.width.equalTo(50) }
-
-        menu.addSubview(menuBadge)
-        menuBadge.layer.cornerRadius = 5
-        menuBadge.layer.masksToBounds = true
-        menuBadge.snp.makeConstraints { make in
-            make.centerY.equalTo(menu.snp.top)
-            make.centerX.equalTo(menu.snp.right).multipliedBy(0.8)
-        }
-
-        menuBadge.textColor = Asset.neutralWhite.color
-        menuBadge.backgroundColor = Asset.brandPrimary.color
-        menuBadge.font = Fonts.Mulish.bold.font(size: 14.0)
-
-        cancel.setTitleColor(Asset.neutralActive.color, for: .normal)
-        cancel.titleLabel?.font = Fonts.Mulish.semiBold.font(size: 14.0)
-        cancel.setTitle(Localized.ChatList.NavigationBar.cancel, for: .normal)
-
-        menu.accessibilityIdentifier = Localized.Accessibility.ChatList.menu
-    }
-
-    private func setupBindings() {
-        viewModel.hud
-            .receive(on: DispatchQueue.main)
-            .sink { [hud] in hud.update(with: $0) }
-            .store(in: &cancellables)
-
-        viewModel.chatsRelay
+        topRightView.actionPublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
-                screenView.stackView.isHidden = !$0.isEmpty
-
-                if $0.isEmpty {
-                    screenView.bringSubviewToFront(screenView.stackView)
+                switch $0 {
+                case .didTapSearch:
+                    coordinator.toSearch(from: self)
+                case .didTapNewGroup:
+                    coordinator.toNewGroup(from: self)
                 }
             }.store(in: &cancellables)
 
-        screenView.contactsButton
+        viewModel.badgeCountPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in topLeftView.updateBadge($0) }
+            .store(in: &cancellables)
+
+        topLeftView.actionPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in coordinator.toSideMenu(from: self) }
+            .store(in: &cancellables)
+   }
+
+    private func setupChatList() {
+        addChild(tableController)
+        addChild(searchTableController)
+
+        screenView.listContainerView.addSubview(tableController.view)
+        screenView.searchListContainerView.addSubview(searchTableController.view)
+
+        tableController.view.snp.makeConstraints {
+            $0.top.equalTo(screenView.listContainerView.collectionContainerView.snp.bottom)
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
+            $0.bottom.equalToSuperview()
+        }
+
+        searchTableController.view.snp.makeConstraints {
+            $0.top.equalToSuperview()
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
+            $0.bottom.equalToSuperview()
+        }
+
+        tableController.didMove(toParent: self)
+        searchTableController.didMove(toParent: self)
+    }
+
+    private func setupRecentContacts() {
+        screenView
+            .listContainerView
+            .collectionView
+            .register(ChatListRecentContactCell.self)
+
+        collectionDataSource = UICollectionViewDiffableDataSource<SectionId, Contact>(
+            collectionView: screenView.listContainerView.collectionView
+        ) { collectionView, indexPath, contact in
+            let cell: ChatListRecentContactCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
+            cell.setup(title: contact.nickname ?? contact.username, image: contact.photo)
+            return cell
+        }
+
+        screenView.listContainerView.collectionView.delegate = self
+        screenView.listContainerView.collectionView.dataSource = collectionDataSource
+
+        viewModel.recentsPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                collectionDataSource.apply($0)
+                shouldBeShowingRecents = $0.numberOfItems > 0
+            }.store(in: &cancellables)
+    }
+
+    private func setupBindings() {
+        screenView.searchView
+            .rightPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in coordinator.toScan(from: self) }
+            .store(in: &cancellables)
+
+        screenView.searchView
+            .textPublisher
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] query in
+                viewModel.updateSearch(query: query)
+                screenView.searchListContainerView.emptyView.updateSearched(content: query)
+            }.store(in: &cancellables)
+
+        Publishers.CombineLatest(
+            viewModel.searchPublisher,
+            screenView.searchView.textPublisher.removeDuplicates()
+        )
+        .receive(on: DispatchQueue.main)
+            .sink { [unowned self] items, query in
+                guard query.isEmpty == false else {
+                    screenView.searchListContainerView.isHidden = true
+                    screenView.listContainerView.isHidden = false
+                    screenView.bringSubviewToFront(screenView.listContainerView)
+                    return
+                }
+
+                screenView.listContainerView.isHidden = true
+                screenView.searchListContainerView.isHidden = false
+
+                guard items.numberOfItems > 0 else {
+                    screenView.searchListContainerView.emptyView.isHidden = false
+                    screenView.bringSubviewToFront(screenView.searchListContainerView)
+                    screenView.searchListContainerView.bringSubviewToFront(screenView.searchListContainerView.emptyView)
+                    return
+                }
+
+                screenView.searchListContainerView.bringSubviewToFront(searchTableController.view)
+                screenView.searchListContainerView.emptyView.isHidden = true
+            }
+            .store(in: &cancellables)
+
+        screenView.searchView
+            .isEditingPublisher
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in isEditingSearch = $0 }
+            .store(in: &cancellables)
+
+        viewModel.chatsPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                guard $0.isEmpty == false else {
+                    screenView.listContainerView.bringSubviewToFront(screenView.listContainerView.emptyView)
+                    screenView.listContainerView.emptyView.isHidden = false
+                    return
+                }
+
+                screenView.listContainerView.bringSubviewToFront(tableController.view)
+                screenView.listContainerView.emptyView.isHidden = true
+            }
+            .store(in: &cancellables)
+
+        screenView.searchListContainerView
+            .emptyView.searchButton
+            .publisher(for: .touchUpInside)
+            .sink { [unowned self] in coordinator.toSearch(from: self) }
+            .store(in: &cancellables)
+
+        screenView.listContainerView
+            .emptyView.contactsButton
             .publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in coordinator.toContacts(from: self) }
             .store(in: &cancellables)
 
-        screenView.searchView.textPublisher
-            .removeDuplicates()
-            .sink { [unowned self] in viewModel.searchQueryRelay.send($0) }
-            .store(in: &cancellables)
-
-        screenView.searchView.rightPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in coordinator.toScan(from: self) }
-            .store(in: &cancellables)
-
-        tableController.deletePublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] ip in
-                if viewModel.isGroup(indexPath: ip) {
-                    presentDrawer(
-                        title: Localized.ChatList.DeleteGroup.title,
-                        subtitle: Localized.ChatList.DeleteGroup.subtitle,
-                        actionTitle: Localized.ChatList.DeleteGroup.action) { [weak self] in
-                            self?.viewModel.deleteAndLeaveGroupFrom(indexPath: ip)
-                        }
-                } else {
-                    presentDrawer(
-                        title: Localized.ChatList.Delete.title,
-                        subtitle: Localized.ChatList.Delete.subtitle,
-                        actionTitle: Localized.ChatList.Delete.delete) { [weak self] in
-                            self?.viewModel.delete(indexPaths: [ip])
-                        }
-                }
-            }.store(in: &cancellables)
-
-        viewModel.badgeCount
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in
-                menuBadge.text = " \($0) "
-                menuBadge.isHidden = $0 < 1
-            }.store(in: &cancellables)
-
         viewModel.isOnline
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
-            .sink { [weak screenView] in screenView?.displayNetworkIssue(!$0) }
+            .sink { [weak screenView] connected in screenView?.showConnectingBanner(!connected) }
             .store(in: &cancellables)
     }
+}
 
-    private func updateNavigationItems(_ isEditing: Bool) {
-        let leftStack = UIStackView()
-        leftStack.addArrangedSubview(titleLabel)
-
-        let rightStack = UIStackView()
-        rightStack.spacing = 10
-        rightStack.addArrangedSubview(contactListButton)
-        rightStack.addArrangedSubview(contactSearchButton)
-
-        contactListButton.snp.makeConstraints { $0.width.equalTo(40) }
-        contactSearchButton.snp.makeConstraints { $0.width.equalTo(40) }
-
-        if !isEditing {
-            leftStack.insertArrangedSubview(menu, at: 0)
-            navigationItem.leftBarButtonItem = UIBarButtonItem(customView: leftStack)
-        } else {
-            navigationItem.leftBarButtonItem = UIBarButtonItem(
-                customView: leftStack.pinning(at: .left(10))
-            )
-        }
-
-        navigationItem.rightBarButtonItem = UIBarButtonItem(
-            customView: isEditing ? cancel : rightStack
-        )
-    }
-
-    @objc private func didTapContactListButton() {
-        coordinator.toContacts(from: self)
-    }
-
-    @objc private func didTapContactSearchButton() {
-        coordinator.toSearch(from: self)
-    }
-
-    @objc private func didTapMenu() {
-        coordinator.toSideMenu(from: self)
-    }
-
-    private func presentDrawer(
-        title: String,
-        subtitle: String,
-        actionTitle: String,
-        action: @escaping () -> Void
+extension ChatListController: UICollectionViewDelegate {
+    public func collectionView(
+        _ collectionView: UICollectionView,
+        didSelectItemAt indexPath: IndexPath
     ) {
-        let actionButton = DrawerCapsuleButton(model: .init(
-            title: actionTitle,
-            style: .red
-        ))
-
-        let drawer = DrawerController(with: [
-            DrawerText(
-                font: Fonts.Mulish.bold.font(size: 26.0),
-                text: title,
-                color: Asset.neutralActive.color,
-                alignment: .left,
-                spacingAfter: 19
-            ),
-            DrawerText(
-                font: Fonts.Mulish.regular.font(size: 16.0),
-                text: subtitle,
-                color: Asset.neutralBody.color,
-                alignment: .left,
-                lineHeightMultiple: 1.1,
-                spacingAfter: 39
-            ),
-            actionButton
-        ])
-
-        actionButton.action.receive(on: DispatchQueue.main)
-            .sink {
-                drawer.dismiss(animated: true) { [weak self] in
-                    guard let self = self else { return }
-                    self.drawerCancellables.removeAll()
-                    action()
-                }
-            }.store(in: &drawerCancellables)
-
-        coordinator.toDrawer(drawer, from: self)
+        if let contact = collectionDataSource.itemIdentifier(for: indexPath) {
+            coordinator.toSingleChat(with: contact, from: self)
+        }
     }
 }

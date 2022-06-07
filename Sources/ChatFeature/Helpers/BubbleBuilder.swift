@@ -10,32 +10,27 @@ final class Bubbler {
 
         switch item.status {
         case .received, .read:
-            audioBubble.lockerView.removeFromSuperview()
+            audioBubble.lockerImageView.removeFromSuperview()
             audioBubble.backgroundColor = Asset.neutralWhite.color
             audioBubble.dateLabel.textColor = Asset.neutralDisabled.color
             audioBubble.progressLabel.textColor = Asset.neutralDisabled.color
         case .receivingAttachment:
-            audioBubble.lockerView.animate()
             audioBubble.backgroundColor = Asset.neutralWhite.color
             audioBubble.dateLabel.textColor = Asset.neutralDisabled.color
             audioBubble.progressLabel.textColor = Asset.neutralDisabled.color
         case .timedOut:
-            audioBubble.lockerView.fail()
             audioBubble.backgroundColor = Asset.accentWarning.color
             audioBubble.dateLabel.textColor = Asset.neutralWhite.color
             audioBubble.progressLabel.textColor = Asset.neutralWhite.color
         case .failedToSend:
-            audioBubble.lockerView.fail()
             audioBubble.backgroundColor = Asset.accentDanger.color
             audioBubble.dateLabel.textColor = Asset.neutralWhite.color
             audioBubble.progressLabel.textColor = Asset.neutralWhite.color
         case .sent:
-            audioBubble.lockerView.stop()
             audioBubble.backgroundColor = Asset.brandBubble.color
             audioBubble.dateLabel.textColor = Asset.neutralWhite.color
             audioBubble.progressLabel.textColor = Asset.neutralWhite.color
         case .sending, .sendingAttachment:
-            audioBubble.lockerView.animate()
             audioBubble.backgroundColor = Asset.brandBubble.color
             audioBubble.dateLabel.textColor = Asset.neutralWhite.color
             audioBubble.progressLabel.textColor = Asset.neutralWhite.color
@@ -52,32 +47,27 @@ final class Bubbler {
 
         switch item.status {
         case .received, .read:
-            imageBubble.lockerView.removeFromSuperview()
+            imageBubble.lockerImageView.removeFromSuperview()
             imageBubble.backgroundColor = Asset.neutralWhite.color
             imageBubble.dateLabel.textColor = Asset.neutralDisabled.color
             imageBubble.progressLabel.textColor = Asset.neutralDisabled.color
         case .receivingAttachment:
-            imageBubble.lockerView.animate()
             imageBubble.backgroundColor = Asset.neutralWhite.color
             imageBubble.dateLabel.textColor = Asset.neutralDisabled.color
             imageBubble.progressLabel.textColor = Asset.neutralDisabled.color
         case .failedToSend:
-            imageBubble.lockerView.fail()
             imageBubble.backgroundColor = Asset.accentDanger.color
             imageBubble.dateLabel.textColor = Asset.neutralWhite.color
             imageBubble.progressLabel.textColor = Asset.neutralWhite.color
         case .timedOut:
-            imageBubble.lockerView.fail()
             imageBubble.backgroundColor = Asset.accentWarning.color
             imageBubble.dateLabel.textColor = Asset.neutralWhite.color
             imageBubble.progressLabel.textColor = Asset.neutralWhite.color
         case .sent:
-            imageBubble.lockerView.stop()
             imageBubble.backgroundColor = Asset.brandBubble.color
             imageBubble.dateLabel.textColor = Asset.neutralWhite.color
             imageBubble.progressLabel.textColor = Asset.neutralWhite.color
         case .sending, .sendingAttachment:
-            imageBubble.lockerView.animate()
             imageBubble.backgroundColor = Asset.brandBubble.color
             imageBubble.dateLabel.textColor = Asset.neutralWhite.color
             imageBubble.progressLabel.textColor = Asset.neutralWhite.color
@@ -96,32 +86,28 @@ final class Bubbler {
 
         switch item.status {
         case .received, .read, .receivingAttachment:
-            bubble.lockerView.removeFromSuperview()
+            bubble.lockerImageView.removeFromSuperview()
             bubble.backgroundColor = Asset.neutralWhite.color
             bubble.textView.textColor = Asset.neutralActive.color
             bubble.dateLabel.textColor = Asset.neutralDisabled.color
             roundButtonColor = Asset.neutralDisabled.color
             bubble.revertBottomStackOrder()
         case .timedOut:
-            bubble.lockerView.fail()
             bubble.backgroundColor = Asset.accentWarning.color
             bubble.textView.textColor = Asset.neutralWhite.color
             bubble.dateLabel.textColor = Asset.neutralWhite.color
             roundButtonColor = Asset.neutralWhite.color
         case .failedToSend:
-            bubble.lockerView.fail()
             bubble.backgroundColor = Asset.accentDanger.color
             bubble.textView.textColor = Asset.neutralWhite.color
             bubble.dateLabel.textColor = Asset.neutralWhite.color
             roundButtonColor = Asset.neutralWhite.color
         case .sent:
-            bubble.lockerView.stop()
             bubble.backgroundColor = Asset.brandBubble.color
             bubble.textView.textColor = Asset.neutralWhite.color
             bubble.dateLabel.textColor = Asset.neutralWhite.color
             roundButtonColor = Asset.neutralWhite.color
         case .sending, .sendingAttachment:
-            bubble.lockerView.animate()
             bubble.backgroundColor = Asset.brandBubble.color
             bubble.textView.textColor = Asset.neutralWhite.color
             bubble.dateLabel.textColor = Asset.neutralWhite.color
@@ -137,8 +123,8 @@ final class Bubbler {
                 .font: Fonts.Mulish.regular.font(size: 12.0) as Any
             ]
         )
+
         bubble.roundButton.setAttributedTitle(attrString, for: .normal)
-        bubble.roundButton.isHidden = item.roundURL == nil
     }
 
     static func buildGroup(
@@ -158,7 +144,7 @@ final class Bubbler {
             bubble.textView.textColor = Asset.neutralActive.color
             bubble.dateLabel.textColor = Asset.neutralDisabled.color
             roundButtonColor = Asset.neutralDisabled.color
-            bubble.lockerView.removeFromSuperview()
+            bubble.lockerImageView.removeFromSuperview()
             bubble.revertBottomStackOrder()
         case .failed:
             bubble.senderLabel.removeFromSuperview()
@@ -185,18 +171,6 @@ final class Bubbler {
         )
 
         bubble.roundButton.setAttributedTitle(attrString, for: .normal)
-        bubble.roundButton.isHidden = item.roundURL == nil
-
-        switch item.status {
-        case .sent:
-            bubble.lockerView.stop()
-        case .failed:
-            bubble.lockerView.fail()
-        case .sending:
-            bubble.lockerView.animate()
-        case .read, .received:
-            bubble.lockerView.removeFromSuperview()
-        }
     }
 
     static func buildReply(
@@ -258,18 +232,6 @@ final class Bubbler {
             ]
         )
         bubble.roundButton.setAttributedTitle(attrString, for: .normal)
-        bubble.roundButton.isHidden = item.roundURL == nil
-
-        switch item.status {
-        case .sent:
-            bubble.lockerView.stop()
-        case .failedToSend, .timedOut:
-            bubble.lockerView.fail()
-        case .sending, .sendingAttachment:
-            bubble.lockerView.animate()
-        case .read, .received, .receivingAttachment:
-            bubble.lockerView.removeFromSuperview()
-        }
     }
 
     static func buildReplyGroup(
@@ -295,7 +257,7 @@ final class Bubbler {
             roundButtonColor = Asset.neutralDisabled.color
             bubble.replyView.container.backgroundColor = Asset.brandDefault.color
             bubble.replyView.space.backgroundColor = Asset.brandPrimary.color
-            bubble.lockerView.removeFromSuperview()
+            bubble.lockerImageView.removeFromSuperview()
             bubble.revertBottomStackOrder()
         case .failed:
             bubble.senderLabel.removeFromSuperview()
@@ -326,15 +288,5 @@ final class Bubbler {
         )
 
         bubble.roundButton.setAttributedTitle(attrString, for: .normal)
-        bubble.roundButton.isHidden = item.roundURL == nil
-
-        switch item.status {
-        case .failed:
-            bubble.lockerView.fail()
-        case .sent:
-            bubble.lockerView.stop()
-        default:
-            bubble.lockerView.animate()
-        }
     }
 }

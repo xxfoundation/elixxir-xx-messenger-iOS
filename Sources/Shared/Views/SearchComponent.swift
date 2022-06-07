@@ -21,10 +21,14 @@ public final class SearchComponent: UIView {
         }
     }
 
-    private var isEditing = false
+    public var isEditingPublisher: AnyPublisher<Bool, Never> {
+        isEditingSubject.eraseToAnyPublisher()
+    }
+
     private var cancellables = Set<AnyCancellable>()
     private var rightSubject = PassthroughSubject<Void, Never>()
     private var textSubject = PassthroughSubject<String, Never>()
+    private var isEditingSubject = CurrentValueSubject<Bool, Never>(false)
 
     public init() {
         super.init(frame: .zero)
@@ -74,7 +78,7 @@ public final class SearchComponent: UIView {
         inputField.text = nil
         textSubject.send("")
         inputField.endEditing(true)
-        isEditing = false
+        isEditingSubject.send(false)
     }
 
     private func setup() {
@@ -110,7 +114,7 @@ public final class SearchComponent: UIView {
 
         rightButton.publisher(for: .touchUpInside)
             .sink { [weak rightSubject, self] in
-                if isEditing {
+                if isEditingSubject.value == true {
                     abortEditing()
                 } else {
                     rightSubject?.send()
@@ -127,31 +131,31 @@ public final class SearchComponent: UIView {
     }
 
     private func setupConstraints() {
-        containerView.snp.makeConstraints { make in
-            make.top.equalToSuperview()
-            make.left.equalToSuperview()
-            make.right.equalToSuperview()
-            make.bottom.equalToSuperview()
-            make.height.equalTo(50)
+        containerView.snp.makeConstraints {
+            $0.top.equalToSuperview()
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
+            $0.bottom.equalToSuperview()
+            $0.height.equalTo(50)
         }
 
-        leftImageView.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(10)
-            make.left.equalToSuperview().offset(13)
-            make.bottom.equalToSuperview().offset(-10)
-            make.height.equalTo(leftImageView.snp.width)
+        leftImageView.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(10)
+            $0.left.equalToSuperview().offset(13)
+            $0.bottom.equalToSuperview().offset(-10)
+            $0.height.equalTo(leftImageView.snp.width)
         }
 
-        inputField.snp.makeConstraints { make in
-            make.top.bottom.equalToSuperview()
-            make.left.equalTo(leftImageView.snp.right).offset(20)
-            make.right.equalTo(rightButton.snp.left).offset(-32)
+        inputField.snp.makeConstraints {
+            $0.top.bottom.equalToSuperview()
+            $0.left.equalTo(leftImageView.snp.right).offset(20)
+            $0.right.equalTo(rightButton.snp.left).offset(-32)
         }
 
-        rightButton.snp.makeConstraints { make in
-            make.top.equalToSuperview()
-            make.right.equalToSuperview().offset(-13)
-            make.bottom.equalToSuperview()
+        rightButton.snp.makeConstraints {
+            $0.top.equalToSuperview()
+            $0.right.equalToSuperview().offset(-13)
+            $0.bottom.equalToSuperview()
         }
     }
 
@@ -162,12 +166,12 @@ public final class SearchComponent: UIView {
 
     public func textFieldDidBeginEditing(_ textField: UITextField) {
         rightButton.setImage(Asset.sharedCross.image, for: .normal)
-        isEditing = true
+        isEditingSubject.send(true)
     }
 
     public func textFieldDidEndEditing(_ textField: UITextField) {
         rightButton.setImage(rightImage, for: .normal)
-        isEditing = false
+        isEditingSubject.send(false)
     }
 }
 

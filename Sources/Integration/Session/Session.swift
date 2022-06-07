@@ -380,8 +380,14 @@ public final class Session: SessionType {
             .store(in: &cancellables)
 
         client.messages
-            .sink { [unowned self] in _ = try? dbManager.save($0) }
-            .store(in: &cancellables)
+            .sink { [unowned self] in
+                if var contact: Contact = try? dbManager.fetch(.withUserId($0.sender)).first {
+                    contact.isRecent = false
+                    _ = try? dbManager.save(contact)
+                }
+
+                _ = try? dbManager.save($0)
+            }.store(in: &cancellables)
 
         client.network
             .sink { [unowned self] in networkMonitor.update($0) }
@@ -404,6 +410,8 @@ public final class Session: SessionType {
             .sink { [unowned self] in
                 if var contact: Contact = try? dbManager.fetch(.withUserId($0.userId)).first {
                     contact.status = .friend
+                    contact.isRecent = true
+                    contact.createdAt = Date()
                     _ = try? dbManager.save(contact)
 
                     toastController.enqueueToast(model: .init(
@@ -423,5 +431,15 @@ public final class Session: SessionType {
     public func getTextFromGroupMessage(messageId: Data) -> String? {
         guard let message: GroupMessage = try? dbManager.fetch(.withUniqueId(messageId)).first else { return nil }
         return message.payload.text
+    }
+
+    public func getContactWith(userId: Data) -> Contact? {
+        let contact: Contact? = try? dbManager.fetch(.withUserId(userId)).first
+        return contact
+    }
+
+    public func getGroupChatInfoWith(groupId: Data) -> GroupChatInfo? {
+        let info: GroupChatInfo? = try? dbManager.fetch(.fromGroup(groupId)).first
+        return info
     }
 }

@@ -46,8 +46,8 @@ final class RestoreSuccessView: UIView {
             make.bottom.equalToSuperview().offset(-60)
         }
 
-        setTitle(Localized.Restore.Success.title)
-        setSubtitle(Localized.Restore.Success.subtitle)
+        setTitle(Localized.AccountRestore.Success.title)
+        setSubtitle(Localized.AccountRestore.Success.subtitle)
     }
 
     required init?(coder: NSCoder) { nil }

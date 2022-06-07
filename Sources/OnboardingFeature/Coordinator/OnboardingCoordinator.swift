@@ -11,7 +11,6 @@ public protocol OnboardingCoordinating {
     func toEmail(from: UIViewController)
     func toPhone(from: UIViewController)
     func toWelcome(from: UIViewController)
-    func toStart(with: String, from: UIViewController)
     func toUsername(with: String, from: UIViewController)
     func toRestoreList(with: String, from: UIViewController)
     func toDrawer(_: UIViewController, from: UIViewController)
@@ -45,7 +44,6 @@ public struct OnboardingCoordinator: OnboardingCoordinating {
     var searchFactory: () -> UIViewController
     var welcomeFactory: () -> UIViewController
     var chatListFactory: () -> UIViewController
-    var startFactory: (String) -> UIViewController
     var usernameFactory: (String) -> UIViewController
     var restoreListFactory: (String) -> UIViewController
     var successFactory: (OnboardingSuccessModel) -> UIViewController
@@ -59,7 +57,6 @@ public struct OnboardingCoordinator: OnboardingCoordinating {
         searchFactory: @escaping () -> UIViewController,
         welcomeFactory: @escaping () -> UIViewController,
         chatListFactory: @escaping () -> UIViewController,
-        startFactory: @escaping (String) -> UIViewController,
         usernameFactory: @escaping (String) -> UIViewController,
         restoreListFactory: @escaping (String) -> UIViewController,
         successFactory: @escaping (OnboardingSuccessModel) -> UIViewController,
@@ -69,7 +66,6 @@ public struct OnboardingCoordinator: OnboardingCoordinating {
     ) {
         self.emailFactory = emailFactory
         self.phoneFactory = phoneFactory
-        self.startFactory = startFactory
         self.searchFactory = searchFactory
         self.welcomeFactory = welcomeFactory
         self.successFactory = successFactory
@@ -105,11 +101,6 @@ public extension OnboardingCoordinator {
 
     func toSuccess(with model: OnboardingSuccessModel, from parent: UIViewController) {
         let screen = successFactory(model)
-        replacePresenter.present(screen, from: parent)
-    }
-
-    func toStart(with ndf: String, from parent: UIViewController) {
-        let screen = startFactory(ndf)
         replacePresenter.present(screen, from: parent)
     }
 

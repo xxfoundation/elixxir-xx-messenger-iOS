@@ -90,18 +90,18 @@ public final class RestoreListController: UIViewController {
 extension RestoreListController {
     private func presentWarning() {
         let actionButton = DrawerCapsuleButton(model: .init(
-            title: Localized.Restore.Warning.action,
+            title: Localized.AccountRestore.Warning.action,
             style: .brandColored
         ))
 
         let drawer = DrawerController(with: [
             DrawerText(
                 font: Fonts.Mulish.bold.font(size: 26.0),
-                text: Localized.Restore.Warning.title,
+                text: Localized.AccountRestore.Warning.title,
                 spacingAfter: 19
             ),
             DrawerText(
-                text: Localized.Restore.Warning.subtitle,
+                text: Localized.AccountRestore.Warning.subtitle,
                 spacingAfter: 37
             ),
             actionButton

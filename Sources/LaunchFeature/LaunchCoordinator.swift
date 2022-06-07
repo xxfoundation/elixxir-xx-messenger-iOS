@@ -1,0 +1,64 @@
+import UIKit
+import Models
+import Presentation
+
+public protocol LaunchCoordinating {
+    func toChats(from: UIViewController)
+    func toRequests(from: UIViewController)
+    func toOnboarding(with: String, from: UIViewController)
+    func toSingleChat(with: Contact, from: UIViewController)
+    func toGroupChat(with: GroupChatInfo, from: UIViewController)
+}
+
+public struct LaunchCoordinator: LaunchCoordinating {
+    var replacePresenter: Presenting = ReplacePresenter()
+
+    var requestsFactory: () -> UIViewController
+    var chatListFactory: () -> UIViewController
+    var onboardingFactory: (String) -> UIViewController
+    var singleChatFactory: (Contact) -> UIViewController
+    var groupChatFactory: (GroupChatInfo) -> UIViewController
+
+    public init(
+        requestsFactory: @escaping () -> UIViewController,
+        chatListFactory: @escaping () -> UIViewController,
+        onboardingFactory: @escaping (String) -> UIViewController,
+        singleChatFactory: @escaping (Contact) -> UIViewController,
+        groupChatFactory: @escaping (GroupChatInfo) -> UIViewController
+    ) {
+        self.requestsFactory = requestsFactory
+        self.chatListFactory = chatListFactory
+        self.groupChatFactory = groupChatFactory
+        self.onboardingFactory = onboardingFactory
+        self.singleChatFactory = singleChatFactory
+    }
+}
+
+public extension LaunchCoordinator {
+    func toChats(from parent: UIViewController) {
+        let screen = chatListFactory()
+        replacePresenter.present(screen, from: parent)
+    }
+
+    func toRequests(from parent: UIViewController) {
+        let screen = requestsFactory()
+        replacePresenter.present(screen, from: parent)
+    }
+
+    func toOnboarding(with ndf: String, from parent: UIViewController) {
+        let screen = onboardingFactory(ndf)
+        replacePresenter.present(screen, from: parent)
+    }
+
+    func toSingleChat(with contact: Contact, from parent: UIViewController) {
+        let chatListScreen = chatListFactory()
+        let singleChatScreen = singleChatFactory(contact)
+        replacePresenter.present(chatListScreen, singleChatScreen, from: parent)
+    }
+
+    func toGroupChat(with group: GroupChatInfo, from parent: UIViewController) {
+        let chatListScreen = chatListFactory()
+        let groupChatScreen = groupChatFactory(group)
+        replacePresenter.present(chatListScreen, groupChatScreen, from: parent)
+    }
+}
