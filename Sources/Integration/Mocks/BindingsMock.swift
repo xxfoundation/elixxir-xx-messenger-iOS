@@ -64,7 +64,7 @@ public final class BindingsMock: BindingsInterface {
 
     public func unregisterNotifications() throws {}
 
-    public func registerNotifications(_: String) throws {}
+    public func registerNotifications(_: Data) throws {}
 
     public func compress(image: Data, _: @escaping(Result<Data, Error>) -> Void) {}
 
@@ -85,6 +85,7 @@ public final class BindingsMock: BindingsInterface {
 
     public func listenMessages(_: @escaping (Message) -> Void) throws {}
 
+
     public func initializeBackup(
         passphrase: String,
         callback: @escaping (Data) -> Void
@@ -93,6 +94,8 @@ public final class BindingsMock: BindingsInterface {
     public func resumeBackup(
         callback: @escaping (Data) -> Void
     ) -> BackupInterface { BindingsBackupMock() }
+
+    public func listenBackups(_: @escaping (Data) -> Void) -> BackupInterface { fatalError() }
 
     public func listenNetworkUpdates(_: @escaping (Bool) -> Void) {}
 
@@ -207,7 +210,8 @@ extension Contact {
                 marshaled: "brad\(n)".data(using: .utf8)!,
                 username: "brad\(n)",
                 nickname: nil,
-                createdAt: Date()
+                createdAt: Date(),
+                isRecent: false
             ))
         }
 
@@ -223,7 +227,8 @@ extension Contact {
         marshaled: "angelinajolie".data(using: .utf8)!,
         username: "angelinajolie",
         nickname: "Angelica Jolie",
-        createdAt: Date()
+        createdAt: Date(),
+        isRecent: false
     )
 
     static let carlRequested = Contact(
@@ -235,7 +240,8 @@ extension Contact {
         marshaled: "carlsagan".data(using: .utf8)!,
         username: "carlsagan",
         nickname: "Carl Sagan",
-        createdAt: Date.distantPast
+        createdAt: Date.distantPast,
+        isRecent: false
     )
 
     static let elonRequested = Contact(
@@ -247,7 +253,8 @@ extension Contact {
         marshaled: "elonmusk".data(using: .utf8)!,
         username: "elonmusk",
         nickname: "Elon Musk",
-        createdAt: Date.distantPast
+        createdAt: Date.distantPast,
+        isRecent: false
     )
 
     static let georgeDiscovered = Contact(
@@ -259,7 +266,8 @@ extension Contact {
         marshaled: "georgebenson74".data(using: .utf8)!,
         username: "bruno_muniz74",
         nickname: "Bruno Muniz",
-        createdAt: Date()
+        createdAt: Date(),
+        isRecent: false
     )
 }
 

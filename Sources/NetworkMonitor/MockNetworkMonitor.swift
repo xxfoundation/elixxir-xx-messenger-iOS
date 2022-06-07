@@ -1,4 +1,5 @@
 import Combine
+import Foundation
 
 public struct MockNetworkMonitor: NetworkMonitoring {
     private let statusRelay = PassthroughSubject<NetworkStatus, Never>()
@@ -20,10 +21,24 @@ public struct MockNetworkMonitor: NetworkMonitoring {
     }
 
     public func start() {
-        // TODO
+        simulateOscilation(.available)
     }
 
     public func update(_ status: Bool) {
         // TODO
+    }
+
+    private func simulateOscilation(_ status: NetworkStatus) {
+        statusRelay.send(status)
+
+        if status == .available {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                simulateOscilation(.internetNotAvailable)
+            }
+        } else if status == .internetNotAvailable {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                simulateOscilation(.available)
+            }
+        }
     }
 }

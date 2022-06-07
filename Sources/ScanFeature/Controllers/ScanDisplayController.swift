@@ -1,6 +1,5 @@
 import UIKit
 import Combine
-import Countries
 
 final class ScanDisplayController: UIViewController {
     lazy private var screenView = ScanDisplayView()
@@ -9,51 +8,57 @@ final class ScanDisplayController: UIViewController {
     private var cancellables = Set<AnyCancellable>()
 
     var didTapInfo: (() -> Void)?
+    var didTapAddPhone: (() -> Void)?
+    var didTapAddEmail: (() -> Void)?
 
     override func loadView() {
         view = screenView
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        viewModel.loadCached()
+        viewModel.generateQR()
+    }
+
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        viewModel.state
-            .map(\.image)
+        viewModel.statePublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
-                guard let ciimage = $0 else { return }
-                screenView.qrImage.image = UIImage(ciImage: ciimage)
+                if let image = $0.image {
+                    screenView.setup(code: image)
+                }
+
+                screenView.setupAttributes(
+                    email: $0.email,
+                    phone: $0.phone,
+                    emailSharing: $0.isSharingEmail,
+                    phoneSharing: $0.isSharingPhone
+                )
             }.store(in: &cancellables)
 
-        if viewModel.email != nil || viewModel.phone != nil {
-            screenView.setupShareView { [weak self] in self?.didTapInfo?() }
+        screenView.actionPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                switch $0 {
+                case .info:
+                    didTapInfo?()
 
-            if let email = viewModel.email {
-                screenView.shareView.setup(email: email)
-                    .sink { [unowned self] in viewModel.didToggleEmail() }
-                    .store(in: &cancellables)
+                case .addEmail:
+                    didTapAddEmail?()
 
-                viewModel.state.map(\.isSharingEmail)
-                    .removeDuplicates()
-                    .receive(on: DispatchQueue.main)
-                    .sink { [unowned self] in screenView.shareView.emailView.switcherView.setOn($0, animated: false) }
-                    .store(in: &cancellables)
-            }
+                case .addPhone:
+                    didTapAddPhone?()
 
-            if let phone = viewModel.phone {
-                let fullPhone = "\(Country.findFrom(phone).prefix)\(phone.dropLast(2))"
+                case .toggleEmail:
+                    viewModel.didToggleEmail()
 
-                screenView.shareView.setup(phone: fullPhone)
-                    .sink { [unowned self] in viewModel.didTogglePhone() }
-                    .store(in: &cancellables)
-
-                viewModel.state.map(\.isSharingPhone)
-                    .removeDuplicates()
-                    .receive(on: DispatchQueue.main)
-                    .sink { [unowned self] in screenView.shareView.phoneView.switcherView.setOn($0, animated: false) }
-                    .store(in: &cancellables)
-            }
-        }
+                case .togglePhone:
+                    viewModel.didTogglePhone()
+                }
+            }.store(in: &cancellables)
 
         viewModel.loadCached()
         viewModel.generateQR()

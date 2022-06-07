@@ -112,7 +112,7 @@ public protocol BindingsInterface {
 
     func getPreImages() -> String
 
-    func registerNotifications(_: String) throws
+    func registerNotifications(_ token: Data) throws
 
     func unregisterNotifications() throws
 

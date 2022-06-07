@@ -5,17 +5,14 @@ typealias OutgoingImageCell = CollectionCell<FlexibleSpace, ImageMessageView>
 typealias IncomingImageCell = CollectionCell<ImageMessageView, FlexibleSpace>
 
 final class ImageMessageView: UIView, CollectionCellContent {
-    // MARK: UI
-
-    let dateLabel = UILabel()
-    let progressLabel = UILabel()
-    let imageView = UIImageView()
-    let lockerView = LockerView()
     private let stackView = UIStackView()
     private let shapeLayer = CAShapeLayer()
     private let bottomStack = UIStackView()
 
-    // MARK: Lifecycle
+    private(set) var dateLabel = UILabel()
+    private(set) var progressLabel = UILabel()
+    private(set) var imageView = UIImageView()
+    private(set) var lockerImageView = UIImageView()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -33,12 +30,12 @@ final class ImageMessageView: UIView, CollectionCellContent {
         imageView.image = nil
         dateLabel.text = nil
         progressLabel.text = nil
-        lockerView.icon.layer.removeAllAnimations()
     }
 
-    // MARK: Private
-
     private func setup() {
+        lockerImageView.contentMode = .center
+        lockerImageView.image = Asset.chatLocker.image
+
         imageView.layer.cornerRadius = 10
 
         dateLabel.font = Fonts.Mulish.regular.font(size: 12.0)
@@ -48,7 +45,7 @@ final class ImageMessageView: UIView, CollectionCellContent {
         bottomStack.spacing = 10
         bottomStack.addArrangedSubview(progressLabel.pinning(at: .left(0)))
         bottomStack.addArrangedSubview(dateLabel.pinning(at: .right(0)))
-        bottomStack.addArrangedSubview(lockerView)
+        bottomStack.addArrangedSubview(lockerImageView)
 
         stackView.axis = .vertical
         stackView.spacing = 5

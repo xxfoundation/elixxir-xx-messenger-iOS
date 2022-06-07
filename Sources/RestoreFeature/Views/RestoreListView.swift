@@ -15,15 +15,15 @@ final class RestoreListView: UIView {
         super.init(frame: .zero)
         backgroundColor = Asset.neutralWhite.color
 
-        setupTitle(Localized.Restore.List.title)
-        setupSubtitle(Localized.Restore.List.firstSubtitle)
+        setupTitle(Localized.AccountRestore.List.title)
+        setupSubtitle(Localized.AccountRestore.List.firstSubtitle)
 
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .left
         paragraph.lineHeightMultiple = 1.15
 
         let attrString = NSMutableAttributedString(
-            string: Localized.Restore.List.secondSubtitle,
+            string: Localized.AccountRestore.List.secondSubtitle,
             attributes: [
                 .foregroundColor: Asset.neutralBody.color,
                 .font: Fonts.Mulish.regular.font(size: 16.0) as Any,
@@ -38,7 +38,7 @@ final class RestoreListView: UIView {
         dropboxButton.setup(title: Localized.Backup.dropbox, icon: Asset.restoreDropbox.image)
         driveButton.setup(title: Localized.Backup.googleDrive, icon: Asset.restoreDrive.image)
 
-        cancelButton.set(style: .seeThrough, title: Localized.Restore.List.cancel)
+        cancelButton.set(style: .seeThrough, title: Localized.AccountRestore.List.cancel)
 
         stackView.axis = .vertical
         stackView.addArrangedSubview(driveButton)

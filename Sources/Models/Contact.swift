@@ -49,6 +49,7 @@ public struct Contact: Codable, Hashable, Equatable {
         case friends
         case received
         case requested
+        case isRecent
         case verificationInProgress
         case withUserId(Data)
         case withUserIds([Data])
@@ -79,6 +80,7 @@ public struct Contact: Codable, Hashable, Equatable {
     public var createdAt: Date
     public let username: String
     public var nickname: String?
+    public var isRecent: Bool
 
     public init(
         photo: Data?,
@@ -89,7 +91,8 @@ public struct Contact: Codable, Hashable, Equatable {
         marshaled: Data,
         username: String,
         nickname: String?,
-        createdAt: Date
+        createdAt: Date,
+        isRecent: Bool
     ) {
         self.email = email
         self.phone = phone
@@ -100,6 +103,7 @@ public struct Contact: Codable, Hashable, Equatable {
         self.nickname = nickname
         self.marshaled = marshaled
         self.createdAt = createdAt
+        self.isRecent = isRecent
     }
 
     public var differenceIdentifier: Data { userId }

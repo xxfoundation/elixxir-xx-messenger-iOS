@@ -6,18 +6,27 @@ import Integration
 import DifferenceKit
 import DependencyInjection
 
+enum GroupChatNavigationRoutes: Equatable {
+    case waitingRound
+    case webview(String)
+}
+
 final class GroupChatViewModel {
     @Dependency private var session: SessionType
+
+    var replyPublisher: AnyPublisher<ReplyModel, Never> {
+        replySubject.eraseToAnyPublisher()
+    }
+
+    var routesPublisher: AnyPublisher<GroupChatNavigationRoutes, Never> {
+        routesSubject.eraseToAnyPublisher()
+    }
 
     let info: GroupChatInfo
     private var stagedReply: Reply?
     private var cancellables = Set<AnyCancellable>()
     private let replySubject = PassthroughSubject<ReplyModel, Never>()
-
-    var roundURLPublisher: AnyPublisher<String, Never> { roundURLSubject.eraseToAnyPublisher() }
-    private let roundURLSubject = PassthroughSubject<String, Never>()
-
-    var replyPublisher: AnyPublisher<ReplyModel, Never> { replySubject.eraseToAnyPublisher() }
+    private let routesSubject = PassthroughSubject<GroupChatNavigationRoutes, Never>()
 
     var messages: AnyPublisher<[ArraySection<ChatSection, GroupChatItem>], Never> {
         session.groupMessages(info.group)
@@ -65,8 +74,11 @@ final class GroupChatViewModel {
     }
 
     func showRoundFrom(_ roundURL: String?) {
-        guard let urlString = roundURL else { return }
-        roundURLSubject.send(urlString)
+        if let urlString = roundURL, !urlString.isEmpty {
+            routesSubject.send(.webview(urlString))
+        } else {
+            routesSubject.send(.waitingRound)
+        }
     }
 
     func abortReply() {

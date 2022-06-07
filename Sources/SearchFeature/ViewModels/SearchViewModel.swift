@@ -6,7 +6,7 @@ import Defaults
 import Countries
 import Foundation
 import Integration
-import PushNotifications
+import PushFeature
 import CombineSchedulers
 import DependencyInjection
 
@@ -143,7 +143,7 @@ final class SearchViewModel {
     private func verifyNotifications() {
         guard pushNotifications == false else { return }
 
-        pushHandler.didRequestAuthorization { [weak self] result in
+        pushHandler.requestAuthorization { [weak self] result in
             guard let self = self else { return }
 
             switch result {

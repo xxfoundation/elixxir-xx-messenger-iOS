@@ -12,7 +12,8 @@ extension Contact {
             marshaled: try! contact.marshal(),
             username: contact.retrieve(fact: .username) ?? "",
             nickname: nil,
-            createdAt: Date()
+            createdAt: Date(),
+            isRecent: false
         )
     }
 }

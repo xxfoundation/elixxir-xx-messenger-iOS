@@ -5,7 +5,7 @@ import Combine
 import Defaults
 import Permissions
 import Integration
-import PushNotifications
+import PushFeature
 import UserNotifications
 import CombineSchedulers
 import DependencyInjection
@@ -113,7 +113,7 @@ final class SettingsViewModel {
         hudRelay.send(.on(nil))
 
         if enable == true {
-            pushHandler.didRequestAuthorization { [weak self] result in
+            pushHandler.requestAuthorization { [weak self] result in
                 guard let self = self else { return }
 
                 switch result {

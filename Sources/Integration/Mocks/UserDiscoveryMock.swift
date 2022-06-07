@@ -35,7 +35,8 @@ final class UserDiscoveryMock: UserDiscoveryInterface {
                 marshaled: "mock_username".data(using: .utf8)!,
                 username: "mock_username",
                 nickname: "mock_nickname",
-                createdAt: Date()
+                createdAt: Date(),
+                isRecent: false
             )))
         }
     }

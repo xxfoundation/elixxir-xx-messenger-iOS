@@ -6,12 +6,19 @@ final class SettingsAdvancedView: UIView {
     let downloadLogsButton = UIButton()
     let logRecordingSwitcher = SettingsSwitcher()
     let crashReportingSwitcher = SettingsSwitcher()
+    let showUsernamesSwitcher = SettingsSwitcher()
 
     init() {
         super.init(frame: .zero)
 
         backgroundColor = Asset.neutralWhite.color
         downloadLogsButton.setImage(Asset.settingsDownload.image, for: .normal)
+
+        showUsernamesSwitcher.set(
+            title: Localized.Settings.Advanced.ShowUsername.title,
+            text: Localized.Settings.Advanced.ShowUsername.description,
+            icon: Asset.settingsHide.image
+        )
 
         logRecordingSwitcher.set(
             title: Localized.Settings.Advanced.Logs.title,
@@ -29,9 +36,11 @@ final class SettingsAdvancedView: UIView {
         stackView.axis = .vertical
         stackView.addArrangedSubview(logRecordingSwitcher)
         stackView.addArrangedSubview(crashReportingSwitcher)
+        stackView.addArrangedSubview(showUsernamesSwitcher)
 
         stackView.setCustomSpacing(20, after: logRecordingSwitcher)
         stackView.setCustomSpacing(10, after: crashReportingSwitcher)
+        stackView.setCustomSpacing(10, after: showUsernamesSwitcher)
 
         addSubview(stackView)
 

@@ -45,8 +45,10 @@ public enum Asset {
   public static let chatListMenuDelete = ImageAsset(name: "chat_list_menu_delete")
   public static let chatListMenuPin = ImageAsset(name: "chat_list_menu_pin")
   public static let chatListNew = ImageAsset(name: "chat_list_new")
+  public static let chatListNewGroup = ImageAsset(name: "chat_list_new_group")
   public static let chatListPinSwipe = ImageAsset(name: "chat_list_pin_swipe")
   public static let chatListPlaceholder = ImageAsset(name: "chat_list_placeholder")
+  public static let chatListUd = ImageAsset(name: "chat_list_ud")
   public static let code = ImageAsset(name: "code")
   public static let contactAddPlaceholder = ImageAsset(name: "contact_add_placeholder")
   public static let contactDetailsPadlock = ImageAsset(name: "contact_details_padlock")
@@ -99,10 +101,14 @@ public enum Asset {
   public static let restoreDropbox = ImageAsset(name: "restore_dropbox")
   public static let restoreIcloud = ImageAsset(name: "restore_icloud")
   public static let restoreSuccess = ImageAsset(name: "restore_success")
+  public static let scanAdd = ImageAsset(name: "scan_add")
+  public static let scanCopy = ImageAsset(name: "scan_copy")
+  public static let scanDropdown = ImageAsset(name: "scan_dropdown")
   public static let scanEmail = ImageAsset(name: "scan_email")
   public static let scanError = ImageAsset(name: "scan_error")
   public static let scanPhone = ImageAsset(name: "scan_phone")
   public static let scanQr = ImageAsset(name: "scan_qr")
+  public static let scanScan = ImageAsset(name: "scan_scan")
   public static let searchEmail = ImageAsset(name: "search_email")
   public static let searchLens = ImageAsset(name: "search_lens")
   public static let searchPhone = ImageAsset(name: "search_phone")
@@ -182,6 +188,17 @@ public final class ColorAsset {
     return color
   }()
 
+  #if os(iOS) || os(tvOS)
+  @available(iOS 11.0, tvOS 11.0, *)
+  public func color(compatibleWith traitCollection: UITraitCollection) -> Color {
+    let bundle = BundleToken.bundle
+    guard let color = Color(named: name, in: bundle, compatibleWith: traitCollection) else {
+      fatalError("Unable to load color asset named \(name).")
+    }
+    return color
+  }
+  #endif
+
   fileprivate init(name: String) {
     self.name = name
   }
@@ -210,6 +227,7 @@ public struct ImageAsset {
   public typealias Image = UIImage
   #endif
 
+  @available(iOS 8.0, tvOS 9.0, watchOS 2.0, macOS 10.7, *)
   public var image: Image {
     let bundle = BundleToken.bundle
     #if os(iOS) || os(tvOS)
@@ -225,9 +243,21 @@ public struct ImageAsset {
     }
     return result
   }
+
+  #if os(iOS) || os(tvOS)
+  @available(iOS 8.0, tvOS 9.0, *)
+  public func image(compatibleWith traitCollection: UITraitCollection) -> Image {
+    let bundle = BundleToken.bundle
+    guard let result = Image(named: name, in: bundle, compatibleWith: traitCollection) else {
+      fatalError("Unable to load image asset named \(name).")
+    }
+    return result
+  }
+  #endif
 }
 
 public extension ImageAsset.Image {
+  @available(iOS 8.0, tvOS 9.0, watchOS 2.0, *)
   @available(macOS, deprecated,
     message: "This initializer is unsafe on macOS, please use the ImageAsset.image property")
   convenience init?(asset: ImageAsset) {

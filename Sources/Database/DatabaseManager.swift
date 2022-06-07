@@ -115,15 +115,26 @@ extension GRDBDatabaseManager: DatabaseManager {
     public func setup() throws {
         var migrator = DatabaseMigrator()
 
-        let path = NSSearchPathForDirectoriesInDomains(
-            .documentDirectory, .userDomainMask, true
-        )[0]
-        .appending("/xxmessenger.sqlite")
+        let oldPath = NSSearchPathForDirectoriesInDomains(.documentDirectory, .userDomainMask, true)[0]
+            .appending("/xxmessenger.sqlite")
 
-        databaseQueue = try DatabaseQueue(path: path)
+        let url = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
+            .appendingPathComponent("database")
+            .appendingPathExtension("sqlite")
+
+        if FileManager.default.fileExists(atPath: oldPath) && !FileManager.default.fileExists(atPath: url.path) {
+            do {
+                try FileManager.default.moveItem(atPath: oldPath, toPath: url.path)
+            } catch {
+                fatalError("Couldn't migrate database from old path to new one: \(error.localizedDescription)")
+            }
+        }
+
+        databaseQueue = try DatabaseQueue(path: url.path)
         try FileManager.default.setAttributes([
             .protectionKey : FileProtectionType.completeUntilFirstUserAuthentication
-        ], ofItemAtPath: path)
+        ], ofItemAtPath: url.path)
 
         migrator.registerMigration("v1") { db in
             try db.create(table: Contact.databaseTableName, ifNotExists: true) { table in
@@ -235,6 +246,14 @@ extension GRDBDatabaseManager: DatabaseManager {
 
             try db.drop(table: Group.databaseTableName)
             try db.rename(table: "temp_\(Group.databaseTableName)", to: Group.databaseTableName)
+        }
+
+        migrator.registerMigration("v2") { db in
+            try db.alter(table: Contact.databaseTableName) { table in
+                table.add(column: Contact.Column.isRecent.rawValue, .boolean)
+            }
+
+            try Contact.updateAll(db, Contact.Column.isRecent.set(to: false))
         }
 
         try migrator.migrate(databaseQueue)

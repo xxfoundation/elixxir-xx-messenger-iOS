@@ -16,13 +16,14 @@ struct AudioMessageCellState {
 }
 
 final class AudioMessageView: UIView, CollectionCellContent {
-    private(set) var progressLabel = UILabel()
-    private(set) var dateLabel = UILabel()
     private let playerView = AudioView()
     private let stackView = UIStackView()
     private let shapeLayer = CAShapeLayer()
     private let bottomStack = UIStackView()
-    private(set) var lockerView = LockerView()
+
+    private(set) var dateLabel = UILabel()
+    private(set) var progressLabel = UILabel()
+    private(set) var lockerImageView = UIImageView()
 
     var didTapLeft: (() -> Void)?
     var didTapRight: (() -> Void)?
@@ -46,7 +47,6 @@ final class AudioMessageView: UIView, CollectionCellContent {
         dateLabel.text = nil
         progressLabel.text = nil
         playerView.timeLabel.text = nil
-        lockerView.icon.layer.removeAllAnimations()
         cancellables.removeAll()
     }
 
@@ -77,6 +77,9 @@ final class AudioMessageView: UIView, CollectionCellContent {
     }
 
     private func setup() {
+        lockerImageView.contentMode = .center
+        lockerImageView.image = Asset.chatLocker.image
+
         dateLabel.textColor = Asset.neutralWhite.color
         dateLabel.font = Fonts.Mulish.regular.font(size: 12.0)
         progressLabel.textColor = Asset.neutralWhite.color
@@ -86,7 +89,7 @@ final class AudioMessageView: UIView, CollectionCellContent {
         bottomStack.spacing = 10
         bottomStack.addArrangedSubview(progressLabel.pinning(at: .left(0)))
         bottomStack.addArrangedSubview(dateLabel.pinning(at: .right(0)))
-        bottomStack.addArrangedSubview(lockerView)
+        bottomStack.addArrangedSubview(lockerImageView)
 
         stackView.axis = .vertical
         stackView.addArrangedSubview(playerView)

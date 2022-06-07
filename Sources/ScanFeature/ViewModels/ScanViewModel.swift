@@ -78,7 +78,8 @@ final class ScanViewModel {
                     marshaled: data,
                     username: usernameAndId.0,
                     nickname: nil,
-                    createdAt: Date()
+                    createdAt: Date(),
+                    isRecent: false
                 )
 
                 self.succeed(with: contact)

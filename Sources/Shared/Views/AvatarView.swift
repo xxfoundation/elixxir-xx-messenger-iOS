@@ -17,12 +17,13 @@ public final class AvatarView: UIView {
         layer.masksToBounds = true
         backgroundColor = Asset.brandPrimary.color
 
+        iconImageView.contentMode = .center
         imageView.contentMode = .scaleAspectFill
         monogramLabel.textColor = Asset.neutralWhite.color
 
-        addSubview(imageView)
-        addSubview(iconImageView)
         addSubview(monogramLabel)
+        addSubview(iconImageView)
+        addSubview(imageView)
 
         imageView.snp.makeConstraints {
             $0.edges.equalToSuperview()

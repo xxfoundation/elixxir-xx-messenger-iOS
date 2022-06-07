@@ -5,6 +5,7 @@ import Shared
 import Combine
 import Voxophone
 import ChatLayout
+import DrawerFeature
 import DifferenceKit
 import ChatInputFeature
 import DependencyInjection
@@ -30,6 +31,7 @@ public final class GroupChatController: UIViewController {
     private let viewModel: GroupChatViewModel
     private let layoutDelegate = LayoutDelegate()
     private var cancellables = Set<AnyCancellable>()
+    private var drawerCancellables = Set<AnyCancellable>()
     private var sections = [ArraySection<ChatSection, GroupChatItem>]()
     private var currentInterfaceActions = SetActor<Set<InterfaceActions>, ReactionTypes>()
 
@@ -157,10 +159,16 @@ public final class GroupChatController: UIViewController {
     }
 
     private func setupBindings() {
-        viewModel.roundURLPublisher
+        viewModel.routesPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in coordinator.toWebview(with: $0, from: self) }
-            .store(in: &cancellables)
+            .sink { [unowned self] in
+                switch $0 {
+                case .waitingRound:
+                    coordinator.toDrawer(makeWaitingRoundDrawer(), from: self)
+                case .webview(let urlString):
+                    coordinator.toWebview(with: urlString, from: self)
+                }
+            }.store(in: &cancellables)
 
         viewModel.messages
             .receive(on: DispatchQueue.main)
@@ -217,6 +225,34 @@ public final class GroupChatController: UIViewController {
 
     @objc private func didTapDots() {
         coordinator.toMembersList(members, from: self)
+    }
+
+    private func makeWaitingRoundDrawer() -> UIViewController {
+        let text = DrawerText(
+            font: Fonts.Mulish.semiBold.font(size: 14.0),
+            text: Localized.Chat.RoundDrawer.title,
+            color: Asset.neutralWeak.color,
+            lineHeightMultiple: 1.35,
+            spacingAfter: 25
+        )
+
+        let button = DrawerCapsuleButton(model: .init(
+            title: Localized.Chat.RoundDrawer.action,
+            style: .brandColored
+        ))
+
+        let drawer = DrawerController(with: [text, button])
+
+        button.action
+            .receive(on: DispatchQueue.main)
+            .sink { [weak drawer] in
+                drawer?.dismiss(animated: true) { [weak self] in
+                    guard let self = self else { return }
+                    self.drawerCancellables.removeAll()
+                }
+            }.store(in: &drawerCancellables)
+
+        return drawer
     }
 
     func scrollToBottom(completion: (() -> Void)? = nil) {

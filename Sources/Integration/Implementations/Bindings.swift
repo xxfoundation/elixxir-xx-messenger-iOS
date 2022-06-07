@@ -9,6 +9,7 @@ public let evaluateNotification: NotificationEvaluation = BindingsNotificationsF
 public protocol NotificationReportProtocol {
     func forMe() -> Bool
     func type() -> String
+    func source() -> Data?
 }
 
 public protocol NotificationManyReportProtocol {
@@ -369,22 +370,12 @@ extension BindingsClient: BindingsInterface {
         }
     }
 
-    /// Registers device token on backend for push notifications
-    ///
-    /// - Parameters:
-    ///   - string: Device token provided by APNS
-    ///
-    /// - Throws: If an exception was raised on
-    ///           backend such as timing out
-    ///
-    public func registerNotifications(_ token: String) throws {
-        log(type: .crumbs)
+    public func registerNotifications(_ token: Data) throws {
+        let tokenString = token.map { String(format: "%02hhx", $0) }.joined()
 
         do {
-            try register(forNotifications: token)
-            log(string: "Registered for notifications using token: \(token)", type: .info)
+            try register(forNotifications: tokenString)
         } catch {
-            log(string: error.localizedDescription, type: .error)
             throw error.friendly()
         }
     }

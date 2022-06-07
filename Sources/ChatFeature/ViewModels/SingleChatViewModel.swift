@@ -19,6 +19,7 @@ enum SingleChatNavigationRoutes: Equatable {
     case none
     case camera
     case library
+    case waitingRound
     case cameraPermission
     case libraryPermission
     case microphonePermission
@@ -55,8 +56,22 @@ final class SingleChatViewModel {
         }.eraseToAnyPublisher()
     }
 
+    private func updateRecentState(_ contact: Contact) {
+        if contact.isRecent == true {
+            var contact = contact
+            contact.isRecent = false
+            session.update(contact)
+        }
+    }
+
+    func viewDidAppear() {
+        updateRecentState(contact)
+    }
+
     init(_ contact: Contact) {
         self.contactSubject = .init(contact)
+
+        updateRecentState(contact)
 
         session.contacts(.withUserId(contact.userId))
             .compactMap { $0.first }
@@ -180,8 +195,11 @@ final class SingleChatViewModel {
     }
 
     func showRoundFrom(_ roundURL: String?) {
-        guard let urlString = roundURL else { return }
-        navigationRoutes.send(.webview(urlString))
+        if let urlString = roundURL, !urlString.isEmpty {
+            navigationRoutes.send(.webview(urlString))
+        } else {
+            navigationRoutes.send(.waitingRound)
+        }
     }
 
     func didRequestDelete(_ items: [ChatItem]) {

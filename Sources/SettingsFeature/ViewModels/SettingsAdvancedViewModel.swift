@@ -8,11 +8,14 @@ import DependencyInjection
 struct AdvancedViewState: Equatable {
     var isRecordingLogs = false
     var isCrashReporting = false
+    var isShowingUsernames = false
 }
 
 final class SettingsAdvancedViewModel {
     @KeyObject(.recordingLogs, defaultValue: true) var isRecordingLogs: Bool
     @KeyObject(.crashReporting, defaultValue: true) var isCrashReporting: Bool
+
+    private let isShowingUsernamesKey = "isShowingUsernames"
 
     @Dependency private var logger: XXLogger
     @Dependency private var crashReporter: CrashReporter
@@ -26,6 +29,29 @@ final class SettingsAdvancedViewModel {
     func loadCachedSettings() {
         stateRelay.value.isRecordingLogs = isRecordingLogs
         stateRelay.value.isCrashReporting = isCrashReporting
+
+        guard let defaults = UserDefaults(suiteName: "group.elixxir.messenger") else {
+            print("^^^ Couldn't access user defaults in the app group container \(#file):\(#line)")
+            return
+        }
+
+        guard let isShowingUsernames = defaults.value(forKey: isShowingUsernamesKey) as? Bool else {
+            defaults.set(false, forKey: isShowingUsernamesKey)
+            return
+        }
+
+        stateRelay.value.isShowingUsernames = isShowingUsernames
+    }
+
+    func didToggleShowUsernames() {
+        stateRelay.value.isShowingUsernames.toggle()
+
+        guard let defaults = UserDefaults(suiteName: "group.elixxir.messenger") else {
+            print("^^^ Couldn't access user defaults in the app group container \(#file):\(#line)")
+            return
+        }
+
+        defaults.set(stateRelay.value.isShowingUsernames, forKey: isShowingUsernamesKey)
     }
 
     func didToggleRecordLogs() {

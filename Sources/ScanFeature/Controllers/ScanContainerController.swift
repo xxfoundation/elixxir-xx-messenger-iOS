@@ -1,8 +1,8 @@
 import UIKit
-import DrawerFeature
 import Theme
 import Shared
 import Combine
+import DrawerFeature
 import DependencyInjection
 
 public final class ScanContainerController: UIViewController {
@@ -11,25 +11,59 @@ public final class ScanContainerController: UIViewController {
 
     lazy private var screenView = ScanContainerView()
 
+    private var previousPoint: CGPoint = .zero
+    private let scanController = ScanController()
+    private let displayController = ScanDisplayController()
+
     private var cancellables = Set<AnyCancellable>()
     private var drawerCancellables = Set<AnyCancellable>()
 
     public override func loadView() {
         view = screenView
-
         screenView.scrollView.delegate = self
-        addChild(screenView.scanScreen)
-        screenView.scanScreen.didMove(toParent: self)
 
-        addChild(screenView.displayScreen)
-        screenView.displayScreen.didMove(toParent: self)
+        addChild(scanController)
+        addChild(displayController)
+
+        screenView.scrollView.addSubview(scanController.view)
+        screenView.scrollView.addSubview(displayController.view)
+
+        scanController.view.snp.makeConstraints {
+            $0.top.equalTo(screenView)
+            $0.width.equalTo(screenView)
+            $0.bottom.equalTo(screenView)
+            $0.left.equalToSuperview()
+            $0.right.equalTo(displayController.view.snp.left)
+        }
+
+        displayController.view.snp.makeConstraints {
+            $0.top.equalTo(screenView.segmentedControl.snp.bottom)
+            $0.width.equalTo(scanController.view)
+            $0.bottom.equalTo(scanController.view)
+        }
+
+        scanController.didMove(toParent: self)
+        displayController.didMove(toParent: self)
+
         screenView.bringSubviewToFront(screenView.segmentedControl)
+    }
+
+    public override func viewDidLayoutSubviews() {
+        super.viewDidLayoutSubviews()
+        screenView.scrollView.contentOffset = previousPoint
+    }
+
+    public override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        previousPoint = screenView.scrollView.contentOffset
+        screenView.scrollView.contentOffset = .zero
     }
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         statusBarController.style.send(.lightContent)
         navigationController?.navigationBar.customize(translucent: true)
+        screenView.scrollView.contentOffset = .zero
     }
 
     public override func viewDidLoad() {
@@ -37,11 +71,21 @@ public final class ScanContainerController: UIViewController {
         setupNavigationBar()
         setupBindings()
 
-        screenView.displayScreen.didTapInfo = { [weak self] in
+        displayController.didTapInfo = { [weak self] in
             self?.presentInfo(
                 title: Localized.Scan.Info.title,
                 subtitle: Localized.Scan.Info.subtitle
             )
+        }
+
+        displayController.didTapAddEmail = { [weak self] in
+            guard let self = self else { return }
+            self.coordinator.toEmail(from: self)
+        }
+
+        displayController.didTapAddPhone = { [weak self] in
+            guard let self = self else { return }
+            self.coordinator.toPhone(from: self)
         }
     }
 
@@ -85,8 +129,8 @@ public final class ScanContainerController: UIViewController {
     public func scrollViewDidScroll(_ scrollView: UIScrollView) {
         let percentage = scrollView.contentOffset.x / view.frame.width
 
-        screenView.scanScreen.view.alpha = 1 - percentage
-        screenView.displayScreen.view.alpha = percentage
+        scanController.view.alpha = 1 - percentage
+        displayController.view.alpha = percentage
         screenView.segmentedControl.updateLeftConstraint(percentage)
     }
 

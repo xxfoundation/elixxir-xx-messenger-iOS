@@ -5,6 +5,10 @@ import Foundation
 import os.log
 import Combine
 
+import Combine
+
+import Combine
+
 public extension BindingsClient {
     static func listenLogs() {
         let callback = LogCallback { log(string: $0 ?? "", type: .bindings) }
@@ -13,7 +17,7 @@ public extension BindingsClient {
 
     func listenPreImageUpdates() {
         let callback = PreImageCallback { [weak self] _, _ in
-            if let defaults = UserDefaults(suiteName: "group.io.xxlabs.notification") {
+            if let defaults = UserDefaults(suiteName: "group.elixxir.messenger") {
                 let preImage = self?.getPreImages()
                 defaults.set(preImage, forKey: "preImage")
             }

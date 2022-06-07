@@ -2,28 +2,40 @@ import UIKit
 import Shared
 
 final class SegmentedControlButton: UIControl {
-    let title = UILabel()
-    let icon = UIImageView()
-    let stack = UIStackView()
+    private let titleLabel = UILabel()
+    private let imageView = UIImageView()
 
     init() {
         super.init(frame: .zero)
 
-        title.textColor = Asset.neutralWhite.color
-        title.font = Fonts.Mulish.bold.font(size: 15.0)
+        titleLabel.textAlignment = .center
+        titleLabel.textColor = Asset.neutralWhite.color
+        titleLabel.font = Fonts.Mulish.semiBold.font(size: 13.0)
 
-        addSubview(icon)
-        addSubview(title)
+        addSubview(titleLabel)
+        addSubview(imageView)
 
-        stack.spacing = 6
-        stack.addArrangedSubview(icon)
-        stack.addArrangedSubview(title)
-        stack.isUserInteractionEnabled = false
+        imageView.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(7.5)
+            $0.centerX.equalToSuperview()
+        }
 
-        addSubview(stack)
-
-        stack.snp.makeConstraints { $0.edges.equalToSuperview() }
+        titleLabel.snp.makeConstraints {
+            $0.top.equalTo(imageView.snp.bottom).offset(2)
+            $0.centerX.equalToSuperview()
+            $0.bottom.equalToSuperview().offset(-7.5)
+        }
     }
 
     required init?(coder: NSCoder) { nil }
+
+    func setup(title: String, icon: UIImage) {
+        titleLabel.text = title
+        imageView.image = icon
+    }
+
+    func update(color: UIColor) {
+        imageView.tintColor = color
+        titleLabel.textColor = color
+    }
 }

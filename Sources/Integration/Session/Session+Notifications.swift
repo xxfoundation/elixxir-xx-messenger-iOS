@@ -1,6 +1,8 @@
+import Foundation
+
 extension Session {
-    public func registerNotifications(_ string: String) throws {
-        try client.bindings.registerNotifications(string)
+    public func registerNotifications(_ token: Data) throws {
+        try client.bindings.registerNotifications(token)
     }
 
     public func unregisterNotifications() throws {

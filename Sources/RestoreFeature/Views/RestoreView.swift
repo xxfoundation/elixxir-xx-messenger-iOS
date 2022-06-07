@@ -23,9 +23,9 @@ final class RestoreView: UIView {
         titleLabel.textColor = Asset.neutralDark.color
         subtitleLabel.textColor = Asset.neutralDark.color
 
-        restoreButton.set(style: .brandColored, title: Localized.Restore.Found.restore)
-        cancelButton.set(style: .simplestColoredBrand, title: Localized.Restore.Found.cancel)
-        backButton.set(style: .seeThrough, title: Localized.Restore.NotFound.back)
+        restoreButton.set(style: .brandColored, title: Localized.AccountRestore.Found.restore)
+        cancelButton.set(style: .simplestColoredBrand, title: Localized.AccountRestore.Found.cancel)
+        backButton.set(style: .seeThrough, title: Localized.AccountRestore.NotFound.back)
 
         bottomStackView.axis = .vertical
 
@@ -105,20 +105,20 @@ final class RestoreView: UIView {
     }
 
     private func showBackup(_ backup: Backup, fromCloud cloud: CloudService) {
-        titleLabel.text = Localized.Restore.Found.title
-        subtitleLabel.text = Localized.Restore.Found.subtitle
+        titleLabel.text = Localized.AccountRestore.Found.title
+        subtitleLabel.text = Localized.AccountRestore.Found.subtitle
 
         detailsView.titleLabel.text = cloud.name()
         detailsView.imageView.image = cloud.asset()
 
         detailsView.dateView.setup(
-            title: Localized.Restore.Found.date,
+            title: Localized.AccountRestore.Found.date,
             value: backup.date.backupStyle(),
             hasArrow: false
         )
 
         detailsView.sizeView.setup(
-            title: Localized.Restore.Found.size,
+            title: Localized.AccountRestore.Found.size,
             value: String(format: "%.1f kb", backup.size/1000),
             hasArrow: false
         )
@@ -131,8 +131,8 @@ final class RestoreView: UIView {
     }
 
     private func showNoBackupForCloud(named cloud: String) {
-        titleLabel.text = Localized.Restore.NotFound.title
-        subtitleLabel.text = Localized.Restore.NotFound.subtitle(cloud)
+        titleLabel.text = Localized.AccountRestore.NotFound.title
+        subtitleLabel.text = Localized.AccountRestore.NotFound.subtitle(cloud)
 
         restoreButton.isHidden = true
         cancelButton.isHidden = true

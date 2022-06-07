@@ -10,6 +10,7 @@ extension Contact: Persistable {
         case userId
         case status
         case username
+        case isRecent
         case nickname
         case marshaled
         case createdAt
@@ -23,6 +24,10 @@ extension Contact: Persistable {
         switch request {
         case .all:
             return Contact.all()
+        case .isRecent:
+            return Contact
+                .filter(Column.isRecent == true)
+                .order(Column.createdAt.desc)
         case .verificationInProgress:
             return Contact.filter(Column.status == Contact.Status.verificationInProgress.rawValue)
         case .failed:
