@@ -1,4 +1,4 @@
-// swift-tools-version:5.3
+// swift-tools-version:5.6
 import PackageDescription
 
 let package = Package(
@@ -14,7 +14,6 @@ let package = Package(
         .library(name: "Shared", targets: ["Shared"]),
         .library(name: "Models", targets: ["Models"]),
         .library(name: "XXLogger", targets: ["XXLogger"]),
-        .library(name: "Database", targets: ["Database"]),
         .library(name: "Defaults", targets: ["Defaults"]),
         .library(name: "Bindings", targets: ["Bindings"]),
         .library(name: "Keychain", targets: ["Keychain"]),
@@ -53,95 +52,26 @@ let package = Package(
     ],
     dependencies: [
         .package(
-            name: "Quick",
-            url: "https://github.com/Quick/Quick",
-            from: "3.0.0"
+            url: "https://git.xx.network/elixxir/client-ios-db.git",
+            revision: "e1b3b1a8d1df6d259c99289e8d09e73fbfa9fe63"
         ),
-        .package(
-            name: "DifferenceKit",
-            url: "https://github.com/ra1028/DifferenceKit",
-            from: "1.2.0"
-        ),
-        .package(
-            name: "Nimble",
-            url: "https://github.com/Quick/Nimble",
-            from: "9.0.0"
-        ),
-        .package(
-            name: "FilesProvider",
-            url: "https://github.com/amosavian/FileProvider.git",
-            from: "0.26.0"
-        ),
-        .package(
-            name: "GRDB",
-            url: "https://github.com/groue/GRDB.swift",
-            from: "5.3.0"
-        ),
-        .package(
-            name: "GoogleSignIn",
-            url: "https://github.com/google/GoogleSignIn-iOS",
-            from: "6.1.0"
-        ),
-        .package(
-            name: "GoogleAPIClientForREST",
-            url: "https://github.com/google/google-api-objectivec-client-for-rest",
-            from: "1.6.0"
-        ),
-        .package(
-            name: "SnapKit",
-            url: "https://github.com/SnapKit/SnapKit",
-            from: "5.0.1"
-        ),
-        .package(
-            name: "Firebase",
-            url: "https://github.com/firebase/firebase-ios-sdk.git",
-            .upToNextMajor(from: "8.10.0")
-        ),
-        .package(
-            name: "SwiftProtobuf",
-            url: "https://github.com/apple/swift-protobuf",
-            from: "1.14.0"
-        ),
-        .package(
-            name: "SwiftyDropbox",
-            url: "https://github.com/dropbox/SwiftyDropbox.git",
-            from: "8.2.1"
-        ),
-        .package(
-            name: "KeychainAccess",
-            url: "https://github.com/kishikawakatsumi/KeychainAccess",
-            from: "4.2.1"
-        ),
-        .package(
-            name: "Retry",
-            url: "https://github.com/icanzilb/Retry.git",
-            from: "0.6.3"
-        ),
-        .package(
-            name: "ChatLayout",
-            url: "https://github.com/ekazaev/ChatLayout",
-            from: "1.1.14"
-        ),
-        .package(
-            name: "SwiftyBeaver",
-            url: "https://github.com/SwiftyBeaver/SwiftyBeaver.git",
-            from: "1.9.5"
-        ),
-        .package(
-            name: "swift-composable-architecture",
-            url: "https://github.com/pointfreeco/swift-composable-architecture.git",
-            .upToNextMajor(from: "0.32.0")
-        ),
-        .package(
-            name: "ScrollViewController",
-            url: "https://github.com/darrarski/ScrollViewController",
-            from: "1.2.0"
-        ),
-        .package(
-            name: "combine-schedulers",
-            url: "https://github.com/pointfreeco/combine-schedulers",
-            from: "0.5.0"
-        )
+        .package(url: "https://github.com/Quick/Quick", from: "3.0.0"),
+        .package(url: "https://github.com/Quick/Nimble", from: "9.0.0"),
+        .package(url: "https://github.com/SnapKit/SnapKit", from: "5.0.1"),
+        .package(url: "https://github.com/icanzilb/Retry.git", from: "0.6.3"),
+        .package(url: "https://github.com/ekazaev/ChatLayout", from: "1.1.14"),
+        .package(url: "https://github.com/ra1028/DifferenceKit", from: "1.2.0"),
+        .package(url: "https://github.com/apple/swift-protobuf", from: "1.14.0"),
+        .package(url: "https://github.com/google/GoogleSignIn-iOS", from: "6.1.0"),
+        .package(url: "https://github.com/dropbox/SwiftyDropbox.git", from: "8.2.1"),
+        .package(url: "https://github.com/amosavian/FileProvider.git", from: "0.26.0"),
+        .package(url: "https://github.com/SwiftyBeaver/SwiftyBeaver.git", from: "1.9.5"),
+        .package(url: "https://github.com/darrarski/ScrollViewController", from: "1.2.0"),
+        .package(url: "https://github.com/pointfreeco/combine-schedulers", from: "0.5.0"),
+        .package(url: "https://github.com/kishikawakatsumi/KeychainAccess", from: "4.2.1"),
+        .package(url: "https://github.com/google/google-api-objectivec-client-for-rest", from: "1.6.0"),
+        .package(url: "https://github.com/firebase/firebase-ios-sdk.git", .upToNextMajor(from: "8.10.0")),
+        .package(url: "https://github.com/pointfreeco/swift-composable-architecture.git",.upToNextMajor(from: "0.32.0"))
     ],
     targets: [
         .target(
@@ -197,7 +127,6 @@ let package = Package(
                 name: "PushFeature",
                 dependencies: [
                     "Models",
-                    "Database",
                     "Defaults",
                     "Integration",
                     "DependencyInjection"
@@ -246,7 +175,7 @@ let package = Package(
                     ),
                     .product(
                         name: "SwiftProtobuf",
-                        package: "SwiftProtobuf"
+                        package: "swift-protobuf"
                     )
                 ]
             ),
@@ -277,7 +206,7 @@ let package = Package(
                     "CrashReporting",
                     .product(
                         name: "FirebaseCrashlytics",
-                        package: "Firebase"
+                        package: "firebase-ios-sdk"
                     )
                 ]
             ),
@@ -289,11 +218,11 @@ let package = Package(
                 dependencies: [
                     .product(
                         name: "GoogleSignIn",
-                        package: "GoogleSignIn"
+                        package: "GoogleSignIn-iOS"
                     ),
                     .product(
                         name: "GoogleAPIClientForREST_Drive",
-                        package: "GoogleAPIClientForREST"
+                        package: "google-api-objectivec-client-for-rest"
                     )
                 ],
                 resources: [.process("Resources")]
@@ -306,7 +235,7 @@ let package = Package(
                 dependencies: [
                     .product(
                         name: "FilesProvider",
-                        package: "FilesProvider"
+                        package: "FileProvider"
                     )
                 ]
             ),
@@ -386,40 +315,22 @@ let package = Package(
                 ]
             ),
 
-        // MARK: - Database
-
-            .target(
-                name: "Database",
-                dependencies: [
-                    "Models",
-                    "XXLogger",
-                    .product(
-                        name: "GRDB",
-                        package: "GRDB"
-                    ),
-                    .product(
-                        name: "DifferenceKit",
-                        package: "DifferenceKit"
-                    )
-                ]
-            ),
-
         // MARK: - Shared
 
             .target(
                 name: "Shared",
                 dependencies: [
                     .product(
-                        name: "DifferenceKit",
-                        package: "DifferenceKit"
+                        name: "SnapKit",
+                        package: "SnapKit"
                     ),
                     .product(
                         name: "ChatLayout",
                         package: "ChatLayout"
                     ),
                     .product(
-                        name: "SnapKit",
-                        package: "SnapKit"
+                        name: "DifferenceKit",
+                        package: "DifferenceKit"
                     )
                 ],
                 exclude: ["swiftgen.yml"],
@@ -431,10 +342,10 @@ let package = Package(
             .target(
                 name: "Integration",
                 dependencies: [
-                    "XXLogger",
                     "Shared",
-                    "Database",
                     "Bindings",
+                    "XXLogger",
+                    "Keychain",
                     "ToastFeature",
                     "BackupFeature",
                     "CrashReporting",
@@ -443,6 +354,10 @@ let package = Package(
                     .product(
                         name: "Retry",
                         package: "Retry"
+                    ),
+                    .product(
+                        name: "XXDatabase",
+                        package: "client-ios-db"
                     )
                 ],
                 resources: [.process("Resources")]
@@ -501,12 +416,12 @@ let package = Package(
                     "ChatFeature",
                     "Presentation",
                     .product(
-                        name: "ScrollViewController",
-                        package: "ScrollViewController"
-                    ),
-                    .product(
                         name: "CombineSchedulers",
                         package: "combine-schedulers"
+                    ),
+                    .product(
+                        name: "ScrollViewController",
+                        package: "ScrollViewController"
                     )
                 ]
             ),
@@ -529,12 +444,12 @@ let package = Package(
                     "ChatInputFeature",
                     "DependencyInjection",
                     .product(
-                        name: "DifferenceKit",
-                        package: "DifferenceKit"
-                    ),
-                    .product(
                         name: "ChatLayout",
                         package: "ChatLayout"
+                    ),
+                    .product(
+                        name: "DifferenceKit",
+                        package: "DifferenceKit"
                     ),
                     .product(
                         name: "ScrollViewController",
@@ -613,12 +528,12 @@ let package = Package(
                     "DrawerFeature",
                     "DependencyInjection",
                     .product(
-                        name: "ScrollViewController",
-                        package: "ScrollViewController"
-                    ),
-                    .product(
                         name: "CombineSchedulers",
                         package: "combine-schedulers"
+                    ),
+                    .product(
+                        name: "ScrollViewController",
+                        package: "ScrollViewController"
                     )
                 ]
             ),
@@ -663,12 +578,12 @@ let package = Package(
                     "VersionChecking",
                     "DependencyInjection",
                     .product(
-                        name: "ScrollViewController",
-                        package: "ScrollViewController"
-                    ),
-                    .product(
                         name: "CombineSchedulers",
                         package: "combine-schedulers"
+                    ),
+                    .product(
+                        name: "ScrollViewController",
+                        package: "ScrollViewController"
                     )
                 ]
             ),
@@ -697,9 +612,10 @@ let package = Package(
                     "Models",
                     "InputField",
                     "Presentation",
-                    "GoogleDriveFeature",
                     "iCloudFeature",
+                    "DrawerFeature",
                     "DropboxFeature",
+                    "GoogleDriveFeature",
                     "DependencyInjection"
                 ]
             ),
@@ -761,12 +677,12 @@ let package = Package(
                     "DrawerFeature",
                     "DependencyInjection",
                     .product(
-                        name: "ScrollViewController",
-                        package: "ScrollViewController"
-                    ),
-                    .product(
                         name: "CombineSchedulers",
                         package: "combine-schedulers"
+                    ),
+                    .product(
+                        name: "ScrollViewController",
+                        package: "ScrollViewController"
                     )
                 ]
             ),
