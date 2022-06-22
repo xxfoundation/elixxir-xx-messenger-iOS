@@ -154,9 +154,9 @@ public final class SingleChatController: UIViewController {
     }
 
     private func setupNavigationBar(contact: Contact) {
-        screenView.set(name: contact.nickname ?? contact.username)
+        screenView.set(name: contact.nickname ?? contact.username!)
         avatarView.snp.makeConstraints { $0.width.height.equalTo(35) }
-        avatarView.setupProfile(title: contact.nickname ?? contact.username, image: contact.photo, size: .small)
+        avatarView.setupProfile(title: contact.nickname ?? contact.username!, image: contact.photo, size: .small)
 
         nameLabel.text = contact.nickname ?? contact.username
         nameLabel.textColor = Asset.neutralActive.color
@@ -435,10 +435,10 @@ public final class SingleChatController: UIViewController {
     }
 
     private func previewItemAt(_ indexPath: IndexPath) {
-        let item = sections[indexPath.section].elements[indexPath.item]
-        guard let attachment = item.payload.attachment, item.status != .receivingAttachment else { return }
-        fileURL = FileManager.url(for: "\(attachment.name).\(attachment._extension.written)")
-        coordinator.toPreview(from: self)
+//        let item = sections[indexPath.section].elements[indexPath.item]
+//        guard let attachment = item.payload.attachment, item.status != .receiving else { return }
+//        fileURL = FileManager.url(for: "\(attachment.name).\(attachment._extension.written)")
+//        coordinator.toPreview(from: self)
     }
 
     // MARK: Selectors
@@ -562,7 +562,7 @@ extension SingleChatController: UICollectionViewDelegate {
 
         let status = sections[section].elements[item].status
 
-        if status == .received || status == .read || status == .receivingAttachment {
+        if status == .received || status == .receiving {
             var leftView: UIView!
 
             if let cell = cell as? IncomingReplyCell {

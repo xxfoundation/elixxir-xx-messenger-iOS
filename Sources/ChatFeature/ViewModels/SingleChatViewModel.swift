@@ -61,7 +61,7 @@ final class SingleChatViewModel {
         if contact.isRecent == true {
             var contact = contact
             contact.isRecent = false
-            session.update(contact)
+            _ = try? session.dbManager.saveContact(contact)
         }
     }
 
@@ -74,13 +74,14 @@ final class SingleChatViewModel {
 
         updateRecentState(contact)
 
-        session.contacts(.withUserId(contact.userId))
+        session.dbManager.fetchContactsPublisher(Contact.Query(id: [contact.id]))
+            .assertNoFailure()
             .compactMap { $0.first }
             .sink { [unowned self] in contactSubject.send($0) }
             .store(in: &cancellables)
 
-        session.singleMessages(contact)
-            .map { $0.sorted(by: { $0.timestamp < $1.timestamp }) }
+        session.dbManager.fetchMessagesPublisher(.init(chat: .direct(session.myId, contact.id)))
+            .assertNoFailure()
             .map { messages in
 
                 let domainModels = messages.map { ChatItem($0) }
@@ -100,12 +101,12 @@ final class SingleChatViewModel {
     // MARK: Public
 
     func didSendAudio(url: URL) {
-        let name = url.deletingPathExtension().lastPathComponent
-        guard let file = FileManager.retrieve(name: name, type: Attachment.Extension.audio.written) else { return }
-
-        let attachment = Attachment(name: name, data: file, _extension: .audio)
-        let payload = Payload(text: "You sent a voice message", reply: nil, attachment: attachment)
-        session.send(payload, toContact: contact)
+//        let name = url.deletingPathExtension().lastPathComponent
+//        guard let file = FileManager.retrieve(name: name, type: Attachment.Extension.audio.written) else { return }
+//
+//        let attachment = Attachment(name: name, data: file, _extension: .audio)
+//        let payload = Payload(text: "You sent a voice message", reply: nil, attachment: attachment)
+//        session.send(payload, toContact: contact)
     }
 
     func didSend(image: UIImage) {
@@ -123,11 +124,13 @@ final class SingleChatViewModel {
     }
 
     func readAll() {
-        session.readAll(from: contact)
+        let assignment = Message.Assignments(isUnread: false)
+        let query = Message.Query(chat: .direct(session.myId, contact.id))
+        _ = try? session.dbManager.bulkUpdateMessages(query, assignment)
     }
 
     func didRequestDeleteAll() {
-        session.deleteAll(from: contact)
+        _ = try? session.dbManager.deleteMessages(.init(chat: .direct(session.myId, contact.id)))
     }
 
     func didRequestRetry(_ model: ChatItem) {
@@ -178,21 +181,22 @@ final class SingleChatViewModel {
 
     func send(_ string: String) {
         let text = string.trimmingCharacters(in: .whitespacesAndNewlines)
-        let payload = Payload(text: text, reply: stagedReply, attachment: nil)
+        let payload = Payload(text: text, reply: stagedReply)
         session.send(payload, toContact: contact)
         stagedReply = nil
     }
 
     func didRequestReply(_ model: ChatItem) {
-        guard let messageId = model.uniqueId else { return }
-
-        let isIncoming = model.status == .received || model.status == .read
-        stagedReply = Reply(messageId: messageId, senderId: isIncoming ? contact.userId : session.myId)
-        replySubject.send(.init(text: model.payload.text, sender: isIncoming ? contact.nickname ?? contact.username : "You"))
+//        guard let messageId = model.uniqueId else { return }
+//
+//        let isIncoming = model.status == .received
+//        stagedReply = Reply(messageId: messageId, senderId: isIncoming ? contact.userId : session.myId)
+//        replySubject.send(.init(text: model.payload.text, sender: isIncoming ? contact.nickname ?? contact.username : "You"))
     }
 
     func getText(from messageId: Data) -> String {
-        session.getTextFromMessage(messageId: messageId) ?? "[DELETED]"
+        fatalError()
+//        session.getTextFromMessage(messageId: messageId) ?? "[DELETED]"
     }
 
     func showRoundFrom(_ roundURL: String?) {
@@ -204,7 +208,7 @@ final class SingleChatViewModel {
     }
 
     func didRequestDelete(_ items: [ChatItem]) {
-        session.delete(messages: items.map { $0.identity })
+        ///session.delete(messages: items.map { $0.identity })
     }
 
     func itemWith(id: Int64) -> ChatItem? {
@@ -212,7 +216,7 @@ final class SingleChatViewModel {
     }
 
     func getName(from senderId: Data) -> String {
-        senderId == session.myId ? "You" : contact.nickname ?? contact.username
+        senderId == session.myId ? "You" : contact.nickname ?? contact.username!
     }
 
     func itemAt(indexPath: IndexPath) -> ChatItem? {

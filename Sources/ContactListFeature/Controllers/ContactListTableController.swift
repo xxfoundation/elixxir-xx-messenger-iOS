@@ -1,7 +1,8 @@
 import UIKit
 import Shared
-import Combine
 import Models
+import Combine
+import XXModels
 
 final class ContactListTableController: UITableViewController {
     private var collation = UILocalizedIndexedCollation.current()

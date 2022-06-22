@@ -6,24 +6,24 @@ import Foundation
 
 extension Session {
     public func send(imageData: Data, to contact: Contact, completion: @escaping (Result<Void, Error>) -> Void) {
-        client.bindings.compress(image: imageData) { [weak self] in
-            guard let self = self else {
-                completion(.success(()))
-                return
-            }
-
-            switch $0 {
-            case .success(let compressed):
-                let name = "image_\(Date.asTimestamp)"
-                try! FileManager.store(data: compressed, name: name, type: Attachment.Extension.image.written)
-                let attachment = Attachment(name: name, data: compressed, _extension: .image)
-                self.send(Payload(text: "You sent an image", reply: nil, attachment: attachment), toContact: contact)
-                completion(.success(()))
-            case .failure(let error):
-                completion(.failure(error))
-                log(string: "Error when compressing image: \(error.localizedDescription)", type: .error)
-            }
-        }
+//        client.bindings.compress(image: imageData) { [weak self] in
+//            guard let self = self else {
+//                completion(.success(()))
+//                return
+//            }
+//
+//            switch $0 {
+//            case .success(let compressed):
+//                let name = "image_\(Date.asTimestamp)"
+//                try! FileManager.store(data: compressed, name: name, type: Attachment.Extension.image.written)
+//                let attachment = Attachment(name: name, data: compressed, _extension: .image)
+//                self.send(Payload(text: "You sent an image", reply: nil, attachment: attachment), toContact: contact)
+//                completion(.success(()))
+//            case .failure(let error):
+//                completion(.failure(error))
+//                log(string: "Error when compressing image: \(error.localizedDescription)", type: .error)
+//            }
+//        }
     }
 
     public func send(_ payload: Payload, toContact contact: Contact) {

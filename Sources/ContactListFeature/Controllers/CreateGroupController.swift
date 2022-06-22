@@ -3,6 +3,7 @@ import UIKit
 import Models
 import Shared
 import Combine
+import XXModels
 import DependencyInjection
 
 public final class CreateGroupController: UIViewController {

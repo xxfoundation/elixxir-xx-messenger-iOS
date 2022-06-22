@@ -38,24 +38,24 @@ extension BindingsFileTransfer: TransferManagerInterface {
         try receive(id)
     }
 
-    public func uploadFile(
-        _ file: Attachment,
-        to recipient: Data,
-        _ callback: @escaping (Bool, Int, Int, Int, Error?) -> Void
-    ) throws -> Data {
-        let cb = OutgoingTransferProgressCallback { completed, sent, arrived, total, error in
-            callback(completed, sent, arrived, total, error)
-        }
-
-        return try send(
-            file.name,
-            fileType: file._extension.written,
-            fileData: file.data!,
-            recipientID: recipient,
-            retry: 1,
-            preview: nil,
-            progressFunc: cb,
-            periodMS: 1000
-        )
-    }
+//    public func uploadFile(
+//        _ file: Attachment,
+//        to recipient: Data,
+//        _ callback: @escaping (Bool, Int, Int, Int, Error?) -> Void
+//    ) throws -> Data {
+//        let cb = OutgoingTransferProgressCallback { completed, sent, arrived, total, error in
+//            callback(completed, sent, arrived, total, error)
+//        }
+//
+//        return try send(
+//            file.name,
+//            fileType: file._extension.written,
+//            fileData: file.data!,
+//            recipientID: recipient,
+//            retry: 1,
+//            preview: nil,
+//            progressFunc: cb,
+//            periodMS: 1000
+//        )
+//    }
 }

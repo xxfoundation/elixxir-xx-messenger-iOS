@@ -1,6 +1,7 @@
 import UIKit
 import Shared
 import Models
+import XXModels
 
 final class ContactView: UIView {
     let container = UIView()
@@ -38,7 +39,7 @@ final class ContactView: UIView {
 
     required init?(coder: NSCoder) { nil }
 
-    func set(status: Contact.Status) {
+    func set(status: Contact.AuthStatus) {
         let contentView: UIView
 
         switch status {

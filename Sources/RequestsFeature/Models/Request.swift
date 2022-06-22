@@ -1,4 +1,5 @@
 import Models
+import XXModels
 import Foundation
 
 enum Section: Int {
@@ -22,9 +23,9 @@ enum Request: Hashable, Equatable {
     var id: Data {
         switch self {
         case .group(let group):
-            return group.groupId
+            return group.id
         case .contact(let contact):
-            return contact.userId
+            return contact.id
         }
     }
 }

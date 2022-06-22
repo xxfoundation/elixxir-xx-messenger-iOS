@@ -43,9 +43,9 @@ final class Bubbler {
         imageBubble: ImageMessageView,
         with item: ChatItem
     ) {
-        let progress = item.payload.attachment!.progress
-        imageBubble.progressLabel.text = String(format: "%.1f%%", progress * 100)
-        imageBubble.dateLabel.text = item.date.asHoursAndMinutes()
+//        let progress = item.payload.attachment!.progress
+//        imageBubble.progressLabel.text = String(format: "%.1f%%", progress * 100)
+//        imageBubble.dateLabel.text = item.date.asHoursAndMinutes()
 
         switch item.status {
         case .received:
@@ -133,52 +133,6 @@ final class Bubbler {
         bubble.roundButton.setAttributedTitle(attrString, for: .normal)
     }
 
-    static func buildGroup(
-        bubble: StackMessageView,
-        with item: GroupChatItem,
-        with senderName: String
-    ) {
-        bubble.textView.text = item.payload.text
-        bubble.dateLabel.text = item.date.asHoursAndMinutes()
-
-        let roundButtonColor: UIColor
-
-        switch item.status {
-        case .received, .read:
-            bubble.senderLabel.text = senderName
-            bubble.backgroundColor = Asset.neutralWhite.color
-            bubble.textView.textColor = Asset.neutralActive.color
-            bubble.dateLabel.textColor = Asset.neutralDisabled.color
-            roundButtonColor = Asset.neutralDisabled.color
-            bubble.lockerImageView.removeFromSuperview()
-            bubble.revertBottomStackOrder()
-        case .failed:
-            bubble.senderLabel.removeFromSuperview()
-            bubble.backgroundColor = Asset.accentDanger.color
-            bubble.textView.textColor = Asset.neutralWhite.color
-            bubble.dateLabel.textColor = Asset.neutralWhite.color
-            roundButtonColor = Asset.neutralWhite.color
-        case .sent, .sending:
-            bubble.senderLabel.removeFromSuperview()
-            bubble.backgroundColor = Asset.brandBubble.color
-            bubble.textView.textColor = Asset.neutralWhite.color
-            bubble.dateLabel.textColor = Asset.neutralWhite.color
-            roundButtonColor = Asset.neutralWhite.color
-        }
-
-        let attrString = NSAttributedString(
-            string: "show mix",
-            attributes: [
-                .underlineStyle: NSUnderlineStyle.single.rawValue,
-                .underlineColor: roundButtonColor,
-                .foregroundColor: roundButtonColor,
-                .font: Fonts.Mulish.regular.font(size: 12.0) as Any
-            ]
-        )
-
-        bubble.roundButton.setAttributedTitle(attrString, for: .normal)
-    }
-
     static func buildReply(
         bubble: ReplyStackMessageView,
         with item: ChatItem,
@@ -239,62 +193,6 @@ final class Bubbler {
                 .font: Fonts.Mulish.regular.font(size: 12.0) as Any
             ]
         )
-        bubble.roundButton.setAttributedTitle(attrString, for: .normal)
-    }
-
-    static func buildReplyGroup(
-        bubble: ReplyStackMessageView,
-        with item: GroupChatItem,
-        reply: ReplyModel,
-        sender: String
-    ) {
-        bubble.dateLabel.text = item.date.asHoursAndMinutes()
-        bubble.textView.text = item.payload.text
-
-        bubble.replyView.message.text = reply.text
-        bubble.replyView.title.text = reply.sender
-
-        let roundButtonColor: UIColor
-
-        switch item.status {
-        case .received, .read:
-            bubble.senderLabel.text = sender
-            bubble.backgroundColor = Asset.neutralWhite.color
-            bubble.textView.textColor = Asset.neutralActive.color
-            bubble.dateLabel.textColor = Asset.neutralDisabled.color
-            roundButtonColor = Asset.neutralDisabled.color
-            bubble.replyView.container.backgroundColor = Asset.brandDefault.color
-            bubble.replyView.space.backgroundColor = Asset.brandPrimary.color
-            bubble.lockerImageView.removeFromSuperview()
-            bubble.revertBottomStackOrder()
-        case .failed:
-            bubble.senderLabel.removeFromSuperview()
-            bubble.backgroundColor = Asset.accentDanger.color
-            bubble.textView.textColor = Asset.neutralWhite.color
-            bubble.dateLabel.textColor = Asset.neutralWhite.color
-            roundButtonColor = Asset.neutralWhite.color
-            bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
-            bubble.replyView.container.backgroundColor = Asset.brandLight.color
-        case .sent, .sending:
-            bubble.senderLabel.removeFromSuperview()
-            bubble.textView.textColor = Asset.neutralWhite.color
-            bubble.backgroundColor = Asset.brandBubble.color
-            bubble.dateLabel.textColor = Asset.neutralWhite.color
-            roundButtonColor = Asset.neutralWhite.color
-            bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
-            bubble.replyView.container.backgroundColor = Asset.brandLight.color
-        }
-
-        let attrString = NSAttributedString(
-            string: "show mix",
-            attributes: [
-                .underlineStyle: NSUnderlineStyle.single.rawValue,
-                .underlineColor: roundButtonColor,
-                .foregroundColor: roundButtonColor,
-                .font: Fonts.Mulish.regular.font(size: 12.0) as Any
-            ]
-        )
-
         bubble.roundButton.setAttributedTitle(attrString, for: .normal)
     }
 }

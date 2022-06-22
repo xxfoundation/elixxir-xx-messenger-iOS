@@ -20,10 +20,9 @@ public protocol TransferManagerInterface {
         with: Data
     ) throws -> Data
 
-
-    func uploadFile(
-        _: Attachment,
-        to: Data,
-        _: @escaping (Bool, Int, Int, Int, Error?) -> Void
-    ) throws -> Data
+//    func uploadFile(
+//        _: Attachment,
+//        to: Data,
+//        _: @escaping (Bool, Int, Int, Int, Error?) -> Void
+//    ) throws -> Data
 }

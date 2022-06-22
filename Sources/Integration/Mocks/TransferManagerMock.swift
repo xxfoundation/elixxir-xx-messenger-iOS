@@ -24,11 +24,11 @@ final class TransferManagerMock: TransferManagerInterface {
         fatalError()
     }
 
-    func uploadFile(
-        _: Attachment,
-        to: Data,
-        _: @escaping (Bool, Int, Int, Int, Error?) -> Void
-    ) throws -> Data {
-        Data()
-    }
+//    func uploadFile(
+//        _: Attachment,
+//        to: Data,
+//        _: @escaping (Bool, Int, Int, Int, Error?) -> Void
+//    ) throws -> Data {
+//        Data()
+//    }
 }

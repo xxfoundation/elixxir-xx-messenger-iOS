@@ -3,12 +3,10 @@ import Foundation
 public struct Payload: Codable, Equatable, Hashable {
     public var text: String
     public var reply: Reply?
-    public var attachment: Attachment?
 
-    public init(text: String, reply: Reply?, attachment: Attachment?) {
+    public init(text: String, reply: Reply?) {
         self.text = text
         self.reply = reply
-        self.attachment = attachment
     }
 
     public init(with marshaled: Data) throws {
@@ -23,7 +21,7 @@ public struct Payload: Codable, Equatable, Hashable {
             )
         }
 
-        self.init(text: proto.text, reply: reply, attachment: nil)
+        self.init(text: proto.text, reply: reply)
     }
 
     public func asData() -> Data {
