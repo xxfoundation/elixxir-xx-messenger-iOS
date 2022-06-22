@@ -3,7 +3,7 @@ import Models
 import Shared
 import Combine
 import Defaults
-import Database
+import XXModels
 import Foundation
 import BackupFeature
 import NetworkMonitor
@@ -52,7 +52,7 @@ public final class Session: SessionType {
     @Dependency var networkMonitor: NetworkMonitoring
 
     public let client: Client
-    public let dbManager: DatabaseManager
+    public let dbManager: Database
     private var cancellables = Set<AnyCancellable>()
 
     public var myId: Data { client.bindings.myId }
@@ -74,61 +74,6 @@ public final class Session: SessionType {
 
     public var isOnline: AnyPublisher<Bool, Never> {
         networkMonitor.statusPublisher.map { $0 == .available }.eraseToAnyPublisher()
-    }
-
-    public func groups(_ request: Group.Request) -> AnyPublisher<[Group], Never> {
-        self.dbManager
-            .publisher(fetch: Group.self, request)
-            .catch { _ in Just([]) }
-            .eraseToAnyPublisher()
-    }
-
-    public func groupMembers(_ request: GroupMember.Request) -> AnyPublisher<[GroupMember], Never> {
-        self.dbManager
-            .publisher(fetch: GroupMember.self, request)
-            .catch { _ in Just([]) }
-            .eraseToAnyPublisher()
-    }
-
-    lazy public var contacts: (Contact.Request) -> AnyPublisher<[Contact], Never> = {
-        self.dbManager.publisher(fetch: Contact.self, $0).catch { _ in Just([]) }.eraseToAnyPublisher()
-    }
-
-    lazy public var singleMessages: (Contact) -> AnyPublisher<[Message], Never> = {
-        self.dbManager.publisher(fetch: Message.self, .withContact($0.userId)).catch { _ in Just([]) }.eraseToAnyPublisher()
-    }
-
-    lazy public var groupMessages: (Group) -> AnyPublisher<[GroupMessage], Never> = {
-        self.dbManager.publisher(fetch: GroupMessage.self, .fromGroup($0.groupId)).catch { _ in Just([]) }.eraseToAnyPublisher()
-    }
-
-    lazy public var groupChats: (GroupChatInfo.Request) -> AnyPublisher<[GroupChatInfo], Never> = {
-        self.dbManager.publisher(fetch: GroupChatInfo.self, $0).catch { _ in Just([]) }.eraseToAnyPublisher()
-    }
-
-    lazy public var singleChats: (SingleChatInfo.Request) -> AnyPublisher<[SingleChatInfo], Never> = { _ in
-        self.dbManager.publisher(fetch: Contact.self, .friends)
-            .flatMap { [unowned self] contactList -> AnyPublisher<[SingleChatInfo], Error> in
-                let contactIds = contactList.map { $0.userId }
-
-                let messagesPublisher: AnyPublisher<[Message], Error> = dbManager
-                    .publisher(fetch: .latestOnesFromContactIds(contactIds))
-                    .map { $0.sorted(by: { $0.timestamp > $1.timestamp }) }
-                    .eraseToAnyPublisher()
-
-                return messagesPublisher.map { messages -> [SingleChatInfo] in
-                    contactList.map { contact -> SingleChatInfo in
-                        SingleChatInfo(contact: contact, lastMessage: messages.first {
-                            $0.sender == contact.userId || $0.receiver == contact.userId
-                        })
-                    }
-                }
-                .eraseToAnyPublisher()
-            }
-            .catch { _ in Just([]) }
-            .map { $0.filter { $0.lastMessage != nil }}
-            .map { $0.sorted(by: { $0.lastMessage!.timestamp > $1.lastMessage!.timestamp })}
-            .eraseToAnyPublisher()
     }
 
     public init(

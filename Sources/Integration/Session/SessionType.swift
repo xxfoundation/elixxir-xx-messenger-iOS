@@ -1,6 +1,5 @@
 import Models
 import Combine
-import Database
 import Foundation
 
 public protocol SessionType {
@@ -9,16 +8,6 @@ public protocol SessionType {
     var version: String { get }
     var hasRunningTasks: Bool { get }
     var isOnline: AnyPublisher<Bool, Never> { get }
-
-    var contacts: (Contact.Request) -> AnyPublisher<[Contact], Never> { get }
-    var singleMessages: (Contact) -> AnyPublisher<[Message], Never> { get }
-    var singleChats: (SingleChatInfo.Request) -> AnyPublisher<[SingleChatInfo], Never> { get }
-
-    func groupMembers(_: GroupMember.Request) -> AnyPublisher<[GroupMember], Never>
-
-    func groups(_: Group.Request) -> AnyPublisher<[Group], Never>
-    var groupMessages: (Group) -> AnyPublisher<[GroupMessage], Never> { get }
-    var groupChats: (GroupChatInfo.Request) -> AnyPublisher<[GroupChatInfo], Never> { get }
 
     func deleteMyself() throws
     func getId(from: Data) -> Data?

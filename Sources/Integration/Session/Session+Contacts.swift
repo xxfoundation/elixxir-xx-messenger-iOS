@@ -1,7 +1,6 @@
 import Retry
 import Models
 import Shared
-import Database
 import Foundation
 
 extension Session {
