@@ -10,8 +10,6 @@ extension Session {
     }
 
     public func verify(contact: Contact) {
-        log(string: "Requested verification of \(contact.username)", type: .crumbs)
-
         var contact = contact
         contact.authStatus = .verificationInProgress
 
@@ -31,14 +29,10 @@ extension Session {
             return
         }
 
-        log(string: "Network is available. Verifying \(contact.username)", type: .crumbs)
-
         let resultClosure: (Result<Contact, Error>) -> Void = { result in
             switch result {
             case .success(let mightBe):
                 guard try! self.client.bindings.verify(marshaled: contact.marshaled!, verifiedMarshaled: mightBe.marshaled!) else {
-                    log(string: "\(contact.username) is fake. Deleted!", type: .info)
-
                     do {
                         try self.dbManager.deleteContact(contact)
                     } catch {
@@ -49,7 +43,6 @@ extension Session {
                 }
 
                 contact.authStatus = .verified
-                log(string: "Verified \(contact.username)", type: .info)
 
                 do {
                     try self.dbManager.saveContact(contact)
@@ -57,8 +50,7 @@ extension Session {
                     log(string: error.localizedDescription, type: .error)
                 }
 
-            case .failure(let error):
-                log(string: "Verification of \(contact.username) failed: \(error.localizedDescription)", type: .error)
+            case .failure:
                 contact.authStatus = .verificationFailed
 
                 do {
@@ -135,7 +127,7 @@ extension Session {
         if contact.authStatus == .requestFailed || contact.authStatus == .confirmationFailed {
             contactToOperate = contact
         } else {
-            guard (try? dbManager.fetch(.withUsername(contact.username)).first as Contact?) == nil else {
+            if let _ = try? dbManager.fetchContacts(.init(id: [contact.id])).first {
                 throw NSError.create("This user has already been requested")
             }
 
@@ -165,7 +157,7 @@ extension Session {
                     contactToOperate.authStatus = success ? .requested : .requestFailed
                     contactToOperate = try self.dbManager.saveContact(contactToOperate)
 
-                case .failure(let error):
+                case .failure:
                     contactToOperate.authStatus = .requestFailed
                     contactToOperate.createdAt = Date()
                     contactToOperate = try self.dbManager.saveContact(contactToOperate)
@@ -203,11 +195,13 @@ extension Session {
     }
 
     public func deleteContact(_ contact: Contact) throws {
-        if let _: FileTransfer = try? dbManager.fetch(.withContactId(contact.userId)).first {
-            throw NSError.create("There is an ongoing file transfer with this contact as you are receiving or sending a file, please try again later once it’s done")
-        } else {
-            print("No pending transfer with this contact. Free to delete")
-        }
+        // TODO: If there's an ongoing FT with this contact, it cannot be deleted.
+
+//        if let _: FileTransfer = try? dbManager.fetch(.withContactId(contact.userId)).first {
+//            throw NSError.create("There is an ongoing file transfer with this contact as you are receiving or sending a file, please try again later once it’s done")
+//        } else {
+//            print("No pending transfer with this contact. Free to delete")
+//        }
 
         try client.bindings.removeContact(contact.marshaled!)
         try dbManager.deleteContact(contact)
