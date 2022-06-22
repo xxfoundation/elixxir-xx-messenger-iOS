@@ -1,6 +1,7 @@
 import UIKit
 import Models
 import Defaults
+import XXModels
 import Integration
 import DependencyInjection
 
@@ -102,15 +103,14 @@ public final class PushHandler: PushHandling {
             return
         }
 
-        let dbManager = GRDBDatabaseManager()
-        try? dbManager.setup()
-
         let tuples: [(String, Push)] = pushes.compactMap {
-            guard let userId = $0.source, let contact: Contact = try? dbManager.fetch(.withUserId(userId)).first else {
+            guard let userId = $0.source,
+                  let dbManager = try? Database.inMemory(),
+                  let contact = try? dbManager.fetchContacts(.init(id: [userId])).first else {
                 return ($0.type.unknownSenderContent!, $0)
             }
 
-            let name = contact.nickname ?? contact.username
+            let name = contact.nickname ?? contact.username!
             return ($0.type.knownSenderContent(name)!, $0)
         }
 
