@@ -229,15 +229,17 @@ public final class Session: SessionType {
 
     private func setupBindings() {
         client.requests
-            .sink { [unowned self] request in
-                if let _: Contact = try? dbManager.fetch(.withUserId(request.userId)).first { return }
+            .sink { [unowned self] in
+                if let _ = try? dbManager.fetchContacts(.init(id: [$0.id])).first {
+                    return
+                }
 
                 if self.inappnotifications {
                     DeviceFeedback.sound(.contactAdded)
                     DeviceFeedback.shake(.notification)
                 }
 
-                verify(contact: request)
+                verify(contact: $0)
             }.store(in: &cancellables)
 
         client.requestsSent
@@ -255,7 +257,7 @@ public final class Session: SessionType {
                 /// TODO: Hold a record on the chat that this contact restored.
                 ///
                 var contact = $0
-                contact.status = .friend
+                contact.authStatus = .friend
                 _ = try? dbManager.saveContact(contact)
             }.store(in: &cancellables)
 
@@ -284,31 +286,25 @@ public final class Session: SessionType {
             .sink { print($0) }
             .store(in: &cancellables)
 
-        client.groupMessages
-            .sink { [unowned self] in _ = try? dbManager.saveMessage($0) }
-            .store(in: &cancellables)
-
         client.messages
             .sink { [unowned self] in
-                if var contact: Contact = try? dbManager.fetch(.withUserId($0.sender)).first {
+                if var contact = try? dbManager.fetchContacts(.init(id: [$0.senderId])).first {
                     contact.isRecent = false
-                    _ = try? dbManager.save(contact)
+                    _ = try? dbManager.saveContact(contact)
                 }
 
-                _ = try? dbManager.save($0)
+                _ = try? dbManager.saveMessage($0)
             }.store(in: &cancellables)
 
         client.network
             .sink { [unowned self] in networkMonitor.update($0) }
             .store(in: &cancellables)
 
-        client.incomingTransfers
-            .sink { [unowned self] in handle(incomingTransfer: $0) }
-            .store(in: &cancellables)
-
         client.groupRequests
             .sink { [unowned self] request in
-                if let _: Group = try? dbManager.fetch(.withGroupId(request.0.groupId)).first { return }
+                if let _ = try? dbManager.fetchGroups(.init(id: [request.0.id])).first {
+                    return
+                }
 
                 DispatchQueue.global().async { [weak self] in
                     self?.processGroupCreation(request.0, memberIds: request.1, welcome: request.2)
@@ -317,14 +313,14 @@ public final class Session: SessionType {
 
         client.confirmations
             .sink { [unowned self] in
-                if var contact: Contact = try? dbManager.fetch(.withUserId($0.userId)).first {
-                    contact.status = .friend
+                if var contact = try? dbManager.fetchContacts(.init(id: [$0.id])).first {
+                    contact.authStatus = .friend
                     contact.isRecent = true
                     contact.createdAt = Date()
                     _ = try? dbManager.saveContact(contact)
 
                     toastController.enqueueToast(model: .init(
-                        title: contact.nickname ?? contact.username,
+                        title: contact.nickname ?? contact.username!,
                         subtitle: Localized.Requests.Confirmations.toaster,
                         leftImage: Asset.sharedSuccess.image
                     ))

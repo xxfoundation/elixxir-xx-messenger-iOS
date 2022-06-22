@@ -1,49 +1,10 @@
-import Models
-import Foundation
 import UIKit
+import Models
 import Shared
+import XXModels
+import Foundation
 
 extension Session {
-    public func readAll(from contact: Contact) {
-        do {
-            try dbManager.updateAll(
-                Message.self,
-                Message.Request.unreadsFromContactId(contact.userId),
-                with: [Message.Column.unread.set(to: false)]
-            )
-        } catch {
-            log(string: error.localizedDescription, type: .error)
-        }
-    }
-
-    public func readAll(from group: Group) {
-        do {
-            try dbManager.updateAll(
-                GroupMessage.self,
-                GroupMessage.Request.unreadsFromGroup(group.groupId),
-                with: [GroupMessage.Column.unread.set(to: false)]
-            )
-        } catch {
-            log(string: error.localizedDescription, type: .error)
-        }
-    }
-
-    public func deleteAll(from contact: Contact) {
-        do {
-            try dbManager.delete(Message.self, .withContact(contact.userId))
-        } catch {
-            log(string: error.localizedDescription, type: .error)
-        }
-    }
-
-    public func deleteAll(from group: Group) {
-        do {
-            try dbManager.delete(GroupMessage.self, .fromGroup(group.groupId))
-        } catch {
-            log(string: error.localizedDescription, type: .error)
-        }
-    }
-
     public func send(imageData: Data, to contact: Contact, completion: @escaping (Result<Void, Error>) -> Void) {
         client.bindings.compress(image: imageData) { [weak self] in
             guard let self = self else {
@@ -68,39 +29,29 @@ extension Session {
     public func send(_ payload: Payload, toContact contact: Contact) {
         var message = Message(
             sender: client.bindings.meMarshalled,
-            receiver: contact.userId,
+            receiver: contact.id,
             payload: payload,
             unread: false,
             timestamp: Date.asTimestamp,
             uniqueId: nil,
-            status: payload.attachment == nil ? .sending : .sendingAttachment
+            status: .sending
         )
 
         do {
-            message = try dbManager.save(message)
+            message = try dbManager.saveMessage(message)
             send(message: message)
         } catch {
             log(string: error.localizedDescription, type: .error)
         }
     }
 
-    public func delete(messages: [Int64]) {
-        messages.forEach {
-            do {
-                try dbManager.delete(Message.self, .withId($0))
-            } catch {
-                log(string: error.localizedDescription, type: .error)
-            }
-        }
-    }
-
     public func retryMessage(_ id: Int64) {
         guard var message: Message = try? dbManager.fetch(withId: id) else { return }
         message.timestamp = Date.asTimestamp
-        message.status = message.payload.attachment == nil ? .sending : .sendingAttachment
+        message.status = .sending
 
         do {
-            message = try dbManager.save(message)
+            message = try dbManager.saveMessage(message)
             send(message: message)
         } catch {
             log(string: error.localizedDescription, type: .error)
@@ -147,13 +98,13 @@ extension Session {
                     }
                 }
             case .failure(let error):
-                message.status = .failedToSend
+                message.status = .sendingFailed
                 log(string: error.localizedDescription, type: .error)
             }
 
             DispatchQueue.main.async {
                 do {
-                    _ = try self.dbManager.save(message)
+                    _ = try self.dbManager.saveMessage(message)
                 } catch {
                     log(string: error.localizedDescription, type: .error)
                 }
@@ -204,20 +155,20 @@ extension Session {
                 )
 
                 message.payload.attachment?.transferId = tid
-                message.status = .sendingAttachment
+                message.status = .sending
 
                 do {
-                    _ = try self.dbManager.save(message)
+                    _ = try self.dbManager.saveMessage(message)
                     _ = try self.dbManager.save(transfer)
                 } catch {
                     log(string: error.localizedDescription, type: .error)
                 }
             } catch {
-                message.status = .failedToSend
+                message.status = .sendingFailed
                 log(string: error.localizedDescription, type: .error)
 
                 do {
-                    _ = try self.dbManager.save(message)
+                    _ = try self.dbManager.saveMessage(message)
                 } catch let otherError {
                     log(string: otherError.localizedDescription, type: .error)
                 }
@@ -267,7 +218,7 @@ extension Session {
         )
 
         do {
-            message = try self.dbManager.save(message)
+            message = try self.dbManager.saveMessage(message)
             try self.dbManager.save(transfer)
         } catch {
             log(string: "Failed to save message/transfer to the database. Will not start listening to transfer... \(error.localizedDescription)", type: .info)

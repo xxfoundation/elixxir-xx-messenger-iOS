@@ -1,8 +1,9 @@
 import Models
+import XXModels
 import Bindings
 
 extension Contact {
-    init(with contact: BindingsContact, status: Contact.Status) {
+    init(with contact: BindingsContact, status: Contact.AuthStatus) {
         self.init(
             photo: nil,
             userId: contact.getID()!,
@@ -33,9 +34,7 @@ extension Message {
             roundURL: message.getRoundURL()
         )
     }
-}
 
-extension GroupMessage {
     init(with message: BindingsGroupMessageReceive) {
         guard let payload = try? Payload(with: message.getPayload()!) else { fatalError() }
 

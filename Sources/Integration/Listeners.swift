@@ -1,13 +1,10 @@
 import Models
 import Shared
-import Bindings
-import Foundation
 import os.log
 import Combine
-
-import Combine
-
-import Combine
+import XXModels
+import Bindings
+import Foundation
 
 public extension BindingsClient {
     static func listenLogs() {
@@ -111,7 +108,7 @@ public extension BindingsClient {
 
     func listenGroupRequests(
         _ groupRequests: @escaping (Group, [Data], String?) -> Void,
-        groupMessages: @escaping (GroupMessage) -> Void
+        groupMessages: @escaping (Message) -> Void
     ) throws -> GroupManagerInterface? {
         var error: NSError?
 

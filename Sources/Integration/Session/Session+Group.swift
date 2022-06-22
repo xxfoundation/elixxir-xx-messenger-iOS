@@ -1,4 +1,5 @@
 import Models
+import XXModels
 import Foundation
 
 public typealias GroupCompletion = (Result<(Group, [GroupMember]), Error>) -> Void
@@ -7,24 +8,24 @@ extension Session {
     public func join(group: Group) throws {
         guard let manager = client.groupManager else { fatalError("A group manager was not created") }
 
-        try manager.join(group.serialize)
+        try manager.join(group.serialized)
         var group = group
-        group.status = .participating
+        group.authStatus = .participating
         scanStrangers {}
-        try dbManager.save(group)
+        try dbManager.saveGroup(group)
     }
 
     public func leave(group: Group) throws {
         guard let manager = client.groupManager else { fatalError("A group manager was not created") }
-        try manager.leave(group.groupId)
-        try dbManager.delete(group)
+        try manager.leave(group.id)
+        try dbManager.deleteGroup(group)
     }
 
     public func createGroup(name: String, welcome: String?, members: [Contact], _ completion: @escaping GroupCompletion) {
         guard let manager = client.groupManager else { fatalError("A group manager was not created") }
 
         let me = client.bindings.meMarshalled
-        let memberIds = members.map { $0.userId }
+        let memberIds = members.map { $0.id }
 
         manager.create(me: me, name: name, welcome: welcome, with: memberIds) { [weak self] in
             guard let self = self else { return }
@@ -41,10 +42,10 @@ extension Session {
 
     @discardableResult
     func processGroupCreation(_ group: Group, memberIds: [Data], welcome: String?) -> [GroupMember] {
-        try! dbManager.save(group)
+        try! dbManager.saveGroup(group)
 
         if let welcome = welcome {
-            try! dbManager.save(GroupMessage(group: group, text: welcome, me: client.bindings.meMarshalled))
+            try! dbManager.save(Message(group: group, text: welcome, me: client.bindings.meMarshalled))
         }
 
         var members: [GroupMember] = []
@@ -54,7 +55,7 @@ extension Session {
         }
 
         let strangersOnGroup = memberIds
-            .filter { !members.map { $0.userId }.contains($0) }
+            .filter { !members.map { $0.contactId }.contains($0) }
             .filter { $0 != client.bindings.myId }
 
         if !strangersOnGroup.isEmpty {
@@ -69,7 +70,7 @@ extension Session {
             }
         }
 
-        members.forEach { try! dbManager.save($0) }
+        members.forEach { try! dbManager.saveGroupMember($0) }
 
         if group.leader != client.bindings.meMarshalled, inappnotifications {
             DeviceFeedback.sound(.contactAdded)
@@ -84,18 +85,8 @@ extension Session {
 // MARK: - GroupMessages
 
 extension Session {
-    public func delete(groupMessages: [Int64]) {
-        groupMessages.forEach {
-            do {
-                try dbManager.delete(GroupMessage.self, .id($0))
-            } catch {
-                log(string: error.localizedDescription, type: .error)
-            }
-        }
-    }
-
     public func send(_ payload: Payload, toGroup group: Group) {
-        var groupMessage = GroupMessage(
+        var message = Message(
             sender: client.bindings.meMarshalled,
             groupId: group.groupId,
             payload: payload,
@@ -106,8 +97,8 @@ extension Session {
         )
 
         do {
-            groupMessage = try dbManager.save(groupMessage)
-            send(groupMessage: groupMessage)
+            message = try dbManager.saveMessage(message)
+            send(message: message)
         } catch {
             log(string: error.localizedDescription, type: .error)
         }
@@ -117,41 +108,41 @@ extension Session {
         guard var message: GroupMessage = try? dbManager.fetch(withId: id) else { return }
         message.timestamp = Date.asTimestamp
         message.status = .sending
-        send(groupMessage: try! dbManager.save(message))
+        send(groupMessage: try! dbManager.saveMessage(message))
     }
 
-    private func send(groupMessage: GroupMessage) {
+    private func send(message: Message) {
         guard let manager = client.groupManager else { fatalError("A group manager was not created") }
-        var groupMessage = groupMessage
+        var message = message
 
         DispatchQueue.global().async { [weak self] in
             guard let self = self else { return }
 
-            switch manager.send(groupMessage.payload.asData(), to: groupMessage.groupId) {
+            switch manager.send(message.payload.asData(), to: message.groupId) {
             case .success((let roundId, let uniqueId, let roundURL)):
-                groupMessage.roundURL = roundURL
+                message.roundURL = roundURL
 
                 self.client.bindings.listenRound(id: Int(roundId)) { result in
                     switch result {
                     case .success(let succeeded):
-                        groupMessage.uniqueId = uniqueId
-                        groupMessage.status = succeeded ? .sent : .failed
+                        message.uniqueId = uniqueId
+                        message.status = succeeded ? .sent : .failed
                     case .failure:
-                        groupMessage.status = .failed
+                        message.status = .failed
                     }
 
                     do {
-                        try self.dbManager.save(groupMessage)
+                        try self.dbManager.saveMessage(message)
                     } catch {
                         log(string: error.localizedDescription, type: .error)
                     }
                 }
             case .failure:
-                groupMessage.status = .failed
+                message.status = .sendingFailed
             }
 
             do {
-                try self.dbManager.save(groupMessage)
+                try self.dbManager.saveMessage(message)
             } catch {
                 log(string: error.localizedDescription, type: .error)
             }
@@ -206,20 +197,6 @@ extension Session {
                 }
             }
         }
-    }
-}
-
-private extension GroupMessage {
-    init(group: Group, text: String, me: Data) {
-        self.init(
-            sender: group.leader,
-            groupId: group.groupId,
-            payload: .init(text: text, reply: nil, attachment: nil),
-            unread: false,
-            timestamp: Date.asTimestamp,
-            uniqueId: nil,
-            status: group.leader == me ? .sent : .received
-        )
     }
 }
 

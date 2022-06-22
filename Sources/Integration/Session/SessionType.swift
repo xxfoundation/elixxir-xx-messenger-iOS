@@ -1,5 +1,6 @@
 import Models
 import Combine
+import XXModels
 import Foundation
 
 public protocol SessionType {
@@ -38,21 +39,14 @@ public protocol SessionType {
 
     // Messages
 
-    func readAll(from: Group)
-    func readAll(from: Contact)
     func retryMessage(_: Int64)
     func retryGroupMessage(_: Int64)
-    func deleteAll(from: Group)
-    func deleteAll(from: Contact)
-    func delete(messages: [Int64])
-    func delete(groupMessages: [Int64])
     func send(_: Payload, toContact: Contact)
 
     // Contacts
 
     func add(_: Contact) throws
     func confirm(_: Contact) throws
-    func find(by: String) -> Contact?
     func deleteContact(_: Contact) throws
 
     func retryRequest(_: Contact) throws

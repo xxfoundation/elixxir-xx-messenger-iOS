@@ -1,4 +1,5 @@
 import Models
+import XXModels
 import Bindings
 
 extension BindingsGroupChat: GroupManagerInterface {

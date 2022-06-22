@@ -1,6 +1,7 @@
 import Retry
 import Models
 import Shared
+import XXModels
 import Foundation
 
 extension Session {
@@ -12,10 +13,10 @@ extension Session {
         log(string: "Requested verification of \(contact.username)", type: .crumbs)
 
         var contact = contact
-        contact.status = .verificationInProgress
+        contact.authStatus = .verificationInProgress
 
         do {
-            contact = try dbManager.save(contact)
+            contact = try dbManager.saveContact(contact)
         } catch {
             log(string: "Failed to store contact request upon verification. Returning, request will be abandoned to not crash", type: .error)
         }
@@ -35,11 +36,11 @@ extension Session {
         let resultClosure: (Result<Contact, Error>) -> Void = { result in
             switch result {
             case .success(let mightBe):
-                guard try! self.client.bindings.verify(marshaled: contact.marshaled, verifiedMarshaled: mightBe.marshaled) else {
+                guard try! self.client.bindings.verify(marshaled: contact.marshaled!, verifiedMarshaled: mightBe.marshaled!) else {
                     log(string: "\(contact.username) is fake. Deleted!", type: .info)
 
                     do {
-                        try self.dbManager.delete(contact)
+                        try self.dbManager.deleteContact(contact)
                     } catch {
                         log(string: error.localizedDescription, type: .error)
                     }
@@ -47,7 +48,7 @@ extension Session {
                     return
                 }
 
-                contact.status = .verified
+                contact.authStatus = .verified
                 log(string: "Verified \(contact.username)", type: .info)
 
                 do {
@@ -58,7 +59,7 @@ extension Session {
 
             case .failure(let error):
                 log(string: "Verification of \(contact.username) failed: \(error.localizedDescription)", type: .error)
-                contact.status = .verificationFailed
+                contact.authStatus = .verificationFailed
 
                 do {
                     try self.dbManager.saveContact(contact)
@@ -74,7 +75,7 @@ extension Session {
         let hasPhone = contact.phone != nil
 
         guard hasEmail || hasPhone else {
-            ud.lookup(forUserId: contact.userId, resultClosure)
+            ud.lookup(forUserId: contact.id, resultClosure)
             return
         }
 
@@ -90,10 +91,10 @@ extension Session {
             try ud.search(fact: fact, resultClosure)
         } catch {
             log(string: error.localizedDescription, type: .error)
-            contact.status = .verificationFailed
+            contact.authStatus = .verificationFailed
 
             do {
-                try self.dbManager.save(contact)
+                try self.dbManager.saveContact(contact)
             } catch {
                 log(string: error.localizedDescription, type: .error)
             }
@@ -103,7 +104,7 @@ extension Session {
     public func retryRequest(_ contact: Contact) throws {
         log(string: "Retrying to request a contact", type: .info)
 
-        client.bindings.add(contact.marshaled, from: myQR) { [weak self, contact] in
+        client.bindings.add(contact.marshaled!, from: myQR) { [weak self, contact] in
             var contact = contact
             guard let self = self else { return }
 
@@ -111,13 +112,13 @@ extension Session {
                 switch $0 {
                 case .success:
                     log(string: "Retrying to request a contact -- Success", type: .info)
-                    contact.status = .requested
+                    contact.authStatus = .requested
                 case .failure(let error):
                     log(string: "Retrying to request a contact -- Failed: \(error.localizedDescription)", type: .error)
                     contact.createdAt = Date()
                 }
 
-                _ = try self.dbManager.save(contact)
+                _ = try self.dbManager.saveContact(contact)
             } catch {
                 log(string: error.localizedDescription, type: .error)
             }
@@ -131,23 +132,23 @@ extension Session {
 
         var contactToOperate: Contact!
 
-        if contact.status == .requestFailed || contact.status == .confirmationFailed {
+        if contact.authStatus == .requestFailed || contact.authStatus == .confirmationFailed {
             contactToOperate = contact
         } else {
             guard (try? dbManager.fetch(.withUsername(contact.username)).first as Contact?) == nil else {
                 throw NSError.create("This user has already been requested")
             }
 
-            contactToOperate = try dbManager.save(contact)
+            contactToOperate = try dbManager.saveContact(contact)
         }
 
-        guard contactToOperate.status != .confirmationFailed else {
+        guard contactToOperate.authStatus != .confirmationFailed else {
             contactToOperate.createdAt = Date()
             try confirm(contact)
             return
         }
 
-        contactToOperate.status = .requesting
+        contactToOperate.authStatus = .requesting
 
         let myself = client.bindings.meMarshalled(
             username!,
@@ -155,77 +156,50 @@ extension Session {
             phone: isSharingPhone ? phone : nil
         )
 
-        client.bindings.add(contactToOperate.marshaled, from: myself) { [weak self, contactToOperate] in
+        client.bindings.add(contactToOperate.marshaled!, from: myself) { [weak self, contactToOperate] in
             guard let self = self, var contactToOperate = contactToOperate else { return }
-            let safeName = contactToOperate.nickname ?? contactToOperate.username
-            let title = "\(safeName.prefix(2))...\(safeName.suffix(3))"
 
             do {
                 switch $0 {
                 case .success(let success):
-                    contactToOperate.status = success ? .requested : .requestFailed
-                    contactToOperate = try self.dbManager.save(contactToOperate)
+                    contactToOperate.authStatus = success ? .requested : .requestFailed
+                    contactToOperate = try self.dbManager.saveContact(contactToOperate)
 
-                    log(string: "Successfully added \(title)", type: .info)
                 case .failure(let error):
-                    contactToOperate.status = .requestFailed
+                    contactToOperate.authStatus = .requestFailed
                     contactToOperate.createdAt = Date()
-                    contactToOperate = try self.dbManager.save(contactToOperate)
-
-                    log(string: "Failed when adding \(title):\n\(error.localizedDescription)", type: .error)
+                    contactToOperate = try self.dbManager.saveContact(contactToOperate)
 
                     self.toastController.enqueueToast(model: .init(
-                        title: Localized.Requests.Failed.toast(contactToOperate.nickname ?? contact.username),
+                        title: Localized.Requests.Failed.toast(contactToOperate.nickname ?? contact.username!),
                         color: Asset.accentDanger.color,
                         leftImage: Asset.requestFailedToaster.image
                     ))
                 }
             } catch {
-                log(string: "Error adding \(title):\n\(error.localizedDescription)", type: .error)
+                print(error.localizedDescription)
             }
         }
     }
 
     public func confirm(_ contact: Contact) throws {
         var contact = contact
-        contact.status = .confirming
-        contact = try dbManager.save(contact)
+        contact.authStatus = .confirming
+        contact = try dbManager.saveContact(contact)
 
-        client.bindings.confirm(contact.marshaled) { [weak self] in
-            let safeName = contact.nickname ?? contact.username
-            let title = "\(safeName.prefix(2))...\(safeName.suffix(3))"
-
+        client.bindings.confirm(contact.marshaled!) { [weak self] in
             switch $0 {
             case .success(let confirmed):
                 contact.isRecent = true
                 contact.createdAt = Date()
-                contact.status = confirmed ? .friend : .confirmationFailed
-                log(string: "Confirming request from \(title) = \(confirmed)", type: confirmed ? .info : .error)
-            case .failure(let error):
-                contact.status = .confirmationFailed
-                log(string: "Error confirming request from \(title):\n\(error.localizedDescription)", type: .error)
+                contact.authStatus = confirmed ? .friend : .confirmationFailed
+
+            case .failure:
+                contact.authStatus = .confirmationFailed
             }
 
-            _ = try? self?.dbManager.save(contact)
+            _ = try? self?.dbManager.saveContact(contact)
         }
-    }
-
-    public func find(by username: String) -> Contact? {
-        log(string: "Trying to find contact with username: \(username)", type: .info)
-
-        do {
-            if let contact: Contact = try dbManager.fetch(.withUsername(username)).first {
-                log(string: "Found \(username)!", type: .info)
-                return contact
-            } else {
-                log(string: "No such contact with username: \(username)", type: .info)
-                return nil
-            }
-        } catch {
-            log(string: "Error trying to find a contact: \(error.localizedDescription)", type: .error)
-        }
-
-        return nil
     }
 
     public func deleteContact(_ contact: Contact) throws {
@@ -235,7 +209,7 @@ extension Session {
             print("No pending transfer with this contact. Free to delete")
         }
 
-        try client.bindings.removeContact(contact.marshaled)
-        try dbManager.delete(contact)
+        try client.bindings.removeContact(contact.marshaled!)
+        try dbManager.deleteContact(contact)
     }
 }
