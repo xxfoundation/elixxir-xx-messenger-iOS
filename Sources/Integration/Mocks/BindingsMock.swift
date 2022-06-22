@@ -1,5 +1,6 @@
 import Models
 import Combine
+import XXModels
 import Foundation
 
 public final class BindingsMock: BindingsInterface {

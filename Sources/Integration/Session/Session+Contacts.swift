@@ -51,7 +51,7 @@ extension Session {
                 log(string: "Verified \(contact.username)", type: .info)
 
                 do {
-                    try self.dbManager.save(contact)
+                    try self.dbManager.saveContact(contact)
                 } catch {
                     log(string: error.localizedDescription, type: .error)
                 }
@@ -61,7 +61,7 @@ extension Session {
                 contact.status = .verificationFailed
 
                 do {
-                    try self.dbManager.save(contact)
+                    try self.dbManager.saveContact(contact)
                 } catch {
                     log(string: error.localizedDescription, type: .error)
                 }
@@ -207,38 +207,6 @@ extension Session {
             }
 
             _ = try? self?.dbManager.save(contact)
-        }
-    }
-
-    public func update(_ contact: Contact) {
-        do {
-            if var stored = try dbManager.fetch(.withUsername(contact.username)).first as Contact? {
-                stored.email = contact.email
-                stored.photo = contact.photo
-                stored.phone = contact.phone
-                stored.nickname = contact.nickname
-                stored.isRecent = contact.isRecent
-                stored.createdAt = contact.createdAt
-                try dbManager.save(stored)
-
-                try dbManager.updateAll(
-                    GroupMember.self,
-                    GroupMember.Request.withUserId(stored.userId),
-                    with: [GroupMember.Column.photo.set(to: stored.photo)]
-                )
-            }
-        } catch {
-            log(string: "Error updating a contact: \(error.localizedDescription)", type: .error)
-        }
-    }
-
-    public func delete<T: Persistable>(_ model: T, isRequest: Bool = false) {
-        log(string: "Deleting a model...", type: .info)
-
-        do {
-            try dbManager.delete(model)
-        } catch {
-            log(string: "Error deleting a model: \(error.localizedDescription)", type: .error)
         }
     }
 

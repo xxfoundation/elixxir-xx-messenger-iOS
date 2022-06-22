@@ -12,12 +12,6 @@ public protocol SessionType {
     func deleteMyself() throws
     func getId(from: Data) -> Data?
 
-    func forceFailMessages()
-
-    func hideRequestOf(group: Group)
-
-    func hideRequestOf(contact: Contact)
-
     func send(imageData: Data, to: Contact, completion: @escaping (Result<Void, Error>) -> Void)
 
     func verify(contact: Contact)
@@ -54,17 +48,11 @@ public protocol SessionType {
     func delete(groupMessages: [Int64])
     func send(_: Payload, toContact: Contact)
 
-    func getTextFromMessage(messageId: Data) -> String?
-    func getTextFromGroupMessage(messageId: Data) -> String?
-
     // Contacts
 
-    func update(_: Contact)
     func add(_: Contact) throws
     func confirm(_: Contact) throws
     func find(by: String) -> Contact?
-    func delete<T: Persistable>(_: T, isRequest: Bool)
-
     func deleteContact(_: Contact) throws
 
     func retryRequest(_: Contact) throws
@@ -82,7 +70,4 @@ public protocol SessionType {
         members: [Contact],
         _ completion: @escaping (Result<(Group, [GroupMember]), Error>) -> Void
     )
-
-    func getContactWith(userId: Data) -> Contact?
-    func getGroupChatInfoWith(groupId: Data) -> GroupChatInfo?
 }
