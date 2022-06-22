@@ -27,17 +27,18 @@ final class UserDiscoveryMock: UserDiscoveryInterface {
         _ completion: @escaping (Result<Contact, Error>) -> Void
     ) {
         DispatchQueue.global().asyncAfter(deadline: .now() + 1) {
-            completion(.success(.init(
-                photo: nil,
-                userId: "mock_username".data(using: .utf8)!,
-                email: nil,
-                phone: nil,
-                status: .stranger,
-                marshaled: "mock_username".data(using: .utf8)!,
-                username: "mock_username",
-                nickname: "mock_nickname",
-                createdAt: Date(),
-                isRecent: false
+            completion(.success(
+                .init(
+                    id: "mock_username".data(using: .utf8)!,
+                    marshaled: "mock_username".data(using: .utf8)!,
+                    username: "mock_username",
+                    email: nil,
+                    phone: nil,
+                    nickname: "mock_nickname",
+                    photo: nil,
+                    authStatus: .stranger,
+                    isRecent: false,
+                    createdAt: Date()
             )))
         }
     }
