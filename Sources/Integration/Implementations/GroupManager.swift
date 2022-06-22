@@ -68,15 +68,14 @@ extension BindingsGroupChat: GroupManagerInterface {
                         return
                     }
 
-                    completion(.success(
-                        .init(
-                            leader: me,
-                            name: name,
-                            groupId: group.getID()!,
-                            status: .participating,
-                            createdAt: Date(),
-                            serialize: group.serialize()!
-                        )))
+                    completion(.success(.init(
+                        id: group.getID()!,
+                        name: name,
+                        leaderId: me,
+                        createdAt: Date(),
+                        authStatus: .participating,
+                        serialized: group.serialize()!
+                    )))
                     return
                 default:
                     break

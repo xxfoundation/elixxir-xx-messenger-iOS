@@ -42,56 +42,59 @@ extension Session {
 
     @discardableResult
     func processGroupCreation(_ group: Group, memberIds: [Data], welcome: String?) -> [GroupMember] {
-        try! dbManager.saveGroup(group)
+        // TODO: Implement this checking on which members of the group are my members etc.
 
-        var members: [GroupMember] = []
-
-        if let contactsOnGroup: [Contact] = try? dbManager.fetch(.withUserIds(memberIds)) {
-            contactsOnGroup.forEach { members.append(GroupMember(contact: $0, group: group)) }
-        }
-
-        let strangersOnGroup = memberIds
-            .filter { !members.map { $0.contactId }.contains($0) }
-            .filter { $0 != client.bindings.myId }
-
-        if !strangersOnGroup.isEmpty {
-            for stranger in strangersOnGroup.enumerated() {
-                members.append(GroupMember(
-                    userId: stranger.element,
-                    groupId: group.groupId,
-                    status: .pendingUsername,
-                    username: "Fetching username...",
-                    photo: nil
-                ))
-            }
-        }
-
-        members.forEach { try! dbManager.saveGroupMember($0) }
-
-        if group.leaderId != client.bindings.meMarshalled, inappnotifications {
-            DeviceFeedback.sound(.contactAdded)
-            DeviceFeedback.shake(.notification)
-        }
-
-        scanStrangers {}
-
-        if let welcome = welcome {
-            _ = try? dbManager.saveMessage(.init(
-                networkId: nil,
-                senderId: group.leaderId,
-                recipientId: client.bindings.meMarshalled,
-                groupId: group.id,
-                date: Date(),
-                status: .received,
-                isUnread: true,
-                text: welcome,
-                replyMessageId: nil,
-                roundURL: nil,
-                fileTransferId: nil
-            ))
-        }
-
-        return members
+//        try! dbManager.saveGroup(group)
+//
+//        var members: [GroupMember] = []
+//
+//        if let contactsOnGroup: [Contact] = try? dbManager.fetchContacts(.init(id: Set(memberIds)) {
+//            //contactsOnGroup.forEach { members.append(GroupMember(contact: $0, group: group)) }
+//        }
+//
+//        let strangersOnGroup = memberIds
+//            .filter { !members.map { $0.contactId }.contains($0) }
+//            .filter { $0 != client.bindings.myId }
+//
+//        if !strangersOnGroup.isEmpty {
+//            for stranger in strangersOnGroup.enumerated() {
+//                members.append(GroupMember(
+//                    userId: stranger.element,
+//                    groupId: group.groupId,
+//                    status: .pendingUsername,
+//                    username: "Fetching username...",
+//                    photo: nil
+//                ))
+//            }
+//        }
+//
+//        members.forEach { try! dbManager.saveGroupMember($0) }
+//
+//        if group.leaderId != client.bindings.meMarshalled, inappnotifications {
+//            DeviceFeedback.sound(.contactAdded)
+//            DeviceFeedback.shake(.notification)
+//        }
+//
+//        scanStrangers {}
+//
+//        if let welcome = welcome {
+//            _ = try? dbManager.saveMessage(.init(
+//                networkId: nil,
+//                senderId: group.leaderId,
+//                recipientId: client.bindings.meMarshalled,
+//                groupId: group.id,
+//                date: Date(),
+//                status: .received,
+//                isUnread: true,
+//                text: welcome,
+//                replyMessageId: nil,
+//                roundURL: nil,
+//                fileTransferId: nil
+//            ))
+//        }
+//
+//        return members
+        fatalError()
     }
 }
 
@@ -100,13 +103,16 @@ extension Session {
 extension Session {
     public func send(_ payload: Payload, toGroup group: Group) {
         var message = Message(
-            sender: client.bindings.meMarshalled,
-            groupId: group.groupId,
-            payload: payload,
-            unread: false,
-            timestamp: Date.asTimestamp,
-            uniqueId: nil,
-            status: .sending
+            senderId: client.bindings.meMarshalled,
+            recipientId: nil,
+            groupId: group.id,
+            date: Date(),
+            status: .sending,
+            isUnread: false,
+            text: payload.text,
+            replyMessageId: payload.reply?.messageId,
+            roundURL: nil,
+            fileTransferId: nil
         )
 
         do {
@@ -115,13 +121,6 @@ extension Session {
         } catch {
             log(string: error.localizedDescription, type: .error)
         }
-    }
-
-    public func retryGroupMessage(_ id: Int64) {
-        guard var message: GroupMessage = try? dbManager.fetch(withId: id) else { return }
-        message.timestamp = Date.asTimestamp
-        message.status = .sending
-        send(groupMessage: try! dbManager.saveMessage(message))
     }
 
     private func send(message: Message) {
@@ -163,52 +162,51 @@ extension Session {
     }
 
     public func scanStrangers(_ completion: @escaping () -> Void) {
-        DispatchQueue.global().async { [weak self] in
-            guard let self = self, let ud = self.client.userDiscovery else { return }
+        // TODO: How this will work?
 
-            guard let strangers: [GroupMember] = try? self.dbManager.fetch(.strangers) else {
-                DispatchQueue.main.async {
-                    completion()
-                }
-
-                return
-            }
-
-            let ids = strangers.map { $0.userId }
-
-            var updatedStrangers: [GroupMember] = []
-
-            ud.lookup(idList: ids) {
-                switch $0 {
-                case .success(let contacts):
-                    strangers.forEach { stranger in
-                        if let found = contacts.first(where: { contact in contact.userId == stranger.userId }) {
-                            var updatedStranger = stranger
-                            updatedStranger.status = .usernameSet
-                            updatedStranger.username = found.username
-                            updatedStrangers.append(updatedStranger)
-                        }
-                    }
-
-                    DispatchQueue.main.async {
-                        updatedStrangers.forEach {
-                            do {
-                                try self.dbManager.save($0)
-                            } catch {
-                                log(string: error.localizedDescription, type:.error)
-                            }
-                        }
-
-                        log(string: "Scanned unknown group members", type: .info)
-                        completion()
-                    }
-                case .failure(let error):
-                    DispatchQueue.main.async {
-                        log(string: error.localizedDescription, type: .error)
-                        completion()
-                    }
-                }
-            }
-        }
+//        DispatchQueue.global().async { [weak self] in
+//            guard let self = self, let ud = self.client.userDiscovery else { return }
+//
+//            guard let strangers = try? self.dbManager.fetchContacts(.init(authStatus: [.stranger])),
+//                    strangers.isEmpty == false else {
+//                DispatchQueue.main.async { completion() }
+//                return
+//            }
+//
+//            let ids = strangers.map { $0.id }
+//
+//            var updatedStrangers: [GroupMember] = []
+//
+//            ud.lookup(idList: ids) {
+//                switch $0 {
+//                case .success(let contacts):
+//                    strangers.forEach { stranger in
+//                        if let found = contacts.first(where: { contact in contact.id == stranger.id }) {
+//                            var updatedStranger = stranger
+//                            updatedStranger.username = found.username
+//                            updatedStrangers.append(updatedStranger)
+//                        }
+//                    }
+//
+//                    DispatchQueue.main.async {
+//                        updatedStrangers.forEach {
+//                            do {
+//                                try self.dbManager.saveContact($0)
+//                            } catch {
+//                                log(string: error.localizedDescription, type:.error)
+//                            }
+//                        }
+//
+//                        log(string: "Scanned unknown group members", type: .info)
+//                        completion()
+//                    }
+//                case .failure(let error):
+//                    DispatchQueue.main.async {
+//                        log(string: error.localizedDescription, type: .error)
+//                        completion()
+//                    }
+//                }
+//            }
+//        }
     }
 }

@@ -40,7 +40,6 @@ public protocol SessionType {
     // Messages
 
     func retryMessage(_: Int64)
-    func retryGroupMessage(_: Int64)
     func send(_: Payload, toContact: Contact)
 
     // Contacts
