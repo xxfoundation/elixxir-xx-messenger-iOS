@@ -1,6 +1,7 @@
 import UIKit
 import Models
 import Shared
+import XXModels
 
 final class MembersController: UIViewController {
     lazy private var stackView = UIStackView()
@@ -33,8 +34,8 @@ final class MembersController: UIViewController {
 
         for member in members {
             let memberView = MemberView()
-            memberView.titleLabel.text = member.username
-            memberView.avatarView.setupProfile(title: member.username, image: member.photo, size: .small)
+//            memberView.titleLabel.text = member.username
+//            memberView.avatarView.setupProfile(title: member.username, image: member.photo, size: .small)
             stackView.addArrangedSubview(memberView)
         }
     }

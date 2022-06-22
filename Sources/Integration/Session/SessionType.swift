@@ -10,6 +10,8 @@ public protocol SessionType {
     var hasRunningTasks: Bool { get }
     var isOnline: AnyPublisher<Bool, Never> { get }
 
+    var dbManager: Database { get }
+
     func deleteMyself() throws
     func getId(from: Data) -> Data?
 

@@ -4,6 +4,7 @@ import Models
 import Shared
 import Combine
 import XXLogger
+import XXModels
 import Foundation
 import Integration
 import Permissions

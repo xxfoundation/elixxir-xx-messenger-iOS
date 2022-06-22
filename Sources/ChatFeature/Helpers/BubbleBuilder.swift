@@ -9,20 +9,20 @@ final class Bubbler {
         audioBubble.dateLabel.text = item.date.asHoursAndMinutes()
 
         switch item.status {
-        case .received, .read:
+        case .received:
             audioBubble.lockerImageView.removeFromSuperview()
             audioBubble.backgroundColor = Asset.neutralWhite.color
             audioBubble.dateLabel.textColor = Asset.neutralDisabled.color
             audioBubble.progressLabel.textColor = Asset.neutralDisabled.color
-        case .receivingAttachment:
+        case .receiving:
             audioBubble.backgroundColor = Asset.neutralWhite.color
             audioBubble.dateLabel.textColor = Asset.neutralDisabled.color
             audioBubble.progressLabel.textColor = Asset.neutralDisabled.color
-        case .timedOut:
+        case .sendingTimedOut:
             audioBubble.backgroundColor = Asset.accentWarning.color
             audioBubble.dateLabel.textColor = Asset.neutralWhite.color
             audioBubble.progressLabel.textColor = Asset.neutralWhite.color
-        case .failedToSend:
+        case .sendingFailed:
             audioBubble.backgroundColor = Asset.accentDanger.color
             audioBubble.dateLabel.textColor = Asset.neutralWhite.color
             audioBubble.progressLabel.textColor = Asset.neutralWhite.color
@@ -30,10 +30,12 @@ final class Bubbler {
             audioBubble.backgroundColor = Asset.brandBubble.color
             audioBubble.dateLabel.textColor = Asset.neutralWhite.color
             audioBubble.progressLabel.textColor = Asset.neutralWhite.color
-        case .sending, .sendingAttachment:
+        case .sending:
             audioBubble.backgroundColor = Asset.brandBubble.color
             audioBubble.dateLabel.textColor = Asset.neutralWhite.color
             audioBubble.progressLabel.textColor = Asset.neutralWhite.color
+        case .receivingFailed:
+            fatalError()
         }
     }
 
@@ -46,20 +48,20 @@ final class Bubbler {
         imageBubble.dateLabel.text = item.date.asHoursAndMinutes()
 
         switch item.status {
-        case .received, .read:
+        case .received:
             imageBubble.lockerImageView.removeFromSuperview()
             imageBubble.backgroundColor = Asset.neutralWhite.color
             imageBubble.dateLabel.textColor = Asset.neutralDisabled.color
             imageBubble.progressLabel.textColor = Asset.neutralDisabled.color
-        case .receivingAttachment:
+        case .receiving:
             imageBubble.backgroundColor = Asset.neutralWhite.color
             imageBubble.dateLabel.textColor = Asset.neutralDisabled.color
             imageBubble.progressLabel.textColor = Asset.neutralDisabled.color
-        case .failedToSend:
+        case .sendingFailed:
             imageBubble.backgroundColor = Asset.accentDanger.color
             imageBubble.dateLabel.textColor = Asset.neutralWhite.color
             imageBubble.progressLabel.textColor = Asset.neutralWhite.color
-        case .timedOut:
+        case .sendingTimedOut:
             imageBubble.backgroundColor = Asset.accentWarning.color
             imageBubble.dateLabel.textColor = Asset.neutralWhite.color
             imageBubble.progressLabel.textColor = Asset.neutralWhite.color
@@ -67,10 +69,12 @@ final class Bubbler {
             imageBubble.backgroundColor = Asset.brandBubble.color
             imageBubble.dateLabel.textColor = Asset.neutralWhite.color
             imageBubble.progressLabel.textColor = Asset.neutralWhite.color
-        case .sending, .sendingAttachment:
+        case .sending:
             imageBubble.backgroundColor = Asset.brandBubble.color
             imageBubble.dateLabel.textColor = Asset.neutralWhite.color
             imageBubble.progressLabel.textColor = Asset.neutralWhite.color
+        case .receivingFailed:
+            fatalError()
         }
     }
 
@@ -85,19 +89,19 @@ final class Bubbler {
         let roundButtonColor: UIColor
 
         switch item.status {
-        case .received, .read, .receivingAttachment:
+        case .received, .receiving:
             bubble.lockerImageView.removeFromSuperview()
             bubble.backgroundColor = Asset.neutralWhite.color
             bubble.textView.textColor = Asset.neutralActive.color
             bubble.dateLabel.textColor = Asset.neutralDisabled.color
             roundButtonColor = Asset.neutralDisabled.color
             bubble.revertBottomStackOrder()
-        case .timedOut:
+        case .sendingTimedOut:
             bubble.backgroundColor = Asset.accentWarning.color
             bubble.textView.textColor = Asset.neutralWhite.color
             bubble.dateLabel.textColor = Asset.neutralWhite.color
             roundButtonColor = Asset.neutralWhite.color
-        case .failedToSend:
+        case .sendingFailed:
             bubble.backgroundColor = Asset.accentDanger.color
             bubble.textView.textColor = Asset.neutralWhite.color
             bubble.dateLabel.textColor = Asset.neutralWhite.color
@@ -107,11 +111,13 @@ final class Bubbler {
             bubble.textView.textColor = Asset.neutralWhite.color
             bubble.dateLabel.textColor = Asset.neutralWhite.color
             roundButtonColor = Asset.neutralWhite.color
-        case .sending, .sendingAttachment:
+        case .sending:
             bubble.backgroundColor = Asset.brandBubble.color
             bubble.textView.textColor = Asset.neutralWhite.color
             bubble.dateLabel.textColor = Asset.neutralWhite.color
             roundButtonColor = Asset.neutralWhite.color
+        case .receivingFailed:
+            fatalError()
         }
 
         let attrString = NSAttributedString(
@@ -187,7 +193,7 @@ final class Bubbler {
         let roundButtonColor: UIColor
 
         switch item.status {
-        case .received, .read, .receivingAttachment:
+        case .received, .receiving:
             bubble.senderLabel.removeFromSuperview()
             bubble.backgroundColor = Asset.neutralWhite.color
             bubble.textView.textColor = Asset.neutralActive.color
@@ -196,7 +202,7 @@ final class Bubbler {
             bubble.replyView.container.backgroundColor = Asset.brandDefault.color
             bubble.replyView.space.backgroundColor = Asset.brandPrimary.color
             bubble.revertBottomStackOrder()
-        case .timedOut:
+        case .sendingTimedOut:
             bubble.senderLabel.removeFromSuperview()
             bubble.backgroundColor = Asset.accentWarning.color
             bubble.textView.textColor = Asset.neutralWhite.color
@@ -204,7 +210,7 @@ final class Bubbler {
             roundButtonColor = Asset.neutralWhite.color
             bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
             bubble.replyView.container.backgroundColor = Asset.brandLight.color
-        case .failedToSend:
+        case .sendingFailed:
             bubble.senderLabel.removeFromSuperview()
             bubble.backgroundColor = Asset.accentDanger.color
             bubble.textView.textColor = Asset.neutralWhite.color
@@ -212,7 +218,7 @@ final class Bubbler {
             roundButtonColor = Asset.neutralWhite.color
             bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
             bubble.replyView.container.backgroundColor = Asset.brandLight.color
-        case .sent, .sending, .sendingAttachment:
+        case .sent, .sending:
             bubble.senderLabel.removeFromSuperview()
             bubble.textView.textColor = Asset.neutralWhite.color
             bubble.backgroundColor = Asset.brandBubble.color
@@ -220,6 +226,8 @@ final class Bubbler {
             roundButtonColor = Asset.neutralWhite.color
             bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
             bubble.replyView.container.backgroundColor = Asset.brandLight.color
+        case .receivingFailed:
+            fatalError()
         }
 
         let attrString = NSAttributedString(
