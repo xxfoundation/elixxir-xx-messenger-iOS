@@ -44,10 +44,6 @@ extension Session {
     func processGroupCreation(_ group: Group, memberIds: [Data], welcome: String?) -> [GroupMember] {
         try! dbManager.saveGroup(group)
 
-        if let welcome = welcome {
-            try! dbManager.save(Message(group: group, text: welcome, me: client.bindings.meMarshalled))
-        }
-
         var members: [GroupMember] = []
 
         if let contactsOnGroup: [Contact] = try? dbManager.fetch(.withUserIds(memberIds)) {
@@ -72,12 +68,29 @@ extension Session {
 
         members.forEach { try! dbManager.saveGroupMember($0) }
 
-        if group.leader != client.bindings.meMarshalled, inappnotifications {
+        if group.leaderId != client.bindings.meMarshalled, inappnotifications {
             DeviceFeedback.sound(.contactAdded)
             DeviceFeedback.shake(.notification)
         }
 
         scanStrangers {}
+
+        if let welcome = welcome {
+            _ = try? dbManager.saveMessage(.init(
+                networkId: nil,
+                senderId: group.leaderId,
+                recipientId: client.bindings.meMarshalled,
+                groupId: group.id,
+                date: Date(),
+                status: .received,
+                isUnread: true,
+                text: welcome,
+                replyMessageId: nil,
+                roundURL: nil,
+                fileTransferId: nil
+            ))
+        }
+
         return members
     }
 }
@@ -118,17 +131,17 @@ extension Session {
         DispatchQueue.global().async { [weak self] in
             guard let self = self else { return }
 
-            switch manager.send(message.payload.asData(), to: message.groupId) {
+            switch manager.send(message.text.data(using: .utf8)!, to: message.groupId!) {
             case .success((let roundId, let uniqueId, let roundURL)):
                 message.roundURL = roundURL
 
                 self.client.bindings.listenRound(id: Int(roundId)) { result in
                     switch result {
                     case .success(let succeeded):
-                        message.uniqueId = uniqueId
-                        message.status = succeeded ? .sent : .failed
+                        message.networkId = uniqueId
+                        message.status = succeeded ? .sent : .sendingFailed
                     case .failure:
-                        message.status = .failed
+                        message.status = .sendingFailed
                     }
 
                     do {
@@ -197,17 +210,5 @@ extension Session {
                 }
             }
         }
-    }
-}
-
-private extension GroupMember {
-    init(contact: Contact, group: Group) {
-        self.init(
-            userId: contact.userId,
-            groupId: group.groupId,
-            status: .usernameSet,
-            username: contact.username,
-            photo: contact.photo
-        )
     }
 }

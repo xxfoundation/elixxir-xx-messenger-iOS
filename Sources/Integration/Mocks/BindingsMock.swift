@@ -163,7 +163,7 @@ public final class BindingsMock: BindingsInterface {
 
     public func listenGroupRequests(
         _ groupRequests: @escaping (Group, [Data], String?) -> Void,
-        groupMessages: @escaping (GroupMessage) -> Void
+        groupMessages: @escaping (Message) -> Void
     ) throws -> GroupManagerInterface? {
         groupRequestsSubject
             .sink { groupRequests($0, [], nil) }
