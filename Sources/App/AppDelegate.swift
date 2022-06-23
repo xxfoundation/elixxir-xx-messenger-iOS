@@ -93,10 +93,9 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
                     if !self.forceFailedPendingMessages {
                         self.forceFailedPendingMessages = true
 
-                        // TODO: We need a Message.Assignment for status
-//                        let query = Message.Query(status: [.sending])
-//                        let assignment = Message.Assignments(status: .sendingFailed)
-//                        _ = try? session.dbManager.bulkUpdateMessages(query, assignment)
+                        let query = Message.Query(status: [.sending])
+                        let assignment = Message.Assignments(status: .sendingFailed)
+                        _ = try? session.dbManager.bulkUpdateMessages(query, assignment)
                     }
 
                     return

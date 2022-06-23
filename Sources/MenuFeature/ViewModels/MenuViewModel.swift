@@ -22,8 +22,8 @@ final class MenuViewModel {
         ])
 
         return Publishers.CombineLatest(
-            session.dbManager.fetchContactsPublisher(contactsQuery).catch { _ in Just([]) },
-            session.dbManager.fetchGroupsPublisher(groupQuery).catch { _ in Just([]) }
+            session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure(),
+            session.dbManager.fetchGroupsPublisher(groupQuery).assertNoFailure()
         )
         .map { $0.0.count + $0.1.count }
         .eraseToAnyPublisher()

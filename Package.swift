@@ -53,7 +53,7 @@ let package = Package(
     dependencies: [
         .package(
             url: "https://git.xx.network/elixxir/client-ios-db.git",
-            revision: "452392e032d52b217a20cd0f9de3b289f12fe444"
+            revision: "eb071f08000b2b7646e45e7a5f55bdc9ad6dbcfa"
         ),
         .package(url: "https://github.com/Quick/Quick", from: "3.0.0"),
         .package(url: "https://github.com/Quick/Nimble", from: "9.0.0"),

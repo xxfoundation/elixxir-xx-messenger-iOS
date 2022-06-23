@@ -50,7 +50,7 @@
       "kind" : "remoteSourceControl",
       "location" : "https://git.xx.network/elixxir/client-ios-db.git",
       "state" : {
-        "revision" : "452392e032d52b217a20cd0f9de3b289f12fe444"
+        "revision" : "eb071f08000b2b7646e45e7a5f55bdc9ad6dbcfa"
       }
     },
     {
