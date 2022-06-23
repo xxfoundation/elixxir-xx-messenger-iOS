@@ -15,7 +15,7 @@ enum GroupChatNavigationRoutes: Equatable {
 final class GroupChatViewModel {
     @Dependency private var session: SessionType
 
-    var replyPublisher: AnyPublisher<ReplyModel, Never> {
+    var replyPublisher: AnyPublisher<(String, String), Never> {
         replySubject.eraseToAnyPublisher()
     }
 
@@ -23,18 +23,17 @@ final class GroupChatViewModel {
         routesSubject.eraseToAnyPublisher()
     }
 
-    let info: GroupChatInfo
+    let info: GroupInfo
     private var stagedReply: Reply?
     private var cancellables = Set<AnyCancellable>()
-    private let replySubject = PassthroughSubject<ReplyModel, Never>()
+    private let replySubject = PassthroughSubject<(String, String), Never>()
     private let routesSubject = PassthroughSubject<GroupChatNavigationRoutes, Never>()
 
-    var messages: AnyPublisher<[ArraySection<ChatSection, ChatItem>], Never> {
+    var messages: AnyPublisher<[ArraySection<ChatSection, Message>], Never> {
         session.dbManager.fetchMessagesPublisher(.init(chat: .group(info.group.id)))
             .assertNoFailure()
-            .map { messages -> [ArraySection<ChatSection, ChatItem>] in
-                let domainModels = messages.map { ChatItem($0) }
-                let groupedByDate = Dictionary(grouping: domainModels) { domainModel -> Date in
+            .map { messages -> [ArraySection<ChatSection, Message>] in
+                let groupedByDate = Dictionary(grouping: messages) { domainModel -> Date in
                     let components = Calendar.current.dateComponents([.day, .month, .year], from: domainModel.date)
                     return Calendar.current.date(from: components)!
                 }
@@ -43,14 +42,14 @@ final class GroupChatViewModel {
                     .map { .init(model: ChatSection(date: $0.key), elements: $0.value) }
                     .sorted(by: { $0.model.date < $1.model.date })
             }
-            .map { sections -> [ArraySection<ChatSection, ChatItem>] in
-            var snapshot = [ArraySection<ChatSection, ChatItem>]()
+            .map { sections -> [ArraySection<ChatSection, Message>] in
+            var snapshot = [ArraySection<ChatSection, Message>]()
             sections.forEach { snapshot.append(.init(model: $0.model, elements: $0.elements)) }
             return snapshot
         }.eraseToAnyPublisher()
     }
 
-    init(_ info: GroupChatInfo) {
+    init(_ info: GroupInfo) {
         self.info = info
     }
 
@@ -60,8 +59,8 @@ final class GroupChatViewModel {
         _ = try? session.dbManager.bulkUpdateMessages(query, assignment)
     }
 
-    func didRequestDelete(_ items: [ChatItem]) {
-//        try? session.dbManager.deleteMessages(.init(id: items.map(\.identity)))
+    func didRequestDelete(_ messages: [Message]) {
+        _ = try? session.dbManager.deleteMessages(.init(id: Set(messages.map(\.id))))
     }
 
     func send(_ text: String) {
@@ -72,8 +71,9 @@ final class GroupChatViewModel {
         stagedReply = nil
     }
 
-    func retry(_ model: ChatItem) {
-//        session.retryGroupMessage(model.identity)
+    func retry(_ message: Message) {
+        guard let id = message.id else { return }
+        session.retryMessage(id)
     }
 
     func showRoundFrom(_ roundURL: String?) {
@@ -89,20 +89,24 @@ final class GroupChatViewModel {
     }
 
     func getName(from senderId: Data) -> String {
-        fatalError()
-//        guard let member = info.members.first(where: { $0.userId == senderId }) else { return "You" }
-//        return member.username
+        guard let contact = try? session.dbManager.fetchContacts(.init(id: [senderId])).first else {
+            return "You"
+        }
+
+        return (contact.nickname ?? contact.username) ?? "Fetching username..."
     }
 
     func getText(from messageId: Data) -> String {
-        fatalError()
-//        session.getTextFromGroupMessage(messageId: messageId) ?? "[DELETED]"
+        guard let message = try? session.dbManager.fetchMessages(.init(networkId: messageId)).first else {
+            return "[DELETED]"
+        }
+
+        return message.text
     }
 
-//    func didRequestReply(_ model: GroupChatItem) {
-//        guard let messageId = model.uniqueId else { return }
-//
-//        stagedReply = Reply(messageId: messageId, senderId: model.sender)
-//        replySubject.send(.init(text: model.payload.text, sender: getName(from: model.sender)))
-//    }
+    func didRequestReply(_ message: Message) {
+        guard let networkId = message.networkId else { return }
+        stagedReply = Reply(messageId: networkId, senderId: message.senderId)
+        replySubject.send((getName(from: message.senderId), message.text))
+    }
 }

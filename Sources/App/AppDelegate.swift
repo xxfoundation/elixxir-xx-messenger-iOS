@@ -1,6 +1,7 @@
 import UIKit
 import BackgroundTasks
 
+import XXModels
 import Theme
 import XXLogger
 import Defaults
@@ -91,7 +92,11 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
                 guard UIApplication.shared.backgroundTimeRemaining > 9 else {
                     if !self.forceFailedPendingMessages {
                         self.forceFailedPendingMessages = true
-                        session.forceFailMessages()
+
+                        // TODO: We need a Message.Assignment for status
+//                        let query = Message.Query(status: [.sending])
+//                        let assignment = Message.Assignments(status: .sendingFailed)
+//                        _ = try? session.dbManager.bulkUpdateMessages(query, assignment)
                     }
 
                     return

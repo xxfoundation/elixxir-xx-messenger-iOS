@@ -74,7 +74,7 @@ public final class CreateGroupController: UIViewController {
         ) { [weak viewModel] collectionView, indexPath, contact in
             let cell: CreateGroupCollectionCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
-            cell.setup(title: contact.nickname ?? contact.username, image: contact.photo)
+            cell.setup(title: contact.nickname ?? contact.username!, image: contact.photo)
             cell.didTapRemove = { viewModel?.didSelect(contact: contact) }
 
             return cell
@@ -85,7 +85,7 @@ public final class CreateGroupController: UIViewController {
         ) { [weak self] tableView, indexPath, contact in
             let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: SmallAvatarAndTitleCell.self)
             cell.titleLabel.text = contact.nickname ?? contact.username
-            cell.avatarView.setupProfile(title: contact.nickname ?? contact.username, image: contact.photo, size: .medium)
+            cell.avatarView.setupProfile(title: contact.nickname ?? contact.username!, image: contact.photo, size: .medium)
 
             if let selectedElements = self?.selectedElements, selectedElements.contains(contact) {
                 tableView.selectRow(at: indexPath, animated: true, scrollPosition: .none)
@@ -181,5 +181,11 @@ extension CreateGroupController: UITableViewDelegate {
         if let contact = tableDataSource.itemIdentifier(for: indexPath) {
             viewModel.didSelect(contact: contact)
         }
+    }
+}
+
+extension Contact: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }

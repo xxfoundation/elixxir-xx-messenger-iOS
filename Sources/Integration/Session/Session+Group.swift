@@ -2,8 +2,6 @@ import Models
 import XXModels
 import Foundation
 
-public typealias GroupCompletion = (Result<(Group, [GroupMember]), Error>) -> Void
-
 extension Session {
     public func join(group: Group) throws {
         guard let manager = client.groupManager else { fatalError("A group manager was not created") }
@@ -21,7 +19,12 @@ extension Session {
         try dbManager.deleteGroup(group)
     }
 
-    public func createGroup(name: String, welcome: String?, members: [Contact], _ completion: @escaping GroupCompletion) {
+    public func createGroup(
+        name: String,
+        welcome: String?,
+        members: [Contact],
+        _ completion: @escaping (Result<GroupInfo, Error>) -> Void
+    ) {
         guard let manager = client.groupManager else { fatalError("A group manager was not created") }
 
         let me = client.bindings.meMarshalled
@@ -32,8 +35,7 @@ extension Session {
 
             switch $0 {
             case .success(let group):
-                completion(.success((group, self.processGroupCreation(group, memberIds: memberIds, welcome: welcome))))
-                break
+                completion(.success(self.processGroupCreation(group, memberIds: memberIds, welcome: welcome)))
             case .failure(let error):
                 completion(.failure(error))
             }
@@ -41,60 +43,47 @@ extension Session {
     }
 
     @discardableResult
-    func processGroupCreation(_ group: Group, memberIds: [Data], welcome: String?) -> [GroupMember] {
-        // TODO: Implement this checking on which members of the group are my members etc.
+    func processGroupCreation(_ group: Group, memberIds: [Data], welcome: String?) -> GroupInfo {
+        /// Save the group
+        ///
+        _ = try? dbManager.saveGroup(group)
 
-//        try! dbManager.saveGroup(group)
-//
-//        var members: [GroupMember] = []
-//
-//        if let contactsOnGroup: [Contact] = try? dbManager.fetchContacts(.init(id: Set(memberIds)) {
-//            //contactsOnGroup.forEach { members.append(GroupMember(contact: $0, group: group)) }
-//        }
-//
-//        let strangersOnGroup = memberIds
-//            .filter { !members.map { $0.contactId }.contains($0) }
-//            .filter { $0 != client.bindings.myId }
-//
-//        if !strangersOnGroup.isEmpty {
-//            for stranger in strangersOnGroup.enumerated() {
-//                members.append(GroupMember(
-//                    userId: stranger.element,
-//                    groupId: group.groupId,
-//                    status: .pendingUsername,
-//                    username: "Fetching username...",
-//                    photo: nil
-//                ))
-//            }
-//        }
-//
-//        members.forEach { try! dbManager.saveGroupMember($0) }
-//
-//        if group.leaderId != client.bindings.meMarshalled, inappnotifications {
-//            DeviceFeedback.sound(.contactAdded)
-//            DeviceFeedback.shake(.notification)
-//        }
-//
-//        scanStrangers {}
-//
-//        if let welcome = welcome {
-//            _ = try? dbManager.saveMessage(.init(
-//                networkId: nil,
-//                senderId: group.leaderId,
-//                recipientId: client.bindings.meMarshalled,
-//                groupId: group.id,
-//                date: Date(),
-//                status: .received,
-//                isUnread: true,
-//                text: welcome,
-//                replyMessageId: nil,
-//                roundURL: nil,
-//                fileTransferId: nil
-//            ))
-//        }
-//
-//        return members
-        fatalError()
+        /// Save the members
+        ///
+        memberIds.forEach { _ = try? dbManager.saveGroupMember(.init(groupId: group.id, contactId: $0)) }
+
+        /// Save the welcome message (if any)
+        ///
+        if let welcome = welcome {
+            _ = try? dbManager.saveMessage(.init(
+                networkId: nil,
+                senderId: group.leaderId,
+                recipientId: client.bindings.meMarshalled,
+                groupId: group.id,
+                date: Date(),
+                status: .received,
+                isUnread: true,
+                text: welcome,
+                replyMessageId: nil,
+                roundURL: nil,
+                fileTransferId: nil
+            ))
+        }
+
+        /// Buzz if the group was not created by me
+        ///
+        if group.leaderId != client.bindings.meMarshalled, inappnotifications {
+            DeviceFeedback.sound(.contactAdded)
+            DeviceFeedback.shake(.notification)
+        }
+
+        scanStrangers {}
+
+        guard let info = try? dbManager.fetchGroupInfos(.init(groupId: group.id)).first else {
+            fatalError()
+        }
+
+        return info
     }
 }
 
@@ -162,7 +151,7 @@ extension Session {
     }
 
     public func scanStrangers(_ completion: @escaping () -> Void) {
-        // TODO: How this will work?
+        // TODO: Needs a request for Contacts without username set
 
 //        DispatchQueue.global().async { [weak self] in
 //            guard let self = self, let ud = self.client.userDiscovery else { return }

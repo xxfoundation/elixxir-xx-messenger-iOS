@@ -120,23 +120,21 @@ final class LaunchViewModel {
     }
 
     func getContactWith(userId: Data) -> Contact? {
-        fatalError()
-//        guard let session = try? DependencyInjection.Container.shared.resolve() as SessionType,
-//              let contact = session.getContactWith(userId: userId) else {
-//            return nil
-//        }
-//
-//        return contact
+        guard let session = try? DependencyInjection.Container.shared.resolve() as SessionType,
+              let contact = try? session.dbManager.fetchContacts(.init(id: [userId])).first else {
+            return nil
+        }
+
+        return contact
     }
 
-    func getGroupInfoWith(groupId: Data) -> GroupChatInfo? {
-        fatalError()
-//        guard let session: SessionType = try? DependencyInjection.Container.shared.resolve(),
-//              let info = session.getGroupChatInfoWith(groupId: groupId) else {
-//            return nil
-//        }
-//
-//        return info
+    func getGroupInfoWith(groupId: Data) -> GroupInfo? {
+        guard let session: SessionType = try? DependencyInjection.Container.shared.resolve(),
+              let info = try? session.dbManager.fetchGroupInfos(.init(groupId: groupId)).first else {
+            return nil
+        }
+
+        return info
     }
 
     private func versionFailed(error: Error) {

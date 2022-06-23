@@ -12,8 +12,8 @@ public protocol RequestsCoordinating {
     func toSideMenu(from: UIViewController)
     func toContact(_: Contact, from: UIViewController)
     func toSingleChat(with: Contact, from: UIViewController)
+    func toGroupChat(with: GroupInfo, from: UIViewController)
     func toDrawer(_:  UIViewController, from: UIViewController)
-    func toGroupChat(with: GroupChatInfo, from: UIViewController)
     func toDrawerBottom(_:  UIViewController, from: UIViewController)
     func toNickname(from: UIViewController, prefilled: String, _: @escaping StringClosure)
 }
@@ -27,7 +27,7 @@ public struct RequestsCoordinator: RequestsCoordinating {
     var searchFactory: () -> UIViewController
     var contactFactory: (Contact) -> UIViewController
     var singleChatFactory: (Contact) -> UIViewController
-    var groupChatFactory: (GroupChatInfo) -> UIViewController
+    var groupChatFactory: (GroupInfo) -> UIViewController
     var sideMenuFactory: (MenuItem, UIViewController) -> UIViewController
     var nicknameFactory: (String, @escaping StringClosure) -> UIViewController
 
@@ -35,7 +35,7 @@ public struct RequestsCoordinator: RequestsCoordinating {
         searchFactory: @escaping () -> UIViewController,
         contactFactory: @escaping (Contact) -> UIViewController,
         singleChatFactory: @escaping (Contact) -> UIViewController,
-        groupChatFactory: @escaping (GroupChatInfo) -> UIViewController,
+        groupChatFactory: @escaping (GroupInfo) -> UIViewController,
         sideMenuFactory: @escaping (MenuItem, UIViewController) -> UIViewController,
         nicknameFactory: @escaping (String, @escaping StringClosure) -> UIViewController
     ) {
@@ -58,7 +58,7 @@ public extension RequestsCoordinator {
     }
 
     func toGroupChat(
-        with info: GroupChatInfo,
+        with info: GroupInfo,
         from parent: UIViewController
     ) {
         let screen = groupChatFactory(info)

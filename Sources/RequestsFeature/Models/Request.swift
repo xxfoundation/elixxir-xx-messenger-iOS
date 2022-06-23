@@ -16,7 +16,7 @@ enum Request: Hashable, Equatable {
         case .group:
             return .verified
         case .contact(let contact):
-            return contact.status.toRequestStatus()
+            return contact.authStatus.toRequestStatus()
         }
     }
 
@@ -41,7 +41,7 @@ enum RequestStatus {
     case failedToRequest
 }
 
-extension Contact.Status {
+extension Contact.AuthStatus {
     func toRequestStatus() -> RequestStatus {
         switch self {
         case .friend, .stranger:
@@ -65,5 +65,17 @@ extension Contact.Status {
         case .hidden:
             return .verified
         }
+    }
+}
+
+extension Contact: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+
+extension Group: Hashable {
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
     }
 }

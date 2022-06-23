@@ -6,9 +6,9 @@ import XXModels
 final class MembersController: UIViewController {
     lazy private var stackView = UIStackView()
 
-    private let members: [GroupMember]
+    private let members: [Contact]
 
-    init(with members: [GroupMember]) {
+    init(with members: [Contact]) {
         self.members = members
         super.init(nibName: nil, bundle: nil)
     }
@@ -26,16 +26,17 @@ final class MembersController: UIViewController {
         stackView.distribution = .fillEqually
         view.addSubview(stackView)
 
-        stackView.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(10)
-            make.left.right.equalToSuperview()
-            make.bottom.equalTo(view.safeAreaLayoutGuide)
+        stackView.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(10)
+            $0.left.right.equalToSuperview()
+            $0.bottom.equalTo(view.safeAreaLayoutGuide)
         }
 
-        for member in members {
+        members.forEach {
             let memberView = MemberView()
-//            memberView.titleLabel.text = member.username
-//            memberView.avatarView.setupProfile(title: member.username, image: member.photo, size: .small)
+            let assignedTitle = ($0.nickname ?? $0.username) ?? "Fetching username..."
+            memberView.titleLabel.text = assignedTitle
+            memberView.avatarView.setupProfile(title: assignedTitle, image: $0.photo, size: .small)
             stackView.addArrangedSubview(memberView)
         }
     }
@@ -57,24 +58,24 @@ private final class MemberView: UIView {
         addSubview(avatarView)
         addSubview(separatorView)
 
-        avatarView.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(10)
-            make.width.height.equalTo(30)
-            make.left.equalToSuperview().offset(25)
-            make.centerY.equalToSuperview()
+        avatarView.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(10)
+            $0.width.height.equalTo(30)
+            $0.left.equalToSuperview().offset(25)
+            $0.centerY.equalToSuperview()
         }
 
-        titleLabel.snp.makeConstraints { make in
-            make.centerY.equalTo(avatarView)
-            make.left.equalTo(avatarView.snp.right).offset(14)
-            make.right.lessThanOrEqualToSuperview().offset(-10)
+        titleLabel.snp.makeConstraints {
+            $0.centerY.equalTo(avatarView)
+            $0.left.equalTo(avatarView.snp.right).offset(14)
+            $0.right.lessThanOrEqualToSuperview().offset(-10)
         }
 
-        separatorView.snp.makeConstraints { make in
-            make.height.equalTo(1)
-            make.left.equalToSuperview().offset(25)
-            make.right.equalToSuperview()
-            make.bottom.equalToSuperview()
+        separatorView.snp.makeConstraints {
+            $0.height.equalTo(1)
+            $0.left.equalToSuperview().offset(25)
+            $0.right.equalToSuperview()
+            $0.bottom.equalToSuperview()
         }
     }
 

@@ -19,6 +19,10 @@ extension FlexibleSpace: CollectionCellContent {
     func prepareForReuse() {}
 }
 
+extension Message: Differentiable {
+    public var differenceIdentifier: Int64 { id! }
+}
+
 public final class SingleChatController: UIViewController {
     @Dependency private var hud: HUDType
     @Dependency private var logger: XXLogger
@@ -44,7 +48,7 @@ public final class SingleChatController: UIViewController {
     private let layoutDelegate = LayoutDelegate()
     private var cancellables = Set<AnyCancellable>()
     private var drawerCancellables = Set<AnyCancellable>()
-    private var sections = [ArraySection<ChatSection, ChatItem>]()
+    private var sections = [ArraySection<ChatSection, Message>]()
     private var currentInterfaceActions: SetActor<Set<InterfaceActions>, ReactionTypes> = SetActor()
 
     var fileURL: URL?
@@ -204,7 +208,9 @@ public final class SingleChatController: UIViewController {
 
         viewModel.replyPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in inputComponent.setupReply(message: $0.text, sender: $0.sender) }
+            .sink { [unowned self] senderTitle, messageText in
+                inputComponent.setupReply(message: messageText, sender: senderTitle)
+            }
             .store(in: &cancellables)
 
         viewModel.navigation

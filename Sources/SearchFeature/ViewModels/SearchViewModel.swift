@@ -168,7 +168,7 @@ final class SearchViewModel {
 
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }
-            self.session.update(contact)
+            _ = try? self.session.dbManager.saveContact(contact)
         }
     }
 

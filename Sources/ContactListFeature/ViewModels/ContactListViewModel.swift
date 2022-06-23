@@ -8,27 +8,26 @@ final class ContactListViewModel {
     @Dependency private var session: SessionType
 
     var contacts: AnyPublisher<[Contact], Never> {
-        session.contacts(.friends).eraseToAnyPublisher()
+        session.dbManager.fetchContactsPublisher(.init(authStatus: [.friend]))
+            .assertNoFailure()
+            .eraseToAnyPublisher()
     }
 
     var requestCount: AnyPublisher<Int, Never> {
-        Publishers.CombineLatest(
-            session.contacts(.received),
-            session.groups(.pending)
-        ).map { (contacts, groups) in
-            let contactRequests = contacts.filter {
-                $0.status == .verified ||
-                $0.status == .confirming ||
-                $0.status == .confirmationFailed ||
-                $0.status == .verificationFailed ||
-                $0.status == .verificationInProgress
-            }
+        let groupQuery = Group.Query(authStatus: [.pending])
+        let contactsQuery = Contact.Query(authStatus: [
+            .verified,
+            .confirming,
+            .confirmationFailed,
+            .verificationFailed,
+            .verificationInProgress
+        ])
 
-            let groupRequests = groups.filter {
-                $0.status == .pending
-            }
-
-            return contactRequests.count + groupRequests.count
-        }.eraseToAnyPublisher()
+        return Publishers.CombineLatest(
+            session.dbManager.fetchContactsPublisher(contactsQuery).catch { _ in Just([]) },
+            session.dbManager.fetchGroupsPublisher(groupQuery).catch { _ in Just([]) }
+        )
+        .map { $0.0.count + $0.1.count }
+        .eraseToAnyPublisher()
     }
 }

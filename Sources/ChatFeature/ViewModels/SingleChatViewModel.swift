@@ -11,11 +11,6 @@ import Permissions
 import DifferenceKit
 import DependencyInjection
 
-struct ReplyModel {
-    var text: String
-    var sender: String
-}
-
 enum SingleChatNavigationRoutes: Equatable {
     case none
     case camera
@@ -36,22 +31,22 @@ final class SingleChatViewModel {
     private var stagedReply: Reply?
     private var cancellables = Set<AnyCancellable>()
     private let contactSubject: CurrentValueSubject<Contact, Never>
-    private let replySubject = PassthroughSubject<ReplyModel, Never>()
+    private let replySubject = PassthroughSubject<(String, String), Never>()
     private let navigationRoutes = PassthroughSubject<SingleChatNavigationRoutes, Never>()
-    private let sectionsRelay = CurrentValueSubject<[ArraySection<ChatSection, ChatItem>], Never>([])
+    private let sectionsRelay = CurrentValueSubject<[ArraySection<ChatSection, Message>], Never>([])
 
     var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
     private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
 
     var isOnline: AnyPublisher<Bool, Never> { session.isOnline }
     var contactPublisher: AnyPublisher<Contact, Never> { contactSubject.eraseToAnyPublisher() }
-    var replyPublisher: AnyPublisher<ReplyModel, Never> { replySubject.eraseToAnyPublisher() }
+    var replyPublisher: AnyPublisher<(String, String), Never> { replySubject.eraseToAnyPublisher() }
     var navigation: AnyPublisher<SingleChatNavigationRoutes, Never> { navigationRoutes.eraseToAnyPublisher() }
     var shouldDisplayEmptyView: AnyPublisher<Bool, Never> { sectionsRelay.map { $0.isEmpty }.eraseToAnyPublisher() }
 
-    var messages: AnyPublisher<[ArraySection<ChatSection, ChatItem>], Never> {
-        sectionsRelay.map { sections -> [ArraySection<ChatSection, ChatItem>] in
-            var snapshot = [ArraySection<ChatSection, ChatItem>]()
+    var messages: AnyPublisher<[ArraySection<ChatSection, Message>], Never> {
+        sectionsRelay.map { sections -> [ArraySection<ChatSection, Message>] in
+            var snapshot = [ArraySection<ChatSection, Message>]()
             sections.forEach { snapshot.append(.init(model: $0.model, elements: $0.elements)) }
             return snapshot
         }.eraseToAnyPublisher()
@@ -82,10 +77,8 @@ final class SingleChatViewModel {
 
         session.dbManager.fetchMessagesPublisher(.init(chat: .direct(session.myId, contact.id)))
             .assertNoFailure()
-            .map { messages in
-
-                let domainModels = messages.map { ChatItem($0) }
-                let groupedByDate = Dictionary(grouping: domainModels) { domainModel -> Date in
+            .map {
+                let groupedByDate = Dictionary(grouping: $0) { domainModel -> Date in
                     let components = Calendar.current.dateComponents([.day, .month, .year], from: domainModel.date)
                     return Calendar.current.date(from: components)!
                 }
@@ -133,8 +126,9 @@ final class SingleChatViewModel {
         _ = try? session.dbManager.deleteMessages(.init(chat: .direct(session.myId, contact.id)))
     }
 
-    func didRequestRetry(_ model: ChatItem) {
-        session.retryMessage(model.identity)
+    func didRequestRetry(_ message: Message) {
+        guard let id = message.id else { return }
+        session.retryMessage(id)
     }
    
     func didNavigateSomewhere() {
@@ -167,11 +161,11 @@ final class SingleChatViewModel {
         return false
     }
 
-    func didRequestCopy(_ model: ChatItem) {
-        UIPasteboard.general.string = model.payload.text
+    func didRequestCopy(_ model: Message) {
+        UIPasteboard.general.string = model.text
     }
 
-    func didRequestDeleteSingle(_ model: ChatItem) {
+    func didRequestDeleteSingle(_ model: Message) {
         didRequestDelete([model])
     }
 
@@ -186,17 +180,25 @@ final class SingleChatViewModel {
         stagedReply = nil
     }
 
-    func didRequestReply(_ model: ChatItem) {
-//        guard let messageId = model.uniqueId else { return }
-//
-//        let isIncoming = model.status == .received
-//        stagedReply = Reply(messageId: messageId, senderId: isIncoming ? contact.userId : session.myId)
-//        replySubject.send(.init(text: model.payload.text, sender: isIncoming ? contact.nickname ?? contact.username : "You"))
+    func didRequestReply(_ message: Message) {
+        let senderTitle: String = {
+            if message.senderId == session.myId {
+                return "You"
+            } else {
+                return (contact.nickname ?? contact.username) ?? "Fetching username..."
+            }
+        }()
+
+        replySubject.send((senderTitle, message.text))
+        stagedReply = Reply(messageId: message.networkId!, senderId: message.senderId)
     }
 
     func getText(from messageId: Data) -> String {
-        fatalError()
-//        session.getTextFromMessage(messageId: messageId) ?? "[DELETED]"
+        guard let message = try? session.dbManager.fetchMessages(.init(networkId: messageId)).first else {
+            return "[DELETED]"
+        }
+
+        return message.text
     }
 
     func showRoundFrom(_ roundURL: String?) {
@@ -207,19 +209,19 @@ final class SingleChatViewModel {
         }
     }
 
-    func didRequestDelete(_ items: [ChatItem]) {
-        ///session.delete(messages: items.map { $0.identity })
+    func didRequestDelete(_ items: [Message]) {
+        _ = try? session.dbManager.deleteMessages(.init(id: Set(items.compactMap(\.id))))
     }
 
-    func itemWith(id: Int64) -> ChatItem? {
-        sectionsRelay.value.flatMap(\.elements).first(where: { $0.identity == id })
+    func itemWith(id: Int64) -> Message? {
+        sectionsRelay.value.flatMap(\.elements).first(where: { $0.id == id })
     }
 
     func getName(from senderId: Data) -> String {
         senderId == session.myId ? "You" : contact.nickname ?? contact.username!
     }
 
-    func itemAt(indexPath: IndexPath) -> ChatItem? {
+    func itemAt(indexPath: IndexPath) -> Message? {
         guard sectionsRelay.value.count > indexPath.section else { return nil }
 
         let items = sectionsRelay.value[indexPath.section].elements

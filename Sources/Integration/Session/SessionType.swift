@@ -63,6 +63,6 @@ public protocol SessionType {
         name: String,
         welcome: String?,
         members: [Contact],
-        _ completion: @escaping (Result<(Group, [GroupMember]), Error>) -> Void
+        _ completion: @escaping (Result<GroupInfo, Error>) -> Void
     )
 }

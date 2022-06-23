@@ -1,6 +1,7 @@
 import UIKit
-import Combine
 import Models
+import Combine
+import XXModels
 
 final class SearchTableController: UITableViewController {
     // MARK: Properties
@@ -49,7 +50,7 @@ final class SearchTableController: UITableViewController {
         let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: SearchCell.self)
         cell.title.text = dataSource[indexPath.row].username
         cell.subtitle.text = dataSource[indexPath.row].username
-        cell.avatar.setupProfile(title: dataSource[indexPath.row].username, image: nil, size: .large)
+        cell.avatar.setupProfile(title: dataSource[indexPath.row].username!, image: nil, size: .large)
         return cell
     }
 

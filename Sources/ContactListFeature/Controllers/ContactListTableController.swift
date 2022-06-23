@@ -47,8 +47,9 @@ final class ContactListTableController: UITableViewController {
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell: SmallAvatarAndTitleCell = tableView.dequeueReusableCell(forIndexPath: indexPath)
         let contact = sections[indexPath.section][indexPath.row]
-        cell.titleLabel.text = contact.nickname ?? contact.username
-        cell.avatarView.setupProfile(title: contact.nickname ?? contact.username, image: contact.photo, size: .medium)
+        let name = (contact.nickname ?? contact.username) ?? "Fetching username..."
+        cell.titleLabel.text = name
+        cell.avatarView.setupProfile(title: name, image: contact.photo, size: .medium)
         return cell
     }
 

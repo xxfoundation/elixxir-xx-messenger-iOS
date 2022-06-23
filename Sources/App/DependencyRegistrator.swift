@@ -259,7 +259,7 @@ extension PushRouter {
                     }
                 case .contactChat(id: let id):
                     if let session = try? DependencyInjection.Container.shared.resolve() as SessionType,
-                       let contact = session.getContactWith(userId: id) {
+                       let contact = try? session.dbManager.fetchContacts(.init(id: [id])).first {
                         navigationController.setViewControllers([
                             ChatListController(),
                             SingleChatController(contact)
@@ -267,7 +267,7 @@ extension PushRouter {
                     }
                 case .groupChat(id: let id):
                     if let session = try? DependencyInjection.Container.shared.resolve() as SessionType,
-                       let info = session.getGroupChatInfoWith(groupId: id) {
+                       let info = try? session.dbManager.fetchGroupInfos(.init(groupId: id)).first {
                         navigationController.setViewControllers([
                             ChatListController(),
                             GroupChatController(info)
