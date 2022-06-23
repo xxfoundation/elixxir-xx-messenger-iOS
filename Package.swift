@@ -51,10 +51,6 @@ let package = Package(
         .library(name: "DependencyInjection", targets: ["DependencyInjection"])
     ],
     dependencies: [
-        .package(
-            url: "https://git.xx.network/elixxir/client-ios-db.git",
-            revision: "eb071f08000b2b7646e45e7a5f55bdc9ad6dbcfa"
-        ),
         .package(url: "https://github.com/Quick/Quick", from: "3.0.0"),
         .package(url: "https://github.com/Quick/Nimble", from: "9.0.0"),
         .package(url: "https://github.com/SnapKit/SnapKit", from: "5.0.1"),
@@ -70,6 +66,7 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/combine-schedulers", from: "0.5.0"),
         .package(url: "https://github.com/kishikawakatsumi/KeychainAccess", from: "4.2.1"),
         .package(url: "https://github.com/google/google-api-objectivec-client-for-rest", from: "1.6.0"),
+        .package(url: "https://git.xx.network/elixxir/client-ios-db.git", .upToNextMajor(from: "1.0.1")),
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", .upToNextMajor(from: "8.10.0")),
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture.git",.upToNextMajor(from: "0.32.0"))
     ],
@@ -357,6 +354,10 @@ let package = Package(
                     ),
                     .product(
                         name: "XXDatabase",
+                        package: "client-ios-db"
+                    ),
+                    .product(
+                        name: "XXLegacyDatabaseMigrator",
                         package: "client-ios-db"
                     )
                 ],

@@ -1,4 +1,5 @@
 import Retry
+import os.log
 import Models
 import Shared
 import Combine
@@ -6,12 +7,11 @@ import Defaults
 import XXModels
 import XXDatabase
 import Foundation
+import ToastFeature
 import BackupFeature
 import NetworkMonitor
 import DependencyInjection
-
-import os.log
-import ToastFeature
+import XXLegacyDatabaseMigrator
 
 let logHandler = OSLog(subsystem: "xx.network", category: "Performance debugging")
 
@@ -89,7 +89,24 @@ public final class Session: SessionType {
         os_signpost(.end, log: logHandler, name: "Decrypting", "Finished newClientFromBackup")
 
         self.client = client
-        dbManager = try Database.inMemory()
+
+        let oldPath = NSSearchPathForDirectoriesInDomains(
+            .documentDirectory, .userDomainMask, true
+        )[0].appending("/xxmessenger.sqlite")
+
+        let newPath = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
+            .appendingPathComponent("database")
+            .appendingPathExtension("sqlite").path
+
+        try Migrator.live()(
+            try .init(path: oldPath),
+            to: try .onDisk(path: newPath),
+            myContactId: client.bindings.myId,
+            meMarshaled: client.bindings.meMarshalled
+        )
+
+        dbManager = try Database.onDisk(path: newPath)
 
         let report = try! JSONDecoder().decode(BackupReport.self, from: backupData!)
 
@@ -111,7 +128,25 @@ public final class Session: SessionType {
     public init(ndf: String) throws {
         let network = try! DependencyInjection.Container.shared.resolve() as XXNetworking
         self.client = try network.newClient(ndf: ndf)
-        dbManager = try Database.inMemory()
+
+        let oldPath = NSSearchPathForDirectoriesInDomains(
+            .documentDirectory, .userDomainMask, true
+        )[0].appending("/xxmessenger.sqlite")
+
+        let newPath = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
+            .appendingPathComponent("database")
+            .appendingPathExtension("sqlite").path
+
+        try Migrator.live()(
+            try .init(path: oldPath),
+            to: try .onDisk(path: newPath),
+            myContactId: client.bindings.myId,
+            meMarshaled: client.bindings.meMarshalled
+        )
+
+        dbManager = try Database.onDisk(path: newPath)
+
         try continueInitialization()
     }
 
