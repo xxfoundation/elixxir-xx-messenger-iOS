@@ -88,6 +88,19 @@ final class GroupChatViewModel {
         stagedReply = nil
     }
 
+    func getReplyContent(for messageId: Data) -> (String, String) {
+        guard let message = try? session.dbManager.fetchMessages(.init(networkId: messageId)).first else {
+            return ("[DELETED]", "[DELETED]")
+        }
+
+        guard let contact = try? session.dbManager.fetchContacts(.init(id: [message.senderId])).first else {
+            return ("You", message.text)
+        }
+
+        let contactTitle = (contact.nickname ?? contact.username) ?? "Fetching username..."
+        return (contactTitle, message.text)
+    }
+
     func getName(from senderId: Data) -> String {
         guard let contact = try? session.dbManager.fetchContacts(.init(id: [senderId])).first else {
             return "You"
@@ -96,17 +109,22 @@ final class GroupChatViewModel {
         return (contact.nickname ?? contact.username) ?? "Fetching username..."
     }
 
-    func getText(from messageId: Data) -> String {
-        guard let message = try? session.dbManager.fetchMessages(.init(networkId: messageId)).first else {
-            return "[DELETED]"
-        }
-
-        return message.text
-    }
-
     func didRequestReply(_ message: Message) {
         guard let networkId = message.networkId else { return }
+
+        let senderTitle: String = {
+            if message.senderId == session.myId {
+                return "You"
+            } else {
+                guard let contact = try? session.dbManager.fetchContacts(.init(id: [message.senderId])).first else {
+                    return "Error"
+                }
+
+                return (contact.nickname ?? contact.username) ?? "Fetching username..."
+            }
+        }()
+
         stagedReply = Reply(messageId: networkId, senderId: message.senderId)
-        replySubject.send((getName(from: message.senderId), message.text))
+        replySubject.send((senderTitle, message.text))
     }
 }

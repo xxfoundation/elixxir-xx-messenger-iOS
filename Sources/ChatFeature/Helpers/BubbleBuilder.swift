@@ -1,10 +1,11 @@
 import UIKit
 import Shared
+import XXModels
 
 final class Bubbler {
     static func build(
         audioBubble: AudioMessageView,
-        with item: ChatItem
+        with item: Message
     ) {
         audioBubble.dateLabel.text = item.date.asHoursAndMinutes()
 
@@ -41,7 +42,7 @@ final class Bubbler {
 
     static func build(
         imageBubble: ImageMessageView,
-        with item: ChatItem
+        with item: Message
     ) {
 //        let progress = item.payload.attachment!.progress
 //        imageBubble.progressLabel.text = String(format: "%.1f%%", progress * 100)
@@ -80,9 +81,9 @@ final class Bubbler {
 
     static func build(
         bubble: StackMessageView,
-        with item: ChatItem
+        with item: Message
     ) {
-        bubble.textView.text = item.payload.text
+        bubble.textView.text = item.text
         bubble.senderLabel.removeFromSuperview()
         bubble.dateLabel.text = item.date.asHoursAndMinutes()
 
@@ -135,14 +136,14 @@ final class Bubbler {
 
     static func buildReply(
         bubble: ReplyStackMessageView,
-        with item: ChatItem,
-        reply: ReplyModel
+        with item: Message,
+        reply: (contactTitle: String, messageText: String)
     ) {
         bubble.dateLabel.text = item.date.asHoursAndMinutes()
-        bubble.textView.text = item.payload.text
+        bubble.textView.text = item.text
 
-        bubble.replyView.message.text = reply.text
-        bubble.replyView.title.text = reply.sender
+        bubble.replyView.message.text = reply.messageText
+        bubble.replyView.title.text = reply.contactTitle
 
         let roundButtonColor: UIColor
 
@@ -195,4 +196,112 @@ final class Bubbler {
         )
         bubble.roundButton.setAttributedTitle(attrString, for: .normal)
     }
+
+    static func buildReplyGroup(
+        bubble: ReplyStackMessageView,
+        with item: Message,
+        reply: (contactTitle: String, messageText: String),
+        sender: String
+    ) {
+        bubble.dateLabel.text = item.date.asHoursAndMinutes()
+        bubble.textView.text = item.text
+
+        bubble.replyView.message.text = reply.messageText
+        bubble.replyView.title.text = reply.contactTitle
+
+        let roundButtonColor: UIColor
+
+        switch item.status {
+        case .received, .receiving:
+            bubble.senderLabel.text = sender
+            bubble.backgroundColor = Asset.neutralWhite.color
+            bubble.textView.textColor = Asset.neutralActive.color
+            bubble.dateLabel.textColor = Asset.neutralDisabled.color
+            roundButtonColor = Asset.neutralDisabled.color
+            bubble.replyView.container.backgroundColor = Asset.brandDefault.color
+            bubble.replyView.space.backgroundColor = Asset.brandPrimary.color
+            bubble.lockerImageView.removeFromSuperview()
+            bubble.revertBottomStackOrder()
+        case .sendingFailed, .sendingTimedOut:
+            bubble.senderLabel.removeFromSuperview()
+            bubble.backgroundColor = Asset.accentDanger.color
+            bubble.textView.textColor = Asset.neutralWhite.color
+            bubble.dateLabel.textColor = Asset.neutralWhite.color
+            roundButtonColor = Asset.neutralWhite.color
+            bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
+            bubble.replyView.container.backgroundColor = Asset.brandLight.color
+        case .sent, .sending:
+            bubble.senderLabel.removeFromSuperview()
+            bubble.textView.textColor = Asset.neutralWhite.color
+            bubble.backgroundColor = Asset.brandBubble.color
+            bubble.dateLabel.textColor = Asset.neutralWhite.color
+            roundButtonColor = Asset.neutralWhite.color
+            bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
+            bubble.replyView.container.backgroundColor = Asset.brandLight.color
+        case .receivingFailed:
+            fatalError()
+        }
+
+        let attrString = NSAttributedString(
+            string: "show mix",
+            attributes: [
+                .underlineStyle: NSUnderlineStyle.single.rawValue,
+                .underlineColor: roundButtonColor,
+                .foregroundColor: roundButtonColor,
+                .font: Fonts.Mulish.regular.font(size: 12.0) as Any
+            ]
+        )
+
+        bubble.roundButton.setAttributedTitle(attrString, for: .normal)
+    }
+
+    static func buildGroup(
+        bubble: StackMessageView,
+        with item: Message,
+        with senderName: String
+    ) {
+        bubble.textView.text = item.text
+        bubble.dateLabel.text = item.date.asHoursAndMinutes()
+
+        let roundButtonColor: UIColor
+
+        switch item.status {
+        case .received, .receiving:
+            bubble.senderLabel.text = senderName
+            bubble.backgroundColor = Asset.neutralWhite.color
+            bubble.textView.textColor = Asset.neutralActive.color
+            bubble.dateLabel.textColor = Asset.neutralDisabled.color
+            roundButtonColor = Asset.neutralDisabled.color
+            bubble.lockerImageView.removeFromSuperview()
+            bubble.revertBottomStackOrder()
+        case .sendingFailed, .sendingTimedOut:
+            bubble.senderLabel.removeFromSuperview()
+            bubble.backgroundColor = Asset.accentDanger.color
+            bubble.textView.textColor = Asset.neutralWhite.color
+            bubble.dateLabel.textColor = Asset.neutralWhite.color
+            roundButtonColor = Asset.neutralWhite.color
+        case .sent, .sending:
+            bubble.senderLabel.removeFromSuperview()
+            bubble.backgroundColor = Asset.brandBubble.color
+            bubble.textView.textColor = Asset.neutralWhite.color
+            bubble.dateLabel.textColor = Asset.neutralWhite.color
+            roundButtonColor = Asset.neutralWhite.color
+        case .receivingFailed:
+            fatalError()
+        }
+
+        let attrString = NSAttributedString(
+            string: "show mix",
+            attributes: [
+                .underlineStyle: NSUnderlineStyle.single.rawValue,
+                .underlineColor: roundButtonColor,
+                .foregroundColor: roundButtonColor,
+                .font: Fonts.Mulish.regular.font(size: 12.0) as Any
+            ]
+        )
+
+        bubble.roundButton.setAttributedTitle(attrString, for: .normal)
+    }
+
+
 }

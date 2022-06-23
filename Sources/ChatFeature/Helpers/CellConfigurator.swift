@@ -1,16 +1,17 @@
 import UIKit
 import Shared
 import Combine
+import XXModels
 import Voxophone
 import AVFoundation
 
 struct CellFactory {
-    var canBuild: (ChatItem) -> Bool
+    var canBuild: (Message) -> Bool
 
-    var build: (ChatItem, UICollectionView, IndexPath) -> UICollectionViewCell
+    var build: (Message, UICollectionView, IndexPath) -> UICollectionViewCell
 
     func callAsFunction(
-        item: ChatItem,
+        item: Message,
         collectionView: UICollectionView,
         indexPath: IndexPath
     ) -> UICollectionViewCell {
@@ -236,14 +237,13 @@ extension CellFactory {
 extension CellFactory {
     static func outgoingReply(
         performReply: @escaping () -> Void,
-        name: @escaping (Data) -> String,
-        text: @escaping (Data) -> String,
+        replyContent: @escaping (Data) -> (String, String),
         showRound: @escaping (String?) -> Void
     ) -> Self {
         .init(
             canBuild: { item in
                 (item.status == .sent || item.status == .sending)
-                && item.payload.reply != nil
+                && item.replyMessageId != nil
 
             }, build: { item, collectionView, indexPath in
                 let cell: OutgoingReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
@@ -251,10 +251,7 @@ extension CellFactory {
                 Bubbler.buildReply(
                     bubble: cell.rightView,
                     with: item,
-                    reply: .init(
-                        text: text(item.payload.reply!.messageId),
-                        sender: name(item.payload.reply!.senderId)
-                    )
+                    reply: replyContent(item.replyMessageId!)
                 )
 
                 cell.canReply = item.status == .sent
@@ -267,14 +264,13 @@ extension CellFactory {
 
     static func incomingReply(
         performReply: @escaping () -> Void,
-        name: @escaping (Data) -> String,
-        text: @escaping (Data) -> String,
+        replyContent: @escaping (Data) -> (String, String),
         showRound: @escaping (String?) -> Void
     ) -> Self {
         .init(
             canBuild: { item in
                 item.status == .received
-                && item.payload.reply != nil
+                && item.replyMessageId != nil
 
             }, build: { item, collectionView, indexPath in
                 let cell: IncomingReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
@@ -282,10 +278,7 @@ extension CellFactory {
                 Bubbler.buildReply(
                     bubble: cell.leftView,
                     with: item,
-                    reply: .init(
-                        text: text(item.payload.reply!.messageId),
-                        sender: name(item.payload.reply!.senderId)
-                    )
+                    reply: replyContent(item.replyMessageId!)
                 )
                 cell.canReply = item.status == .received
                 cell.performReply = performReply
@@ -298,13 +291,12 @@ extension CellFactory {
 
     static func outgoingFailedReply(
         performReply: @escaping () -> Void,
-        name: @escaping (Data) -> String,
-        text: @escaping (Data) -> String
+        replyContent: @escaping (Data) -> (String, String)
     ) -> Self {
         .init(
             canBuild: { item in
                 (item.status == .sendingFailed || item.status == .sendingTimedOut)
-                && item.payload.reply != nil
+                && item.replyMessageId != nil
 
             }, build: { item, collectionView, indexPath in
                 let cell: OutgoingFailedReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
@@ -312,10 +304,7 @@ extension CellFactory {
                 Bubbler.buildReply(
                     bubble: cell.rightView,
                     with: item,
-                    reply: .init(
-                        text: text(item.payload.reply!.messageId),
-                        sender: name(item.payload.reply!.senderId)
-                    )
+                    reply: replyContent(item.replyMessageId!)
                 )
 
                 cell.canReply = false
@@ -334,7 +323,7 @@ extension CellFactory {
         .init(
             canBuild: { item in
                 item.status == .received
-                && item.payload.reply == nil
+                && item.replyMessageId == nil
 
             }, build: { item, collectionView, indexPath in
                 let cell: IncomingTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
@@ -356,7 +345,7 @@ extension CellFactory {
         .init(
             canBuild: { item in
                 (item.status == .sending || item.status == .sent)
-                && item.payload.reply == nil
+                && item.replyMessageId == nil
 
             }, build: { item, collectionView, indexPath in
                 let cell: OutgoingTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
@@ -375,7 +364,7 @@ extension CellFactory {
         .init(
             canBuild: { item in
                 (item.status == .sendingFailed || item.status == .sendingTimedOut)
-                && item.payload.reply == nil
+                && item.replyMessageId == nil
 
             }, build: { item, collectionView, indexPath in
                 let cell: OutgoingFailedTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
@@ -412,9 +401,9 @@ struct ActionFactory {
     }
 
     static func build(
-        from item: ChatItem,
+        from item: Message,
         action: Action,
-        closure: @escaping (ChatItem) -> Void
+        closure: @escaping (Message) -> Void
     ) -> UIAction? {
 
         switch action {

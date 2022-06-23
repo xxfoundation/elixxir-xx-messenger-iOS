@@ -489,10 +489,9 @@ extension SingleChatController: UICollectionViewDataSource {
         cellForItemAt indexPath: IndexPath
     ) -> UICollectionViewCell {
 
-        let name: (Data) -> String = viewModel.getName(from:)
-        let text: (Data) -> String = viewModel.getText(from:)
         let showRound: (String?) -> Void = viewModel.showRoundFrom(_:)
         let item = sections[indexPath.section].elements[indexPath.item]
+        let replyContent: (Data) -> (String, String) = viewModel.getReplyContent(for:)
         let performReply: () -> Void = { [weak self] in self?.viewModel.didRequestReply(item) }
 
         let factory = CellFactory.combined(factories: [
@@ -503,9 +502,9 @@ extension SingleChatController: UICollectionViewDataSource {
             .incomingText(performReply: performReply, showRound: showRound),
             .outgoingText(performReply: performReply, showRound: showRound),
             .outgoingFailedText(performReply: performReply),
-            .incomingReply(performReply: performReply, name: name, text: text, showRound: showRound),
-            .outgoingReply(performReply: performReply, name: name, text: text, showRound: showRound),
-            .outgoingFailedReply(performReply: performReply, name: name, text: text)
+            .incomingReply(performReply: performReply, replyContent: replyContent, showRound: showRound),
+            .outgoingReply(performReply: performReply, replyContent: replyContent, showRound: showRound),
+            .outgoingFailedReply(performReply: performReply, replyContent: replyContent)
         ])
 
         return factory(item: item, collectionView: collectionView, indexPath: indexPath)

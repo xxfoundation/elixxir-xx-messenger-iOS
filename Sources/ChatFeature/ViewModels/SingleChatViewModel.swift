@@ -181,6 +181,8 @@ final class SingleChatViewModel {
     }
 
     func didRequestReply(_ message: Message) {
+        guard let networkId = message.networkId else { return }
+
         let senderTitle: String = {
             if message.senderId == session.myId {
                 return "You"
@@ -190,15 +192,20 @@ final class SingleChatViewModel {
         }()
 
         replySubject.send((senderTitle, message.text))
-        stagedReply = Reply(messageId: message.networkId!, senderId: message.senderId)
+        stagedReply = Reply(messageId: networkId, senderId: message.senderId)
     }
 
-    func getText(from messageId: Data) -> String {
+    func getReplyContent(for messageId: Data) -> (String, String) {
         guard let message = try? session.dbManager.fetchMessages(.init(networkId: messageId)).first else {
-            return "[DELETED]"
+            return ("[DELETED]", "[DELETED]")
         }
 
-        return message.text
+        guard let contact = try? session.dbManager.fetchContacts(.init(id: [message.senderId])).first else {
+            return ("You", message.text)
+        }
+
+        let contactTitle = (contact.nickname ?? contact.username) ?? "Fetching username..."
+        return (contactTitle, message.text)
     }
 
     func showRoundFrom(_ roundURL: String?) {
@@ -215,10 +222,6 @@ final class SingleChatViewModel {
 
     func itemWith(id: Int64) -> Message? {
         sectionsRelay.value.flatMap(\.elements).first(where: { $0.id == id })
-    }
-
-    func getName(from senderId: Data) -> String {
-        senderId == session.myId ? "You" : contact.nickname ?? contact.username!
     }
 
     func itemAt(indexPath: IndexPath) -> Message? {

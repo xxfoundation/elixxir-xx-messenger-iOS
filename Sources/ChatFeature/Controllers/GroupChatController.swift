@@ -329,26 +329,23 @@ extension GroupChatController: UICollectionViewDataSource {
         let canReply: () -> Bool = { item.status == .sent || item.status == .received }
 
         let performReply: () -> Void = { [weak self] in
-            //self?.viewModel.didRequestReply(item)
+            self?.viewModel.didRequestReply(item)
         }
 
         let name: (Data) -> String = viewModel.getName(from:)
-        let text: (Data) -> String = viewModel.getText(from:)
         let showRound: (String?) -> Void = viewModel.showRoundFrom(_:)
+        let replyContent: (Data) -> (String, String) = viewModel.getReplyContent(for:)
 
         if item.status == .received {
             if item.replyMessageId != nil {
                 let cell: IncomingGroupReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
-//                Bubbler.buildReplyGroup(
-//                    bubble: cell.leftView,
-//                    with: item,
-//                    reply: .init(
-//                        text: text(item.payload.reply!.messageId),
-//                        sender: name(item.payload.reply!.senderId)
-//                    ),
-//                    sender: name(item.sender)
-//                )
+                Bubbler.buildReplyGroup(
+                    bubble: cell.leftView,
+                    with: item,
+                    reply: replyContent(item.replyMessageId!),
+                    sender: name(item.senderId)
+                )
 
                 cell.canReply = canReply()
                 cell.performReply = performReply
@@ -357,7 +354,12 @@ extension GroupChatController: UICollectionViewDataSource {
                 return cell
             } else {
                 let cell: IncomingGroupTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
-//                Bubbler.buildGroup(bubble: cell.leftView, with: item, with: name(item.sender))
+                Bubbler.buildGroup(
+                    bubble: cell.leftView,
+                    with: item,
+                    with: name(item.senderId)
+                )
+
                 cell.canReply = canReply()
                 cell.performReply = performReply
                 cell.leftView.didTapShowRound = { showRound(item.roundURL) }
@@ -368,15 +370,12 @@ extension GroupChatController: UICollectionViewDataSource {
             if item.replyMessageId != nil {
                 let cell: OutgoingFailedGroupReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
-//                Bubbler.buildReplyGroup(
-//                    bubble: cell.rightView,
-//                    with: item,
-//                    reply: .init(
-//                        text: text(item.payload.reply!.messageId),
-//                        sender: name(item.payload.reply!.senderId)
-//                    ),
-//                    sender: name(item.sender)
-//                )
+                Bubbler.buildReplyGroup(
+                    bubble: cell.rightView,
+                    with: item,
+                    reply: replyContent(item.replyMessageId!),
+                    sender: name(item.senderId)
+                )
 
                 cell.canReply = canReply()
                 cell.performReply = performReply
@@ -385,7 +384,12 @@ extension GroupChatController: UICollectionViewDataSource {
             } else {
                 let cell: OutgoingFailedGroupTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
-//                Bubbler.buildGroup(bubble: cell.rightView, with: item, with: name(item.sender))
+                Bubbler.buildGroup(
+                    bubble: cell.rightView,
+                    with: item,
+                    with: name(item.senderId)
+                )
+
                 cell.canReply = canReply()
                 cell.performReply = performReply
 
@@ -395,15 +399,12 @@ extension GroupChatController: UICollectionViewDataSource {
             if item.replyMessageId != nil {
                 let cell: OutgoingGroupReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
-//                Bubbler.buildReplyGroup(
-//                    bubble: cell.rightView,
-//                    with: item,
-//                    reply: .init(
-//                        text: text(item.payload.reply!.messageId),
-//                        sender: name(item.payload.reply!.senderId)
-//                    ),
-//                    sender: name(item.sender)
-//                )
+                Bubbler.buildReplyGroup(
+                    bubble: cell.rightView,
+                    with: item,
+                    reply: replyContent(item.replyMessageId!),
+                    sender: name(item.senderId)
+                )
 
                 cell.canReply = canReply()
                 cell.performReply = performReply
@@ -413,7 +414,12 @@ extension GroupChatController: UICollectionViewDataSource {
             } else {
                 let cell: OutgoingGroupTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
-//                Bubbler.buildGroup(bubble: cell.rightView, with: item, with: name(item.sender))
+                Bubbler.buildGroup(
+                    bubble: cell.rightView,
+                    with: item,
+                    with: name(item.senderId)
+                )
+
                 cell.canReply = canReply()
                 cell.performReply = performReply
                 cell.rightView.didTapShowRound = { showRound(item.roundURL) }
@@ -537,7 +543,7 @@ extension GroupChatController: UICollectionViewDelegate {
             }
 
             let reply = UIAction(title: Localized.Chat.BubbleMenu.reply, state: .off) { [weak self] _ in
-                //self?.viewModel.didRequestReply(item)
+                self?.viewModel.didRequestReply(item)
             }
 
             let delete = UIAction(title: Localized.Chat.BubbleMenu.delete, state: .off) { [weak self] _ in
