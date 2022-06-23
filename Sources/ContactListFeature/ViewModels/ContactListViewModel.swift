@@ -10,6 +10,7 @@ final class ContactListViewModel {
     var contacts: AnyPublisher<[Contact], Never> {
         session.dbManager.fetchContactsPublisher(.init(authStatus: [.friend]))
             .assertNoFailure()
+            .map { $0.filter { $0.id != self.session.myId }}
             .eraseToAnyPublisher()
     }
 

@@ -20,13 +20,13 @@ extension Contact {
 }
 
 extension Message {
-    init(with message: BindingsMessage, meMarshalled: Data) {
+    init(with message: BindingsMessage, myId: Data) {
         guard let payload = try? Payload(with: message.getPayload()!) else { fatalError() }
 
         self.init(
             networkId: message.getID()!,
             senderId: message.getSender()!,
-            recipientId: meMarshalled,
+            recipientId: myId,
             groupId: nil,
             date: Date.fromTimestamp(Int(message.getTimestampNano())),
             status: .received,

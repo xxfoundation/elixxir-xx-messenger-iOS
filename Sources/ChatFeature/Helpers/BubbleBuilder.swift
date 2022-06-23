@@ -42,13 +42,13 @@ final class Bubbler {
 
     static func build(
         imageBubble: ImageMessageView,
-        with item: Message
+        with message: Message,
+        with transfer: FileTransfer
     ) {
-//        let progress = item.payload.attachment!.progress
-//        imageBubble.progressLabel.text = String(format: "%.1f%%", progress * 100)
-//        imageBubble.dateLabel.text = item.date.asHoursAndMinutes()
+        imageBubble.progressLabel.text = String(format: "%.1f%%", transfer.progress * 100)
+        imageBubble.dateLabel.text = message.date.asHoursAndMinutes()
 
-        switch item.status {
+        switch message.status {
         case .received:
             imageBubble.lockerImageView.removeFromSuperview()
             imageBubble.backgroundColor = Asset.neutralWhite.color

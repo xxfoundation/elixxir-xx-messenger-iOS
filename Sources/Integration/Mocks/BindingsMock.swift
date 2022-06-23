@@ -120,7 +120,7 @@ public final class BindingsMock: BindingsInterface {
             self?.requestsSubject.send(.carlRequested)
             self?.requestsSubject.send(.angelinaRequested)
             self?.requestsSubject.send(.elonRequested)
-            //self?.groupRequestsSubject.send(.mockGroup)
+            self?.groupRequestsSubject.send(.mockGroup)
 
             DispatchQueue.global().asyncAfter(deadline: .now() + 1) { [weak self] in
                 self?.confirmationsSubject.send(.georgeDiscovered)

@@ -166,48 +166,35 @@ final class RequestsReceivedViewModel {
         _ group: Group,
         _ completion: @escaping (Result<[DrawerTableCellModel], Error>) -> Void
     ) {
-//        session.scanStrangers { [weak self] in
-//            guard let self = self else { return }
-//
-//            Publishers.CombineLatest(
-//                self.session.dbManager.fetchContactsPublisher(.init()).assertNoFailure(),
-//                self.session.dbManager.fetchGroupInfosPublisher(.init(groupId: group.id)).assertNoFailure()
-//            )
-//            .sink { (allContacts, groupMembers) in
-//
-//                guard !groupMembers.map(\.authStatus).contains(.pendingUsername) else {
-//                    completion(.failure(NSError.create(""))) // Some members are still pending username lookup...
-//                    return
-//                }
-//
-//                // Now that all members are set with their usernames lets find our friends:
-//                //
-//                let contactsAlsoMembers = allContacts.filter { groupMembers.map(\.userId).contains($0.userId) }
-//                let membersNonContacts = groupMembers.filter { !contactsAlsoMembers.map(\.userId).contains($0.userId) }
-//
-//                var models = [DrawerTableCellModel]()
-//
-//                contactsAlsoMembers.forEach {
-//                    models.append(.init(
-//                        title: $0.nickname ?? $0.username,
-//                        image: $0.photo,
-//                        isCreator: $0.userId == group.leaderId,
-//                        isConnection: true
-//                    ))
-//                }
-//
-//                membersNonContacts.forEach {
-//                    models.append(.init(
-//                        title: $0.username,
-//                        image: nil,
-//                        isCreator: $0.userId == group.leaderId,
-//                        isConnection: false
-//                    ))
-//                }
-//
-//                completion(.success(models))
-//            }.store(in: &self.cancellables)
-//        }
+        if let info = try? session.dbManager.fetchGroupInfos(.init(groupId: group.id)).first {
+            session.dbManager.fetchContactsPublisher(.init(id: Set(info.members.map(\.id))))
+                .assertNoFailure()
+                .sink { members in
+                    let withUsername = members
+                        .filter { $0.username != nil }
+                        .map {
+                            DrawerTableCellModel(
+                                title: $0.nickname ?? $0.username!,
+                                image: $0.photo,
+                                isCreator: $0.id == group.leaderId,
+                                isConnection: $0.authStatus == .friend
+                            )
+                        }
+
+                    let withoutUsername = members
+                        .filter { $0.username == nil }
+                        .map {
+                            DrawerTableCellModel(
+                                title: "Fetching username...",
+                                image: $0.photo,
+                                isCreator: $0.id == group.leaderId,
+                                isConnection: $0.authStatus == .friend
+                            )
+                        }
+
+                    completion(.success(withUsername + withoutUsername))
+                }.store(in: &cancellables)
+        }
     }
 
     func didRequestHide(contact: Contact) {

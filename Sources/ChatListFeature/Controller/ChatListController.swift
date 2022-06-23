@@ -76,10 +76,10 @@ public final class ChatListController: UIViewController {
                 }
             }.store(in: &cancellables)
 
-//        viewModel.badgeCountPublisher
-//            .receive(on: DispatchQueue.main)
-//            .sink { [unowned self] in topLeftView.updateBadge($0) }
-//            .store(in: &cancellables)
+        viewModel.badgeCountPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in topLeftView.updateBadge($0) }
+            .store(in: &cancellables)
 
         topLeftView.actionPublisher
             .receive(on: DispatchQueue.main)
@@ -129,12 +129,12 @@ public final class ChatListController: UIViewController {
         screenView.listContainerView.collectionView.delegate = self
         screenView.listContainerView.collectionView.dataSource = collectionDataSource
 
-//        viewModel.recentsPublisher
-//            .receive(on: DispatchQueue.main)
-//            .sink { [unowned self] in
-//                collectionDataSource.apply($0)
-//                shouldBeShowingRecents = $0.numberOfItems > 0
-//            }.store(in: &cancellables)
+        viewModel.recentsPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                collectionDataSource.apply($0)
+                shouldBeShowingRecents = $0.numberOfItems > 0
+            }.store(in: &cancellables)
     }
 
     private func setupBindings() {
@@ -153,33 +153,33 @@ public final class ChatListController: UIViewController {
                 screenView.searchListContainerView.emptyView.updateSearched(content: query)
             }.store(in: &cancellables)
 
-//        Publishers.CombineLatest(
-//            viewModel.searchPublisher,
-//            screenView.searchView.textPublisher.removeDuplicates()
-//        )
-//        .receive(on: DispatchQueue.main)
-//            .sink { [unowned self] items, query in
-//                guard query.isEmpty == false else {
-//                    screenView.searchListContainerView.isHidden = true
-//                    screenView.listContainerView.isHidden = false
-//                    screenView.bringSubviewToFront(screenView.listContainerView)
-//                    return
-//                }
-//
-//                screenView.listContainerView.isHidden = true
-//                screenView.searchListContainerView.isHidden = false
-//
-//                guard items.numberOfItems > 0 else {
-//                    screenView.searchListContainerView.emptyView.isHidden = false
-//                    screenView.bringSubviewToFront(screenView.searchListContainerView)
-//                    screenView.searchListContainerView.bringSubviewToFront(screenView.searchListContainerView.emptyView)
-//                    return
-//                }
-//
-//                screenView.searchListContainerView.bringSubviewToFront(searchTableController.view)
-//                screenView.searchListContainerView.emptyView.isHidden = true
-//            }
-//            .store(in: &cancellables)
+        Publishers.CombineLatest(
+            viewModel.searchPublisher,
+            screenView.searchView.textPublisher.removeDuplicates()
+        )
+        .receive(on: DispatchQueue.main)
+            .sink { [unowned self] items, query in
+                guard query.isEmpty == false else {
+                    screenView.searchListContainerView.isHidden = true
+                    screenView.listContainerView.isHidden = false
+                    screenView.bringSubviewToFront(screenView.listContainerView)
+                    return
+                }
+
+                screenView.listContainerView.isHidden = true
+                screenView.searchListContainerView.isHidden = false
+
+                guard items.numberOfItems > 0 else {
+                    screenView.searchListContainerView.emptyView.isHidden = false
+                    screenView.bringSubviewToFront(screenView.searchListContainerView)
+                    screenView.searchListContainerView.bringSubviewToFront(screenView.searchListContainerView.emptyView)
+                    return
+                }
+
+                screenView.searchListContainerView.bringSubviewToFront(searchTableController.view)
+                screenView.searchListContainerView.emptyView.isHidden = true
+            }
+            .store(in: &cancellables)
 
         screenView.searchView
             .isEditingPublisher
@@ -188,19 +188,19 @@ public final class ChatListController: UIViewController {
             .sink { [unowned self] in isEditingSearch = $0 }
             .store(in: &cancellables)
 
-//        viewModel.chatsPublisher
-//            .receive(on: DispatchQueue.main)
-//            .sink { [unowned self] in
-//                guard $0.isEmpty == false else {
-//                    screenView.listContainerView.bringSubviewToFront(screenView.listContainerView.emptyView)
-//                    screenView.listContainerView.emptyView.isHidden = false
-//                    return
-//                }
-//
-//                screenView.listContainerView.bringSubviewToFront(tableController.view)
-//                screenView.listContainerView.emptyView.isHidden = true
-//            }
-//            .store(in: &cancellables)
+        viewModel.chatsPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                guard $0.isEmpty == false else {
+                    screenView.listContainerView.bringSubviewToFront(screenView.listContainerView.emptyView)
+                    screenView.listContainerView.emptyView.isHidden = false
+                    return
+                }
+
+                screenView.listContainerView.bringSubviewToFront(tableController.view)
+                screenView.listContainerView.emptyView.isHidden = true
+            }
+            .store(in: &cancellables)
 
         screenView.searchListContainerView
             .emptyView.searchButton

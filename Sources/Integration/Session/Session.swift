@@ -170,38 +170,49 @@ public final class Session: SessionType {
     }
 
     private func registerUnfinishedTransfers() {
-//        guard let unfinisheds: [Message] = try? dbManager.fetch(.sendingAttachment), !unfinisheds.isEmpty else { return }
-//
-//        for var message in unfinisheds {
-//            guard let tid = message.payload.attachment?.transferId else { return }
-//
-//            do {
-//                try client.transferManager?.listenUploadFromTransfer(with: tid) { completed, sent, arrived, total, error in
-//                    if completed {
-//                        message.status = .sent
-//                        message.payload.attachment?.progress = 1.0
-//
-//                        if let transfer: FileTransfer = try? self.dbManager.fetch(.withTID(tid)).first {
-//                            try? self.dbManager.delete(transfer)
-//                        }
-//                    } else {
-//                        if let error = error {
-//                            log(string: error.localizedDescription, type: .error)
-//                            message.status = .failedToSend
-//                        } else {
-//                            let progress = Float(arrived)/Float(total)
-//                            message.payload.attachment?.progress = progress
-//                            return
-//                        }
-//                    }
-//
-//                    _ = try? self.dbManager.save(message)
-//                }
-//            } catch {
-//                message.status = .sent
-//                _ = try? self.dbManager.save(message)
-//            }
-//        }
+        guard let unfinishedSendingMessages = try? dbManager.fetchMessages(.init(status: [.sending])),
+              let unfinishedSendingTransfers = try? dbManager.fetchFileTransfers(.init(
+                id: Set(unfinishedSendingMessages
+                    .filter { $0.fileTransferId != nil }
+                    .compactMap(\.fileTransferId))))
+        else { return }
+
+        // What would be a good way to do this?
+
+        let pairs = unfinishedSendingMessages.map { message -> (Message, FileTransfer) in
+            let transfer = unfinishedSendingTransfers.first { ft in
+                ft.id == message.fileTransferId
+            }
+
+            return (message, transfer!)
+        }
+
+        pairs.forEach { message, transfer in
+            var message = message
+            var transfer = transfer
+
+            do {
+                try client.transferManager?.listenUploadFromTransfer(with: transfer.id) { completed, sent, arrived, total, error in
+                    if completed {
+                        transfer.progress = 1.0
+                        message.status = .sent
+
+                    } else {
+                        if error != nil {
+                            message.status = .sendingFailed
+                        } else {
+                            transfer.progress = Float(arrived)/Float(total)
+                        }
+                    }
+
+                    _ = try? self.dbManager.saveFileTransfer(transfer)
+                    _ = try? self.dbManager.saveMessage(message)
+                }
+            } catch {
+                message.status = .sendingFailed
+                _ = try? self.dbManager.saveMessage(message)
+            }
+        }
     }
 
     func updateFactsOnBackup() {

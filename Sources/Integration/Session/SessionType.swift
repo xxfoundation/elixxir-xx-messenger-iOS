@@ -15,6 +15,7 @@ public protocol SessionType {
     func deleteMyself() throws
     func getId(from: Data) -> Data?
 
+    func sendFile(url: URL, to: Contact)
     func send(imageData: Data, to: Contact, completion: @escaping (Result<Void, Error>) -> Void)
 
     func verify(contact: Contact)

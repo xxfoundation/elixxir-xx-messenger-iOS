@@ -34,6 +34,7 @@ public class Client {
     private let eventsSubject = PassthroughSubject<BackendEvent, Never>()
     private let requestsSentSubject = PassthroughSubject<Contact, Never>()
     private let confirmationsSubject = PassthroughSubject<Contact, Never>()
+    private let transfersSubject = PassthroughSubject<FileTransfer, Never>()
     private let groupRequestsSubject = PassthroughSubject<(Group, [Data], String?), Never>()
 
     private var isBackupInitialization = false
@@ -176,31 +177,33 @@ public class Client {
     }
 
     private func instantiateTransferManager() throws {
-//        transferManager = try bindings.generateTransferManager { [weak transfersSubject] tid, name, type, sender in
-//
-//            /// Someone transfered something to me
-//            /// but I haven't received yet. I'll store an
-//            /// IncomingTransfer object so later on I can
-//            /// pull up whatever this contact has sent me.
-//            ///
-//            guard let name = name,
-//                  let type = type,
-//                  let contact = sender,
-//                  let _extension = Attachment.Extension.from(type) else {
-//                      log(string: "Transfer of \(name ?? "nil").\(type ?? "nil") is being dismissed", type: .error)
-//                      return
-//                  }
-//
-//            transfersSubject?.send(
-//                FileTransfer(
-//                    tid: tid,
-//                    contact: contact,
-//                    fileName: name,
-//                    fileType: _extension.written,
-//                    isIncoming: true
-//                )
-//            )
-//        }
+        transferManager = try bindings.generateTransferManager { [weak transfersSubject] tid, name, type, sender in
+
+            /// Someone transfered something to me
+            /// but I haven't received yet. I'll store an
+            /// IncomingTransfer object so later on I can
+            /// pull up whatever this contact has sent me.
+            ///
+            guard let name = name,
+                  let type = type,
+                  let contactId = sender else {
+                      log(string: "Transfer of \(name ?? "nil").\(type ?? "nil") is being dismissed", type: .error)
+                      return
+                  }
+
+            transfersSubject?.send(
+                FileTransfer(
+                    id: tid,
+                    contactId: contactId,
+                    name: name,
+                    type: type,
+                    data: nil,
+                    progress: 0.0,
+                    isIncoming: true,
+                    createdAt: Date()
+                )
+            )
+        }
     }
 
     private func instantiateUserDiscovery() throws {

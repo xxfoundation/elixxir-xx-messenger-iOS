@@ -195,13 +195,9 @@ extension Session {
     }
 
     public func deleteContact(_ contact: Contact) throws {
-        // TODO: If there's an ongoing FT with this contact, it cannot be deleted.
-
-//        if let _: FileTransfer = try? dbManager.fetch(.withContactId(contact.userId)).first {
-//            throw NSError.create("There is an ongoing file transfer with this contact as you are receiving or sending a file, please try again later once it’s done")
-//        } else {
-//            print("No pending transfer with this contact. Free to delete")
-//        }
+        if !(try dbManager.fetchFileTransfers(.init(contactId: contact.id))).isEmpty {
+            throw NSError.create("There is an ongoing file transfer with this contact as you are receiving or sending a file, please try again later once it’s done")
+        }
 
         try client.bindings.removeContact(contact.marshaled!)
         try dbManager.deleteContact(contact)

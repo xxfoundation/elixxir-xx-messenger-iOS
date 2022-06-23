@@ -93,13 +93,16 @@ final class SingleChatViewModel {
 
     // MARK: Public
 
+    func getFileTransferWith(id: Data) -> FileTransfer {
+        guard let transfer = try? session.dbManager.fetchFileTransfers(.init(id: [id])).first else {
+            fatalError()
+        }
+
+        return transfer
+    }
+
     func didSendAudio(url: URL) {
-//        let name = url.deletingPathExtension().lastPathComponent
-//        guard let file = FileManager.retrieve(name: name, type: Attachment.Extension.audio.written) else { return }
-//
-//        let attachment = Attachment(name: name, data: file, _extension: .audio)
-//        let payload = Payload(text: "You sent a voice message", reply: nil, attachment: attachment)
-//        session.send(payload, toContact: contact)
+        session.sendFile(url: url, to: contact)
     }
 
     func didSend(image: UIImage) {

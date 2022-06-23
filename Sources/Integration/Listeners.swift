@@ -42,7 +42,7 @@ public extension BindingsClient {
 
         let listener = TextListener { bindingsMessage in
             guard let message = bindingsMessage else { return }
-            let domainModel = Message(with: message, meMarshalled: self.meMarshalled)
+            let domainModel = Message(with: message, myId: self.myId)
             callback(domainModel)
         }
 

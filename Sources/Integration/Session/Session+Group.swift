@@ -58,7 +58,7 @@ extension Session {
             _ = try? dbManager.saveMessage(.init(
                 networkId: nil,
                 senderId: group.leaderId,
-                recipientId: client.bindings.meMarshalled,
+                recipientId: client.bindings.myId,
                 groupId: group.id,
                 date: Date(),
                 status: .received,
@@ -72,7 +72,7 @@ extension Session {
 
         /// Buzz if the group was not created by me
         ///
-        if group.leaderId != client.bindings.meMarshalled, inappnotifications {
+        if group.leaderId != client.bindings.myId, inappnotifications {
             DeviceFeedback.sound(.contactAdded)
             DeviceFeedback.shake(.notification)
         }
@@ -92,7 +92,7 @@ extension Session {
 extension Session {
     public func send(_ payload: Payload, toGroup group: Group) {
         var message = Message(
-            senderId: client.bindings.meMarshalled,
+            senderId: client.bindings.myId,
             recipientId: nil,
             groupId: group.id,
             date: Date(),
@@ -151,51 +151,31 @@ extension Session {
     }
 
     public func scanStrangers(_ completion: @escaping () -> Void) {
-        // TODO: Needs a request for Contacts without username set
+        DispatchQueue.global().async { [weak self] in
+            guard let self = self,
+                  let ud = self.client.userDiscovery,
+                  let strangers = try? self.dbManager.fetchContacts(.init(username: .some(nil))),
+                  !strangers.isEmpty else { return }
 
-//        DispatchQueue.global().async { [weak self] in
-//            guard let self = self, let ud = self.client.userDiscovery else { return }
-//
-//            guard let strangers = try? self.dbManager.fetchContacts(.init(authStatus: [.stranger])),
-//                    strangers.isEmpty == false else {
-//                DispatchQueue.main.async { completion() }
-//                return
-//            }
-//
-//            let ids = strangers.map { $0.id }
-//
-//            var updatedStrangers: [GroupMember] = []
-//
-//            ud.lookup(idList: ids) {
-//                switch $0 {
-//                case .success(let contacts):
-//                    strangers.forEach { stranger in
-//                        if let found = contacts.first(where: { contact in contact.id == stranger.id }) {
-//                            var updatedStranger = stranger
-//                            updatedStranger.username = found.username
-//                            updatedStrangers.append(updatedStranger)
-//                        }
-//                    }
-//
-//                    DispatchQueue.main.async {
-//                        updatedStrangers.forEach {
-//                            do {
-//                                try self.dbManager.saveContact($0)
-//                            } catch {
-//                                log(string: error.localizedDescription, type:.error)
-//                            }
-//                        }
-//
-//                        log(string: "Scanned unknown group members", type: .info)
-//                        completion()
-//                    }
-//                case .failure(let error):
-//                    DispatchQueue.main.async {
-//                        log(string: error.localizedDescription, type: .error)
-//                        completion()
-//                    }
-//                }
-//            }
-//        }
+            ud.lookup(idList: strangers.map(\.id)) { result in
+                switch result {
+                case .success(let strangersWithUsernames):
+                    let acquaintances = strangers.map { stranger -> Contact in
+                        var exStranger = stranger
+                        exStranger.username = strangersWithUsernames.first(where: { $0.id == stranger.id })?.username
+                        return exStranger
+                    }
+
+                    DispatchQueue.main.async {
+                        acquaintances.forEach { _ = try? self.dbManager.saveContact($0) }
+                    }
+
+                    completion()
+                case .failure(let error):
+                    print(error.localizedDescription)
+                    DispatchQueue.main.async { completion() }
+                }
+            }
+        }
     }
 }

@@ -441,10 +441,14 @@ public final class SingleChatController: UIViewController {
     }
 
     private func previewItemAt(_ indexPath: IndexPath) {
-//        let item = sections[indexPath.section].elements[indexPath.item]
-//        guard let attachment = item.payload.attachment, item.status != .receiving else { return }
-//        fileURL = FileManager.url(for: "\(attachment.name).\(attachment._extension.written)")
-//        coordinator.toPreview(from: self)
+        let item = sections[indexPath.section].elements[indexPath.item]
+        guard let ftid = item.fileTransferId,
+              item.status != .receiving,
+              item.status != .receivingFailed else { return }
+
+        let ft = viewModel.getFileTransferWith(id: ftid)
+        fileURL = FileManager.url(for: "\(ft.name).\(ft.type)")
+        coordinator.toPreview(from: self)
     }
 
     // MARK: Selectors
@@ -495,10 +499,10 @@ extension SingleChatController: UICollectionViewDataSource {
         let performReply: () -> Void = { [weak self] in self?.viewModel.didRequestReply(item) }
 
         let factory = CellFactory.combined(factories: [
-            .incomingImage(),
-            .outgoingImage(),
-            .incomingAudio(voxophone: voxophone),
-            .outgoingAudio(voxophone: voxophone),
+            .incomingImage(transfer: viewModel.getFileTransferWith(id:)),
+            .outgoingImage(transfer: viewModel.getFileTransferWith(id:)),
+            .incomingAudio(voxophone: voxophone, transfer: viewModel.getFileTransferWith(id:)),
+            .outgoingAudio(voxophone: voxophone, transfer: viewModel.getFileTransferWith(id:)),
             .incomingText(performReply: performReply, showRound: showRound),
             .outgoingText(performReply: performReply, showRound: showRound),
             .outgoingFailedText(performReply: performReply),
