@@ -169,7 +169,7 @@ public final class ContactController: UIViewController {
             .sink { [unowned self] in
                 coordinator.toNickname(
                     from: self,
-                    prefilled: viewModel.contact.nickname ?? viewModel.contact.username!,
+                    prefilled: (viewModel.contact.nickname ?? viewModel.contact.username) ?? "",
                     viewModel.didTapRequest(with:)
                 )
             }.store(in: &cancellables)
@@ -181,7 +181,7 @@ public final class ContactController: UIViewController {
             .sink { [unowned self] in
                 coordinator.toNickname(
                     from: self,
-                    prefilled: viewModel.contact.nickname ?? viewModel.contact.username!,
+                    prefilled: (viewModel.contact.nickname ?? viewModel.contact.username) ?? "",
                     viewModel.didTapAccept(_:)
                 )
             }.store(in: &cancellables)
@@ -243,7 +243,7 @@ public final class ContactController: UIViewController {
                     .sink { [unowned self] in
                         coordinator.toNickname(
                             from: self,
-                            prefilled: viewModel.contact.nickname ?? viewModel.contact.username!,
+                            prefilled: (viewModel.contact.nickname ?? viewModel.contact.username) ?? "",
                             viewModel.didUpdateNickname(_:)
                         )
                     }

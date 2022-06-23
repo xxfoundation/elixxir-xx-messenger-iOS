@@ -375,7 +375,7 @@ extension GroupChatController: UICollectionViewDataSource {
                 Bubbler.buildReplyGroup(
                     bubble: cell.rightView,
                     with: item,
-                    reply: replyContent(item.replyMessageId),
+                    reply: replyContent(replyMessageId),
                     sender: name(item.senderId)
                 )
 
@@ -404,7 +404,7 @@ extension GroupChatController: UICollectionViewDataSource {
                 Bubbler.buildReplyGroup(
                     bubble: cell.rightView,
                     with: item,
-                    reply: replyContent(item.replyMessageId),
+                    reply: replyContent(replyMessageId),
                     sender: name(item.senderId)
                 )
 

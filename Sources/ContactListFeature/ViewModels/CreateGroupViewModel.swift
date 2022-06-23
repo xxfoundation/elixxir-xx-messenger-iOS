@@ -67,7 +67,11 @@ final class CreateGroupViewModel {
             return
         }
 
-        contactsRelay.send(allContacts.filter { $0.username!.contains(text.lowercased()) })
+        contactsRelay.send(
+            allContacts.filter {
+                ($0.username ?? "").contains(text.lowercased())
+            }
+        )
     }
 
     func create(name: String, welcome: String?, members: [Contact]) {

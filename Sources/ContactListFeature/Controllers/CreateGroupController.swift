@@ -74,7 +74,8 @@ public final class CreateGroupController: UIViewController {
         ) { [weak viewModel] collectionView, indexPath, contact in
             let cell: CreateGroupCollectionCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
-            cell.setup(title: contact.nickname ?? contact.username!, image: contact.photo)
+            let title = (contact.nickname ?? contact.username) ?? ""
+            cell.setup(title: title, image: contact.photo)
             cell.didTapRemove = { viewModel?.didSelect(contact: contact) }
 
             return cell
@@ -84,8 +85,9 @@ public final class CreateGroupController: UIViewController {
             tableView: screenView.tableView
         ) { [weak self] tableView, indexPath, contact in
             let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: SmallAvatarAndTitleCell.self)
-            cell.titleLabel.text = contact.nickname ?? contact.username
-            cell.avatarView.setupProfile(title: contact.nickname ?? contact.username!, image: contact.photo, size: .medium)
+            let title = (contact.nickname ?? contact.username) ?? ""
+            cell.titleLabel.text = title
+            cell.avatarView.setupProfile(title: title, image: contact.photo, size: .medium)
 
             if let selectedElements = self?.selectedElements, selectedElements.contains(contact) {
                 tableView.selectRow(at: indexPath, animated: true, scrollPosition: .none)

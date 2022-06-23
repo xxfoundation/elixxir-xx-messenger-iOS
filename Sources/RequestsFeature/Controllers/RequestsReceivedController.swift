@@ -212,7 +212,7 @@ extension RequestsReceivedController {
 
         let drawerNickname = DrawerText(
             font: Fonts.Mulish.extraBold.font(size: 26.0),
-            text: contact.nickname ?? contact.username!,
+            text: (contact.nickname ?? contact.username) ?? "",
             color: Asset.neutralDark.color,
             spacingAfter: 20
         )
@@ -393,7 +393,7 @@ extension RequestsReceivedController {
 
         let drawerUsername = DrawerText(
             font: Fonts.Mulish.extraBold.font(size: 26.0),
-            text: contact.username!,
+            text: contact.username ?? "",
             color: Asset.neutralDark.color,
             spacingAfter: 25
         )
@@ -453,7 +453,7 @@ extension RequestsReceivedController {
         items.append(drawerNicknameTitle)
 
         let drawerNicknameInput = DrawerInput(
-            placeholder: contact.username!,
+            placeholder: contact.username ?? "",
             validator: .init(
                 wrongIcon: .image(Asset.sharedError.image),
                 correctIcon: .image(Asset.sharedSuccess.image),

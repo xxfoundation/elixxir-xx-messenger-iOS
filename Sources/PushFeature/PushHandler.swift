@@ -110,7 +110,7 @@ public final class PushHandler: PushHandling {
                 return ($0.type.unknownSenderContent!, $0)
             }
 
-            let name = contact.nickname ?? contact.username!
+            let name = (contact.nickname ?? contact.username) ?? ""
             return ($0.type.knownSenderContent(name)!, $0)
         }
 
