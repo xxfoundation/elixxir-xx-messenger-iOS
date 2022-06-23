@@ -326,7 +326,9 @@ extension GroupChatController: UICollectionViewDataSource {
     ) -> UICollectionViewCell {
 
         let item = sections[indexPath.section].elements[indexPath.item]
-        let canReply: () -> Bool = { item.status == .sent || item.status == .received }
+        let canReply: () -> Bool = {
+            (item.status == .sent || item.status == .received) && item.networkId != nil
+        }
 
         let performReply: () -> Void = { [weak self] in
             self?.viewModel.didRequestReply(item)
@@ -337,13 +339,13 @@ extension GroupChatController: UICollectionViewDataSource {
         let replyContent: (Data) -> (String, String) = viewModel.getReplyContent(for:)
 
         if item.status == .received {
-            if item.replyMessageId != nil {
+            if let replyMessageId = item.replyMessageId {
                 let cell: IncomingGroupReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
                 Bubbler.buildReplyGroup(
                     bubble: cell.leftView,
                     with: item,
-                    reply: replyContent(item.replyMessageId!),
+                    reply: replyContent(replyMessageId),
                     sender: name(item.senderId)
                 )
 
@@ -367,13 +369,13 @@ extension GroupChatController: UICollectionViewDataSource {
                 return cell
             }
         } else if item.status == .sendingFailed {
-            if item.replyMessageId != nil {
+            if let replyMessageId = item.replyMessageId {
                 let cell: OutgoingFailedGroupReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
                 Bubbler.buildReplyGroup(
                     bubble: cell.rightView,
                     with: item,
-                    reply: replyContent(item.replyMessageId!),
+                    reply: replyContent(item.replyMessageId),
                     sender: name(item.senderId)
                 )
 
@@ -396,13 +398,13 @@ extension GroupChatController: UICollectionViewDataSource {
                 return cell
             }
         } else {
-            if item.replyMessageId != nil {
+            if let replyMessageId = item.replyMessageId {
                 let cell: OutgoingGroupReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
                 Bubbler.buildReplyGroup(
                     bubble: cell.rightView,
                     with: item,
-                    reply: replyContent(item.replyMessageId!),
+                    reply: replyContent(item.replyMessageId),
                     sender: name(item.senderId)
                 )
 
