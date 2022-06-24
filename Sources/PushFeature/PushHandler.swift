@@ -103,9 +103,14 @@ public final class PushHandler: PushHandling {
             return
         }
 
+        let dbPath = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
+            .appendingPathComponent("xxm_database")
+            .appendingPathExtension("sqlite").path
+
         let tuples: [(String, Push)] = pushes.compactMap {
             guard let userId = $0.source,
-                  let dbManager = try? Database.inMemory(),
+                  let dbManager = try? Database.onDisk(path: dbPath),
                   let contact = try? dbManager.fetchContacts(.init(id: [userId])).first else {
                 return ($0.type.unknownSenderContent!, $0)
             }
