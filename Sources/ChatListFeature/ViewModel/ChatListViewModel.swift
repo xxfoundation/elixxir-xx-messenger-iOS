@@ -66,8 +66,8 @@ final class ChatListViewModel {
 
                 let chatItems = chats.filter {
                     switch $0 {
-                    case .group:
-                        fatalError()
+                    case .group(let group):
+                        return group.name.lowercased().contains(query.lowercased())
 
                     case .groupChat(let info):
                         let name = info.group.name.lowercased().contains(query.lowercased())
@@ -147,5 +147,14 @@ final class ChatListViewModel {
 
     func clear(_ contact: Contact) {
         _ = try? session.dbManager.deleteMessages(.init(chat: .direct(session.myId, contact.id)))
+    }
+
+    func groupInfo(from group: Group) -> GroupInfo? {
+        let query = GroupInfo.Query(groupId: group.id)
+        guard let info = try? session.dbManager.fetchGroupInfos(query).first else {
+            return nil
+        }
+
+        return info
     }
 }

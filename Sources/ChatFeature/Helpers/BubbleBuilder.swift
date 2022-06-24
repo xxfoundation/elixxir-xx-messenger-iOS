@@ -36,7 +36,9 @@ final class Bubbler {
             audioBubble.dateLabel.textColor = Asset.neutralWhite.color
             audioBubble.progressLabel.textColor = Asset.neutralWhite.color
         case .receivingFailed:
-            fatalError()
+            audioBubble.backgroundColor = Asset.accentWarning.color
+            audioBubble.dateLabel.textColor = Asset.neutralWhite.color
+            audioBubble.progressLabel.textColor = Asset.neutralWhite.color
         }
     }
 
@@ -75,7 +77,9 @@ final class Bubbler {
             imageBubble.dateLabel.textColor = Asset.neutralWhite.color
             imageBubble.progressLabel.textColor = Asset.neutralWhite.color
         case .receivingFailed:
-            fatalError()
+            imageBubble.backgroundColor = Asset.accentWarning.color
+            imageBubble.dateLabel.textColor = Asset.neutralWhite.color
+            imageBubble.progressLabel.textColor = Asset.neutralWhite.color
         }
     }
 
@@ -118,7 +122,10 @@ final class Bubbler {
             bubble.dateLabel.textColor = Asset.neutralWhite.color
             roundButtonColor = Asset.neutralWhite.color
         case .receivingFailed:
-            fatalError()
+            bubble.backgroundColor = Asset.accentWarning.color
+            bubble.textView.textColor = Asset.neutralWhite.color
+            bubble.dateLabel.textColor = Asset.neutralWhite.color
+            roundButtonColor = Asset.neutralWhite.color
         }
 
         let attrString = NSAttributedString(
@@ -182,7 +189,13 @@ final class Bubbler {
             bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
             bubble.replyView.container.backgroundColor = Asset.brandLight.color
         case .receivingFailed:
-            fatalError()
+            bubble.senderLabel.removeFromSuperview()
+            bubble.textView.textColor = Asset.neutralWhite.color
+            bubble.backgroundColor = Asset.accentWarning.color
+            bubble.dateLabel.textColor = Asset.neutralWhite.color
+            roundButtonColor = Asset.neutralWhite.color
+            bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
+            bubble.replyView.container.backgroundColor = Asset.brandLight.color
         }
 
         let attrString = NSAttributedString(
@@ -239,7 +252,13 @@ final class Bubbler {
             bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
             bubble.replyView.container.backgroundColor = Asset.brandLight.color
         case .receivingFailed:
-            fatalError()
+            bubble.senderLabel.removeFromSuperview()
+            bubble.textView.textColor = Asset.neutralWhite.color
+            bubble.backgroundColor = Asset.accentWarning.color
+            bubble.dateLabel.textColor = Asset.neutralWhite.color
+            roundButtonColor = Asset.neutralWhite.color
+            bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
+            bubble.replyView.container.backgroundColor = Asset.brandLight.color
         }
 
         let attrString = NSAttributedString(
@@ -287,7 +306,11 @@ final class Bubbler {
             bubble.dateLabel.textColor = Asset.neutralWhite.color
             roundButtonColor = Asset.neutralWhite.color
         case .receivingFailed:
-            fatalError()
+            bubble.senderLabel.removeFromSuperview()
+            bubble.backgroundColor = Asset.accentWarning.color
+            bubble.textView.textColor = Asset.neutralWhite.color
+            bubble.dateLabel.textColor = Asset.neutralWhite.color
+            roundButtonColor = Asset.neutralWhite.color
         }
 
         let attrString = NSAttributedString(

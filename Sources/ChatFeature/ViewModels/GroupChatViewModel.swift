@@ -109,6 +109,6 @@ final class GroupChatViewModel {
     func didRequestReply(_ message: Message) {
         guard let networkId = message.networkId else { return }
         stagedReply = Reply(messageId: networkId, senderId: message.senderId)
-        replySubject.send(getReplyContent(for: message.id))
+        replySubject.send(getReplyContent(for: networkId))
     }
 }

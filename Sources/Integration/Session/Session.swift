@@ -90,23 +90,39 @@ public final class Session: SessionType {
 
         self.client = client
 
-        let oldPath = NSSearchPathForDirectoriesInDomains(
+        let legacyOldPath = NSSearchPathForDirectoriesInDomains(
             .documentDirectory, .userDomainMask, true
         )[0].appending("/xxmessenger.sqlite")
 
-        let newPath = FileManager.default
+        let legacyPath = FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
             .appendingPathComponent("database")
             .appendingPathExtension("sqlite").path
 
-        try Migrator.live()(
-            try .init(path: oldPath),
-            to: try .onDisk(path: newPath),
-            myContactId: client.bindings.myId,
-            meMarshaled: client.bindings.meMarshalled
-        )
+        let dbExistsInLegacyOldPath = FileManager.default.fileExists(atPath: legacyOldPath)
+        let dbExistsInLegacyPath = FileManager.default.fileExists(atPath: legacyPath)
 
-        dbManager = try Database.onDisk(path: newPath)
+        if dbExistsInLegacyOldPath && !dbExistsInLegacyPath {
+            try? FileManager.default.moveItem(atPath: legacyOldPath, toPath: legacyPath)
+        }
+
+        let dbPath = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
+            .appendingPathComponent("xxm_database")
+            .appendingPathExtension("sqlite").path
+
+        dbManager = try Database.onDisk(path: dbPath)
+
+        if dbExistsInLegacyPath {
+            try Migrator.live()(
+                try .init(path: legacyPath),
+                to: dbManager,
+                myContactId: client.bindings.myId,
+                meMarshaled: client.bindings.meMarshalled
+            )
+
+            try FileManager.default.moveItem(atPath: legacyPath, toPath: legacyPath.appending("-backup"))
+        }
 
         let report = try! JSONDecoder().decode(BackupReport.self, from: backupData!)
 
@@ -129,23 +145,39 @@ public final class Session: SessionType {
         let network = try! DependencyInjection.Container.shared.resolve() as XXNetworking
         self.client = try network.newClient(ndf: ndf)
 
-        let oldPath = NSSearchPathForDirectoriesInDomains(
+        let legacyOldPath = NSSearchPathForDirectoriesInDomains(
             .documentDirectory, .userDomainMask, true
         )[0].appending("/xxmessenger.sqlite")
 
-        let newPath = FileManager.default
+        let legacyPath = FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
             .appendingPathComponent("database")
             .appendingPathExtension("sqlite").path
 
-        try Migrator.live()(
-            try .init(path: oldPath),
-            to: try .onDisk(path: newPath),
-            myContactId: client.bindings.myId,
-            meMarshaled: client.bindings.meMarshalled
-        )
+        let dbExistsInLegacyOldPath = FileManager.default.fileExists(atPath: legacyOldPath)
+        let dbExistsInLegacyPath = FileManager.default.fileExists(atPath: legacyPath)
 
-        dbManager = try Database.onDisk(path: newPath)
+        if dbExistsInLegacyOldPath && !dbExistsInLegacyPath {
+            try? FileManager.default.moveItem(atPath: legacyOldPath, toPath: legacyPath)
+        }
+
+        let dbPath = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
+            .appendingPathComponent("xxm_database")
+            .appendingPathExtension("sqlite").path
+
+        dbManager = try Database.onDisk(path: dbPath)
+
+        if dbExistsInLegacyPath {
+            try Migrator.live()(
+                try .init(path: legacyPath),
+                to: dbManager,
+                myContactId: client.bindings.myId,
+                meMarshaled: client.bindings.meMarshalled
+            )
+
+            try FileManager.default.moveItem(atPath: legacyPath, toPath: legacyPath.appending("-backup"))
+        }
 
         try continueInitialization()
     }
@@ -211,8 +243,6 @@ public final class Session: SessionType {
                     .filter { $0.fileTransferId != nil }
                     .compactMap(\.fileTransferId))))
         else { return }
-
-        // What would be a good way to do this?
 
         let pairs = unfinishedSendingMessages.map { message -> (Message, FileTransfer) in
             let transfer = unfinishedSendingTransfers.first { ft in

@@ -94,12 +94,15 @@ extension ChatListTableController {
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         switch rows[indexPath.row] {
-        case .group:
-            fatalError()
+        case .group(let group):
+            if let groupInfo = viewModel.groupInfo(from: group) {
+                coordinator.toGroupChat(with: groupInfo, from: self)
+            }
 
-        case .groupChat:
-            fatalError()
-            //coordinator.toGroupChat(with: info, from: self)
+        case .groupChat(let info):
+            if let groupInfo = viewModel.groupInfo(from: info.group) {
+                coordinator.toGroupChat(with: groupInfo, from: self)
+            }
 
         case .contactChat(let info):
             guard info.contact.authStatus == .friend else { return }
@@ -115,8 +118,13 @@ extension ChatListTableController {
         let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: ChatListCell.self)
 
         switch rows[indexPath.row] {
-        case .group:
-            fatalError()
+        case .group(let group):
+            cell.setupGroup(
+                name: group.name,
+                date: group.createdAt,
+                preview: nil,
+                hasUnread: false
+            )
 
         case .groupChat(let info):
             cell.setupGroup(
@@ -146,8 +154,11 @@ extension ChatListTableController {
         let actionClosure: () -> Void
 
         switch item {
-        case .group:
-            fatalError()
+        case .group(let group):
+            title = Localized.ChatList.DeleteGroup.title
+            subtitle = Localized.ChatList.DeleteGroup.subtitle
+            actionTitle = Localized.ChatList.DeleteGroup.action
+            actionClosure = { [weak viewModel] in viewModel?.leave(group) }
 
         case .contactChat(let info):
             title = Localized.ChatList.Delete.title

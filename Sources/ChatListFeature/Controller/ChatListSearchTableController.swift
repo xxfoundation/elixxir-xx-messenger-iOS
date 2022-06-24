@@ -34,8 +34,13 @@ final class ChatSearchTableController: UITableViewController {
             switch item {
             case .chat(let info):
                 switch info {
-                case .group:
-                    fatalError()
+                case .group(let group):
+                    cell.setupGroup(
+                        name: group.name,
+                        date: group.createdAt,
+                        preview: nil,
+                        hasUnread: false
+                    )
 
                 case .groupChat(let groupChatInfo):
                     cell.setupGroup(
@@ -57,7 +62,7 @@ final class ChatSearchTableController: UITableViewController {
 
             case .connection(let contact):
                 cell.setupContact(
-                    name: contact.nickname ?? contact.username!,
+                    name: (contact.nickname ?? contact.username) ?? "",
                     image: contact.photo,
                     date: nil,
                     hasUnread: false,
@@ -101,13 +106,16 @@ extension ChatSearchTableController {
             switch item {
             case .chat(let chatInfo):
                 switch chatInfo {
-                case .group:
-                    fatalError()
+                case .group(let group):
+                    if let groupInfo = viewModel.groupInfo(from: group) {
+                        coordinator.toGroupChat(with: groupInfo, from: self)
+                    }
 
-                case .groupChat:
-                    fatalError()
+                case .groupChat(let info):
+                    if let groupInfo = viewModel.groupInfo(from: info.group) {
+                        coordinator.toGroupChat(with: groupInfo, from: self)
+                    }
 
-                    //coordinator.toGroupChat(with: info, from: self)
                 case .contactChat(let info):
                     guard info.contact.authStatus == .friend else { return }
                     coordinator.toSingleChat(with: info.contact, from: self)

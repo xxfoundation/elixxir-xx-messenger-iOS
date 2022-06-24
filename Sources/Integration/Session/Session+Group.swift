@@ -58,9 +58,9 @@ extension Session {
             _ = try? dbManager.saveMessage(.init(
                 networkId: nil,
                 senderId: group.leaderId,
-                recipientId: client.bindings.myId,
+                recipientId: nil,
                 groupId: group.id,
-                date: Date(),
+                date: group.createdAt,
                 status: .received,
                 isUnread: true,
                 text: welcome,
