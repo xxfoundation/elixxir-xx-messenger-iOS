@@ -258,7 +258,7 @@ extension SearchController {
             spacingAfter: 20
         )
 
-        var subtitleFragment = "Share your information with #\(contact.username)"
+        var subtitleFragment = "Share your information with #\(contact.username ?? "")"
 
         if let email = contact.email {
             subtitleFragment.append(contentsOf: " (\(email))#")

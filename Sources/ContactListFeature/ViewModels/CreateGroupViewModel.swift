@@ -44,6 +44,7 @@ final class CreateGroupViewModel {
     init() {
         session.dbManager.fetchContactsPublisher(.init(authStatus: [.friend]))
             .assertNoFailure()
+            .map { $0.filter { $0.id != self.session.myId }}
             .map { $0.sorted(by: { $0.username! < $1.username! })}
             .sink { [unowned self] in
                 allContacts = $0
