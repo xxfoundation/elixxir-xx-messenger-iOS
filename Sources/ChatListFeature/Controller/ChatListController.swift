@@ -7,12 +7,6 @@ import XXModels
 import MenuFeature
 import DependencyInjection
 
-extension Contact: Hashable {
-    public func hash(into hasher: inout Hasher) {
-        hasher.combine(id)
-    }
-}
-
 public final class ChatListController: UIViewController {
     @Dependency private var coordinator: ChatListCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
@@ -122,7 +116,8 @@ public final class ChatListController: UIViewController {
             collectionView: screenView.listContainerView.collectionView
         ) { collectionView, indexPath, contact in
             let cell: ChatListRecentContactCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
-            cell.setup(title: contact.nickname ?? contact.username!, image: contact.photo)
+            let title = (contact.nickname ?? contact.username) ?? ""
+            cell.setup(title: title, image: contact.photo)
             return cell
         }
 

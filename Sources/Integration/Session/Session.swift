@@ -184,7 +184,7 @@ public final class Session: SessionType {
             guard self.hasRunningTasks == false else { throw NSError.create("") }
         }.finalCatch { _ in fatalError("Couldn't delete account because network is not stopping") }
 
-        try? dbManager.drop()
+        try! dbManager.drop()
         FileManager.xxCleanup()
 
         email = nil

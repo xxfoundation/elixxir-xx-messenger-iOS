@@ -18,7 +18,7 @@ extension Session {
                     let url = try FileManager.store(
                         data: compressedImage,
                         name: "image_\(Date.asTimestamp)",
-                        type: "png"
+                        type: "jpeg"
                     )
 
                     self.sendFile(url: url, to: contact)

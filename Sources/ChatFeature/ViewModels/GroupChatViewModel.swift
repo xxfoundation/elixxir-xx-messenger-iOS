@@ -93,17 +93,14 @@ final class GroupChatViewModel {
             return ("[DELETED]", "[DELETED]")
         }
 
-        guard let contact = try? session.dbManager.fetchContacts(.init(id: [message.senderId])).first else {
-            return ("You", message.text)
-        }
-
-        let contactTitle = (contact.nickname ?? contact.username) ?? "Fetching username..."
-        return (contactTitle, message.text)
+        return (getName(from: message.senderId), message.text)
     }
 
     func getName(from senderId: Data) -> String {
+        guard senderId != session.myId else { return "You" }
+
         guard let contact = try? session.dbManager.fetchContacts(.init(id: [senderId])).first else {
-            return "You"
+            return "[DELETED]"
         }
 
         return (contact.nickname ?? contact.username) ?? "Fetching username..."
@@ -111,20 +108,7 @@ final class GroupChatViewModel {
 
     func didRequestReply(_ message: Message) {
         guard let networkId = message.networkId else { return }
-
-        let senderTitle: String = {
-            if message.senderId == session.myId {
-                return "You"
-            } else {
-                guard let contact = try? session.dbManager.fetchContacts(.init(id: [message.senderId])).first else {
-                    return "Error"
-                }
-
-                return (contact.nickname ?? contact.username) ?? "Fetching username..."
-            }
-        }()
-
         stagedReply = Reply(messageId: networkId, senderId: message.senderId)
-        replySubject.send((senderTitle, message.text))
+        replySubject.send(getReplyContent(for: message.id))
     }
 }

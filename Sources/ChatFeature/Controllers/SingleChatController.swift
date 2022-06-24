@@ -160,9 +160,11 @@ public final class SingleChatController: UIViewController {
     private func setupNavigationBar(contact: Contact) {
         screenView.set(name: contact.nickname ?? contact.username!)
         avatarView.snp.makeConstraints { $0.width.height.equalTo(35) }
-        avatarView.setupProfile(title: contact.nickname ?? contact.username!, image: contact.photo, size: .small)
 
-        nameLabel.text = contact.nickname ?? contact.username
+        let title = (contact.nickname ?? contact.username) ?? ""
+        avatarView.setupProfile(title: title, image: contact.photo, size: .small)
+
+        nameLabel.text = title
         nameLabel.textColor = Asset.neutralActive.color
         nameLabel.font = Fonts.Mulish.semiBold.font(size: 18.0)
 
