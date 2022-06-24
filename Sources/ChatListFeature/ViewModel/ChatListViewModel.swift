@@ -130,7 +130,10 @@ final class ChatListViewModel {
                     authStatus: [.friend]
                 ),
                 groupChatInfoQuery: GroupChatInfo.Query(),
-                groupQuery: Group.Query(withMessages: false)
+                groupQuery: Group.Query(
+                    withMessages: false,
+                    authStatus: [.participating]
+                )
             ))
             .assertNoFailure()
             .sink { [unowned self] in chatsSubject.send($0) }
