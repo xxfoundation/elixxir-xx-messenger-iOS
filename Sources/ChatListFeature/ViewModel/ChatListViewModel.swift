@@ -123,7 +123,15 @@ final class ChatListViewModel {
     private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
 
     init() {
-        session.dbManager.fetchChatInfosPublisher(.init(userId: session.myId))
+        session.dbManager.fetchChatInfosPublisher(
+            ChatInfo.Query(
+                contactChatInfoQuery: .init(
+                    userId: session.myId,
+                    authStatus: [.friend]
+                ),
+                groupChatInfoQuery: GroupChatInfo.Query(),
+                groupQuery: Group.Query(withMessages: false)
+            ))
             .assertNoFailure()
             .sink { [unowned self] in chatsSubject.send($0) }
             .store(in: &cancellables)
