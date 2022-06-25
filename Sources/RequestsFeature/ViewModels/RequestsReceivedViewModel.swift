@@ -60,6 +60,7 @@ final class RequestsReceivedViewModel {
 
         let contactsQuery = Contact.Query(
             authStatus: [
+                .friend,
                 .hidden,
                 .verified,
                 .verificationFailed,
@@ -80,11 +81,11 @@ final class RequestsReceivedViewModel {
             var snapshot = NSDiffableDataSourceSnapshot<Section, RequestReceived>()
             snapshot.appendSections([.appearing, .hidden])
 
-            let requests = data.0.map(Request.group) + data.1.map(Request.contact)
+            let contactsFilteringFriends = data.1.filter { $0.authStatus != .friend }
+            let requests = data.0.map(Request.group) + contactsFilteringFriends.map(Request.contact)
             let receivedRequests = requests.map { request -> RequestReceived in
                 switch request {
                 case let .group(group):
-
                     func leaderName() -> String {
                         if let leader = data.1.first(where: { $0.id == group.leaderId }) {
                             return (leader.nickname ?? leader.username) ?? "Leader is not a friend"
