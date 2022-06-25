@@ -129,7 +129,9 @@ final class ChatListViewModel {
                     userId: session.myId,
                     authStatus: [.friend]
                 ),
-                groupChatInfoQuery: GroupChatInfo.Query(),
+                groupChatInfoQuery: GroupChatInfo.Query(
+                    authStatus: [.participating]
+                ),
                 groupQuery: Group.Query(
                     withMessages: false,
                     authStatus: [.participating]

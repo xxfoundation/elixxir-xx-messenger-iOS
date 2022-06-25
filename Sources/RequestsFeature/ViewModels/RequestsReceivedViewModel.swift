@@ -174,6 +174,7 @@ final class RequestsReceivedViewModel {
                         .filter { $0.username != nil }
                         .map {
                             DrawerTableCellModel(
+                                id: $0.id,
                                 title: $0.nickname ?? $0.username!,
                                 image: $0.photo,
                                 isCreator: $0.id == group.leaderId,
@@ -185,6 +186,7 @@ final class RequestsReceivedViewModel {
                         .filter { $0.username == nil }
                         .map {
                             DrawerTableCellModel(
+                                id: $0.id,
                                 title: "Fetching username...",
                                 image: $0.photo,
                                 isCreator: $0.id == group.leaderId,
