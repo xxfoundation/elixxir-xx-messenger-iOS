@@ -46,16 +46,16 @@ extension Session {
     func processGroupCreation(_ group: Group, memberIds: [Data], welcome: String?) -> GroupInfo {
         /// Save the group
         ///
-        _ = try? dbManager.saveGroup(group)
+        _ = try! dbManager.saveGroup(group)
 
         /// Save the members
         ///
-        memberIds.forEach { _ = try? dbManager.saveGroupMember(.init(groupId: group.id, contactId: $0)) }
+        memberIds.forEach { _ = try! dbManager.saveGroupMember(.init(groupId: group.id, contactId: $0)) }
 
         /// Save the welcome message (if any)
         ///
         if let welcome = welcome {
-            _ = try? dbManager.saveMessage(.init(
+            _ = try! dbManager.saveMessage(.init(
                 networkId: nil,
                 senderId: group.leaderId,
                 recipientId: nil,
@@ -79,11 +79,8 @@ extension Session {
 
         scanStrangers {}
 
-        guard let info = try? dbManager.fetchGroupInfos(.init(groupId: group.id)).first else {
-            fatalError()
-        }
-
-        return info
+        let info = try! dbManager.fetchGroupInfos(.init(groupId: group.id)).first
+        return info!
     }
 }
 
