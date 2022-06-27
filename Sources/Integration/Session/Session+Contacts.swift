@@ -124,7 +124,7 @@ extension Session {
 
         var contactToOperate: Contact!
 
-        if contact.authStatus == .requestFailed || contact.authStatus == .confirmationFailed {
+        if [.requestFailed, .confirmationFailed, .stranger].contains(contact.authStatus) {
             contactToOperate = contact
         } else {
             if let _ = try? dbManager.fetchContacts(.init(id: [contact.id])).first {

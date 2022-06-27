@@ -195,6 +195,8 @@ public final class Session: SessionType {
 
         let query = Contact.Query(authStatus: [.verificationInProgress])
         _ = try? dbManager.bulkUpdateContacts(query, .init(authStatus: .verificationFailed))
+
+        scanStrangers {}
     }
 
     public func setDummyTraffic(status: Bool) {
