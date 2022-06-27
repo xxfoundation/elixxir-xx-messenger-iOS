@@ -39,7 +39,7 @@ final class ChatSearchTableController: UITableViewController {
                         name: group.name,
                         date: group.createdAt,
                         preview: nil,
-                        hasUnread: false
+                        unreadCount: 0
                     )
 
                 case .groupChat(let groupChatInfo):
@@ -47,7 +47,7 @@ final class ChatSearchTableController: UITableViewController {
                         name: groupChatInfo.group.name,
                         date: groupChatInfo.lastMessage.date,
                         preview: groupChatInfo.lastMessage.text,
-                        hasUnread: groupChatInfo.lastMessage.isUnread
+                        unreadCount: groupChatInfo.unreadCount
                     )
 
                 case .contactChat(let contactChatInfo):
@@ -55,7 +55,7 @@ final class ChatSearchTableController: UITableViewController {
                         name: (contactChatInfo.contact.nickname ?? contactChatInfo.contact.username) ?? "",
                         image: contactChatInfo.contact.photo,
                         date: contactChatInfo.lastMessage.date,
-                        hasUnread: contactChatInfo.lastMessage.isUnread,
+                        unreadCount: contactChatInfo.unreadCount,
                         preview: contactChatInfo.lastMessage.text
                     )
                 }
@@ -65,7 +65,7 @@ final class ChatSearchTableController: UITableViewController {
                     name: (contact.nickname ?? contact.username) ?? "",
                     image: contact.photo,
                     date: nil,
-                    hasUnread: false,
+                    unreadCount: 0,
                     preview: contact.username ?? ""
                 )
             }

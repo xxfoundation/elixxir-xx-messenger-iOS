@@ -4,6 +4,7 @@ import Shared
 final class ChatListCell: UITableViewCell {
     private let titleLabel = UILabel()
     private let unreadView = UIView()
+    private let unreadCountLabel = UILabel()
     private let previewLabel = UILabel()
     private let dateLabel = UILabel()
     private let avatarView = AvatarView()
@@ -31,10 +32,11 @@ final class ChatListCell: UITableViewCell {
         backgroundColor = Asset.neutralWhite.color
         dateLabel.textColor = Asset.neutralWeak.color
         titleLabel.textColor = Asset.neutralActive.color
+        unreadCountLabel.textColor = Asset.neutralWhite.color
 
         dateLabel.font = Fonts.Mulish.semiBold.font(size: 13.0)
         titleLabel.font = Fonts.Mulish.semiBold.font(size: 16.0)
-
+        unreadCountLabel.font = Fonts.Mulish.semiBold.font(size: 13.0)
 
         timer = Timer.scheduledTimer(withTimeInterval: 59, repeats: true) { [weak self] _ in
             self?.updateTimeAgoLabel()
@@ -47,11 +49,16 @@ final class ChatListCell: UITableViewCell {
         contentView.addSubview(avatarView)
         contentView.addSubview(previewLabel)
         contentView.addSubview(dateLabel)
+        unreadView.addSubview(unreadCountLabel)
 
         avatarView.snp.makeConstraints {
             $0.top.equalToSuperview().offset(14)
             $0.left.equalToSuperview().offset(24)
             $0.width.height.equalTo(48)
+        }
+
+        unreadCountLabel.snp.makeConstraints {
+            $0.center.equalToSuperview()
         }
 
         titleLabel.snp.makeConstraints {
@@ -85,6 +92,7 @@ final class ChatListCell: UITableViewCell {
         super.prepareForReuse()
         lastDate = nil
         titleLabel.text = nil
+        unreadCountLabel.text = nil
         previewLabel.attributedText = nil
         avatarView.prepareForReuse()
     }
@@ -99,13 +107,14 @@ final class ChatListCell: UITableViewCell {
         name: String,
         image: Data?,
         date: Date?,
-        hasUnread: Bool,
+        unreadCount: Int,
         preview: String
     ) {
         titleLabel.text = name
         setPreview(string: preview)
         avatarView.setupProfile(title: name, image: image, size: .large)
-        unreadView.backgroundColor = hasUnread ? Asset.brandPrimary.color : .clear
+        unreadCountLabel.text = "\(unreadCount)"
+        unreadView.backgroundColor = unreadCount > 0 ? Asset.brandPrimary.color : .clear
 
         if let date = date {
             lastDate = date
@@ -118,13 +127,14 @@ final class ChatListCell: UITableViewCell {
         name: String,
         date: Date,
         preview: String?,
-        hasUnread: Bool
+        unreadCount: Int
     ) {
         lastDate = date
         titleLabel.text = name
         setPreview(string: preview)
         avatarView.setupGroup(size: .large)
-        unreadView.backgroundColor = hasUnread ? Asset.brandPrimary.color : .clear
+        unreadCountLabel.text = "\(unreadCount)"
+        unreadView.backgroundColor = unreadCount > 0 ? Asset.brandPrimary.color : .clear
     }
 
     private func setPreview(string: String?) {

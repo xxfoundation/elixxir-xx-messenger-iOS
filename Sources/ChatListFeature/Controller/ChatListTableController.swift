@@ -123,7 +123,7 @@ extension ChatListTableController {
                 name: group.name,
                 date: group.createdAt,
                 preview: nil,
-                hasUnread: false
+                unreadCount: 0
             )
 
         case .groupChat(let info):
@@ -131,7 +131,7 @@ extension ChatListTableController {
                 name: info.group.name,
                 date: info.lastMessage.date,
                 preview: info.lastMessage.text,
-                hasUnread: info.lastMessage.isUnread
+                unreadCount: info.unreadCount
             )
 
         case .contactChat(let info):
@@ -139,7 +139,7 @@ extension ChatListTableController {
                 name: (info.contact.nickname ?? info.contact.username) ?? "",
                 image: info.contact.photo,
                 date: info.lastMessage.date,
-                hasUnread: info.lastMessage.isUnread,
+                unreadCount: info.unreadCount,
                 preview: info.lastMessage.text
             )
         }
