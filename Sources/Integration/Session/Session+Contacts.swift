@@ -200,6 +200,29 @@ extension Session {
         }
 
         try client.bindings.removeContact(contact.marshaled!)
-        try dbManager.deleteContact(contact)
+
+        /// Currently this cascades into deleting
+        /// all messages w/ contact.id == senderId
+        /// But this shouldn't be the always the case
+        /// because if we have a group / this contact
+        /// the messages will be gone as well.
+        ///
+        /// Suggestion: If there's a group where this user belongs to
+        /// we will just cleanup the contact model stored on the db
+        /// leaving only username and id which are the equivalent to
+        /// .stranger contacts.
+        ///
+        //try dbManager.deleteContact(contact)
+
+        _ = try? dbManager.deleteMessages(Message.Query(chat: .direct(myId, contact.id)))
+        var contact = contact
+        contact.email = nil
+        contact.phone = nil
+        contact.photo = nil
+        contact.isRecent = false
+        contact.marshaled = nil
+        contact.authStatus = .stranger
+        contact.nickname = contact.username
+        _ = try? dbManager.saveContact(contact)
     }
 }

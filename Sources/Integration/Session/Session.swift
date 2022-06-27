@@ -305,9 +305,11 @@ public final class Session: SessionType {
 
     private func setupBindings() {
         client.requests
-            .sink { [unowned self] in
-                if let _ = try? dbManager.fetchContacts(.init(id: [$0.id])).first {
-                    return
+            .sink { [unowned self] contact in
+                let query = Contact.Query(id: [contact.id])
+
+                if let prexistent = try? dbManager.fetchContacts(query).first {
+                    guard prexistent.authStatus == .stranger else { return }
                 }
 
                 if self.inappnotifications {
@@ -315,7 +317,7 @@ public final class Session: SessionType {
                     DeviceFeedback.shake(.notification)
                 }
 
-                verify(contact: $0)
+                verify(contact: contact)
             }.store(in: &cancellables)
 
         client.requestsSent
