@@ -115,9 +115,17 @@ extension Session {
     private func send(message: Message) {
         var message = message
 
+        var reply: Reply?
+        if let replyId = message.replyMessageId,
+           let replyMessage = try? dbManager.fetchMessages(Message.Query(networkId: replyId)).first {
+            reply = Reply(messageId: replyId, senderId: replyMessage.senderId)
+        }
+
+        let payloadData = Payload(text: message.text, reply: reply).asData()
+
         DispatchQueue.global().async { [weak self] in
             guard let self = self else { return }
-            switch self.client.bindings.send(message.text.data(using: .utf8)!, to: message.recipientId!) {
+            switch self.client.bindings.send(payloadData, to: message.recipientId!) {
             case .success(let report):
                 message.roundURL = report.roundURL
 

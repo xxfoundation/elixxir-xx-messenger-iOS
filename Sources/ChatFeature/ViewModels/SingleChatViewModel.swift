@@ -204,10 +204,10 @@ final class SingleChatViewModel {
         }
 
         guard let contact = try? session.dbManager.fetchContacts(.init(id: [message.senderId])).first else {
-            return ("You", message.text)
+            fatalError()
         }
 
-        let contactTitle = (contact.nickname ?? contact.username) ?? "Fetching username..."
+        let contactTitle = (contact.nickname ?? contact.username) ?? "You"
         return (contactTitle, message.text)
     }
 

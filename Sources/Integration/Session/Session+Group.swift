@@ -116,10 +116,18 @@ extension Session {
         guard let manager = client.groupManager else { fatalError("A group manager was not created") }
         var message = message
 
+        var reply: Reply?
+        if let replyId = message.replyMessageId,
+           let replyMessage = try? dbManager.fetchMessages(Message.Query(networkId: replyId)).first {
+            reply = Reply(messageId: replyId, senderId: replyMessage.senderId)
+        }
+
+        let payloadData = Payload(text: message.text, reply: reply).asData()
+
         DispatchQueue.global().async { [weak self] in
             guard let self = self else { return }
 
-            switch manager.send(message.text.data(using: .utf8)!, to: message.groupId!) {
+            switch manager.send(payloadData, to: message.groupId!) {
             case .success((let roundId, let uniqueId, let roundURL)):
                 message.roundURL = roundURL
 
