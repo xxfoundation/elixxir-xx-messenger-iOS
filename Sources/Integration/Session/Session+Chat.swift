@@ -40,10 +40,12 @@ extension Session {
         DispatchQueue.global().async { [weak self] in
             guard let self = self else { return }
 
-            var tid: Data!
+            var tid: Data?
 
             do {
                 tid = try manager.uploadFile(url: url, to: contact.id) { completed, send, arrived, total, error in
+                    guard let tid = tid else { return }
+
                     if completed {
                         self.endTransferWith(tid: tid)
                     } else {
@@ -55,7 +57,22 @@ extension Session {
                     }
                 }
 
+                guard let tid = tid else { return }
+
                 let content = url.pathExtension == "m4a" ? "a voice message" : "an image"
+
+                let transfer = FileTransfer(
+                    id: tid,
+                    contactId: contact.id,
+                    name: url.deletingPathExtension().lastPathComponent,
+                    type: url.pathExtension,
+                    data: try? Data(contentsOf: url),
+                    progress: 0.0,
+                    isIncoming: false,
+                    createdAt: Date()
+                )
+
+                _ = try? self.dbManager.saveFileTransfer(transfer)
 
                 let message = Message(
                     networkId: nil,

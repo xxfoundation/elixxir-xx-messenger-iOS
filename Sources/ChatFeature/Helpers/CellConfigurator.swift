@@ -236,7 +236,13 @@ extension CellFactory {
                 Bubbler.build(imageBubble: cell.leftView, with: item, with: ft)
                 cell.canReply = false
                 cell.performReply = {}
-                cell.leftView.imageView.image = UIImage(data: ft.data!)
+
+                if let data = ft.data {
+                    cell.leftView.imageView.image = UIImage(data: data)
+                } else {
+                    cell.leftView.imageView.image = Asset.transferImagePlaceholder.image
+                }
+
                 return cell
             }
         )

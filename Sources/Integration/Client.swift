@@ -22,6 +22,7 @@ public class Client {
     var messages: AnyPublisher<Message, Never> { messagesSubject.eraseToAnyPublisher() }
     var requests: AnyPublisher<Contact, Never> { requestsSubject.eraseToAnyPublisher() }
     var events: AnyPublisher<BackendEvent, Never> { eventsSubject.eraseToAnyPublisher() }
+    var transfers: AnyPublisher<FileTransfer, Never> { transfersSubject.eraseToAnyPublisher() }
     var requestsSent: AnyPublisher<Contact, Never> { requestsSentSubject.eraseToAnyPublisher() }
     var confirmations: AnyPublisher<Contact, Never> { confirmationsSubject.eraseToAnyPublisher() }
     var groupRequests: AnyPublisher<(Group, [Data], String?), Never> { groupRequestsSubject.eraseToAnyPublisher() }

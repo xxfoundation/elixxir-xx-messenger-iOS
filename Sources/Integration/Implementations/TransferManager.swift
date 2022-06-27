@@ -47,9 +47,7 @@ extension BindingsFileTransfer: TransferManagerInterface {
             callback(completed, sent, arrived, total, error)
         }
 
-        guard let file = FileManager.retrieve(name: url.lastPathComponent, type: url.pathExtension) else {
-            fatalError()
-        }
+        guard let file = try? Data(contentsOf: url) else { fatalError() }
 
         return try send(
             url.lastPathComponent,
