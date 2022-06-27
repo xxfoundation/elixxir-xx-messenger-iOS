@@ -188,15 +188,16 @@ public final class Session: SessionType {
 
         networkMonitor.statusPublisher
             .filter { $0 == .available }.first()
-            .sink { [unowned self] _ in client.bindings.replayRequests() }
+            .sink { [unowned self] _ in
+                client.bindings.replayRequests()
+                scanStrangers {}
+            }
             .store(in: &cancellables)
 
         registerUnfinishedTransfers()
 
         let query = Contact.Query(authStatus: [.verificationInProgress])
         _ = try? dbManager.bulkUpdateContacts(query, .init(authStatus: .verificationFailed))
-
-        scanStrangers {}
     }
 
     public func setDummyTraffic(status: Bool) {
