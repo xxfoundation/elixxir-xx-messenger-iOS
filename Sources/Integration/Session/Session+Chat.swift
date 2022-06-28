@@ -124,12 +124,16 @@ extension Session {
             message.date = Date()
 
             if let message = try? dbManager.saveMessage(message) {
-                send(message: message)
+                if let recipientId = message.recipientId {
+                    send(message: message)
+                } else {
+                    send(groupMessage: message)
+                }
             }
         }
     }
 
-    private func send(message: Message) {
+    func send(message: Message) {
         var message = message
 
         var reply: Reply?

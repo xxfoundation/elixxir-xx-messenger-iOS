@@ -25,17 +25,49 @@ extension Session {
         members: [Contact],
         _ completion: @escaping (Result<GroupInfo, Error>) -> Void
     ) {
-        guard let manager = client.groupManager else { fatalError("A group manager was not created") }
+        guard let manager = client.groupManager else {
+            fatalError("A group manager was not created")
+        }
 
-        let me = client.bindings.meMarshalled
-        let memberIds = members.map { $0.id }
-
-        manager.create(me: me, name: name, welcome: welcome, with: memberIds) { [weak self] in
+        manager.create(
+            me: myId,
+            name: name,
+            welcome: welcome,
+            with: members.map { $0.id }) { [weak self] result in
             guard let self = self else { return }
 
-            switch $0 {
+            switch result {
             case .success(let group):
-                completion(.success(self.processGroupCreation(group, memberIds: memberIds, welcome: welcome)))
+                try! self.dbManager.saveGroup(group)
+
+                members
+                    .map { GroupMember(groupId: group.id, contactId: $0.id) }
+                    .forEach { try! self.dbManager.saveGroupMember($0) }
+
+                // TODO: Add saveBulkGroupMembers to the database
+
+                if let welcome = welcome {
+                    let message = Message(
+                        networkId: nil,
+                        senderId: self.myId,
+                        recipientId: nil,
+                        groupId: group.id,
+                        date: group.createdAt,
+                        status: .received,
+                        isUnread: false,
+                        text: welcome,
+                        replyMessageId: nil,
+                        roundURL: nil,
+                        fileTransferId: nil
+                    )
+
+                    try! self.dbManager.saveMessage(message)
+                }
+
+                let query = GroupInfo.Query(groupId: group.id)
+                let info = try! self.dbManager.fetchGroupInfos(query).first
+                completion(.success(info!))
+
             case .failure(let error):
                 completion(.failure(error))
             }
@@ -48,9 +80,35 @@ extension Session {
         ///
         _ = try! dbManager.saveGroup(group)
 
-        /// Save the members
+        /// Which of those members are not my friends?
         ///
-        memberIds.forEach { _ = try! dbManager.saveGroupMember(.init(groupId: group.id, contactId: $0)) }
+        let friendsParticipating = try! dbManager.fetchContacts(Contact.Query(id: Set(memberIds)))
+
+        /// Save the strangers as contacts
+        ///
+        let friendIds = friendsParticipating.map(\.id)
+        memberIds.forEach {
+            if !friendIds.contains($0) {
+                try! dbManager.saveContact(.init(
+                    id: $0,
+                    marshaled: nil,
+                    username: nil,
+                    email: nil,
+                    phone: nil,
+                    nickname: nil,
+                    photo: nil,
+                    authStatus: .stranger,
+                    isRecent: false,
+                    createdAt: Date()
+                ))
+            }
+        }
+
+        /// Save group members relation
+        ///
+        memberIds.forEach {
+            try! dbManager.saveGroupMember(.init(groupId: group.id, contactId: $0))
+        }
 
         /// Save the welcome message (if any)
         ///
@@ -70,9 +128,8 @@ extension Session {
             ))
         }
 
-        /// Buzz if the group was not created by me
-        ///
-        if group.leaderId != client.bindings.myId, inappnotifications {
+
+        if inappnotifications {
             DeviceFeedback.sound(.contactAdded)
             DeviceFeedback.shake(.notification)
         }
@@ -103,15 +160,15 @@ extension Session {
 
         do {
             message = try dbManager.saveMessage(message)
-            send(message: message)
+            send(groupMessage: message)
         } catch {
             log(string: error.localizedDescription, type: .error)
         }
     }
 
-    private func send(message: Message) {
+    func send(groupMessage: Message) {
         guard let manager = client.groupManager else { fatalError("A group manager was not created") }
-        var message = message
+        var message = groupMessage
 
         var reply: Reply?
         if let replyId = message.replyMessageId,
