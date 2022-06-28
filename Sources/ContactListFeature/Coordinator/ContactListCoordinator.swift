@@ -25,6 +25,7 @@ public struct ContactListCoordinator: ContactListCoordinating {
     var sidePresenter: Presenting = SideMenuPresenter()
     var bottomPresenter: Presenting = BottomPresenter()
     var fullscreenPresenter: Presenting = FullscreenPresenter()
+    var replacePresenter: Presenting = ReplacePresenter(mode: .replaceLast)
 
     var scanFactory: () -> UIViewController
     var searchFactory: () -> UIViewController
@@ -104,7 +105,7 @@ public extension ContactListCoordinator {
 
     func toGroupChat(with info: GroupInfo, from parent: UIViewController) {
         let screen = groupChatFactory(info)
-        pushPresenter.present(screen, from: parent)
+        replacePresenter.present(screen, from: parent)
     }
 
     func toSideMenu(from parent: UIViewController) {
