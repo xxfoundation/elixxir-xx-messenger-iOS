@@ -247,12 +247,12 @@ public final class Session: SessionType {
                     .compactMap(\.fileTransferId))))
         else { return }
 
-        let pairs = unfinishedSendingMessages.map { message -> (Message, FileTransfer) in
-            let transfer = unfinishedSendingTransfers.first { ft in
+        let pairs = unfinishedSendingMessages.compactMap { message -> (Message, FileTransfer)? in
+            guard let transfer = unfinishedSendingTransfers.first(where: { ft in
                 ft.id == message.fileTransferId
-            }
+            }) else { return nil }
 
-            return (message, transfer!)
+            return (message, transfer)
         }
 
         pairs.forEach { message, transfer in
