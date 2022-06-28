@@ -1,28 +1,29 @@
 import UIKit
 import Shared
+import XXModels
 
 final class Bubbler {
     static func build(
         audioBubble: AudioMessageView,
-        with item: ChatItem
+        with item: Message
     ) {
         audioBubble.dateLabel.text = item.date.asHoursAndMinutes()
 
         switch item.status {
-        case .received, .read:
+        case .received:
             audioBubble.lockerImageView.removeFromSuperview()
             audioBubble.backgroundColor = Asset.neutralWhite.color
             audioBubble.dateLabel.textColor = Asset.neutralDisabled.color
             audioBubble.progressLabel.textColor = Asset.neutralDisabled.color
-        case .receivingAttachment:
+        case .receiving:
             audioBubble.backgroundColor = Asset.neutralWhite.color
             audioBubble.dateLabel.textColor = Asset.neutralDisabled.color
             audioBubble.progressLabel.textColor = Asset.neutralDisabled.color
-        case .timedOut:
+        case .sendingTimedOut:
             audioBubble.backgroundColor = Asset.accentWarning.color
             audioBubble.dateLabel.textColor = Asset.neutralWhite.color
             audioBubble.progressLabel.textColor = Asset.neutralWhite.color
-        case .failedToSend:
+        case .sendingFailed:
             audioBubble.backgroundColor = Asset.accentDanger.color
             audioBubble.dateLabel.textColor = Asset.neutralWhite.color
             audioBubble.progressLabel.textColor = Asset.neutralWhite.color
@@ -30,8 +31,12 @@ final class Bubbler {
             audioBubble.backgroundColor = Asset.brandBubble.color
             audioBubble.dateLabel.textColor = Asset.neutralWhite.color
             audioBubble.progressLabel.textColor = Asset.neutralWhite.color
-        case .sending, .sendingAttachment:
+        case .sending:
             audioBubble.backgroundColor = Asset.brandBubble.color
+            audioBubble.dateLabel.textColor = Asset.neutralWhite.color
+            audioBubble.progressLabel.textColor = Asset.neutralWhite.color
+        case .receivingFailed:
+            audioBubble.backgroundColor = Asset.accentWarning.color
             audioBubble.dateLabel.textColor = Asset.neutralWhite.color
             audioBubble.progressLabel.textColor = Asset.neutralWhite.color
         }
@@ -39,27 +44,27 @@ final class Bubbler {
 
     static func build(
         imageBubble: ImageMessageView,
-        with item: ChatItem
+        with message: Message,
+        with transfer: FileTransfer
     ) {
-        let progress = item.payload.attachment!.progress
-        imageBubble.progressLabel.text = String(format: "%.1f%%", progress * 100)
-        imageBubble.dateLabel.text = item.date.asHoursAndMinutes()
+        imageBubble.progressLabel.text = String(format: "%.1f%%", transfer.progress * 100)
+        imageBubble.dateLabel.text = message.date.asHoursAndMinutes()
 
-        switch item.status {
-        case .received, .read:
+        switch message.status {
+        case .received:
             imageBubble.lockerImageView.removeFromSuperview()
             imageBubble.backgroundColor = Asset.neutralWhite.color
             imageBubble.dateLabel.textColor = Asset.neutralDisabled.color
             imageBubble.progressLabel.textColor = Asset.neutralDisabled.color
-        case .receivingAttachment:
+        case .receiving:
             imageBubble.backgroundColor = Asset.neutralWhite.color
             imageBubble.dateLabel.textColor = Asset.neutralDisabled.color
             imageBubble.progressLabel.textColor = Asset.neutralDisabled.color
-        case .failedToSend:
+        case .sendingFailed:
             imageBubble.backgroundColor = Asset.accentDanger.color
             imageBubble.dateLabel.textColor = Asset.neutralWhite.color
             imageBubble.progressLabel.textColor = Asset.neutralWhite.color
-        case .timedOut:
+        case .sendingTimedOut:
             imageBubble.backgroundColor = Asset.accentWarning.color
             imageBubble.dateLabel.textColor = Asset.neutralWhite.color
             imageBubble.progressLabel.textColor = Asset.neutralWhite.color
@@ -67,8 +72,12 @@ final class Bubbler {
             imageBubble.backgroundColor = Asset.brandBubble.color
             imageBubble.dateLabel.textColor = Asset.neutralWhite.color
             imageBubble.progressLabel.textColor = Asset.neutralWhite.color
-        case .sending, .sendingAttachment:
+        case .sending:
             imageBubble.backgroundColor = Asset.brandBubble.color
+            imageBubble.dateLabel.textColor = Asset.neutralWhite.color
+            imageBubble.progressLabel.textColor = Asset.neutralWhite.color
+        case .receivingFailed:
+            imageBubble.backgroundColor = Asset.accentWarning.color
             imageBubble.dateLabel.textColor = Asset.neutralWhite.color
             imageBubble.progressLabel.textColor = Asset.neutralWhite.color
         }
@@ -76,28 +85,28 @@ final class Bubbler {
 
     static func build(
         bubble: StackMessageView,
-        with item: ChatItem
+        with item: Message
     ) {
-        bubble.textView.text = item.payload.text
+        bubble.textView.text = item.text
         bubble.senderLabel.removeFromSuperview()
         bubble.dateLabel.text = item.date.asHoursAndMinutes()
 
         let roundButtonColor: UIColor
 
         switch item.status {
-        case .received, .read, .receivingAttachment:
+        case .received, .receiving:
             bubble.lockerImageView.removeFromSuperview()
             bubble.backgroundColor = Asset.neutralWhite.color
             bubble.textView.textColor = Asset.neutralActive.color
             bubble.dateLabel.textColor = Asset.neutralDisabled.color
             roundButtonColor = Asset.neutralDisabled.color
             bubble.revertBottomStackOrder()
-        case .timedOut:
+        case .sendingTimedOut:
             bubble.backgroundColor = Asset.accentWarning.color
             bubble.textView.textColor = Asset.neutralWhite.color
             bubble.dateLabel.textColor = Asset.neutralWhite.color
             roundButtonColor = Asset.neutralWhite.color
-        case .failedToSend:
+        case .sendingFailed:
             bubble.backgroundColor = Asset.accentDanger.color
             bubble.textView.textColor = Asset.neutralWhite.color
             bubble.dateLabel.textColor = Asset.neutralWhite.color
@@ -107,54 +116,13 @@ final class Bubbler {
             bubble.textView.textColor = Asset.neutralWhite.color
             bubble.dateLabel.textColor = Asset.neutralWhite.color
             roundButtonColor = Asset.neutralWhite.color
-        case .sending, .sendingAttachment:
+        case .sending:
             bubble.backgroundColor = Asset.brandBubble.color
             bubble.textView.textColor = Asset.neutralWhite.color
             bubble.dateLabel.textColor = Asset.neutralWhite.color
             roundButtonColor = Asset.neutralWhite.color
-        }
-
-        let attrString = NSAttributedString(
-            string: "show mix",
-            attributes: [
-                .underlineStyle: NSUnderlineStyle.single.rawValue,
-                .underlineColor: roundButtonColor,
-                .foregroundColor: roundButtonColor,
-                .font: Fonts.Mulish.regular.font(size: 12.0) as Any
-            ]
-        )
-
-        bubble.roundButton.setAttributedTitle(attrString, for: .normal)
-    }
-
-    static func buildGroup(
-        bubble: StackMessageView,
-        with item: GroupChatItem,
-        with senderName: String
-    ) {
-        bubble.textView.text = item.payload.text
-        bubble.dateLabel.text = item.date.asHoursAndMinutes()
-
-        let roundButtonColor: UIColor
-
-        switch item.status {
-        case .received, .read:
-            bubble.senderLabel.text = senderName
-            bubble.backgroundColor = Asset.neutralWhite.color
-            bubble.textView.textColor = Asset.neutralActive.color
-            bubble.dateLabel.textColor = Asset.neutralDisabled.color
-            roundButtonColor = Asset.neutralDisabled.color
-            bubble.lockerImageView.removeFromSuperview()
-            bubble.revertBottomStackOrder()
-        case .failed:
-            bubble.senderLabel.removeFromSuperview()
-            bubble.backgroundColor = Asset.accentDanger.color
-            bubble.textView.textColor = Asset.neutralWhite.color
-            bubble.dateLabel.textColor = Asset.neutralWhite.color
-            roundButtonColor = Asset.neutralWhite.color
-        case .sent, .sending:
-            bubble.senderLabel.removeFromSuperview()
-            bubble.backgroundColor = Asset.brandBubble.color
+        case .receivingFailed:
+            bubble.backgroundColor = Asset.accentWarning.color
             bubble.textView.textColor = Asset.neutralWhite.color
             bubble.dateLabel.textColor = Asset.neutralWhite.color
             roundButtonColor = Asset.neutralWhite.color
@@ -175,19 +143,19 @@ final class Bubbler {
 
     static func buildReply(
         bubble: ReplyStackMessageView,
-        with item: ChatItem,
-        reply: ReplyModel
+        with item: Message,
+        reply: (contactTitle: String, messageText: String)
     ) {
         bubble.dateLabel.text = item.date.asHoursAndMinutes()
-        bubble.textView.text = item.payload.text
+        bubble.textView.text = item.text
 
-        bubble.replyView.message.text = reply.text
-        bubble.replyView.title.text = reply.sender
+        bubble.replyView.message.text = reply.messageText
+        bubble.replyView.title.text = reply.contactTitle
 
         let roundButtonColor: UIColor
 
         switch item.status {
-        case .received, .read, .receivingAttachment:
+        case .received, .receiving:
             bubble.senderLabel.removeFromSuperview()
             bubble.backgroundColor = Asset.neutralWhite.color
             bubble.textView.textColor = Asset.neutralActive.color
@@ -196,7 +164,7 @@ final class Bubbler {
             bubble.replyView.container.backgroundColor = Asset.brandDefault.color
             bubble.replyView.space.backgroundColor = Asset.brandPrimary.color
             bubble.revertBottomStackOrder()
-        case .timedOut:
+        case .sendingTimedOut:
             bubble.senderLabel.removeFromSuperview()
             bubble.backgroundColor = Asset.accentWarning.color
             bubble.textView.textColor = Asset.neutralWhite.color
@@ -204,7 +172,7 @@ final class Bubbler {
             roundButtonColor = Asset.neutralWhite.color
             bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
             bubble.replyView.container.backgroundColor = Asset.brandLight.color
-        case .failedToSend:
+        case .sendingFailed:
             bubble.senderLabel.removeFromSuperview()
             bubble.backgroundColor = Asset.accentDanger.color
             bubble.textView.textColor = Asset.neutralWhite.color
@@ -212,10 +180,18 @@ final class Bubbler {
             roundButtonColor = Asset.neutralWhite.color
             bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
             bubble.replyView.container.backgroundColor = Asset.brandLight.color
-        case .sent, .sending, .sendingAttachment:
+        case .sent, .sending:
             bubble.senderLabel.removeFromSuperview()
             bubble.textView.textColor = Asset.neutralWhite.color
             bubble.backgroundColor = Asset.brandBubble.color
+            bubble.dateLabel.textColor = Asset.neutralWhite.color
+            roundButtonColor = Asset.neutralWhite.color
+            bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
+            bubble.replyView.container.backgroundColor = Asset.brandLight.color
+        case .receivingFailed:
+            bubble.senderLabel.removeFromSuperview()
+            bubble.textView.textColor = Asset.neutralWhite.color
+            bubble.backgroundColor = Asset.accentWarning.color
             bubble.dateLabel.textColor = Asset.neutralWhite.color
             roundButtonColor = Asset.neutralWhite.color
             bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
@@ -236,20 +212,20 @@ final class Bubbler {
 
     static func buildReplyGroup(
         bubble: ReplyStackMessageView,
-        with item: GroupChatItem,
-        reply: ReplyModel,
+        with item: Message,
+        reply: (contactTitle: String, messageText: String),
         sender: String
     ) {
         bubble.dateLabel.text = item.date.asHoursAndMinutes()
-        bubble.textView.text = item.payload.text
+        bubble.textView.text = item.text
 
-        bubble.replyView.message.text = reply.text
-        bubble.replyView.title.text = reply.sender
+        bubble.replyView.message.text = reply.messageText
+        bubble.replyView.title.text = reply.contactTitle
 
         let roundButtonColor: UIColor
 
         switch item.status {
-        case .received, .read:
+        case .received, .receiving:
             bubble.senderLabel.text = sender
             bubble.backgroundColor = Asset.neutralWhite.color
             bubble.textView.textColor = Asset.neutralActive.color
@@ -259,7 +235,7 @@ final class Bubbler {
             bubble.replyView.space.backgroundColor = Asset.brandPrimary.color
             bubble.lockerImageView.removeFromSuperview()
             bubble.revertBottomStackOrder()
-        case .failed:
+        case .sendingFailed, .sendingTimedOut:
             bubble.senderLabel.removeFromSuperview()
             bubble.backgroundColor = Asset.accentDanger.color
             bubble.textView.textColor = Asset.neutralWhite.color
@@ -271,6 +247,14 @@ final class Bubbler {
             bubble.senderLabel.removeFromSuperview()
             bubble.textView.textColor = Asset.neutralWhite.color
             bubble.backgroundColor = Asset.brandBubble.color
+            bubble.dateLabel.textColor = Asset.neutralWhite.color
+            roundButtonColor = Asset.neutralWhite.color
+            bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
+            bubble.replyView.container.backgroundColor = Asset.brandLight.color
+        case .receivingFailed:
+            bubble.senderLabel.removeFromSuperview()
+            bubble.textView.textColor = Asset.neutralWhite.color
+            bubble.backgroundColor = Asset.accentWarning.color
             bubble.dateLabel.textColor = Asset.neutralWhite.color
             roundButtonColor = Asset.neutralWhite.color
             bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
@@ -289,4 +273,58 @@ final class Bubbler {
 
         bubble.roundButton.setAttributedTitle(attrString, for: .normal)
     }
+
+    static func buildGroup(
+        bubble: StackMessageView,
+        with item: Message,
+        with senderName: String
+    ) {
+        bubble.textView.text = item.text
+        bubble.dateLabel.text = item.date.asHoursAndMinutes()
+
+        let roundButtonColor: UIColor
+
+        switch item.status {
+        case .received, .receiving:
+            bubble.senderLabel.text = senderName
+            bubble.backgroundColor = Asset.neutralWhite.color
+            bubble.textView.textColor = Asset.neutralActive.color
+            bubble.dateLabel.textColor = Asset.neutralDisabled.color
+            roundButtonColor = Asset.neutralDisabled.color
+            bubble.lockerImageView.removeFromSuperview()
+            bubble.revertBottomStackOrder()
+        case .sendingFailed, .sendingTimedOut:
+            bubble.senderLabel.removeFromSuperview()
+            bubble.backgroundColor = Asset.accentDanger.color
+            bubble.textView.textColor = Asset.neutralWhite.color
+            bubble.dateLabel.textColor = Asset.neutralWhite.color
+            roundButtonColor = Asset.neutralWhite.color
+        case .sent, .sending:
+            bubble.senderLabel.removeFromSuperview()
+            bubble.backgroundColor = Asset.brandBubble.color
+            bubble.textView.textColor = Asset.neutralWhite.color
+            bubble.dateLabel.textColor = Asset.neutralWhite.color
+            roundButtonColor = Asset.neutralWhite.color
+        case .receivingFailed:
+            bubble.senderLabel.removeFromSuperview()
+            bubble.backgroundColor = Asset.accentWarning.color
+            bubble.textView.textColor = Asset.neutralWhite.color
+            bubble.dateLabel.textColor = Asset.neutralWhite.color
+            roundButtonColor = Asset.neutralWhite.color
+        }
+
+        let attrString = NSAttributedString(
+            string: "show mix",
+            attributes: [
+                .underlineStyle: NSUnderlineStyle.single.rawValue,
+                .underlineColor: roundButtonColor,
+                .foregroundColor: roundButtonColor,
+                .font: Fonts.Mulish.regular.font(size: 12.0) as Any
+            ]
+        )
+
+        bubble.roundButton.setAttributedTitle(attrString, for: .normal)
+    }
+
+
 }

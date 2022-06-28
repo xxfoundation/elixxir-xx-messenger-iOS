@@ -1,6 +1,11 @@
 import UIKit
 import Shared
 
+struct Member {
+    let title: String
+    let photo: Data?
+}
+
 final class GroupHeaderView: UIView {
     let titleLabel = UILabel()
     let containerView = UIView()
@@ -39,14 +44,14 @@ final class GroupHeaderView: UIView {
 
     required init?(coder: NSCoder) { nil }
 
-    func setup(title: String, memberList: [(String, Data?)]) {
+    func setup(title: String, memberList: [Member]) {
         titleLabel.text = title
 
-        for member in memberList {
+        memberList.forEach {
             let avatarView = AvatarView()
             avatarView.layer.borderWidth = 3
             avatarView.layer.borderColor = UIColor.white.cgColor
-            avatarView.setupProfile(title: member.0, image: member.1, size: .small)
+            avatarView.setupProfile(title: $0.title, image: $0.photo, size: .small)
             avatarView.snp.makeConstraints { $0.width.height.equalTo(25.0) }
             stackView.addArrangedSubview(avatarView)
         }

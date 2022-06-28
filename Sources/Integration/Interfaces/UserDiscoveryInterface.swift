@@ -1,4 +1,5 @@
 import Models
+import XXModels
 import Foundation
 
 public struct LookupResult {

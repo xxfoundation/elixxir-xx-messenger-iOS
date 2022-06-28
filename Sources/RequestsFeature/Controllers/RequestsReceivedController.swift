@@ -3,6 +3,7 @@ import UIKit
 import Models
 import Shared
 import Combine
+import XXModels
 import Countries
 import ToastFeature
 import DrawerFeature
@@ -110,10 +111,10 @@ extension RequestsReceivedController: UICollectionViewDelegate {
 
         switch request {
         case .group(let group):
-            guard group.status == .pending || group.status == .hidden else { return }
+            guard group.authStatus == .pending || group.authStatus == .hidden else { return }
             presentGroupRequestDrawer(forGroup: group)
         case .contact(let contact):
-            guard contact.status == .verified || contact.status == .hidden else { return }
+            guard contact.authStatus == .verified || contact.authStatus == .hidden else { return }
             presentSingleRequestDrawer(forContact: contact)
         }
     }
@@ -211,7 +212,7 @@ extension RequestsReceivedController {
 
         let drawerNickname = DrawerText(
             font: Fonts.Mulish.extraBold.font(size: 26.0),
-            text: contact.nickname ?? contact.username,
+            text: (contact.nickname ?? contact.username) ?? "",
             color: Asset.neutralDark.color,
             spacingAfter: 20
         )
@@ -392,7 +393,7 @@ extension RequestsReceivedController {
 
         let drawerUsername = DrawerText(
             font: Fonts.Mulish.extraBold.font(size: 26.0),
-            text: contact.username,
+            text: contact.username ?? "",
             color: Asset.neutralDark.color,
             spacingAfter: 25
         )
@@ -452,7 +453,7 @@ extension RequestsReceivedController {
         items.append(drawerNicknameTitle)
 
         let drawerNicknameInput = DrawerInput(
-            placeholder: contact.username,
+            placeholder: contact.username ?? "",
             validator: .init(
                 wrongIcon: .image(Asset.sharedError.image),
                 correctIcon: .image(Asset.sharedSuccess.image),

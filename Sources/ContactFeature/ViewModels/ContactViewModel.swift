@@ -2,6 +2,7 @@ import HUD
 import UIKit
 import Models
 import Combine
+import XXModels
 import Integration
 import CombineSchedulers
 import DependencyInjection
@@ -38,8 +39,8 @@ final class ContactViewModel {
         self.contact = contact
 
         do {
-            let email = try session.extract(fact: .email, from: contact.marshaled)
-            let phone = try session.extract(fact: .phone, from: contact.marshaled)
+            let email = try session.extract(fact: .email, from: contact.marshaled!)
+            let phone = try session.extract(fact: .phone, from: contact.marshaled!)
 
             stateRelay.value = .init(
                 title: contact.nickname ?? contact.username,
@@ -57,7 +58,7 @@ final class ContactViewModel {
     func didChoosePhoto(_ photo: UIImage) {
         stateRelay.value.photo = photo
         contact.photo = photo.jpegData(compressionQuality: 0.0)
-        session.update(contact)
+        _ = try? session.dbManager.saveContact(contact)
     }
 
     func didTapDelete() {
@@ -73,18 +74,18 @@ final class ContactViewModel {
     }
 
     func didTapReject() {
-        session.delete(contact, isRequest: true)
+        try? session.deleteContact(contact)
         popRelay.send()
     }
 
     func didTapClear() {
-        session.deleteAll(from: contact)
+        _ = try? session.dbManager.deleteMessages(.init(chat: .direct(session.myId, contact.id)))
     }
 
     func didUpdateNickname(_ string: String) {
         contact.nickname = string.isEmpty ? nil : string
         stateRelay.value.title = string.isEmpty ? contact.username : string
-        session.update(contact)
+        _ = try? session.dbManager.saveContact(contact)
 
         stateRelay.value.nickname = contact.nickname
     }

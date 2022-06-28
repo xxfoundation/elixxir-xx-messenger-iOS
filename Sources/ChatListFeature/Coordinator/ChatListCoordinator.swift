@@ -1,6 +1,7 @@
 import UIKit
 import Shared
 import Models
+import XXModels
 import MenuFeature
 import ChatFeature
 import Presentation
@@ -16,7 +17,7 @@ public protocol ChatListCoordinating {
     func toContact(_: Contact, from: UIViewController)
     func toSingleChat(with: Contact, from: UIViewController)
     func toDrawer(_: UIViewController, from: UIViewController)
-    func toGroupChat(with: GroupChatInfo, from: UIViewController)
+    func toGroupChat(with: GroupInfo, from: UIViewController)
 }
 
 public struct ChatListCoordinator: ChatListCoordinating {
@@ -31,7 +32,7 @@ public struct ChatListCoordinator: ChatListCoordinating {
     var contactsFactory: () -> UIViewController
     var contactFactory: (Contact) -> UIViewController
     var singleChatFactory: (Contact) -> UIViewController
-    var groupChatFactory: (GroupChatInfo) -> UIViewController
+    var groupChatFactory: (GroupInfo) -> UIViewController
     var sideMenuFactory: (MenuItem, UIViewController) -> UIViewController
 
     public init(
@@ -41,7 +42,7 @@ public struct ChatListCoordinator: ChatListCoordinating {
         contactsFactory: @escaping () -> UIViewController,
         contactFactory: @escaping (Contact) -> UIViewController,
         singleChatFactory: @escaping (Contact) -> UIViewController,
-        groupChatFactory: @escaping (GroupChatInfo) -> UIViewController,
+        groupChatFactory: @escaping (GroupInfo) -> UIViewController,
         sideMenuFactory: @escaping (MenuItem, UIViewController) -> UIViewController
     ) {
         self.scanFactory = scanFactory
@@ -81,7 +82,7 @@ public extension ChatListCoordinator {
         pushPresenter.present(screen, from: parent)
     }
 
-    func toGroupChat(with group: GroupChatInfo, from parent: UIViewController) {
+    func toGroupChat(with group: GroupInfo, from parent: UIViewController) {
         let screen = groupChatFactory(group)
         pushPresenter.present(screen, from: parent)
     }

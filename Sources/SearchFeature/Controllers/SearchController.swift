@@ -2,13 +2,14 @@ import HUD
 import Theme
 import UIKit
 import Shared
+import Models
 import Combine
+import Defaults
+import XXModels
+import Countries
+import DrawerFeature
 import DependencyInjection
 import ScrollViewController
-import DrawerFeature
-import Models
-import Defaults
-import Countries
 
 public final class SearchController: UIViewController {
     @KeyObject(.email, defaultValue: nil) var email: String?
@@ -233,7 +234,7 @@ public final class SearchController: UIViewController {
     public func tableView(_: UITableView, didSelectRowAt indexPath: IndexPath) {
         let contact = viewModel.itemsRelay.value[indexPath.row]
 
-        guard contact.status == .stranger else {
+        guard contact.authStatus == .stranger else {
             coordinator.toContact(contact, from: self)
             return
         }
@@ -257,7 +258,7 @@ extension SearchController {
             spacingAfter: 20
         )
 
-        var subtitleFragment = "Share your information with #\(contact.username)"
+        var subtitleFragment = "Share your information with #\(contact.username ?? "")"
 
         if let email = contact.email {
             subtitleFragment.append(contentsOf: " (\(email))#")
@@ -440,7 +441,7 @@ extension SearchController {
         ])
 
         let drawerNicknameInput = DrawerInput(
-            placeholder: contact.username,
+            placeholder: contact.username!,
             validator: .init(
                 wrongIcon: .image(Asset.sharedError.image),
                 correctIcon: .image(Asset.sharedSuccess.image),
@@ -487,7 +488,7 @@ extension SearchController {
                 guard allowsSave else { return }
 
                 drawer.dismiss(animated: true) {
-                    self.viewModel.didSet(nickname: nickname ?? contact.username, for: contact)
+                    self.viewModel.didSet(nickname: nickname ?? contact.username!, for: contact)
                 }
             }
             .store(in: &drawerCancellables)

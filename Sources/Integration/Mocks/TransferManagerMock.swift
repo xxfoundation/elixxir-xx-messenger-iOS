@@ -1,4 +1,3 @@
-import Models
 import Foundation
 
 final class TransferManagerMock: TransferManagerInterface {
@@ -25,7 +24,7 @@ final class TransferManagerMock: TransferManagerInterface {
     }
 
     func uploadFile(
-        _: Attachment,
+        url: URL,
         to: Data,
         _: @escaping (Bool, Int, Int, Int, Error?) -> Void
     ) throws -> Data {

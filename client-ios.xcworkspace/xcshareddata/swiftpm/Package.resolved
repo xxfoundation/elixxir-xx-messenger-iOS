@@ -1,349 +1,356 @@
 {
-  "object": {
-    "pins": [
-      {
-        "package": "abseil",
-        "repositoryURL": "https://github.com/firebase/abseil-cpp-SwiftPM.git",
-        "state": {
-          "branch": null,
-          "revision": "fffc3c2729be5747390ad02d5100291a0d9ad26a",
-          "version": "0.20200225.4"
-        }
-      },
-      {
-        "package": "Alamofire",
-        "repositoryURL": "https://github.com/Alamofire/Alamofire.git",
-        "state": {
-          "branch": null,
-          "revision": "f82c23a8a7ef8dc1a49a8bfc6a96883e79121864",
-          "version": "5.5.0"
-        }
-      },
-      {
-        "package": "AppAuth",
-        "repositoryURL": "https://github.com/openid/AppAuth-iOS.git",
-        "state": {
-          "branch": null,
-          "revision": "01131d68346c8ae552961c768d583c715fbe1410",
-          "version": "1.4.0"
-        }
-      },
-      {
-        "package": "BoringSSL-GRPC",
-        "repositoryURL": "https://github.com/firebase/boringssl-SwiftPM.git",
-        "state": {
-          "branch": null,
-          "revision": "734a8247442fde37df4364c21f6a0085b6a36728",
-          "version": "0.7.2"
-        }
-      },
-      {
-        "package": "ChatLayout",
-        "repositoryURL": "https://github.com/ekazaev/ChatLayout",
-        "state": {
-          "branch": null,
-          "revision": "d0edb6f3ae716a26842467c540a6bee909b80360",
-          "version": "1.1.14"
-        }
-      },
-      {
-        "package": "combine-schedulers",
-        "repositoryURL": "https://github.com/pointfreeco/combine-schedulers",
-        "state": {
-          "branch": null,
-          "revision": "4cf088c29a20f52be0f2ca54992b492c54e0076b",
-          "version": "0.5.3"
-        }
-      },
-      {
-        "package": "CwlCatchException",
-        "repositoryURL": "https://github.com/mattgallagher/CwlCatchException.git",
-        "state": {
-          "branch": null,
-          "revision": "35f9e770f54ce62dd8526470f14c6e137cef3eea",
-          "version": "2.1.1"
-        }
-      },
-      {
-        "package": "CwlPreconditionTesting",
-        "repositoryURL": "https://github.com/mattgallagher/CwlPreconditionTesting.git",
-        "state": {
-          "branch": null,
-          "revision": "fb7a26374e8570ff5c68142e5c83406d6abae0d8",
-          "version": "2.0.2"
-        }
-      },
-      {
-        "package": "DifferenceKit",
-        "repositoryURL": "https://github.com/ra1028/DifferenceKit",
-        "state": {
-          "branch": null,
-          "revision": "62745d7780deef4a023a792a1f8f763ec7bf9705",
-          "version": "1.2.0"
-        }
-      },
-      {
-        "package": "FilesProvider",
-        "repositoryURL": "https://github.com/amosavian/FileProvider.git",
-        "state": {
-          "branch": null,
-          "revision": "abf68a62541a4193c8d106367ddb3648e8ab693f",
-          "version": "0.26.0"
-        }
-      },
-      {
-        "package": "Firebase",
-        "repositoryURL": "https://github.com/firebase/firebase-ios-sdk.git",
-        "state": {
-          "branch": null,
-          "revision": "08686f04881483d2bc098b2696e674c0ba135e47",
-          "version": "8.10.0"
-        }
-      },
-      {
-        "package": "GoogleAPIClientForREST",
-        "repositoryURL": "https://github.com/google/google-api-objectivec-client-for-rest",
-        "state": {
-          "branch": null,
-          "revision": "22e0bb02729d60db396e8b90d8189313cd86ba53",
-          "version": "1.6.0"
-        }
-      },
-      {
-        "package": "GoogleAppMeasurement",
-        "repositoryURL": "https://github.com/google/GoogleAppMeasurement.git",
-        "state": {
-          "branch": null,
-          "revision": "9b2f6aca5b4685c45f9f5481f19bee8e7982c538",
-          "version": "8.9.1"
-        }
-      },
-      {
-        "package": "GoogleDataTransport",
-        "repositoryURL": "https://github.com/google/GoogleDataTransport.git",
-        "state": {
-          "branch": null,
-          "revision": "15ccdfd25ac55b9239b82809531ff26605e7556e",
-          "version": "9.1.2"
-        }
-      },
-      {
-        "package": "GoogleSignIn",
-        "repositoryURL": "https://github.com/google/GoogleSignIn-iOS",
-        "state": {
-          "branch": null,
-          "revision": "60ca2bfd218ccb194a746a79b41d9d50eb7e3af0",
-          "version": "6.1.0"
-        }
-      },
-      {
-        "package": "GoogleUtilities",
-        "repositoryURL": "https://github.com/google/GoogleUtilities.git",
-        "state": {
-          "branch": null,
-          "revision": "b3bb0c5551fb3f80ca939829639ab5b093edd14f",
-          "version": "7.7.0"
-        }
-      },
-      {
-        "package": "GRDB",
-        "repositoryURL": "https://github.com/groue/GRDB.swift",
-        "state": {
-          "branch": null,
-          "revision": "32b2923e890df320906e64cbd0faca22a8bfda14",
-          "version": "5.12.0"
-        }
-      },
-      {
-        "package": "gRPC",
-        "repositoryURL": "https://github.com/firebase/grpc-SwiftPM.git",
-        "state": {
-          "branch": null,
-          "revision": "fb405dd2c7901485f7e158b24e3a0a47e4efd8b5",
-          "version": "1.28.4"
-        }
-      },
-      {
-        "package": "GTMSessionFetcher",
-        "repositoryURL": "https://github.com/google/gtm-session-fetcher.git",
-        "state": {
-          "branch": null,
-          "revision": "bc6a19702ac76ac4e488b68148710eb815f9bc56",
-          "version": "1.7.0"
-        }
-      },
-      {
-        "package": "GTMAppAuth",
-        "repositoryURL": "https://github.com/google/GTMAppAuth.git",
-        "state": {
-          "branch": null,
-          "revision": "40f4103fb52109032c05599a0c39ad43edbdf80a",
-          "version": "1.2.2"
-        }
-      },
-      {
-        "package": "KeychainAccess",
-        "repositoryURL": "https://github.com/kishikawakatsumi/KeychainAccess",
-        "state": {
-          "branch": null,
-          "revision": "84e546727d66f1adc5439debad16270d0fdd04e7",
-          "version": "4.2.2"
-        }
-      },
-      {
-        "package": "leveldb",
-        "repositoryURL": "https://github.com/firebase/leveldb.git",
-        "state": {
-          "branch": null,
-          "revision": "0706abcc6b0bd9cedfbb015ba840e4a780b5159b",
-          "version": "1.22.2"
-        }
-      },
-      {
-        "package": "nanopb",
-        "repositoryURL": "https://github.com/firebase/nanopb.git",
-        "state": {
-          "branch": null,
-          "revision": "7ee9ef9f627d85cbe1b8c4f49a3ed26eed216c77",
-          "version": "2.30908.0"
-        }
-      },
-      {
-        "package": "Nimble",
-        "repositoryURL": "https://github.com/Quick/Nimble",
-        "state": {
-          "branch": null,
-          "revision": "c93f16c25af5770f0d3e6af27c9634640946b068",
-          "version": "9.2.1"
-        }
-      },
-      {
-        "package": "Promises",
-        "repositoryURL": "https://github.com/google/promises.git",
-        "state": {
-          "branch": null,
-          "revision": "611337c330350c9c1823ad6d671e7f936af5ee13",
-          "version": "2.0.0"
-        }
-      },
-      {
-        "package": "Quick",
-        "repositoryURL": "https://github.com/Quick/Quick",
-        "state": {
-          "branch": null,
-          "revision": "8cce6acd38f965f5baa3167b939f86500314022b",
-          "version": "3.1.2"
-        }
-      },
-      {
-        "package": "Retry",
-        "repositoryURL": "https://github.com/icanzilb/Retry.git",
-        "state": {
-          "branch": null,
-          "revision": "3beacada357968bcf9e5a2da520abfb374188afe",
-          "version": "0.6.3"
-        }
-      },
-      {
-        "package": "ScrollViewController",
-        "repositoryURL": "https://github.com/darrarski/ScrollViewController",
-        "state": {
-          "branch": null,
-          "revision": "9a52bb056504bb4766ddb5ac518097dd48736303",
-          "version": "1.2.0"
-        }
-      },
-      {
-        "package": "SnapKit",
-        "repositoryURL": "https://github.com/SnapKit/SnapKit",
-        "state": {
-          "branch": null,
-          "revision": "d458564516e5676af9c70b4f4b2a9178294f1bc6",
-          "version": "5.0.1"
-        }
-      },
-      {
-        "package": "swift-case-paths",
-        "repositoryURL": "https://github.com/pointfreeco/swift-case-paths",
-        "state": {
-          "branch": null,
-          "revision": "241301b67d8551c26d8f09bd2c0e52cc49f18007",
-          "version": "0.8.0"
-        }
-      },
-      {
-        "package": "swift-collections",
-        "repositoryURL": "https://github.com/apple/swift-collections",
-        "state": {
-          "branch": null,
-          "revision": "48254824bb4248676bf7ce56014ff57b142b77eb",
-          "version": "1.0.2"
-        }
-      },
-      {
-        "package": "swift-composable-architecture",
-        "repositoryURL": "https://github.com/pointfreeco/swift-composable-architecture.git",
-        "state": {
-          "branch": null,
-          "revision": "313dd217dcd1d0478118ec5d15225fd473c1564a",
-          "version": "0.32.0"
-        }
-      },
-      {
-        "package": "swift-custom-dump",
-        "repositoryURL": "https://github.com/pointfreeco/swift-custom-dump",
-        "state": {
-          "branch": null,
-          "revision": "51698ece74ecf31959d3fa81733f0a5363ef1b4e",
-          "version": "0.3.0"
-        }
-      },
-      {
-        "package": "swift-identified-collections",
-        "repositoryURL": "https://github.com/pointfreeco/swift-identified-collections",
-        "state": {
-          "branch": null,
-          "revision": "680bf440178a78a627b1c2c64c0855f6523ad5b9",
-          "version": "0.3.2"
-        }
-      },
-      {
-        "package": "SwiftProtobuf",
-        "repositoryURL": "https://github.com/apple/swift-protobuf",
-        "state": {
-          "branch": null,
-          "revision": "7e2c5f3cbbeea68e004915e3a8961e20bd11d824",
-          "version": "1.18.0"
-        }
-      },
-      {
-        "package": "SwiftyBeaver",
-        "repositoryURL": "https://github.com/SwiftyBeaver/SwiftyBeaver.git",
-        "state": {
-          "branch": null,
-          "revision": "2c039501d6eeb4d4cd4aec4a8d884ad28862e044",
-          "version": "1.9.5"
-        }
-      },
-      {
-        "package": "SwiftyDropbox",
-        "repositoryURL": "https://github.com/dropbox/SwiftyDropbox.git",
-        "state": {
-          "branch": null,
-          "revision": "7af87d903be1cf0af0e76e0394d992943055894e",
-          "version": "8.2.1"
-        }
-      },
-      {
-        "package": "xctest-dynamic-overlay",
-        "repositoryURL": "https://github.com/pointfreeco/xctest-dynamic-overlay",
-        "state": {
-          "branch": null,
-          "revision": "50a70a9d3583fe228ce672e8923010c8df2deddd",
-          "version": "0.2.1"
-        }
+  "pins" : [
+    {
+      "identity" : "abseil-cpp-swiftpm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/firebase/abseil-cpp-SwiftPM.git",
+      "state" : {
+        "revision" : "fffc3c2729be5747390ad02d5100291a0d9ad26a",
+        "version" : "0.20200225.4"
       }
-    ]
-  },
-  "version": 1
+    },
+    {
+      "identity" : "alamofire",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Alamofire/Alamofire.git",
+      "state" : {
+        "revision" : "f82c23a8a7ef8dc1a49a8bfc6a96883e79121864",
+        "version" : "5.5.0"
+      }
+    },
+    {
+      "identity" : "appauth-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/openid/AppAuth-iOS.git",
+      "state" : {
+        "revision" : "01131d68346c8ae552961c768d583c715fbe1410",
+        "version" : "1.4.0"
+      }
+    },
+    {
+      "identity" : "boringssl-swiftpm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/firebase/boringssl-SwiftPM.git",
+      "state" : {
+        "revision" : "734a8247442fde37df4364c21f6a0085b6a36728",
+        "version" : "0.7.2"
+      }
+    },
+    {
+      "identity" : "chatlayout",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ekazaev/ChatLayout",
+      "state" : {
+        "revision" : "d0edb6f3ae716a26842467c540a6bee909b80360",
+        "version" : "1.1.14"
+      }
+    },
+    {
+      "identity" : "client-ios-db",
+      "kind" : "remoteSourceControl",
+      "location" : "https://git.xx.network/elixxir/client-ios-db.git",
+      "state" : {
+        "revision" : "adf3c4b906870ecbd0d1d7208f0666939fd08665",
+        "version" : "1.0.5"
+      }
+    },
+    {
+      "identity" : "combine-schedulers",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/combine-schedulers",
+      "state" : {
+        "revision" : "4cf088c29a20f52be0f2ca54992b492c54e0076b",
+        "version" : "0.5.3"
+      }
+    },
+    {
+      "identity" : "cwlcatchexception",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mattgallagher/CwlCatchException.git",
+      "state" : {
+        "revision" : "35f9e770f54ce62dd8526470f14c6e137cef3eea",
+        "version" : "2.1.1"
+      }
+    },
+    {
+      "identity" : "cwlpreconditiontesting",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/mattgallagher/CwlPreconditionTesting.git",
+      "state" : {
+        "revision" : "fb7a26374e8570ff5c68142e5c83406d6abae0d8",
+        "version" : "2.0.2"
+      }
+    },
+    {
+      "identity" : "differencekit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ra1028/DifferenceKit",
+      "state" : {
+        "revision" : "62745d7780deef4a023a792a1f8f763ec7bf9705",
+        "version" : "1.2.0"
+      }
+    },
+    {
+      "identity" : "fileprovider",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/amosavian/FileProvider.git",
+      "state" : {
+        "revision" : "abf68a62541a4193c8d106367ddb3648e8ab693f",
+        "version" : "0.26.0"
+      }
+    },
+    {
+      "identity" : "firebase-ios-sdk",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/firebase/firebase-ios-sdk.git",
+      "state" : {
+        "revision" : "08686f04881483d2bc098b2696e674c0ba135e47",
+        "version" : "8.10.0"
+      }
+    },
+    {
+      "identity" : "google-api-objectivec-client-for-rest",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/google/google-api-objectivec-client-for-rest",
+      "state" : {
+        "revision" : "22e0bb02729d60db396e8b90d8189313cd86ba53",
+        "version" : "1.6.0"
+      }
+    },
+    {
+      "identity" : "googleappmeasurement",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/google/GoogleAppMeasurement.git",
+      "state" : {
+        "revision" : "9b2f6aca5b4685c45f9f5481f19bee8e7982c538",
+        "version" : "8.9.1"
+      }
+    },
+    {
+      "identity" : "googledatatransport",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/google/GoogleDataTransport.git",
+      "state" : {
+        "revision" : "15ccdfd25ac55b9239b82809531ff26605e7556e",
+        "version" : "9.1.2"
+      }
+    },
+    {
+      "identity" : "googlesignin-ios",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/google/GoogleSignIn-iOS",
+      "state" : {
+        "revision" : "60ca2bfd218ccb194a746a79b41d9d50eb7e3af0",
+        "version" : "6.1.0"
+      }
+    },
+    {
+      "identity" : "googleutilities",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/google/GoogleUtilities.git",
+      "state" : {
+        "revision" : "b3bb0c5551fb3f80ca939829639ab5b093edd14f",
+        "version" : "7.7.0"
+      }
+    },
+    {
+      "identity" : "grdb.swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/groue/GRDB.swift",
+      "state" : {
+        "revision" : "e02f2c8abacff2799ed14926edcbf6e76fb9f805",
+        "version" : "5.25.0"
+      }
+    },
+    {
+      "identity" : "grpc-swiftpm",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/firebase/grpc-SwiftPM.git",
+      "state" : {
+        "revision" : "fb405dd2c7901485f7e158b24e3a0a47e4efd8b5",
+        "version" : "1.28.4"
+      }
+    },
+    {
+      "identity" : "gtm-session-fetcher",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/google/gtm-session-fetcher.git",
+      "state" : {
+        "revision" : "bc6a19702ac76ac4e488b68148710eb815f9bc56",
+        "version" : "1.7.0"
+      }
+    },
+    {
+      "identity" : "gtmappauth",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/google/GTMAppAuth.git",
+      "state" : {
+        "revision" : "40f4103fb52109032c05599a0c39ad43edbdf80a",
+        "version" : "1.2.2"
+      }
+    },
+    {
+      "identity" : "keychainaccess",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/kishikawakatsumi/KeychainAccess",
+      "state" : {
+        "revision" : "84e546727d66f1adc5439debad16270d0fdd04e7",
+        "version" : "4.2.2"
+      }
+    },
+    {
+      "identity" : "leveldb",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/firebase/leveldb.git",
+      "state" : {
+        "revision" : "0706abcc6b0bd9cedfbb015ba840e4a780b5159b",
+        "version" : "1.22.2"
+      }
+    },
+    {
+      "identity" : "nanopb",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/firebase/nanopb.git",
+      "state" : {
+        "revision" : "7ee9ef9f627d85cbe1b8c4f49a3ed26eed216c77",
+        "version" : "2.30908.0"
+      }
+    },
+    {
+      "identity" : "nimble",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Quick/Nimble",
+      "state" : {
+        "revision" : "c93f16c25af5770f0d3e6af27c9634640946b068",
+        "version" : "9.2.1"
+      }
+    },
+    {
+      "identity" : "promises",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/google/promises.git",
+      "state" : {
+        "revision" : "611337c330350c9c1823ad6d671e7f936af5ee13",
+        "version" : "2.0.0"
+      }
+    },
+    {
+      "identity" : "quick",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/Quick/Quick",
+      "state" : {
+        "revision" : "8cce6acd38f965f5baa3167b939f86500314022b",
+        "version" : "3.1.2"
+      }
+    },
+    {
+      "identity" : "retry",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/icanzilb/Retry.git",
+      "state" : {
+        "revision" : "3beacada357968bcf9e5a2da520abfb374188afe",
+        "version" : "0.6.3"
+      }
+    },
+    {
+      "identity" : "scrollviewcontroller",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/darrarski/ScrollViewController",
+      "state" : {
+        "revision" : "9a52bb056504bb4766ddb5ac518097dd48736303",
+        "version" : "1.2.0"
+      }
+    },
+    {
+      "identity" : "snapkit",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SnapKit/SnapKit",
+      "state" : {
+        "revision" : "d458564516e5676af9c70b4f4b2a9178294f1bc6",
+        "version" : "5.0.1"
+      }
+    },
+    {
+      "identity" : "swift-case-paths",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-case-paths",
+      "state" : {
+        "revision" : "241301b67d8551c26d8f09bd2c0e52cc49f18007",
+        "version" : "0.8.0"
+      }
+    },
+    {
+      "identity" : "swift-collections",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-collections",
+      "state" : {
+        "revision" : "48254824bb4248676bf7ce56014ff57b142b77eb",
+        "version" : "1.0.2"
+      }
+    },
+    {
+      "identity" : "swift-composable-architecture",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-composable-architecture.git",
+      "state" : {
+        "revision" : "313dd217dcd1d0478118ec5d15225fd473c1564a",
+        "version" : "0.32.0"
+      }
+    },
+    {
+      "identity" : "swift-custom-dump",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-custom-dump",
+      "state" : {
+        "revision" : "51698ece74ecf31959d3fa81733f0a5363ef1b4e",
+        "version" : "0.3.0"
+      }
+    },
+    {
+      "identity" : "swift-identified-collections",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/swift-identified-collections",
+      "state" : {
+        "revision" : "680bf440178a78a627b1c2c64c0855f6523ad5b9",
+        "version" : "0.3.2"
+      }
+    },
+    {
+      "identity" : "swift-protobuf",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-protobuf",
+      "state" : {
+        "revision" : "7e2c5f3cbbeea68e004915e3a8961e20bd11d824",
+        "version" : "1.18.0"
+      }
+    },
+    {
+      "identity" : "swiftybeaver",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/SwiftyBeaver/SwiftyBeaver.git",
+      "state" : {
+        "revision" : "2c039501d6eeb4d4cd4aec4a8d884ad28862e044",
+        "version" : "1.9.5"
+      }
+    },
+    {
+      "identity" : "swiftydropbox",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/dropbox/SwiftyDropbox.git",
+      "state" : {
+        "revision" : "7af87d903be1cf0af0e76e0394d992943055894e",
+        "version" : "8.2.1"
+      }
+    },
+    {
+      "identity" : "xctest-dynamic-overlay",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/pointfreeco/xctest-dynamic-overlay",
+      "state" : {
+        "revision" : "50a70a9d3583fe228ce672e8923010c8df2deddd",
+        "version" : "0.2.1"
+      }
+    }
+  ],
+  "version" : 2
 }

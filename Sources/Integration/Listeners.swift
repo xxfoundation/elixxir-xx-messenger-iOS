@@ -1,13 +1,10 @@
 import Models
 import Shared
-import Bindings
-import Foundation
 import os.log
 import Combine
-
-import Combine
-
-import Combine
+import XXModels
+import Bindings
+import Foundation
 
 public extension BindingsClient {
     static func listenLogs() {
@@ -45,7 +42,7 @@ public extension BindingsClient {
 
         let listener = TextListener { bindingsMessage in
             guard let message = bindingsMessage else { return }
-            let domainModel = Message(with: message, meMarshalled: self.meMarshalled)
+            let domainModel = Message(with: message, myId: self.myId)
             callback(domainModel)
         }
 
@@ -111,7 +108,7 @@ public extension BindingsClient {
 
     func listenGroupRequests(
         _ groupRequests: @escaping (Group, [Data], String?) -> Void,
-        groupMessages: @escaping (GroupMessage) -> Void
+        groupMessages: @escaping (Message) -> Void
     ) throws -> GroupManagerInterface? {
         var error: NSError?
 
@@ -136,16 +133,16 @@ public extension BindingsClient {
             }
 
             groupRequests(.init(
-                leader: members.first!,
+                id: id,
                 name: String(data: name, encoding: .utf8)!,
-                groupId: id,
-                status: .pending,
+                leaderId: members.first!,
                 createdAt: Date(),
-                serialize: serialize
+                authStatus: .pending,
+                serialized: serialize
             ), members, welcomeMessage)
         }
 
-        let messageCallback = GroupMessageCallback { groupMessages(GroupMessage(with: $0)) }
+        let messageCallback = GroupMessageCallback { groupMessages(Message(with: $0)) }
         let groupManager = BindingsNewGroupManager(self, requestCallback, messageCallback, &error)
 
         guard let error = error else { return groupManager }

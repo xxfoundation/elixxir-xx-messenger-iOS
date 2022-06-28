@@ -3,6 +3,7 @@ import Theme
 import Models
 import Shared
 import Combine
+import XXModels
 import MenuFeature
 import DependencyInjection
 
@@ -115,7 +116,8 @@ public final class ChatListController: UIViewController {
             collectionView: screenView.listContainerView.collectionView
         ) { collectionView, indexPath, contact in
             let cell: ChatListRecentContactCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
-            cell.setup(title: contact.nickname ?? contact.username, image: contact.photo)
+            let title = (contact.nickname ?? contact.username) ?? ""
+            cell.setup(title: title, image: contact.photo)
             return cell
         }
 

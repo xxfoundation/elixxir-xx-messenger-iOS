@@ -4,8 +4,9 @@ import Models
 import Shared
 import Combine
 import Defaults
-import DrawerFeature
+import XXModels
 import Integration
+import DrawerFeature
 import CombineSchedulers
 import DependencyInjection
 
@@ -47,51 +48,61 @@ final class RequestsReceivedViewModel {
     private let groupConfirmationSubject = PassthroughSubject<Group, Never>()
     private let contactConfirmationSubject = PassthroughSubject<Contact, Never>()
     private let itemsSubject = CurrentValueSubject<NSDiffableDataSourceSnapshot<Section, RequestReceived>, Never>(.init())
-    private var groupChats = [GroupChatInfo]()
 
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
     init() {
-        Publishers.CombineLatest4(
-            session.groups(.pending),
-            session.contacts(.all),
-            session.groupMembers(.all),
+        let groupsQuery = Group.Query(
+            authStatus: [
+                .hidden,
+                .pending
+            ])
+
+        let contactsQuery = Contact.Query(
+            authStatus: [
+                .friend,
+                .hidden,
+                .verified,
+                .verificationFailed,
+                .verificationInProgress
+            ])
+
+        let groupStream = session.dbManager.fetchGroupsPublisher(groupsQuery).assertNoFailure()
+        let contactsStream = session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure()
+
+        Publishers.CombineLatest3(
+            groupStream,
+            contactsStream,
             updateSubject.eraseToAnyPublisher()
         )
         .subscribe(on: DispatchQueue.main)
         .receive(on: DispatchQueue.global())
         .map { [unowned self] data -> NSDiffableDataSourceSnapshot<Section, RequestReceived> in
-            let contactRequests = data.1.filter {
-                $0.status == .hidden ||
-                $0.status == .verified ||
-                $0.status == .verificationFailed ||
-                $0.status == .verificationInProgress
-            }
-
             var snapshot = NSDiffableDataSourceSnapshot<Section, RequestReceived>()
             snapshot.appendSections([.appearing, .hidden])
 
-            let requests = data.0.map(Request.group) + contactRequests.map(Request.contact)
+            let contactsFilteringFriends = data.1.filter { $0.authStatus != .friend }
+            let requests = data.0.map(Request.group) + contactsFilteringFriends.map(Request.contact)
             let receivedRequests = requests.map { request -> RequestReceived in
                 switch request {
                 case let .group(group):
-                    var leaderTitle = ""
-
-                    if let leader = data.1.first(where: { $0.userId == group.leader }) {
-                        leaderTitle = leader.nickname ?? leader.username
-                    } else if let leader = data.2.first(where: { $0.userId == group.leader }) {
-                        leaderTitle = leader.username
+                    func leaderName() -> String {
+                        if let leader = data.1.first(where: { $0.id == group.leaderId }) {
+                            return (leader.nickname ?? leader.username) ?? "Leader is not a friend"
+                        } else {
+                            return "[Error retrieving leader]"
+                        }
                     }
 
                     return RequestReceived(
                         request: request,
-                        isHidden: group.status == .hidden,
-                        leader: leaderTitle
+                        isHidden: group.authStatus == .hidden,
+                        leader: leaderName()
                     )
                 case let .contact(contact):
                     return RequestReceived(
                         request: request,
-                        isHidden: contact.status == .hidden,
+                        isHidden: contact.authStatus == .hidden,
                         leader: nil
                     )
                 }
@@ -112,10 +123,6 @@ final class RequestsReceivedViewModel {
             receiveCompletion: { _ in },
             receiveValue: { [unowned self] in itemsSubject.send($0) }
         ).store(in: &cancellables)
-
-        session.groupChats(.accepted)
-            .sink { [unowned self] in groupChats = $0 }
-            .store(in: &cancellables)
     }
 
     func didToggleHiddenRequestsSwitcher() {
@@ -136,7 +143,10 @@ final class RequestsReceivedViewModel {
     }
 
     func didRequestHide(group: Group) {
-        session.hideRequestOf(group: group)
+        if var group = try? session.dbManager.fetchGroups(.init(id: [group.id])).first {
+            group.authStatus = .hidden
+            _ = try? session.dbManager.saveGroup(group)
+        }
     }
 
     func didRequestAccept(group: Group) {
@@ -157,52 +167,44 @@ final class RequestsReceivedViewModel {
         _ group: Group,
         _ completion: @escaping (Result<[DrawerTableCellModel], Error>) -> Void
     ) {
-        session.scanStrangers { [weak self] in
-            guard let self = self else { return }
+        if let info = try? session.dbManager.fetchGroupInfos(.init(groupId: group.id)).first {
+            session.dbManager.fetchContactsPublisher(.init(id: Set(info.members.map(\.id))))
+                .assertNoFailure()
+                .sink { members in
+                    let withUsername = members
+                        .filter { $0.username != nil }
+                        .map {
+                            DrawerTableCellModel(
+                                id: $0.id,
+                                title: $0.nickname ?? $0.username!,
+                                image: $0.photo,
+                                isCreator: $0.id == group.leaderId,
+                                isConnection: $0.authStatus == .friend
+                            )
+                        }
 
-            Publishers.CombineLatest(
-                self.session.contacts(.all),
-                self.session.groupMembers(.fromGroup(group.groupId))
-            )
-            .sink { (allContacts, groupMembers) in
+                    let withoutUsername = members
+                        .filter { $0.username == nil }
+                        .map {
+                            DrawerTableCellModel(
+                                id: $0.id,
+                                title: "Fetching username...",
+                                image: $0.photo,
+                                isCreator: $0.id == group.leaderId,
+                                isConnection: $0.authStatus == .friend
+                            )
+                        }
 
-                guard !groupMembers.map(\.status).contains(.pendingUsername) else {
-                    completion(.failure(NSError.create(""))) // Some members are still pending username lookup...
-                    return
-                }
-
-                // Now that all members are set with their usernames lets find our friends:
-                //
-                let contactsAlsoMembers = allContacts.filter { groupMembers.map(\.userId).contains($0.userId) }
-                let membersNonContacts = groupMembers.filter { !contactsAlsoMembers.map(\.userId).contains($0.userId) }
-
-                var models = [DrawerTableCellModel]()
-
-                contactsAlsoMembers.forEach {
-                    models.append(.init(
-                        title: $0.nickname ?? $0.username,
-                        image: $0.photo,
-                        isCreator: $0.userId == group.leader,
-                        isConnection: true
-                    ))
-                }
-
-                membersNonContacts.forEach {
-                    models.append(.init(
-                        title: $0.username,
-                        image: nil,
-                        isCreator: $0.userId == group.leader,
-                        isConnection: false
-                    ))
-                }
-
-                completion(.success(models))
-            }.store(in: &self.cancellables)
+                    completion(.success(withUsername + withoutUsername))
+                }.store(in: &cancellables)
         }
     }
 
     func didRequestHide(contact: Contact) {
-        session.hideRequestOf(contact: contact)
+        if var contact = try? session.dbManager.fetchContacts(.init(id: [contact.id])).first {
+            contact.authStatus = .hidden
+            _ = try? session.dbManager.saveContact(contact)
+        }
     }
 
     func didRequestAccept(contact: Contact, nickname: String? = nil) {
@@ -222,8 +224,11 @@ final class RequestsReceivedViewModel {
         }
     }
 
-    func groupChatWith(group: Group) -> GroupChatInfo {
-        guard let info = groupChats.first(where: { $0.group.groupId == group.groupId }) else { fatalError() }
+    func groupChatWith(group: Group) -> GroupInfo {
+        guard let info = try? session.dbManager.fetchGroupInfos(.init(groupId: group.id)).first else {
+            fatalError()
+        }
+
         return info
     }
 }

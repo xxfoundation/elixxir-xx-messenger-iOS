@@ -32,7 +32,8 @@ final class RequestsSentViewModel {
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
     init() {
-        session.contacts(.requested)
+        session.dbManager.fetchContactsPublisher(.init(authStatus: [.requested]))
+            .assertNoFailure()
             .removeDuplicates()
             .map { data -> NSDiffableDataSourceSnapshot<Section, RequestSent> in
                 var snapshot = NSDiffableDataSourceSnapshot<Section, RequestSent>()

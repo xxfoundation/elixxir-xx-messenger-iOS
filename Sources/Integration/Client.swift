@@ -2,8 +2,9 @@ import Retry
 import Models
 import Combine
 import Defaults
-import Foundation
 import Bindings
+import XXModels
+import Foundation
 
 public class Client {
     @KeyObject(.inappnotifications, defaultValue: true) var inappnotifications: Bool
@@ -21,10 +22,9 @@ public class Client {
     var messages: AnyPublisher<Message, Never> { messagesSubject.eraseToAnyPublisher() }
     var requests: AnyPublisher<Contact, Never> { requestsSubject.eraseToAnyPublisher() }
     var events: AnyPublisher<BackendEvent, Never> { eventsSubject.eraseToAnyPublisher() }
+    var transfers: AnyPublisher<FileTransfer, Never> { transfersSubject.eraseToAnyPublisher() }
     var requestsSent: AnyPublisher<Contact, Never> { requestsSentSubject.eraseToAnyPublisher() }
     var confirmations: AnyPublisher<Contact, Never> { confirmationsSubject.eraseToAnyPublisher() }
-    var groupMessages: AnyPublisher<GroupMessage, Never> { groupMessagesSubject.eraseToAnyPublisher() }
-    var incomingTransfers: AnyPublisher<FileTransfer, Never> { transfersSubject.eraseToAnyPublisher() }
     var groupRequests: AnyPublisher<(Group, [Data], String?), Never> { groupRequestsSubject.eraseToAnyPublisher() }
 
     private let backupSubject = PassthroughSubject<Data, Never>()
@@ -36,7 +36,6 @@ public class Client {
     private let requestsSentSubject = PassthroughSubject<Contact, Never>()
     private let confirmationsSubject = PassthroughSubject<Contact, Never>()
     private let transfersSubject = PassthroughSubject<FileTransfer, Never>()
-    private let groupMessagesSubject = PassthroughSubject<GroupMessage, Never>()
     private let groupRequestsSubject = PassthroughSubject<(Group, [Data], String?), Never>()
 
     private var isBackupInitialization = false
@@ -110,7 +109,7 @@ public class Client {
 
                 switch $0 {
                 case .success(var contact):
-                    contact.status = .requested
+                    contact.authStatus = .requested
                     self.requestsSentSubject.send(contact)
                     print(">>> Restored \(contact.username). Setting status as requested")
                 case .failure(let error):
@@ -165,8 +164,8 @@ public class Client {
 
         groupManager = try bindings.listenGroupRequests { [weak groupRequestsSubject] request, members, welcome in
             groupRequestsSubject?.send((request, members, welcome))
-        } groupMessages: { [weak groupMessagesSubject] in
-            groupMessagesSubject?.send($0)
+        } groupMessages: { [weak messagesSubject] in
+            messagesSubject?.send($0)
         }
 
         bindings.listenPreImageUpdates()
@@ -188,19 +187,21 @@ public class Client {
             ///
             guard let name = name,
                   let type = type,
-                  let contact = sender,
-                  let _extension = Attachment.Extension.from(type) else {
+                  let contactId = sender else {
                       log(string: "Transfer of \(name ?? "nil").\(type ?? "nil") is being dismissed", type: .error)
                       return
                   }
 
             transfersSubject?.send(
                 FileTransfer(
-                    tid: tid,
-                    contact: contact,
-                    fileName: name,
-                    fileType: _extension.written,
-                    isIncoming: true
+                    id: tid,
+                    contactId: contactId,
+                    name: name,
+                    type: type,
+                    data: nil,
+                    progress: 0.0,
+                    isIncoming: true,
+                    createdAt: Date()
                 )
             )
         }

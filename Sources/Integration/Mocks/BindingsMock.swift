@@ -1,5 +1,6 @@
 import Models
 import Combine
+import XXModels
 import Foundation
 
 public final class BindingsMock: BindingsInterface {
@@ -162,7 +163,7 @@ public final class BindingsMock: BindingsInterface {
 
     public func listenGroupRequests(
         _ groupRequests: @escaping (Group, [Data], String?) -> Void,
-        groupMessages: @escaping (GroupMessage) -> Void
+        groupMessages: @escaping (Message) -> Void
     ) throws -> GroupManagerInterface? {
         groupRequestsSubject
             .sink { groupRequests($0, [], nil) }
@@ -187,12 +188,12 @@ public final class BindingsMock: BindingsInterface {
 
 extension Group {
     static let mockGroup = Group(
-        leader: "mockGroupLeader".data(using: .utf8)!,
+        id: "mockGroup".data(using: .utf8)!,
         name: "Bruno's birthday 6/1",
-        groupId: "mockGroup".data(using: .utf8)!,
-        status: .pending,
+        leaderId: "mockGroupLeader".data(using: .utf8)!,
         createdAt: Date.distantPast,
-        serialize: "mockGroup".data(using: .utf8)!
+        authStatus: .pending,
+        serialized: "mockGroup".data(using: .utf8)!
     )
 }
 
@@ -201,17 +202,18 @@ extension Contact {
         var mocks = [Contact]()
 
         for n in 0..<count {
-            mocks.append(.init(
-                photo: nil,
-                userId: "brad\(n)".data(using: .utf8)!,
-                email: "brad\(n)@xx.io",
-                phone: "819820212\(n)5BR",
-                status: .verified,
-                marshaled: "brad\(n)".data(using: .utf8)!,
-                username: "brad\(n)",
-                nickname: nil,
-                createdAt: Date(),
-                isRecent: false
+            mocks.append(
+                .init(
+                    id: "brad\(n)".data(using: .utf8)!,
+                    marshaled: "brad\(n)".data(using: .utf8)!,
+                    username: "brad\(n)",
+                    email: "brad\(n)@xx.io",
+                    phone: "819820212\(n)5BR",
+                    nickname: nil,
+                    photo: nil,
+                    authStatus: .verified,
+                    isRecent: false,
+                    createdAt: Date()
             ))
         }
 
@@ -219,55 +221,55 @@ extension Contact {
     }
 
     static let angelinaRequested = Contact(
-        photo: nil,
-        userId: "angelinajolie".data(using: .utf8)!,
-        email: nil,
-        phone: nil,
-        status: .verificationInProgress,
+        id: "angelinajolie".data(using: .utf8)!,
         marshaled: "angelinajolie".data(using: .utf8)!,
         username: "angelinajolie",
+        email: nil,
+        phone: nil,
         nickname: "Angelica Jolie",
-        createdAt: Date(),
-        isRecent: false
+        photo: nil,
+        authStatus: .verificationInProgress,
+        isRecent: false,
+        createdAt: Date()
     )
 
     static let carlRequested = Contact(
-        photo: nil,
-        userId: "carlsagan".data(using: .utf8)!,
-        email: "carl@jpl.nasa",
-        phone: "81982022244BR",
-        status: .verified,
+        id: "carlsagan".data(using: .utf8)!,
         marshaled: "carlsagan".data(using: .utf8)!,
         username: "carlsagan",
+        email: "carl@jpl.nasa",
+        phone: "81982022244BR",
         nickname: "Carl Sagan",
-        createdAt: Date.distantPast,
-        isRecent: false
+        photo: nil,
+        authStatus: .verified,
+        isRecent: false,
+        createdAt: Date.distantPast
     )
 
     static let elonRequested = Contact(
-        photo: nil,
-        userId: "elonmusk".data(using: .utf8)!,
-        email: "elon@tesla.com",
-        phone: nil,
-        status: .verified,
+        id: "elonmusk".data(using: .utf8)!,
         marshaled: "elonmusk".data(using: .utf8)!,
         username: "elonmusk",
+        email: "elon@tesla.com",
+        phone: nil,
         nickname: "Elon Musk",
-        createdAt: Date.distantPast,
-        isRecent: false
+        photo: nil,
+        authStatus: .verified,
+        isRecent: false,
+        createdAt: Date.distantPast
     )
 
     static let georgeDiscovered = Contact(
-        photo: nil,
-        userId: "georgebenson74".data(using: .utf8)!,
-        email: "george@xx.io",
-        phone: "81987022255BR",
-        status: .stranger,
+        id: "georgebenson74".data(using: .utf8)!,
         marshaled: "georgebenson74".data(using: .utf8)!,
         username: "bruno_muniz74",
+        email: "george@xx.io",
+        phone: "81987022255BR",
         nickname: "Bruno Muniz",
-        createdAt: Date(),
-        isRecent: false
+        photo: nil,
+        authStatus: .stranger,
+        isRecent: false,
+        createdAt: Date()
     )
 }
 

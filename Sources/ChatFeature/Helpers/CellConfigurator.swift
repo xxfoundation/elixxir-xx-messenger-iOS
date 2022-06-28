@@ -1,16 +1,17 @@
 import UIKit
 import Shared
 import Combine
+import XXModels
 import Voxophone
 import AVFoundation
 
 struct CellFactory {
-    var canBuild: (ChatItem) -> Bool
+    var canBuild: (Message) -> Bool
 
-    var build: (ChatItem, UICollectionView, IndexPath) -> UICollectionViewCell
+    var build: (Message, UICollectionView, IndexPath) -> UICollectionViewCell
 
     func callAsFunction(
-        item: ChatItem,
+        item: Message,
         collectionView: UICollectionView,
         indexPath: IndexPath
     ) -> UICollectionViewCell {
@@ -39,33 +40,34 @@ extension CellFactory {
 
 extension CellFactory {
     static func incomingAudio(
-        voxophone: Voxophone
+        voxophone: Voxophone,
+        transfer: @escaping (Data) -> FileTransfer
     ) -> Self {
         .init(
             canBuild: { item in
-                (item.status == .received || item.status == .read || item.status == .receivingAttachment)
-                && item.payload.reply == nil
-                && item.payload.attachment != nil
-                && item.payload.attachment?._extension == .audio
+                guard (item.status == .received || item.status == .receiving),
+                      item.replyMessageId == nil,
+                      item.fileTransferId != nil else { return false }
+
+                return transfer(item.fileTransferId!).type == "m4a"
 
             }, build: { item, collectionView, indexPath in
-                guard let attachment = item.payload.attachment else { fatalError() }
-
+                let ft = transfer(item.fileTransferId!)
                 let cell: IncomingAudioCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
-                let url = FileManager.url(for: "\(attachment.name).\(attachment._extension.written)")!
+                let url = FileManager.url(for: ft.name)!
 
                 var model = AudioMessageCellState(
                     date: item.date,
                     audioURL: url,
                     isPlaying: false,
-                    transferProgress: attachment.progress,
+                    transferProgress: ft.progress,
                     isLoudspeaker: false,
                     duration: (try? AVAudioPlayer(contentsOf: url).duration) ?? 0.0,
                     playbackTime: 0.0
                 )
 
                 cell.leftView.setup(with: model)
-                cell.canReply = item.status.canReply
+                cell.canReply = false
                 cell.performReply = {}
 
                 Bubbler.build(audioBubble: cell.leftView, with: item)
@@ -87,13 +89,13 @@ extension CellFactory {
                     }.store(in: &cell.leftView.cancellables)
 
                 cell.leftView.didTapRight = {
-                    guard item.status != .receivingAttachment else { return }
+                    guard item.status != .receiving else { return }
 
                     voxophone.toggleLoudspeaker()
                 }
 
                 cell.leftView.didTapLeft = {
-                    guard item.status != .receivingAttachment else { return }
+                    guard item.status != .receiving else { return }
 
                     if case .playing(url, _, _, _) = voxophone.state {
                         voxophone.reset()
@@ -109,35 +111,38 @@ extension CellFactory {
     }
 
     static func outgoingAudio(
-        voxophone: Voxophone
+        voxophone: Voxophone,
+        transfer: @escaping (Data) -> FileTransfer
     ) -> Self {
         .init(
             canBuild: { item in
-                (item.status == .sent ||
-                 item.status == .failedToSend ||
-                 item.status == .sendingAttachment ||
-                 item.status == .timedOut)
-                && item.payload.reply == nil
-                && item.payload.attachment != nil
-                && item.payload.attachment?._extension == .audio
+                guard (item.status == .sent ||
+                       item.status == .sending ||
+                       item.status == .sendingFailed ||
+                       item.status == .sendingTimedOut)
+                        && item.replyMessageId == nil
+                        && item.fileTransferId != nil else {
+                    return false
+                }
+
+                return transfer(item.fileTransferId!).type == "m4a"
 
             }, build: { item, collectionView, indexPath in
-                guard let attachment = item.payload.attachment else { fatalError() }
-
+                let ft = transfer(item.fileTransferId!)
                 let cell: OutgoingAudioCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
-                let url = FileManager.url(for: "\(attachment.name).\(attachment._extension.written)")!
+                let url = FileManager.url(for: ft.name)!
                 var model = AudioMessageCellState(
                     date: item.date,
                     audioURL: url,
                     isPlaying: false,
-                    transferProgress: attachment.progress,
+                    transferProgress: ft.progress,
                     isLoudspeaker: false,
                     duration: (try? AVAudioPlayer(contentsOf: url).duration) ?? 0.0,
                     playbackTime: 0.0
                 )
 
                 cell.rightView.setup(with: model)
-                cell.canReply = item.status.canReply
+                cell.canReply = false
                 cell.performReply = {}
 
                 Bubbler.build(audioBubble: cell.rightView, with: item)
@@ -178,28 +183,31 @@ extension CellFactory {
 }
 
 extension CellFactory {
-    static func outgoingImage() -> Self {
+    static func outgoingImage(
+        transfer:  @escaping (Data) -> FileTransfer
+    ) -> Self {
         .init(
             canBuild: { item in
-                (item.status == .sent ||
-                 item.status == .failedToSend ||
-                 item.status == .sendingAttachment ||
-                 item.status == .timedOut)
-                && item.payload.reply == nil
-                && item.payload.attachment != nil
-                && item.payload.attachment?._extension == .image
+                guard (item.status == .sent ||
+                       item.status == .sending ||
+                       item.status == .sendingFailed ||
+                       item.status == .sendingTimedOut)
+                        && item.replyMessageId == nil
+                        && item.fileTransferId != nil else {
+                    return false
+                }
+
+                return transfer(item.fileTransferId!).type == "jpeg"
 
             }, build: { item, collectionView, indexPath in
-                guard let attachment = item.payload.attachment else { fatalError() }
-
+                let ft = transfer(item.fileTransferId!)
                 let cell: OutgoingImageCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
-                Bubbler.build(imageBubble: cell.rightView, with: item)
-
-                cell.canReply = item.status.canReply
+                Bubbler.build(imageBubble: cell.rightView, with: item, with: transfer(item.fileTransferId!))
+                cell.canReply = false
                 cell.performReply = {}
 
-                if let image = UIImage(data: attachment.data!) {
+                if let image = UIImage(data: ft.data!) {
                     cell.rightView.imageView.image = UIImage(cgImage: image.cgImage!, scale: image.scale, orientation: .up)
                 }
 
@@ -208,23 +216,33 @@ extension CellFactory {
         )
     }
 
-    static func incomingImage() -> Self {
+    static func incomingImage(
+        transfer: @escaping (Data) -> FileTransfer
+    ) -> Self {
         .init(
             canBuild: { item in
-                (item.status == .received || item.status == .read || item.status == .receivingAttachment)
-                && item.payload.reply == nil
-                && item.payload.attachment != nil
-                && item.payload.attachment?._extension == .image
+                guard (item.status == .received || item.status == .receiving)
+                        && item.replyMessageId == nil
+                        && item.fileTransferId != nil else {
+                    return false
+                }
+
+                return transfer(item.fileTransferId!).type == "jpeg"
 
             }, build: { item, collectionView, indexPath in
-                guard let attachment = item.payload.attachment else { fatalError() }
-
+                let ft = transfer(item.fileTransferId!)
                 let cell: IncomingImageCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
-                Bubbler.build(imageBubble: cell.leftView, with: item)
-                cell.canReply = item.status.canReply
+                Bubbler.build(imageBubble: cell.leftView, with: item, with: ft)
+                cell.canReply = false
                 cell.performReply = {}
-                cell.leftView.imageView.image = UIImage(data: attachment.data!)
+
+                if let data = ft.data {
+                    cell.leftView.imageView.image = UIImage(data: data)
+                } else {
+                    cell.leftView.imageView.image = Asset.transferImagePlaceholder.image
+                }
+
                 return cell
             }
         )
@@ -234,15 +252,13 @@ extension CellFactory {
 extension CellFactory {
     static func outgoingReply(
         performReply: @escaping () -> Void,
-        name: @escaping (Data) -> String,
-        text: @escaping (Data) -> String,
+        replyContent: @escaping (Data) -> (String, String),
         showRound: @escaping (String?) -> Void
     ) -> Self {
         .init(
             canBuild: { item in
                 (item.status == .sent || item.status == .sending)
-                && item.payload.reply != nil
-                && item.payload.attachment == nil
+                && item.replyMessageId != nil
 
             }, build: { item, collectionView, indexPath in
                 let cell: OutgoingReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
@@ -250,13 +266,10 @@ extension CellFactory {
                 Bubbler.buildReply(
                     bubble: cell.rightView,
                     with: item,
-                    reply: .init(
-                        text: text(item.payload.reply!.messageId),
-                        sender: name(item.payload.reply!.senderId)
-                    )
+                    reply: replyContent(item.replyMessageId!)
                 )
 
-                cell.canReply = item.status.canReply
+                cell.canReply = item.status == .sent
                 cell.performReply = performReply
                 cell.rightView.didTapShowRound = { showRound(item.roundURL) }
                 return cell
@@ -266,15 +279,13 @@ extension CellFactory {
 
     static func incomingReply(
         performReply: @escaping () -> Void,
-        name: @escaping (Data) -> String,
-        text: @escaping (Data) -> String,
+        replyContent: @escaping (Data) -> (String, String),
         showRound: @escaping (String?) -> Void
     ) -> Self {
         .init(
             canBuild: { item in
-                (item.status == .received || item.status == .read)
-                && item.payload.reply != nil
-                && item.payload.attachment == nil
+                item.status == .received
+                && item.replyMessageId != nil
 
             }, build: { item, collectionView, indexPath in
                 let cell: IncomingReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
@@ -282,12 +293,9 @@ extension CellFactory {
                 Bubbler.buildReply(
                     bubble: cell.leftView,
                     with: item,
-                    reply: .init(
-                        text: text(item.payload.reply!.messageId),
-                        sender: name(item.payload.reply!.senderId)
-                    )
+                    reply: replyContent(item.replyMessageId!)
                 )
-                cell.canReply = item.status.canReply
+                cell.canReply = item.status == .received
                 cell.performReply = performReply
                 cell.leftView.didTapShowRound = { showRound(item.roundURL) }
                 cell.leftView.revertBottomStackOrder()
@@ -298,14 +306,12 @@ extension CellFactory {
 
     static func outgoingFailedReply(
         performReply: @escaping () -> Void,
-        name: @escaping (Data) -> String,
-        text: @escaping (Data) -> String
+        replyContent: @escaping (Data) -> (String, String)
     ) -> Self {
         .init(
             canBuild: { item in
-                (item.status == .failedToSend || item.status == .timedOut)
-                && item.payload.reply != nil
-                && item.payload.attachment == nil
+                (item.status == .sendingFailed || item.status == .sendingTimedOut)
+                && item.replyMessageId != nil
 
             }, build: { item, collectionView, indexPath in
                 let cell: OutgoingFailedReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
@@ -313,13 +319,10 @@ extension CellFactory {
                 Bubbler.buildReply(
                     bubble: cell.rightView,
                     with: item,
-                    reply: .init(
-                        text: text(item.payload.reply!.messageId),
-                        sender: name(item.payload.reply!.senderId)
-                    )
+                    reply: replyContent(item.replyMessageId!)
                 )
 
-                cell.canReply = item.status.canReply
+                cell.canReply = false
                 cell.performReply = performReply
                 return cell
             }
@@ -334,15 +337,14 @@ extension CellFactory {
     ) -> Self {
         .init(
             canBuild: { item in
-                (item.status == .received || item.status == .read)
-                && item.payload.reply == nil
-                && item.payload.attachment == nil
+                item.status == .received
+                && item.replyMessageId == nil
 
             }, build: { item, collectionView, indexPath in
                 let cell: IncomingTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
                 Bubbler.build(bubble: cell.leftView, with: item)
-                cell.canReply = item.status.canReply
+                cell.canReply = item.status == .received
                 cell.performReply = performReply
                 cell.leftView.didTapShowRound = { showRound(item.roundURL) }
                 cell.leftView.revertBottomStackOrder()
@@ -358,14 +360,13 @@ extension CellFactory {
         .init(
             canBuild: { item in
                 (item.status == .sending || item.status == .sent)
-                && item.payload.reply == nil
-                && item.payload.attachment == nil
+                && item.replyMessageId == nil
 
             }, build: { item, collectionView, indexPath in
                 let cell: OutgoingTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
                 Bubbler.build(bubble: cell.rightView, with: item)
-                cell.canReply = item.status.canReply
+                cell.canReply = item.status == .sent
                 cell.performReply = performReply
                 cell.rightView.didTapShowRound = { showRound(item.roundURL) }
 
@@ -377,15 +378,14 @@ extension CellFactory {
     static func outgoingFailedText(performReply: @escaping () -> Void) -> Self {
         .init(
             canBuild: { item in
-                (item.status == .failedToSend || item.status == .timedOut)
-                && item.payload.reply == nil
-                && item.payload.attachment == nil
+                (item.status == .sendingFailed || item.status == .sendingTimedOut)
+                && item.replyMessageId == nil
 
             }, build: { item, collectionView, indexPath in
                 let cell: OutgoingFailedTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
                 Bubbler.build(bubble: cell.rightView, with: item)
-                cell.canReply = item.status.canReply
+                cell.canReply = false
                 cell.performReply = performReply
                 return cell
             }
@@ -416,18 +416,16 @@ struct ActionFactory {
     }
 
     static func build(
-        from item: ChatItem,
+        from item: Message,
         action: Action,
-        closure: @escaping (ChatItem) -> Void
+        closure: @escaping (Message) -> Void
     ) -> UIAction? {
-
-        guard item.payload.attachment == nil else { return nil }
 
         switch action {
         case .reply:
-            guard item.status == .read || item.status == .received || item.status == .sent else { return nil }
+            guard item.status == .received || item.status == .sent else { return nil }
         case .retry:
-            guard item.status == .failedToSend || item.status == .timedOut else { return nil }
+            guard item.status == .sendingFailed || item.status == .sendingTimedOut else { return nil }
         case .delete, .copy:
             break
         }
