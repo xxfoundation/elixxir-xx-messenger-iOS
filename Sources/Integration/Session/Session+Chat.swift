@@ -124,7 +124,7 @@ extension Session {
             message.date = Date()
 
             if let message = try? dbManager.saveMessage(message) {
-                if let recipientId = message.recipientId {
+                if let _ = message.recipientId {
                     send(message: message)
                 } else {
                     send(groupMessage: message)
@@ -229,24 +229,27 @@ extension Session {
 
         let content = transfer.type == "m4a" ? "a voice message" : "an image"
 
-        var message = Message(
-            networkId: nil,
-            senderId: transfer.contactId,
-            recipientId: myId,
-            groupId: nil,
-            date: transfer.createdAt,
-            status: .receiving,
-            isUnread: true,
-            text: "Sent you \(content)",
-            replyMessageId: nil,
-            roundURL: nil,
-            fileTransferId: transfer.id
+        var message = try! dbManager.saveMessage(
+            Message(
+                networkId: nil,
+                senderId: transfer.contactId,
+                recipientId: myId,
+                groupId: nil,
+                date: transfer.createdAt,
+                status: .receiving,
+                isUnread: true,
+                text: "Sent you \(content)",
+                replyMessageId: nil,
+                roundURL: nil,
+                fileTransferId: transfer.id
+            )
         )
 
-        message = try! self.dbManager.saveMessage(message)
-
         try! manager.listenDownloadFromTransfer(with: transfer.id) { completed, arrived, total, error in
-            if let error = error { fatalError(error.localizedDescription) }
+            if let error = error {
+                print(error.localizedDescription)
+                return
+            }
 
             if completed {
                 guard let rawFile = try? manager.downloadFileFromTransfer(with: transfer.id) else { return }

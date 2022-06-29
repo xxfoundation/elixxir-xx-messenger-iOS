@@ -410,25 +410,8 @@ public final class Session: SessionType {
 
         client.transfers
             .sink { [unowned self] in
-                _ = try? dbManager.saveFileTransfer($0)
-
-                let content = $0.type == "m4a" ? "a voice message" : "an image"
-
-                let message = Message(
-                    networkId: $0.id,
-                    senderId: $0.contactId,
-                    recipientId: myId,
-                    groupId: nil,
-                    date: $0.createdAt,
-                    status: .receiving,
-                    isUnread: true,
-                    text: "Sent you \(content)",
-                    replyMessageId: nil,
-                    roundURL: nil,
-                    fileTransferId: $0.id
-                )
-
-                _ = try? dbManager.saveMessage(message)
+                guard let transfer = try? dbManager.saveFileTransfer($0) else { return }
+                handle(incomingTransfer: transfer)
             }
             .store(in: &cancellables)
     }
