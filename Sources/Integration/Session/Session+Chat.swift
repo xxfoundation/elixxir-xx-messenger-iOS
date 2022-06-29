@@ -252,16 +252,16 @@ extension Session {
             }
 
             if completed {
-                guard let rawFile = try? manager.downloadFileFromTransfer(with: transfer.id) else { return }
-                _ = try! FileManager.store(data: rawFile, name: transfer.name, type: transfer.type)
+                if let data = try? manager.downloadFileFromTransfer(with: transfer.id),
+                   let _ = try? FileManager.store(data: data, name: transfer.name, type: transfer.type) {
+                    var transfer = transfer
+                    transfer.data = data
+                    transfer.progress = 1.0
+                    message.status = .received
 
-                var transfer = transfer
-                transfer.data = rawFile
-                transfer.progress = 1.0
-                _ = try? self.dbManager.saveFileTransfer(transfer)
-
-                message.status = .received
-                _ = try? self.dbManager.saveMessage(message)
+                    _ = try? self.dbManager.saveFileTransfer(transfer)
+                    _ = try? self.dbManager.saveMessage(message)
+                }
             } else {
                 self.progressTransferWith(tid: transfer.id, arrived: Float(arrived), total: Float(total))
             }

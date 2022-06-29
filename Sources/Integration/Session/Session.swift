@@ -261,10 +261,16 @@ public final class Session: SessionType {
             var transfer = transfer
 
             do {
-                try client.transferManager?.listenDownloadFromTransfer(with: transfer.id) { completed, received, total, error in
+                try client.transferManager?.listenDownloadFromTransfer(with: transfer.id) { [weak self] completed, received, total, error in
+                    guard let self = self else { return }
                     if completed {
                         transfer.progress = 1.0
                         message.status = .received
+
+                        if let data = try? self.client.transferManager?.downloadFileFromTransfer(with: transfer.id),
+                           let _ = try? FileManager.store(data: data, name: transfer.name, type: transfer.type) {
+                            transfer.data = data
+                        }
                     } else {
                         if error != nil {
                             message.status = .receivingFailed
@@ -304,10 +310,14 @@ public final class Session: SessionType {
             var transfer = transfer
 
             do {
-                try client.transferManager?.listenUploadFromTransfer(with: transfer.id) { completed, sent, arrived, total, error in
+                try client.transferManager?.listenUploadFromTransfer(with: transfer.id) { [weak self] completed, sent, arrived, total, error in
+                    guard let self = self else { return }
+
                     if completed {
                         transfer.progress = 1.0
                         message.status = .sent
+
+                        try? self.client.transferManager?.endTransferUpload(with: transfer.id)
                     } else {
                         if error != nil {
                             message.status = .sendingFailed
