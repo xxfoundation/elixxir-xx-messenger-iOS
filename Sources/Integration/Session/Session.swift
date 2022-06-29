@@ -194,7 +194,8 @@ public final class Session: SessionType {
             }
             .store(in: &cancellables)
 
-        registerUnfinishedTransfers()
+        registerUnfinishedUploadTransfers()
+        registerUnfinishedDownloadTransfers()
 
         let query = Contact.Query(authStatus: [.verificationInProgress])
         _ = try? dbManager.bulkUpdateContacts(query, .init(authStatus: .verificationFailed))
@@ -239,7 +240,50 @@ public final class Session: SessionType {
         inappnotifications = true
     }
 
-    private func registerUnfinishedTransfers() {
+    private func registerUnfinishedDownloadTransfers() {
+        guard let unfinishedReceivingMessages = try? dbManager.fetchMessages(.init(status: [.receiving])),
+              let unfinishedReceivingTransfers = try? dbManager.fetchFileTransfers(.init(
+                id: Set(unfinishedReceivingMessages
+                    .filter { $0.fileTransferId != nil }
+                    .compactMap(\.fileTransferId))))
+        else { return }
+
+        let pairs = unfinishedReceivingMessages.compactMap { message -> (Message, FileTransfer)? in
+            guard let transfer = unfinishedReceivingTransfers.first(where: { ft in
+                ft.id == message.fileTransferId
+            }) else { return nil }
+
+            return (message, transfer)
+        }
+
+        pairs.forEach { message, transfer in
+            var message = message
+            var transfer = transfer
+
+            do {
+                try client.transferManager?.listenDownloadFromTransfer(with: transfer.id) { completed, received, total, error in
+                    if completed {
+                        transfer.progress = 1.0
+                        message.status = .received
+                    } else {
+                        if error != nil {
+                            message.status = .receivingFailed
+                        } else {
+                            transfer.progress = Float(received)/Float(total)
+                        }
+                    }
+
+                    _ = try? self.dbManager.saveFileTransfer(transfer)
+                    _ = try? self.dbManager.saveMessage(message)
+                }
+            } catch {
+                message.status = .receivingFailed
+                _ = try? self.dbManager.saveMessage(message)
+            }
+        }
+    }
+
+    private func registerUnfinishedUploadTransfers() {
         guard let unfinishedSendingMessages = try? dbManager.fetchMessages(.init(status: [.sending])),
               let unfinishedSendingTransfers = try? dbManager.fetchFileTransfers(.init(
                 id: Set(unfinishedSendingMessages
@@ -264,7 +308,6 @@ public final class Session: SessionType {
                     if completed {
                         transfer.progress = 1.0
                         message.status = .sent
-
                     } else {
                         if error != nil {
                             message.status = .sendingFailed
