@@ -263,7 +263,7 @@ public final class ContactController: UIViewController {
 
                 let deleteButton = RowButton()
                 deleteButton.setup(
-                    title: "Delete Connection",
+                    title: Localized.Contact.Delete.Info.title,
                     icon: Asset.settingsDelete.image,
                     style: .delete,
                     separator: false
@@ -411,22 +411,23 @@ extension ContactController {
 
     private func presentDeleteInfo() {
         let actionButton = DrawerCapsuleButton(model: .init(
-            title: "Delete Connection",
+            title: Localized.Contact.Delete.Info.title,
             style: .red
         ))
 
         let drawer = DrawerController(with: [
             DrawerText(
                 font: Fonts.Mulish.bold.font(size: 26.0),
-                text: "Delete Connection?",
+                text: Localized.Contact.Delete.Drawer.title,
                 color: Asset.neutralActive.color,
                 alignment: .left,
                 spacingAfter: 19
             ),
             DrawerText(
-                text: "This is a silent deletion, \(viewModel.contact.username) will not know you deleted them. This action will remove all information on your phone about this user, including your communications. You #cannot undo this step, and cannot re-add them unless they delete you as a connection as well.#",
-                spacingAfter: 37
-                ),
+                text: Localized.Contact.Delete.Drawer.description(viewModel.contact.username ?? ""),
+                spacingAfter: 37,
+                customAttributes: [.font:  Fonts.Mulish.bold.font(size: 16.0)]
+            ),
             actionButton
         ])
 

@@ -455,6 +455,20 @@ public enum Localized {
       /// Send message
       public static let send = Localized.tr("Localizable", "contact.confirmed.send")
     }
+    public enum Delete {
+      public enum Drawer {
+        /// This is a silent deletion, %@ will not know you deleted them. This action will remove all information on your phone about this user, including your communications. You #cannot undo this step, and cannot re-add them unless they delete you as a connection as well.#
+        public static func description(_ p1: Any) -> String {
+          return Localized.tr("Localizable", "contact.delete.drawer.description", String(describing: p1))
+        }
+        /// Delete Connection?
+        public static let title = Localized.tr("Localizable", "contact.delete.drawer.title")
+      }
+      public enum Info {
+        /// Delete Connection
+        public static let title = Localized.tr("Localizable", "contact.delete.info.title")
+      }
+    }
     public enum Inprogress {
       /// Your request failed to send
       public static let failed = Localized.tr("Localizable", "contact.inprogress.failed")

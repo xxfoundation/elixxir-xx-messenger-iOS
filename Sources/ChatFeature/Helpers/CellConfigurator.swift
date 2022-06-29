@@ -54,7 +54,7 @@ extension CellFactory {
             }, build: { item, collectionView, indexPath in
                 let ft = transfer(item.fileTransferId!)
                 let cell: IncomingAudioCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
-                let url = FileManager.url(for: ft.name)!
+                let url = FileManager.url(for: "\(ft.name).\(ft.type)")!
 
                 var model = AudioMessageCellState(
                     date: item.date,
@@ -130,7 +130,7 @@ extension CellFactory {
             }, build: { item, collectionView, indexPath in
                 let ft = transfer(item.fileTransferId!)
                 let cell: OutgoingAudioCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
-                let url = FileManager.url(for: ft.name)!
+                let url = FileManager.url(for: "\(ft.name).\(ft.type)")!
                 var model = AudioMessageCellState(
                     date: item.date,
                     audioURL: url,

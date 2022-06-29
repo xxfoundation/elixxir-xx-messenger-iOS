@@ -230,6 +230,15 @@
 "contact.nickname"
 = "Nickname";
 
+// ContactFeature - Delete
+
+"contact.delete.info.title"
+= "Delete Connection";
+"contact.delete.drawer.title"
+= "Delete Connection?";
+"contact.delete.drawer.description"
+= "This is a silent deletion, %@ will not know you deleted them. This action will remove all information on your phone about this user, including your communications. You #cannot undo this step, and cannot re-add them unless they delete you as a connection as well.#";
+
 // ContactFeature - Confirmed
 
 "contact.confirmed.clear"

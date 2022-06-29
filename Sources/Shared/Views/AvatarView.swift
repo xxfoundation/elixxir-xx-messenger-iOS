@@ -48,6 +48,12 @@ public final class AvatarView: UIView {
 
     public func setupProfile(title: String, image: Data?, size: AvatarView.Size) {
         iconImageView.image = nil
+        monogramLabel.text = title
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+            .replacingOccurrences(of: " ", with: "")
+            .prefix(2)
+            .uppercased()
+
         monogramLabel.text = "\(title.prefix(2))".uppercased()
 
         // TODO: What are the font sizes and corner radius for small/medium avatars?

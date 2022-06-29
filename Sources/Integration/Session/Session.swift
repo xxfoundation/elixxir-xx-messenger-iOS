@@ -194,7 +194,8 @@ public final class Session: SessionType {
             }
             .store(in: &cancellables)
 
-        registerUnfinishedTransfers()
+        registerUnfinishedUploadTransfers()
+        registerUnfinishedDownloadTransfers()
 
         let query = Contact.Query(authStatus: [.verificationInProgress])
         _ = try? dbManager.bulkUpdateContacts(query, .init(authStatus: .verificationFailed))
@@ -239,20 +240,20 @@ public final class Session: SessionType {
         inappnotifications = true
     }
 
-    private func registerUnfinishedTransfers() {
-        guard let unfinishedSendingMessages = try? dbManager.fetchMessages(.init(status: [.sending])),
-              let unfinishedSendingTransfers = try? dbManager.fetchFileTransfers(.init(
-                id: Set(unfinishedSendingMessages
+    private func registerUnfinishedDownloadTransfers() {
+        guard let unfinishedReceivingMessages = try? dbManager.fetchMessages(.init(status: [.receiving])),
+              let unfinishedReceivingTransfers = try? dbManager.fetchFileTransfers(.init(
+                id: Set(unfinishedReceivingMessages
                     .filter { $0.fileTransferId != nil }
                     .compactMap(\.fileTransferId))))
         else { return }
 
-        let pairs = unfinishedSendingMessages.map { message -> (Message, FileTransfer) in
-            let transfer = unfinishedSendingTransfers.first { ft in
+        let pairs = unfinishedReceivingMessages.compactMap { message -> (Message, FileTransfer)? in
+            guard let transfer = unfinishedReceivingTransfers.first(where: { ft in
                 ft.id == message.fileTransferId
-            }
+            }) else { return nil }
 
-            return (message, transfer!)
+            return (message, transfer)
         }
 
         pairs.forEach { message, transfer in
@@ -260,11 +261,63 @@ public final class Session: SessionType {
             var transfer = transfer
 
             do {
-                try client.transferManager?.listenUploadFromTransfer(with: transfer.id) { completed, sent, arrived, total, error in
+                try client.transferManager?.listenDownloadFromTransfer(with: transfer.id) { [weak self] completed, received, total, error in
+                    guard let self = self else { return }
+                    if completed {
+                        transfer.progress = 1.0
+                        message.status = .received
+
+                        if let data = try? self.client.transferManager?.downloadFileFromTransfer(with: transfer.id),
+                           let _ = try? FileManager.store(data: data, name: transfer.name, type: transfer.type) {
+                            transfer.data = data
+                        }
+                    } else {
+                        if error != nil {
+                            message.status = .receivingFailed
+                        } else {
+                            transfer.progress = Float(received)/Float(total)
+                        }
+                    }
+
+                    _ = try? self.dbManager.saveFileTransfer(transfer)
+                    _ = try? self.dbManager.saveMessage(message)
+                }
+            } catch {
+                message.status = .receivingFailed
+                _ = try? self.dbManager.saveMessage(message)
+            }
+        }
+    }
+
+    private func registerUnfinishedUploadTransfers() {
+        guard let unfinishedSendingMessages = try? dbManager.fetchMessages(.init(status: [.sending])),
+              let unfinishedSendingTransfers = try? dbManager.fetchFileTransfers(.init(
+                id: Set(unfinishedSendingMessages
+                    .filter { $0.fileTransferId != nil }
+                    .compactMap(\.fileTransferId))))
+        else { return }
+
+        let pairs = unfinishedSendingMessages.compactMap { message -> (Message, FileTransfer)? in
+            guard let transfer = unfinishedSendingTransfers.first(where: { ft in
+                ft.id == message.fileTransferId
+            }) else { return nil }
+
+            return (message, transfer)
+        }
+
+        pairs.forEach { message, transfer in
+            var message = message
+            var transfer = transfer
+
+            do {
+                try client.transferManager?.listenUploadFromTransfer(with: transfer.id) { [weak self] completed, sent, arrived, total, error in
+                    guard let self = self else { return }
+
                     if completed {
                         transfer.progress = 1.0
                         message.status = .sent
 
+                        try? self.client.transferManager?.endTransferUpload(with: transfer.id)
                     } else {
                         if error != nil {
                             message.status = .sendingFailed
@@ -410,25 +463,8 @@ public final class Session: SessionType {
 
         client.transfers
             .sink { [unowned self] in
-                _ = try? dbManager.saveFileTransfer($0)
-
-                let content = $0.type == "m4a" ? "a voice message" : "an image"
-
-                let message = Message(
-                    networkId: $0.id,
-                    senderId: $0.contactId,
-                    recipientId: myId,
-                    groupId: nil,
-                    date: $0.createdAt,
-                    status: .receiving,
-                    isUnread: true,
-                    text: "Sent you \(content)",
-                    replyMessageId: nil,
-                    roundURL: nil,
-                    fileTransferId: $0.id
-                )
-
-                _ = try? dbManager.saveMessage(message)
+                guard let transfer = try? dbManager.saveFileTransfer($0) else { return }
+                handle(incomingTransfer: transfer)
             }
             .store(in: &cancellables)
     }

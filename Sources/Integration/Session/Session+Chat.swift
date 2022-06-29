@@ -124,7 +124,7 @@ extension Session {
             message.date = Date()
 
             if let message = try? dbManager.saveMessage(message) {
-                if let recipientId = message.recipientId {
+                if let _ = message.recipientId {
                     send(message: message)
                 } else {
                     send(groupMessage: message)
@@ -229,36 +229,39 @@ extension Session {
 
         let content = transfer.type == "m4a" ? "a voice message" : "an image"
 
-        var message = Message(
-            networkId: nil,
-            senderId: transfer.contactId,
-            recipientId: myId,
-            groupId: nil,
-            date: transfer.createdAt,
-            status: .receiving,
-            isUnread: true,
-            text: "Sent you \(content)",
-            replyMessageId: nil,
-            roundURL: nil,
-            fileTransferId: transfer.id
+        var message = try! dbManager.saveMessage(
+            Message(
+                networkId: nil,
+                senderId: transfer.contactId,
+                recipientId: myId,
+                groupId: nil,
+                date: transfer.createdAt,
+                status: .receiving,
+                isUnread: true,
+                text: "Sent you \(content)",
+                replyMessageId: nil,
+                roundURL: nil,
+                fileTransferId: transfer.id
+            )
         )
 
-        message = try! self.dbManager.saveMessage(message)
-
         try! manager.listenDownloadFromTransfer(with: transfer.id) { completed, arrived, total, error in
-            if let error = error { fatalError(error.localizedDescription) }
+            if let error = error {
+                print(error.localizedDescription)
+                return
+            }
 
             if completed {
-                guard let rawFile = try? manager.downloadFileFromTransfer(with: transfer.id) else { return }
-                _ = try! FileManager.store(data: rawFile, name: transfer.name, type: transfer.type)
+                if let data = try? manager.downloadFileFromTransfer(with: transfer.id),
+                   let _ = try? FileManager.store(data: data, name: transfer.name, type: transfer.type) {
+                    var transfer = transfer
+                    transfer.data = data
+                    transfer.progress = 1.0
+                    message.status = .received
 
-                var transfer = transfer
-                transfer.data = rawFile
-                transfer.progress = 1.0
-                _ = try? self.dbManager.saveFileTransfer(transfer)
-
-                message.status = .received
-                _ = try? self.dbManager.saveMessage(message)
+                    _ = try? self.dbManager.saveFileTransfer(transfer)
+                    _ = try? self.dbManager.saveMessage(message)
+                }
             } else {
                 self.progressTransferWith(tid: transfer.id, arrived: Float(arrived), total: Float(total))
             }
