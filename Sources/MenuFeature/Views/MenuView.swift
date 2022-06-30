@@ -18,20 +18,9 @@ final class MenuView: UIView {
 
     init() {
         super.init(frame: .zero)
-        setup()
-    }
-
-    required init?(coder: NSCoder) { nil }
-
-    private func setup() {
         backgroundColor = Asset.neutralDark.color
 
-        chatsButton.set(
-            title: Localized.Menu.chats,
-            image: Asset.menuChats.image,
-            color: Asset.brandPrimary.color
-        )
-
+        chatsButton.set(title: Localized.Menu.chats, image: Asset.menuChats.image)
         scanButton.set(title: Localized.Menu.scan, image: Asset.menuScan.image)
         requestsButton.set(title: Localized.Menu.requests, image: Asset.menuRequests.image)
         contactsButton.set(title: Localized.Menu.contacts, image: Asset.menuContacts.image)
@@ -64,33 +53,42 @@ final class MenuView: UIView {
         addSubview(infoStackView)
 
         setupConstraints()
-        setupAccessibility()
+    }
+
+    required init?(coder: NSCoder) { nil }
+
+    func select(item: MenuItem) {
+        switch item {
+        case .chats:
+            chatsButton.set(color: Asset.brandPrimary.color)
+        case .contacts:
+            contactsButton.set(color: Asset.brandPrimary.color)
+        case .requests:
+            requestsButton.set(color: Asset.brandPrimary.color)
+        case .scan:
+            scanButton.set(color: Asset.brandPrimary.color)
+        case .settings:
+            settingsButton.set(color: Asset.brandPrimary.color)
+        case .profile, .dashboard, .join:
+            break
+        }
     }
 
     private func setupConstraints() {
-        headerView.snp.makeConstraints { make in
-            make.top.equalTo(safeAreaLayoutGuide).offset(20)
-            make.left.equalToSuperview().offset(30)
-            make.right.equalToSuperview().offset(-24)
+        headerView.snp.makeConstraints {
+            $0.top.equalTo(safeAreaLayoutGuide).offset(20)
+            $0.left.equalToSuperview().offset(30)
+            $0.right.equalToSuperview().offset(-24)
         }
 
-        stackView.snp.makeConstraints { make in
-            make.left.equalToSuperview().offset(26)
-            make.top.equalTo(headerView.snp.bottom).offset(75)
+        stackView.snp.makeConstraints {
+            $0.left.equalToSuperview().offset(26)
+            $0.top.equalTo(headerView.snp.bottom).offset(75)
         }
 
-        infoStackView.snp.makeConstraints { make in
-            make.bottom.equalTo(safeAreaLayoutGuide).offset(-20)
-            make.left.equalToSuperview().offset(20)
+        infoStackView.snp.makeConstraints {
+            $0.bottom.equalTo(safeAreaLayoutGuide).offset(-20)
+            $0.left.equalToSuperview().offset(20)
         }
-    }
-
-    private func setupAccessibility() {
-        scanButton.accessibilityIdentifier = Localized.Accessibility.Menu.scan
-        chatsButton.accessibilityIdentifier = Localized.Accessibility.Menu.chats
-        headerView.accessibilityIdentifier = Localized.Accessibility.Menu.header
-        contactsButton.accessibilityIdentifier = Localized.Accessibility.Menu.contacts
-        requestsButton.accessibilityIdentifier = Localized.Accessibility.Menu.requests
-        settingsButton.accessibilityIdentifier = Localized.Accessibility.Menu.settings
     }
 }

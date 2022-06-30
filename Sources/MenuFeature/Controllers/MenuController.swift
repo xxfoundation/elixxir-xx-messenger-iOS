@@ -51,6 +51,7 @@ public final class MenuController: UIViewController {
             image: viewModel.avatar
         )
 
+        screenView.select(item: previousItem)
         screenView.xxdkVersionLabel.text = "XXDK \(viewModel.xxdk)"
         screenView.buildLabel.text = Localized.Menu.build(viewModel.build)
         screenView.versionLabel.text = Localized.Menu.version(viewModel.version)
