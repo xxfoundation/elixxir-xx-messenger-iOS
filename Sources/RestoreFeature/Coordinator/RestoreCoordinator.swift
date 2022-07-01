@@ -4,6 +4,7 @@ import Shared
 import Presentation
 
 public protocol RestoreCoordinating {
+    func toSFTP(from: UIViewController)
     func toChats(from: UIViewController)
     func toSuccess(from: UIViewController)
     func toDrawer(_: UIViewController, from: UIViewController)
@@ -16,17 +17,20 @@ public struct RestoreCoordinator: RestoreCoordinating {
     var bottomPresenter: Presenting = BottomPresenter()
     var replacePresenter: Presenting = ReplacePresenter()
 
+    var sftpFactory: () -> UIViewController
     var successFactory: () -> UIViewController
     var chatListFactory: () -> UIViewController
     var restoreFactory: (String, RestoreSettings) -> UIViewController
     var passphraseFactory: (@escaping StringClosure) -> UIViewController
 
     public init(
+        sftpFactory: @escaping () -> UIViewController,
         successFactory: @escaping () -> UIViewController,
         chatListFactory: @escaping () -> UIViewController,
         restoreFactory: @escaping (String, RestoreSettings) -> UIViewController,
         passphraseFactory: @escaping (@escaping StringClosure) -> UIViewController
     ) {
+        self.sftpFactory = sftpFactory
         self.successFactory = successFactory
         self.restoreFactory = restoreFactory
         self.chatListFactory = chatListFactory
@@ -64,5 +68,10 @@ public extension RestoreCoordinator {
     ) {
         let screen = passphraseFactory(completion)
         bottomPresenter.present(screen, from: parent)
+    }
+
+    func toSFTP(from parent: UIViewController) {
+        let screen = sftpFactory()
+        pushPresenter.present(screen, from: parent)
     }
 }

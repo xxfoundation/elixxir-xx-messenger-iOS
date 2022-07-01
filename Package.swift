@@ -215,7 +215,8 @@ let package = Package(
             .target(
                 name: "SFTPFeature",
                 dependencies: [
-
+                    "Shared",
+                    "InputField"
                 ]
             ),
 

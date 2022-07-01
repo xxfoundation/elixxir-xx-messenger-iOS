@@ -211,6 +211,20 @@ public enum Localized {
       /// Backup not found
       public static let title = Localized.tr("Localizable", "accountRestore.notFound.title")
     }
+    public enum Sftp {
+      /// Host
+      public static let host = Localized.tr("Localizable", "accountRestore.sftp.host")
+      /// Login
+      public static let login = Localized.tr("Localizable", "accountRestore.sftp.login")
+      /// Password
+      public static let password = Localized.tr("Localizable", "accountRestore.sftp.password")
+      /// Login to your server. Your credentials will be automatically and securley saved locally on your device.
+      public static let subtitle = Localized.tr("Localizable", "accountRestore.sftp.subtitle")
+      /// Login to your SFTP
+      public static let title = Localized.tr("Localizable", "accountRestore.sftp.title")
+      /// Username
+      public static let username = Localized.tr("Localizable", "accountRestore.sftp.username")
+    }
     public enum Success {
       /// You now have access to all your contacts.
       public static let subtitle = Localized.tr("Localizable", "accountRestore.success.subtitle")

@@ -161,6 +161,7 @@ struct DependencyRegistrator {
 
         container.register(
             RestoreCoordinator(
+                sftpFactory: SFTPController.init,
                 successFactory: RestoreSuccessController.init,
                 chatListFactory: ChatListController.init,
                 restoreFactory: RestoreController.init(_:_:),

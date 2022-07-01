@@ -831,6 +831,19 @@
 "accountRestore.list.cancel"
 = "Cancel";
 
+"accountRestore.sftp.title"
+= "Login to your SFTP";
+"accountRestore.sftp.subtitle"
+= "Login to your server. Your credentials will be automatically and securley saved locally on your device.";
+"accountRestore.sftp.host"
+= "Host";
+"accountRestore.sftp.username"
+= "Username";
+"accountRestore.sftp.password"
+= "Password";
+"accountRestore.sftp.login"
+= "Login";
+
 "accountRestore.header"
 = "Account restore";
 "accountRestore.found.title"
