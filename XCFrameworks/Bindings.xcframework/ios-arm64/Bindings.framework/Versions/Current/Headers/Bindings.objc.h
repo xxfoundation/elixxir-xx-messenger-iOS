@@ -275,6 +275,10 @@ client is registered with and the number total.
  */
 - (BindingsNodeRegistrationsStatus* _Nullable)getNodeRegistrationStatus:(NSError* _Nullable* _Nullable)error;
 /**
+ * GetPartners returns a list of
+ */
+- (NSData* _Nullable)getPartners:(NSError* _Nullable* _Nullable)error;
+/**
  * GetPreferredBins returns the geographic bin or bins that the provided two
 character country code is a part of. The bins are returned as CSV.
  */
