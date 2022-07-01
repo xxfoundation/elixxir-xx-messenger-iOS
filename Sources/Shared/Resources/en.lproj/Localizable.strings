@@ -620,6 +620,8 @@
 = "Dropbox";
 "backup.googleDrive"
 = "Google Drive";
+"backup.SFTP"
+= "SFTP";
 
 // Settings - Delete Account
 

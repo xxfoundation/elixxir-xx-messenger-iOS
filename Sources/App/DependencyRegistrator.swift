@@ -18,6 +18,7 @@ import Voxophone
 import Integration
 import Permissions
 import PushFeature
+import SFTPFeature
 import CrashService
 import ToastFeature
 import iCloudFeature
@@ -86,6 +87,7 @@ struct DependencyRegistrator {
 
         /// Restore / Backup
 
+        container.register(SFTPService.live)
         container.register(iCloudService() as iCloudInterface)
         container.register(DropboxService() as DropboxInterface)
         container.register(GoogleDriveService() as GoogleDriveInterface)

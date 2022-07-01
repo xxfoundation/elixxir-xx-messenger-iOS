@@ -2,6 +2,7 @@ import UIKit
 import Models
 import Combine
 import Defaults
+import SFTPFeature
 import iCloudFeature
 import DropboxFeature
 import NetworkMonitor
@@ -9,10 +10,11 @@ import GoogleDriveFeature
 import DependencyInjection
 
 public final class BackupService {
+    @Dependency private var sftpService: SFTPService
     @Dependency private var icloudService: iCloudInterface
     @Dependency private var dropboxService: DropboxInterface
-    @Dependency private var driveService: GoogleDriveInterface
     @Dependency private var networkManager: NetworkMonitoring
+    @Dependency private var driveService: GoogleDriveInterface
 
     @KeyObject(.backupSettings, defaultValue: Data()) private var storedSettings: Data
 
@@ -149,6 +151,10 @@ extension BackupService {
                         self.refreshBackups()
                     }.store(in: &cancellables)
             }
+        case .sftp:
+            if !sftpService.isAuthorized() {
+                // TODO
+            }
         }
     }
 }
@@ -165,6 +171,12 @@ extension BackupService {
             settings.value.connectedServices.insert(.dropbox)
         } else if !dropboxService.isAuthorized() && settings.value.connectedServices.contains(.dropbox) {
             settings.value.connectedServices.remove(.dropbox)
+        }
+
+        if sftpService.isAuthorized() && !settings.value.connectedServices.contains(.sftp) {
+            settings.value.connectedServices.insert(.sftp)
+        } else if !sftpService.isAuthorized() && settings.value.connectedServices.contains(.sftp) {
+            settings.value.connectedServices.remove(.sftp)
         }
 
         driveService.isAuthorized { [weak settings] isAuthorized in
@@ -194,6 +206,10 @@ extension BackupService {
                     size: metadata.size
                 )
             }
+        }
+
+        if sftpService.isAuthorized() {
+            // TODO
         }
 
         if dropboxService.isAuthorized() {
@@ -293,6 +309,8 @@ extension BackupService {
 
                 // try? FileManager.default.removeItem(at: url)
             }
+        case .sftp:
+            break // TODO
         }
     }
 }

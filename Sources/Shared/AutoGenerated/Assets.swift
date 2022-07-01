@@ -97,6 +97,7 @@ public enum Asset {
   public static let requestsTabReceived = ImageAsset(name: "requests_tab_received")
   public static let requestsTabSent = ImageAsset(name: "requests_tab_sent")
   public static let requestsVerificationFailed = ImageAsset(name: "requests_verification_failed")
+  public static let restoreSFTP = ImageAsset(name: "restore_SFTP")
   public static let restoreDrive = ImageAsset(name: "restore_drive")
   public static let restoreDropbox = ImageAsset(name: "restore_dropbox")
   public static let restoreIcloud = ImageAsset(name: "restore_icloud")

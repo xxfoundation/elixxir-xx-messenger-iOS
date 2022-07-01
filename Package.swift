@@ -27,6 +27,7 @@ let package = Package(
         .library(name: "Integration", targets: ["Integration"]),
         .library(name: "ChatFeature", targets: ["ChatFeature"]),
         .library(name: "PushFeature", targets: ["PushFeature"]),
+        .library(name: "SFTPFeature", targets: ["SFTPFeature"]),
         .library(name: "CrashService", targets: ["CrashService"]),
         .library(name: "Presentation", targets: ["Presentation"]),
         .library(name: "BackupFeature", targets: ["BackupFeature"]),
@@ -81,6 +82,7 @@ let package = Package(
                 "ChatFeature",
                 "MenuFeature",
                 "PushFeature",
+                "SFTPFeature",
                 "ToastFeature",
                 "CrashService",
                 "BackupFeature",
@@ -205,6 +207,15 @@ let package = Package(
                         name: "FirebaseCrashlytics",
                         package: "firebase-ios-sdk"
                     )
+                ]
+            ),
+
+        // MARK: - SFTPFeature
+
+            .target(
+                name: "SFTPFeature",
+                dependencies: [
+
                 ]
             ),
 
@@ -398,6 +409,7 @@ let package = Package(
                 dependencies: [
                     "HUD",
                     "Shared",
+                    "SFTPFeature",
                     "Integration",
                     "Presentation",
                     "iCloudFeature",
@@ -612,6 +624,7 @@ let package = Package(
                     "Shared",
                     "Models",
                     "InputField",
+                    "SFTPFeature",
                     "Presentation",
                     "iCloudFeature",
                     "DrawerFeature",

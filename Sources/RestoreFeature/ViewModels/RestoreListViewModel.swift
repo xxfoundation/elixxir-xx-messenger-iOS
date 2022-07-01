@@ -6,14 +6,16 @@ import Combine
 import BackupFeature
 import DependencyInjection
 
+import SFTPFeature
 import iCloudFeature
 import DropboxFeature
 import GoogleDriveFeature
 
 final class RestoreListViewModel {
-    @Dependency private var icloud: iCloudInterface
-    @Dependency private var dropbox: DropboxInterface
-    @Dependency private var drive: GoogleDriveInterface
+    @Dependency private var sftpService: SFTPService
+    @Dependency private var icloudService: iCloudInterface
+    @Dependency private var dropboxService: DropboxInterface
+    @Dependency private var googleDriveService: GoogleDriveInterface
 
     var hud: AnyPublisher<HUDStatus, Never> { hudSubject.eraseToAnyPublisher() }
     var didFetchBackup: AnyPublisher<RestoreSettings, Never> { backupSubject.eraseToAnyPublisher() }
@@ -31,15 +33,17 @@ final class RestoreListViewModel {
             didRequestICloudAuthorization()
         case .dropbox:
             didRequestDropboxAuthorization(from: parent)
+        case .sftp:
+            didRequestSFTPAuthorization()
         }
     }
 
     private func didRequestDriveAuthorization(from controller: UIViewController) {
-        drive.authorize(presenting: controller) { authResult in
+        googleDriveService.authorize(presenting: controller) { authResult in
             switch authResult {
             case .success:
                 self.hudSubject.send(.on(nil))
-                self.drive.downloadMetadata { downloadResult in
+                self.googleDriveService.downloadMetadata { downloadResult in
                     switch downloadResult {
                     case .success(let metadata):
                         var backup: Backup?
@@ -62,10 +66,10 @@ final class RestoreListViewModel {
     }
 
     private func didRequestICloudAuthorization() {
-        if icloud.isAuthorized() {
+        if icloudService.isAuthorized() {
             self.hudSubject.send(.on(nil))
 
-            icloud.downloadMetadata { result in
+            icloudService.downloadMetadata { result in
                 switch result {
                 case .success(let metadata):
                     var backup: Backup?
@@ -83,12 +87,12 @@ final class RestoreListViewModel {
         } else {
             /// This could be an alert controller asking if user wants to enable/deeplink
             ///
-            icloud.openSettings()
+            icloudService.openSettings()
         }
     }
 
     private func didRequestDropboxAuthorization(from controller: UIViewController) {
-        dropboxAuthCancellable = dropbox.authorize(presenting: controller)
+        dropboxAuthCancellable = dropboxService.authorize(presenting: controller)
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] authResult in
                 switch authResult {
@@ -96,7 +100,7 @@ final class RestoreListViewModel {
                     guard bool == true else { return }
 
                     self.hudSubject.send(.on(nil))
-                    dropbox.downloadMetadata { metadataResult in
+                    dropboxService.downloadMetadata { metadataResult in
                         switch metadataResult {
                         case .success(let metadata):
                             var backup: Backup?

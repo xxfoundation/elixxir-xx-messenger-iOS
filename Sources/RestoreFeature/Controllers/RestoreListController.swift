@@ -80,6 +80,11 @@ public final class RestoreListController: UIViewController {
             .publisher(for: .touchUpInside)
             .sink { [unowned self] in viewModel.didTapCloud(.dropbox, from: self) }
             .store(in: &cancellables)
+
+        screenView.sftpButton
+            .publisher(for: .touchUpInside)
+            .sink { [unowned self] in viewModel.didTapCloud(.sftp, from: self) }
+            .store(in: &cancellables)
     }
 
     @objc private func didTapBack() {

@@ -236,6 +236,8 @@ public enum Localized {
     public static let header = Localized.tr("Localizable", "backup.header")
     /// iCloud
     public static let iCloud = Localized.tr("Localizable", "backup.iCloud")
+    /// SFTP
+    public static let sftp = Localized.tr("Localizable", "backup.SFTP")
     /// Back up your account to a cloud storage service, you can restore it along with only your contacts when you reinstall xx Messenger on another device.
     public static let subtitle = Localized.tr("Localizable", "backup.subtitle")
     public enum Config {
