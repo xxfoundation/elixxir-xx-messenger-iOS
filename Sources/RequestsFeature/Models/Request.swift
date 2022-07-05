@@ -1,4 +1,5 @@
 import Models
+import XXModels
 import Foundation
 
 enum Section: Int {
@@ -15,16 +16,16 @@ enum Request: Hashable, Equatable {
         case .group:
             return .verified
         case .contact(let contact):
-            return contact.status.toRequestStatus()
+            return contact.authStatus.toRequestStatus()
         }
     }
 
     var id: Data {
         switch self {
         case .group(let group):
-            return group.groupId
+            return group.id
         case .contact(let contact):
-            return contact.userId
+            return contact.id
         }
     }
 }
@@ -40,7 +41,7 @@ enum RequestStatus {
     case failedToRequest
 }
 
-extension Contact.Status {
+extension Contact.AuthStatus {
     func toRequestStatus() -> RequestStatus {
         switch self {
         case .friend, .stranger:

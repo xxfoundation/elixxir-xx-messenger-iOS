@@ -1,6 +1,7 @@
 import UIKit
 import Shared
 import Models
+import XXModels
 import MenuFeature
 import ChatFeature
 import Presentation
@@ -15,7 +16,7 @@ public protocol ContactListCoordinating {
     func toSideMenu(from: UIViewController)
     func toContact(_: Contact, from: UIViewController)
     func toSingleChat(with: Contact, from: UIViewController)
-    func toGroupChat(with: GroupChatInfo, from: UIViewController)
+    func toGroupChat(with: GroupInfo, from: UIViewController)
     func toGroupDrawer(with: Int, from: UIViewController, _: @escaping (String, String?) -> Void)
 }
 
@@ -24,6 +25,7 @@ public struct ContactListCoordinator: ContactListCoordinating {
     var sidePresenter: Presenting = SideMenuPresenter()
     var bottomPresenter: Presenting = BottomPresenter()
     var fullscreenPresenter: Presenting = FullscreenPresenter()
+    var replacePresenter: Presenting = ReplacePresenter(mode: .replaceLast)
 
     var scanFactory: () -> UIViewController
     var searchFactory: () -> UIViewController
@@ -31,7 +33,7 @@ public struct ContactListCoordinator: ContactListCoordinating {
     var requestsFactory: () -> UIViewController
     var contactFactory: (Contact) -> UIViewController
     var singleChatFactory: (Contact) -> UIViewController
-    var groupChatFactory: (GroupChatInfo) -> UIViewController
+    var groupChatFactory: (GroupInfo) -> UIViewController
     var sideMenuFactory: (MenuItem, UIViewController) -> UIViewController
     var groupDrawerFactory: (Int, @escaping (String, String?) -> Void) -> UIViewController
 
@@ -42,7 +44,7 @@ public struct ContactListCoordinator: ContactListCoordinating {
         requestsFactory: @escaping () -> UIViewController,
         contactFactory: @escaping (Contact) -> UIViewController,
         singleChatFactory: @escaping (Contact) -> UIViewController,
-        groupChatFactory: @escaping (GroupChatInfo) -> UIViewController,
+        groupChatFactory: @escaping (GroupInfo) -> UIViewController,
         sideMenuFactory: @escaping (MenuItem, UIViewController) -> UIViewController,
         groupDrawerFactory: @escaping (Int, @escaping (String, String?) -> Void) -> UIViewController
     ) {
@@ -101,9 +103,9 @@ public extension ContactListCoordinator {
         pushPresenter.present(screen, from: parent)
     }
 
-    func toGroupChat(with info: GroupChatInfo, from parent: UIViewController) {
+    func toGroupChat(with info: GroupInfo, from parent: UIViewController) {
         let screen = groupChatFactory(info)
-        pushPresenter.present(screen, from: parent)
+        replacePresenter.present(screen, from: parent)
     }
 
     func toSideMenu(from parent: UIViewController) {

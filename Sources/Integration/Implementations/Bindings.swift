@@ -1,8 +1,9 @@
 import Shared
 import Models
 import Bindings
-import DependencyInjection
+import XXModels
 import Foundation
+import DependencyInjection
 
 public let evaluateNotification: NotificationEvaluation = BindingsNotificationsForMe
 

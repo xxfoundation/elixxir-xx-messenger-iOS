@@ -2,14 +2,19 @@ import UIKit
 import Shared
 import Models
 import Combine
+import XXModels
 import DifferenceKit
 import DrawerFeature
 import DependencyInjection
 
+extension ChatInfo: Differentiable {
+    public var differenceIdentifier: ChatInfo.ID { id }
+}
+
 final class ChatListTableController: UITableViewController {
     @Dependency private var coordinator: ChatListCoordinating
 
-    private var rows = [Chat]()
+    private var rows = [ChatInfo]()
     private let viewModel: ChatListViewModel
     private let cellHeight: CGFloat = 83.0
     private var cancellables = Set<AnyCancellable>()
@@ -89,11 +94,19 @@ extension ChatListTableController {
 
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         switch rows[indexPath.row] {
-        case .contact(let info):
-            guard info.contact.status == .friend else { return }
+        case .group(let group):
+            if let groupInfo = viewModel.groupInfo(from: group) {
+                coordinator.toGroupChat(with: groupInfo, from: self)
+            }
+
+        case .groupChat(let info):
+            if let groupInfo = viewModel.groupInfo(from: info.group) {
+                coordinator.toGroupChat(with: groupInfo, from: self)
+            }
+
+        case .contactChat(let info):
+            guard info.contact.authStatus == .friend else { return }
             coordinator.toSingleChat(with: info.contact, from: self)
-        case .group(let info):
-            coordinator.toGroupChat(with: info, from: self)
         }
     }
 
@@ -104,62 +117,60 @@ extension ChatListTableController {
 
         let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: ChatListCell.self)
 
-        if case .contact(let info) = rows[indexPath.row] {
-            cell.setupContact(
-                name: info.contact.nickname ?? info.contact.username,
-                image: info.contact.photo,
-                date: Date.fromTimestamp(info.lastMessage!.timestamp),
-                hasUnread: info.lastMessage!.unread,
-                preview: info.lastMessage!.payload.text
+        switch rows[indexPath.row] {
+        case .group(let group):
+            cell.setupGroup(
+                name: group.name,
+                date: group.createdAt,
+                preview: nil,
+                unreadCount: 0
             )
-        }
 
-        if case .group(let info) = rows[indexPath.row] {
-            let date: Date = {
-                guard let lastMessage = info.lastMessage else {
-                    return info.group.createdAt
-                }
-
-                return Date.fromTimestamp(lastMessage.timestamp)
-            }()
-
-            let hasUnread: Bool = {
-                guard let lastMessage = info.lastMessage else {
-                    return false
-                }
-
-                return lastMessage.unread
-            }()
-
+        case .groupChat(let info):
             cell.setupGroup(
                 name: info.group.name,
-                date: date,
-                preview: info.lastMessage?.payload.text,
-                hasUnread: hasUnread
+                date: info.lastMessage.date,
+                preview: info.lastMessage.text,
+                unreadCount: info.unreadCount
+            )
+
+        case .contactChat(let info):
+            cell.setupContact(
+                name: (info.contact.nickname ?? info.contact.username) ?? "",
+                image: info.contact.photo,
+                date: info.lastMessage.date,
+                unreadCount: info.unreadCount,
+                preview: info.lastMessage.text
             )
         }
 
         return cell
     }
 
-    private func didRequestDeletionOf(_ item: Chat) {
+    private func didRequestDeletionOf(_ item: ChatInfo) {
         let title: String
         let subtitle: String
         let actionTitle: String
         let actionClosure: () -> Void
 
         switch item {
-        case .group(let info):
+        case .group(let group):
             title = Localized.ChatList.DeleteGroup.title
             subtitle = Localized.ChatList.DeleteGroup.subtitle
             actionTitle = Localized.ChatList.DeleteGroup.action
-            actionClosure = { [weak viewModel] in viewModel?.leave(info.group) }
+            actionClosure = { [weak viewModel] in viewModel?.leave(group) }
 
-        case .contact(let info):
+        case .contactChat(let info):
             title = Localized.ChatList.Delete.title
             subtitle = Localized.ChatList.Delete.subtitle
             actionTitle = Localized.ChatList.Delete.delete
             actionClosure = { [weak viewModel] in viewModel?.clear(info.contact) }
+
+        case .groupChat(let info):
+            title = Localized.ChatList.DeleteGroup.title
+            subtitle = Localized.ChatList.DeleteGroup.subtitle
+            actionTitle = Localized.ChatList.DeleteGroup.action
+            actionClosure = { [weak viewModel] in viewModel?.leave(info.group) }
         }
 
         let actionButton = DrawerCapsuleButton(model: .init(title: actionTitle, style: .red))

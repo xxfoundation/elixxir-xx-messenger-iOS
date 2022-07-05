@@ -4,16 +4,12 @@ import Models
 import Shared
 import Combine
 import XXLogger
+import XXModels
 import Foundation
 import Integration
 import Permissions
 import DifferenceKit
 import DependencyInjection
-
-struct ReplyModel {
-    var text: String
-    var sender: String
-}
 
 enum SingleChatNavigationRoutes: Equatable {
     case none
@@ -35,22 +31,22 @@ final class SingleChatViewModel {
     private var stagedReply: Reply?
     private var cancellables = Set<AnyCancellable>()
     private let contactSubject: CurrentValueSubject<Contact, Never>
-    private let replySubject = PassthroughSubject<ReplyModel, Never>()
+    private let replySubject = PassthroughSubject<(String, String), Never>()
     private let navigationRoutes = PassthroughSubject<SingleChatNavigationRoutes, Never>()
-    private let sectionsRelay = CurrentValueSubject<[ArraySection<ChatSection, ChatItem>], Never>([])
+    private let sectionsRelay = CurrentValueSubject<[ArraySection<ChatSection, Message>], Never>([])
 
     var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
     private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
 
     var isOnline: AnyPublisher<Bool, Never> { session.isOnline }
     var contactPublisher: AnyPublisher<Contact, Never> { contactSubject.eraseToAnyPublisher() }
-    var replyPublisher: AnyPublisher<ReplyModel, Never> { replySubject.eraseToAnyPublisher() }
+    var replyPublisher: AnyPublisher<(String, String), Never> { replySubject.eraseToAnyPublisher() }
     var navigation: AnyPublisher<SingleChatNavigationRoutes, Never> { navigationRoutes.eraseToAnyPublisher() }
     var shouldDisplayEmptyView: AnyPublisher<Bool, Never> { sectionsRelay.map { $0.isEmpty }.eraseToAnyPublisher() }
 
-    var messages: AnyPublisher<[ArraySection<ChatSection, ChatItem>], Never> {
-        sectionsRelay.map { sections -> [ArraySection<ChatSection, ChatItem>] in
-            var snapshot = [ArraySection<ChatSection, ChatItem>]()
+    var messages: AnyPublisher<[ArraySection<ChatSection, Message>], Never> {
+        sectionsRelay.map { sections -> [ArraySection<ChatSection, Message>] in
+            var snapshot = [ArraySection<ChatSection, Message>]()
             sections.forEach { snapshot.append(.init(model: $0.model, elements: $0.elements)) }
             return snapshot
         }.eraseToAnyPublisher()
@@ -60,7 +56,7 @@ final class SingleChatViewModel {
         if contact.isRecent == true {
             var contact = contact
             contact.isRecent = false
-            session.update(contact)
+            _ = try? session.dbManager.saveContact(contact)
         }
     }
 
@@ -73,17 +69,16 @@ final class SingleChatViewModel {
 
         updateRecentState(contact)
 
-        session.contacts(.withUserId(contact.userId))
+        session.dbManager.fetchContactsPublisher(Contact.Query(id: [contact.id]))
+            .assertNoFailure()
             .compactMap { $0.first }
             .sink { [unowned self] in contactSubject.send($0) }
             .store(in: &cancellables)
 
-        session.singleMessages(contact)
-            .map { $0.sorted(by: { $0.timestamp < $1.timestamp }) }
-            .map { messages in
-
-                let domainModels = messages.map { ChatItem($0) }
-                let groupedByDate = Dictionary(grouping: domainModels) { domainModel -> Date in
+        session.dbManager.fetchMessagesPublisher(.init(chat: .direct(session.myId, contact.id)))
+            .assertNoFailure()
+            .map {
+                let groupedByDate = Dictionary(grouping: $0) { domainModel -> Date in
                     let components = Calendar.current.dateComponents([.day, .month, .year], from: domainModel.date)
                     return Calendar.current.date(from: components)!
                 }
@@ -98,13 +93,16 @@ final class SingleChatViewModel {
 
     // MARK: Public
 
-    func didSendAudio(url: URL) {
-        let name = url.deletingPathExtension().lastPathComponent
-        guard let file = FileManager.retrieve(name: name, type: Attachment.Extension.audio.written) else { return }
+    func getFileTransferWith(id: Data) -> FileTransfer {
+        guard let transfer = try? session.dbManager.fetchFileTransfers(.init(id: [id])).first else {
+            fatalError()
+        }
 
-        let attachment = Attachment(name: name, data: file, _extension: .audio)
-        let payload = Payload(text: "You sent a voice message", reply: nil, attachment: attachment)
-        session.send(payload, toContact: contact)
+        return transfer
+    }
+
+    func didSendAudio(url: URL) {
+        session.sendFile(url: url, to: contact)
     }
 
     func didSend(image: UIImage) {
@@ -122,15 +120,18 @@ final class SingleChatViewModel {
     }
 
     func readAll() {
-        session.readAll(from: contact)
+        let assignment = Message.Assignments(isUnread: false)
+        let query = Message.Query(chat: .direct(session.myId, contact.id))
+        _ = try? session.dbManager.bulkUpdateMessages(query, assignment)
     }
 
     func didRequestDeleteAll() {
-        session.deleteAll(from: contact)
+        _ = try? session.dbManager.deleteMessages(.init(chat: .direct(session.myId, contact.id)))
     }
 
-    func didRequestRetry(_ model: ChatItem) {
-        session.retryMessage(model.identity)
+    func didRequestRetry(_ message: Message) {
+        guard let id = message.id else { return }
+        session.retryMessage(id)
     }
    
     func didNavigateSomewhere() {
@@ -163,11 +164,11 @@ final class SingleChatViewModel {
         return false
     }
 
-    func didRequestCopy(_ model: ChatItem) {
-        UIPasteboard.general.string = model.payload.text
+    func didRequestCopy(_ model: Message) {
+        UIPasteboard.general.string = model.text
     }
 
-    func didRequestDeleteSingle(_ model: ChatItem) {
+    func didRequestDeleteSingle(_ model: Message) {
         didRequestDelete([model])
     }
 
@@ -177,21 +178,37 @@ final class SingleChatViewModel {
 
     func send(_ string: String) {
         let text = string.trimmingCharacters(in: .whitespacesAndNewlines)
-        let payload = Payload(text: text, reply: stagedReply, attachment: nil)
+        let payload = Payload(text: text, reply: stagedReply)
         session.send(payload, toContact: contact)
         stagedReply = nil
     }
 
-    func didRequestReply(_ model: ChatItem) {
-        guard let messageId = model.uniqueId else { return }
+    func didRequestReply(_ message: Message) {
+        guard let networkId = message.networkId else { return }
 
-        let isIncoming = model.status == .received || model.status == .read
-        stagedReply = Reply(messageId: messageId, senderId: isIncoming ? contact.userId : session.myId)
-        replySubject.send(.init(text: model.payload.text, sender: isIncoming ? contact.nickname ?? contact.username : "You"))
+        let senderTitle: String = {
+            if message.senderId == session.myId {
+                return "You"
+            } else {
+                return (contact.nickname ?? contact.username) ?? "Fetching username..."
+            }
+        }()
+
+        replySubject.send((senderTitle, message.text))
+        stagedReply = Reply(messageId: networkId, senderId: message.senderId)
     }
 
-    func getText(from messageId: Data) -> String {
-        session.getTextFromMessage(messageId: messageId) ?? "[DELETED]"
+    func getReplyContent(for messageId: Data) -> (String, String) {
+        guard let message = try? session.dbManager.fetchMessages(.init(networkId: messageId)).first else {
+            return ("[DELETED]", "[DELETED]")
+        }
+
+        guard let contact = try? session.dbManager.fetchContacts(.init(id: [message.senderId])).first else {
+            fatalError()
+        }
+
+        let contactTitle = (contact.nickname ?? contact.username) ?? "You"
+        return (contactTitle, message.text)
     }
 
     func showRoundFrom(_ roundURL: String?) {
@@ -202,19 +219,15 @@ final class SingleChatViewModel {
         }
     }
 
-    func didRequestDelete(_ items: [ChatItem]) {
-        session.delete(messages: items.map { $0.identity })
+    func didRequestDelete(_ items: [Message]) {
+        _ = try? session.dbManager.deleteMessages(.init(id: Set(items.compactMap(\.id))))
     }
 
-    func itemWith(id: Int64) -> ChatItem? {
-        sectionsRelay.value.flatMap(\.elements).first(where: { $0.identity == id })
+    func itemWith(id: Int64) -> Message? {
+        sectionsRelay.value.flatMap(\.elements).first(where: { $0.id == id })
     }
 
-    func getName(from senderId: Data) -> String {
-        senderId == session.myId ? "You" : contact.nickname ?? contact.username
-    }
-
-    func itemAt(indexPath: IndexPath) -> ChatItem? {
+    func itemAt(indexPath: IndexPath) -> Message? {
         guard sectionsRelay.value.count > indexPath.section else { return nil }
 
         let items = sectionsRelay.value[indexPath.section].elements

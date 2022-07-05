@@ -1,6 +1,7 @@
 import Models
-import Foundation
 import Combine
+import XXModels
+import Foundation
 
 public enum MessageDeliveryStatus {
     case sent
@@ -157,7 +158,7 @@ public protocol BindingsInterface {
 
     func listenGroupRequests(
         _: @escaping (Group, [Data], String?) -> Void,
-        groupMessages: @escaping (GroupMessage) -> Void
+        groupMessages: @escaping (Message) -> Void
     ) throws -> GroupManagerInterface?
 
     func listenNetworkUpdates(_: @escaping (Bool) -> Void)

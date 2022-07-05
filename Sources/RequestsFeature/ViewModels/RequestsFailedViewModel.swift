@@ -24,7 +24,8 @@ final class RequestsFailedViewModel {
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
     init() {
-        session.contacts(.failed)
+        session.dbManager.fetchContactsPublisher(.init(authStatus: [.requestFailed]))
+            .assertNoFailure()
             .map { data -> NSDiffableDataSourceSnapshot<Section, Request> in
                 var snapshot = NSDiffableDataSourceSnapshot<Section, Request>()
                 snapshot.appendSections([.appearing])

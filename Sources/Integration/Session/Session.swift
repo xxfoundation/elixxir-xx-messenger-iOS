@@ -1,16 +1,17 @@
 import Retry
+import os.log
 import Models
 import Shared
 import Combine
 import Defaults
-import Database
+import XXModels
+import XXDatabase
 import Foundation
+import ToastFeature
 import BackupFeature
 import NetworkMonitor
 import DependencyInjection
-
-import os.log
-import ToastFeature
+import XXLegacyDatabaseMigrator
 
 let logHandler = OSLog(subsystem: "xx.network", category: "Performance debugging")
 
@@ -52,7 +53,7 @@ public final class Session: SessionType {
     @Dependency var networkMonitor: NetworkMonitoring
 
     public let client: Client
-    public let dbManager: DatabaseManager
+    public let dbManager: Database
     private var cancellables = Set<AnyCancellable>()
 
     public var myId: Data { client.bindings.myId }
@@ -76,61 +77,6 @@ public final class Session: SessionType {
         networkMonitor.statusPublisher.map { $0 == .available }.eraseToAnyPublisher()
     }
 
-    public func groups(_ request: Group.Request) -> AnyPublisher<[Group], Never> {
-        self.dbManager
-            .publisher(fetch: Group.self, request)
-            .catch { _ in Just([]) }
-            .eraseToAnyPublisher()
-    }
-
-    public func groupMembers(_ request: GroupMember.Request) -> AnyPublisher<[GroupMember], Never> {
-        self.dbManager
-            .publisher(fetch: GroupMember.self, request)
-            .catch { _ in Just([]) }
-            .eraseToAnyPublisher()
-    }
-
-    lazy public var contacts: (Contact.Request) -> AnyPublisher<[Contact], Never> = {
-        self.dbManager.publisher(fetch: Contact.self, $0).catch { _ in Just([]) }.eraseToAnyPublisher()
-    }
-
-    lazy public var singleMessages: (Contact) -> AnyPublisher<[Message], Never> = {
-        self.dbManager.publisher(fetch: Message.self, .withContact($0.userId)).catch { _ in Just([]) }.eraseToAnyPublisher()
-    }
-
-    lazy public var groupMessages: (Group) -> AnyPublisher<[GroupMessage], Never> = {
-        self.dbManager.publisher(fetch: GroupMessage.self, .fromGroup($0.groupId)).catch { _ in Just([]) }.eraseToAnyPublisher()
-    }
-
-    lazy public var groupChats: (GroupChatInfo.Request) -> AnyPublisher<[GroupChatInfo], Never> = {
-        self.dbManager.publisher(fetch: GroupChatInfo.self, $0).catch { _ in Just([]) }.eraseToAnyPublisher()
-    }
-
-    lazy public var singleChats: (SingleChatInfo.Request) -> AnyPublisher<[SingleChatInfo], Never> = { _ in
-        self.dbManager.publisher(fetch: Contact.self, .friends)
-            .flatMap { [unowned self] contactList -> AnyPublisher<[SingleChatInfo], Error> in
-                let contactIds = contactList.map { $0.userId }
-
-                let messagesPublisher: AnyPublisher<[Message], Error> = dbManager
-                    .publisher(fetch: .latestOnesFromContactIds(contactIds))
-                    .map { $0.sorted(by: { $0.timestamp > $1.timestamp }) }
-                    .eraseToAnyPublisher()
-
-                return messagesPublisher.map { messages -> [SingleChatInfo] in
-                    contactList.map { contact -> SingleChatInfo in
-                        SingleChatInfo(contact: contact, lastMessage: messages.first {
-                            $0.sender == contact.userId || $0.receiver == contact.userId
-                        })
-                    }
-                }
-                .eraseToAnyPublisher()
-            }
-            .catch { _ in Just([]) }
-            .map { $0.filter { $0.lastMessage != nil }}
-            .map { $0.sorted(by: { $0.lastMessage!.timestamp > $1.lastMessage!.timestamp })}
-            .eraseToAnyPublisher()
-    }
-
     public init(
         passphrase: String,
         backupFile: Data,
@@ -143,7 +89,40 @@ public final class Session: SessionType {
         os_signpost(.end, log: logHandler, name: "Decrypting", "Finished newClientFromBackup")
 
         self.client = client
-        dbManager = GRDBDatabaseManager()
+
+        let legacyOldPath = NSSearchPathForDirectoriesInDomains(
+            .documentDirectory, .userDomainMask, true
+        )[0].appending("/xxmessenger.sqlite")
+
+        let legacyPath = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
+            .appendingPathComponent("database")
+            .appendingPathExtension("sqlite").path
+
+        let dbExistsInLegacyOldPath = FileManager.default.fileExists(atPath: legacyOldPath)
+        let dbExistsInLegacyPath = FileManager.default.fileExists(atPath: legacyPath)
+
+        if dbExistsInLegacyOldPath && !dbExistsInLegacyPath {
+            try? FileManager.default.moveItem(atPath: legacyOldPath, toPath: legacyPath)
+        }
+
+        let dbPath = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
+            .appendingPathComponent("xxm_database")
+            .appendingPathExtension("sqlite").path
+
+        dbManager = try Database.onDisk(path: dbPath)
+
+        if dbExistsInLegacyPath {
+            try Migrator.live()(
+                try .init(path: legacyPath),
+                to: dbManager,
+                myContactId: client.bindings.myId,
+                meMarshaled: client.bindings.meMarshalled
+            )
+
+            try FileManager.default.moveItem(atPath: legacyPath, toPath: legacyPath.appending("-backup"))
+        }
 
         let report = try! JSONDecoder().decode(BackupReport.self, from: backupData!)
 
@@ -165,30 +144,61 @@ public final class Session: SessionType {
     public init(ndf: String) throws {
         let network = try! DependencyInjection.Container.shared.resolve() as XXNetworking
         self.client = try network.newClient(ndf: ndf)
-        dbManager = GRDBDatabaseManager()
+
+        let legacyOldPath = NSSearchPathForDirectoriesInDomains(
+            .documentDirectory, .userDomainMask, true
+        )[0].appending("/xxmessenger.sqlite")
+
+        let legacyPath = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
+            .appendingPathComponent("database")
+            .appendingPathExtension("sqlite").path
+
+        let dbExistsInLegacyOldPath = FileManager.default.fileExists(atPath: legacyOldPath)
+        let dbExistsInLegacyPath = FileManager.default.fileExists(atPath: legacyPath)
+
+        if dbExistsInLegacyOldPath && !dbExistsInLegacyPath {
+            try? FileManager.default.moveItem(atPath: legacyOldPath, toPath: legacyPath)
+        }
+
+        let dbPath = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
+            .appendingPathComponent("xxm_database")
+            .appendingPathExtension("sqlite").path
+
+        dbManager = try Database.onDisk(path: dbPath)
+
+        if dbExistsInLegacyPath {
+            try Migrator.live()(
+                try .init(path: legacyPath),
+                to: dbManager,
+                myContactId: client.bindings.myId,
+                meMarshaled: client.bindings.meMarshalled
+            )
+
+            try FileManager.default.moveItem(atPath: legacyPath, toPath: legacyPath.appending("-backup"))
+        }
+
         try continueInitialization()
     }
 
     private func continueInitialization() throws {
-        try dbManager.setup()
-
         setupBindings()
         networkMonitor.start()
 
         networkMonitor.statusPublisher
             .filter { $0 == .available }.first()
-            .sink { [unowned self] _ in client.bindings.replayRequests() }
+            .sink { [unowned self] _ in
+                client.bindings.replayRequests()
+                scanStrangers {}
+            }
             .store(in: &cancellables)
 
-        registerUnfinishedTransfers()
+        registerUnfinishedUploadTransfers()
+        registerUnfinishedDownloadTransfers()
 
-        if let pendingVerificationUsers: [Contact] = try? dbManager.fetch(.verificationInProgress) {
-            pendingVerificationUsers.forEach {
-                var contact = $0
-                contact.status = .verificationFailed
-                _ = try? dbManager.save(contact)
-            }
-        }
+        let query = Contact.Query(authStatus: [.verificationInProgress])
+        _ = try? dbManager.bulkUpdateContacts(query, .init(authStatus: .verificationFailed))
     }
 
     public func setDummyTraffic(status: Bool) {
@@ -210,7 +220,7 @@ public final class Session: SessionType {
             guard self.hasRunningTasks == false else { throw NSError.create("") }
         }.finalCatch { _ in fatalError("Couldn't delete account because network is not stopping") }
 
-        dbManager.drop()
+        try! dbManager.drop()
         FileManager.xxCleanup()
 
         email = nil
@@ -230,67 +240,98 @@ public final class Session: SessionType {
         inappnotifications = true
     }
 
-    public func hideRequestOf(group: Group) {
-        var group = group
-        group.status = .hidden
-        _ = try? dbManager.save(group)
-    }
+    private func registerUnfinishedDownloadTransfers() {
+        guard let unfinishedReceivingMessages = try? dbManager.fetchMessages(.init(status: [.receiving])),
+              let unfinishedReceivingTransfers = try? dbManager.fetchFileTransfers(.init(
+                id: Set(unfinishedReceivingMessages
+                    .filter { $0.fileTransferId != nil }
+                    .compactMap(\.fileTransferId))))
+        else { return }
 
-    public func hideRequestOf(contact: Contact) {
-        var contact = contact
-        contact.status = .hidden
-        _ = try? dbManager.save(contact)
-    }
+        let pairs = unfinishedReceivingMessages.compactMap { message -> (Message, FileTransfer)? in
+            guard let transfer = unfinishedReceivingTransfers.first(where: { ft in
+                ft.id == message.fileTransferId
+            }) else { return nil }
 
-    public func forceFailMessages() {
-        if let pendingE2E: [Message] = try? dbManager.fetch(.sending) {
-            pendingE2E.forEach {
-                var message = $0
-                message.status = .failedToSend
-                _ = try? dbManager.save(message)
-            }
+            return (message, transfer)
         }
 
-        if let pendingGroupMessages: [GroupMessage] = try? dbManager.fetch(.sending) {
-            pendingGroupMessages.forEach {
-                var message = $0
-                message.status = .failed
-                _ = try? dbManager.save(message)
-            }
-        }
-    }
-
-    private func registerUnfinishedTransfers() {
-        guard let unfinisheds: [Message] = try? dbManager.fetch(.sendingAttachment), !unfinisheds.isEmpty else { return }
-
-        for var message in unfinisheds {
-            guard let tid = message.payload.attachment?.transferId else { return }
+        pairs.forEach { message, transfer in
+            var message = message
+            var transfer = transfer
 
             do {
-                try client.transferManager?.listenUploadFromTransfer(with: tid) { completed, sent, arrived, total, error in
+                try client.transferManager?.listenDownloadFromTransfer(with: transfer.id) { [weak self] completed, received, total, error in
+                    guard let self = self else { return }
                     if completed {
-                        message.status = .sent
-                        message.payload.attachment?.progress = 1.0
+                        transfer.progress = 1.0
+                        message.status = .received
 
-                        if let transfer: FileTransfer = try? self.dbManager.fetch(.withTID(tid)).first {
-                            try? self.dbManager.delete(transfer)
+                        if let data = try? self.client.transferManager?.downloadFileFromTransfer(with: transfer.id),
+                           let _ = try? FileManager.store(data: data, name: transfer.name, type: transfer.type) {
+                            transfer.data = data
                         }
                     } else {
-                        if let error = error {
-                            log(string: error.localizedDescription, type: .error)
-                            message.status = .failedToSend
+                        if error != nil {
+                            message.status = .receivingFailed
                         } else {
-                            let progress = Float(arrived)/Float(total)
-                            message.payload.attachment?.progress = progress
-                            return
+                            transfer.progress = Float(received)/Float(total)
                         }
                     }
 
-                    _ = try? self.dbManager.save(message)
+                    _ = try? self.dbManager.saveFileTransfer(transfer)
+                    _ = try? self.dbManager.saveMessage(message)
                 }
             } catch {
-                message.status = .sent
-                _ = try? self.dbManager.save(message)
+                message.status = .receivingFailed
+                _ = try? self.dbManager.saveMessage(message)
+            }
+        }
+    }
+
+    private func registerUnfinishedUploadTransfers() {
+        guard let unfinishedSendingMessages = try? dbManager.fetchMessages(.init(status: [.sending])),
+              let unfinishedSendingTransfers = try? dbManager.fetchFileTransfers(.init(
+                id: Set(unfinishedSendingMessages
+                    .filter { $0.fileTransferId != nil }
+                    .compactMap(\.fileTransferId))))
+        else { return }
+
+        let pairs = unfinishedSendingMessages.compactMap { message -> (Message, FileTransfer)? in
+            guard let transfer = unfinishedSendingTransfers.first(where: { ft in
+                ft.id == message.fileTransferId
+            }) else { return nil }
+
+            return (message, transfer)
+        }
+
+        pairs.forEach { message, transfer in
+            var message = message
+            var transfer = transfer
+
+            do {
+                try client.transferManager?.listenUploadFromTransfer(with: transfer.id) { [weak self] completed, sent, arrived, total, error in
+                    guard let self = self else { return }
+
+                    if completed {
+                        transfer.progress = 1.0
+                        message.status = .sent
+
+                        try? self.client.transferManager?.endTransferUpload(with: transfer.id)
+                    } else {
+                        if error != nil {
+                            message.status = .sendingFailed
+                        } else {
+                            transfer.progress = Float(arrived)/Float(total)
+                        }
+                    }
+
+                    _ = try? self.dbManager.saveFileTransfer(transfer)
+                    _ = try? self.dbManager.saveMessage(message)
+                }
+            } catch {
+                message.status = .sendingFailed
+                _ = try? self.dbManager.saveMessage(message)
             }
         }
     }
@@ -320,19 +361,23 @@ public final class Session: SessionType {
 
     private func setupBindings() {
         client.requests
-            .sink { [unowned self] request in
-                if let _: Contact = try? dbManager.fetch(.withUserId(request.userId)).first { return }
+            .sink { [unowned self] contact in
+                let query = Contact.Query(id: [contact.id])
+
+                if let prexistent = try? dbManager.fetchContacts(query).first {
+                    guard prexistent.authStatus == .stranger else { return }
+                }
 
                 if self.inappnotifications {
                     DeviceFeedback.sound(.contactAdded)
                     DeviceFeedback.shake(.notification)
                 }
 
-                verify(contact: request)
+                verify(contact: contact)
             }.store(in: &cancellables)
 
         client.requestsSent
-            .sink { [unowned self] in _ = try? dbManager.save($0) }
+            .sink { [unowned self] in _ = try? dbManager.saveContact($0) }
             .store(in: &cancellables)
 
         client.backup
@@ -346,8 +391,8 @@ public final class Session: SessionType {
                 /// TODO: Hold a record on the chat that this contact restored.
                 ///
                 var contact = $0
-                contact.status = .friend
-                _ = try? dbManager.save(contact)
+                contact.authStatus = .friend
+                _ = try? dbManager.saveContact(contact)
             }.store(in: &cancellables)
 
         backupService.settingsPublisher
@@ -375,31 +420,25 @@ public final class Session: SessionType {
             .sink { print($0) }
             .store(in: &cancellables)
 
-        client.groupMessages
-            .sink { [unowned self] in _ = try? dbManager.save($0) }
-            .store(in: &cancellables)
-
         client.messages
             .sink { [unowned self] in
-                if var contact: Contact = try? dbManager.fetch(.withUserId($0.sender)).first {
+                if var contact = try? dbManager.fetchContacts(.init(id: [$0.senderId])).first {
                     contact.isRecent = false
-                    _ = try? dbManager.save(contact)
+                    _ = try? dbManager.saveContact(contact)
                 }
 
-                _ = try? dbManager.save($0)
+                _ = try? dbManager.saveMessage($0)
             }.store(in: &cancellables)
 
         client.network
             .sink { [unowned self] in networkMonitor.update($0) }
             .store(in: &cancellables)
 
-        client.incomingTransfers
-            .sink { [unowned self] in handle(incomingTransfer: $0) }
-            .store(in: &cancellables)
-
         client.groupRequests
             .sink { [unowned self] request in
-                if let _: Group = try? dbManager.fetch(.withGroupId(request.0.groupId)).first { return }
+                if let _ = try? dbManager.fetchGroups(.init(id: [request.0.id])).first {
+                    return
+                }
 
                 DispatchQueue.global().async { [weak self] in
                     self?.processGroupCreation(request.0, memberIds: request.1, welcome: request.2)
@@ -408,38 +447,25 @@ public final class Session: SessionType {
 
         client.confirmations
             .sink { [unowned self] in
-                if var contact: Contact = try? dbManager.fetch(.withUserId($0.userId)).first {
-                    contact.status = .friend
+                if var contact = try? dbManager.fetchContacts(.init(id: [$0.id])).first {
+                    contact.authStatus = .friend
                     contact.isRecent = true
                     contact.createdAt = Date()
-                    _ = try? dbManager.save(contact)
+                    _ = try? dbManager.saveContact(contact)
 
                     toastController.enqueueToast(model: .init(
-                        title: contact.nickname ?? contact.username,
+                        title: contact.nickname ?? contact.username!,
                         subtitle: Localized.Requests.Confirmations.toaster,
                         leftImage: Asset.sharedSuccess.image
                     ))
                 }
             }.store(in: &cancellables)
-    }
 
-    public func getTextFromMessage(messageId: Data) -> String? {
-        guard let message: Message = try? dbManager.fetch(.withUniqueId(messageId)).first else { return nil }
-        return message.payload.text
-    }
-
-    public func getTextFromGroupMessage(messageId: Data) -> String? {
-        guard let message: GroupMessage = try? dbManager.fetch(.withUniqueId(messageId)).first else { return nil }
-        return message.payload.text
-    }
-
-    public func getContactWith(userId: Data) -> Contact? {
-        let contact: Contact? = try? dbManager.fetch(.withUserId(userId)).first
-        return contact
-    }
-
-    public func getGroupChatInfoWith(groupId: Data) -> GroupChatInfo? {
-        let info: GroupChatInfo? = try? dbManager.fetch(.fromGroup(groupId)).first
-        return info
+        client.transfers
+            .sink { [unowned self] in
+                guard let transfer = try? dbManager.saveFileTransfer($0) else { return }
+                handle(incomingTransfer: transfer)
+            }
+            .store(in: &cancellables)
     }
 }

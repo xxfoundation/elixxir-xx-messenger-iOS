@@ -1,10 +1,11 @@
 import HUD
-import Combine
+import UIKit
 import Models
+import Combine
+import XXModels
+import Defaults
 import Integration
 import DependencyInjection
-import Defaults
-import UIKit
 
 final class CreateGroupViewModel {
     @KeyObject(.username, defaultValue: "") var username: String
@@ -27,13 +28,13 @@ final class CreateGroupViewModel {
         hudRelay.eraseToAnyPublisher()
     }
 
-    var info: AnyPublisher<GroupChatInfo, Never> {
+    var info: AnyPublisher<GroupInfo, Never> {
         infoRelay.eraseToAnyPublisher()
     }
 
     private var allContacts = [Contact]()
     private var cancellables = Set<AnyCancellable>()
-    private let infoRelay = PassthroughSubject<GroupChatInfo, Never>()
+    private let infoRelay = PassthroughSubject<GroupInfo, Never>()
     private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
     private let contactsRelay = CurrentValueSubject<[Contact], Never>([])
     private let selectedContactsRelay = CurrentValueSubject<[Contact], Never>([])
@@ -41,8 +42,10 @@ final class CreateGroupViewModel {
     // MARK: Lifecycle
 
     init() {
-        session.contacts(.friends)
-            .map { $0.sorted(by: { $0.username < $1.username })}
+        session.dbManager.fetchContactsPublisher(.init(authStatus: [.friend]))
+            .assertNoFailure()
+            .map { $0.filter { $0.id != self.session.myId }}
+            .map { $0.sorted(by: { $0.username! < $1.username! })}
             .sink { [unowned self] in
                 allContacts = $0
                 contactsRelay.send($0)
@@ -65,7 +68,11 @@ final class CreateGroupViewModel {
             return
         }
 
-        contactsRelay.send(allContacts.filter { $0.username.contains(text.lowercased()) })
+        contactsRelay.send(
+            allContacts.filter {
+                ($0.username ?? "").contains(text.lowercased())
+            }
+        )
     }
 
     func create(name: String, welcome: String?, members: [Contact]) {
@@ -77,8 +84,8 @@ final class CreateGroupViewModel {
             self.hudRelay.send(.none)
 
             switch $0 {
-            case .success((let group, let members)):
-                self.infoRelay.send(.init(group: group, members: members))
+            case .success(let info):
+                self.infoRelay.send(info)
             case .failure(let error):
                 self.hudRelay.send(.error(.init(with: error)))
             }

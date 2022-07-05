@@ -89,7 +89,7 @@ final class RequestCell: UICollectionViewCell {
         }
 
         setupContact(
-            title: contact.nickname ?? contact.username,
+            title: (contact.nickname ?? contact.username) ?? "",
             photo: contact.photo,
             phone: phone,
             email: contact.email,
@@ -128,7 +128,7 @@ final class RequestCell: UICollectionViewCell {
         }
 
         setupContact(
-            title: contact.nickname ?? contact.username,
+            title: (contact.nickname ?? contact.username) ?? "",
             photo: contact.photo,
             phone: phone,
             email: contact.email,
@@ -165,7 +165,7 @@ final class RequestCell: UICollectionViewCell {
             }
 
             setupContact(
-                title: contact.nickname ?? contact.username,
+                title: (contact.nickname ?? contact.username) ?? "",
                 photo: contact.photo,
                 phone: phone,
                 email: contact.email,

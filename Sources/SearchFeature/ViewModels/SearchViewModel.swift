@@ -3,6 +3,7 @@ import UIKit
 import Models
 import Combine
 import Defaults
+import XXModels
 import Countries
 import Foundation
 import Integration
@@ -167,7 +168,7 @@ final class SearchViewModel {
 
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }
-            self.session.update(contact)
+            _ = try? self.session.dbManager.saveContact(contact)
         }
     }
 

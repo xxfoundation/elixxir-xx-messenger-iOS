@@ -1,5 +1,4 @@
 import HUD
-import DrawerFeature
 import UIKit
 import Theme
 import Models
@@ -7,8 +6,10 @@ import Shared
 import Combine
 import XXLogger
 import QuickLook
+import XXModels
 import Voxophone
 import ChatLayout
+import DrawerFeature
 import DifferenceKit
 import ChatInputFeature
 import DependencyInjection
@@ -16,6 +17,10 @@ import ScrollViewController
 
 extension FlexibleSpace: CollectionCellContent {
     func prepareForReuse() {}
+}
+
+extension Message: Differentiable {
+    public var differenceIdentifier: Int64 { id! }
 }
 
 public final class SingleChatController: UIViewController {
@@ -43,7 +48,7 @@ public final class SingleChatController: UIViewController {
     private let layoutDelegate = LayoutDelegate()
     private var cancellables = Set<AnyCancellable>()
     private var drawerCancellables = Set<AnyCancellable>()
-    private var sections = [ArraySection<ChatSection, ChatItem>]()
+    private var sections = [ArraySection<ChatSection, Message>]()
     private var currentInterfaceActions: SetActor<Set<InterfaceActions>, ReactionTypes> = SetActor()
 
     var fileURL: URL?
@@ -153,11 +158,13 @@ public final class SingleChatController: UIViewController {
     }
 
     private func setupNavigationBar(contact: Contact) {
-        screenView.set(name: contact.nickname ?? contact.username)
+        screenView.set(name: contact.nickname ?? contact.username!)
         avatarView.snp.makeConstraints { $0.width.height.equalTo(35) }
-        avatarView.setupProfile(title: contact.nickname ?? contact.username, image: contact.photo, size: .small)
 
-        nameLabel.text = contact.nickname ?? contact.username
+        let title = (contact.nickname ?? contact.username) ?? ""
+        avatarView.setupProfile(title: title, image: contact.photo, size: .small)
+
+        nameLabel.text = title
         nameLabel.textColor = Asset.neutralActive.color
         nameLabel.font = Fonts.Mulish.semiBold.font(size: 18.0)
 
@@ -203,7 +210,9 @@ public final class SingleChatController: UIViewController {
 
         viewModel.replyPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in inputComponent.setupReply(message: $0.text, sender: $0.sender) }
+            .sink { [unowned self] senderTitle, messageText in
+                inputComponent.setupReply(message: messageText, sender: senderTitle)
+            }
             .store(in: &cancellables)
 
         viewModel.navigation
@@ -435,8 +444,12 @@ public final class SingleChatController: UIViewController {
 
     private func previewItemAt(_ indexPath: IndexPath) {
         let item = sections[indexPath.section].elements[indexPath.item]
-        guard let attachment = item.payload.attachment, item.status != .receivingAttachment else { return }
-        fileURL = FileManager.url(for: "\(attachment.name).\(attachment._extension.written)")
+        guard let ftid = item.fileTransferId,
+              item.status != .receiving,
+              item.status != .receivingFailed else { return }
+
+        let ft = viewModel.getFileTransferWith(id: ftid)
+        fileURL = FileManager.url(for: "\(ft.name).\(ft.type)")
         coordinator.toPreview(from: self)
     }
 
@@ -482,23 +495,22 @@ extension SingleChatController: UICollectionViewDataSource {
         cellForItemAt indexPath: IndexPath
     ) -> UICollectionViewCell {
 
-        let name: (Data) -> String = viewModel.getName(from:)
-        let text: (Data) -> String = viewModel.getText(from:)
         let showRound: (String?) -> Void = viewModel.showRoundFrom(_:)
         let item = sections[indexPath.section].elements[indexPath.item]
+        let replyContent: (Data) -> (String, String) = viewModel.getReplyContent(for:)
         let performReply: () -> Void = { [weak self] in self?.viewModel.didRequestReply(item) }
 
         let factory = CellFactory.combined(factories: [
-            .incomingImage(),
-            .outgoingImage(),
-            .incomingAudio(voxophone: voxophone),
-            .outgoingAudio(voxophone: voxophone),
+            .incomingImage(transfer: viewModel.getFileTransferWith(id:)),
+            .outgoingImage(transfer: viewModel.getFileTransferWith(id:)),
+            .incomingAudio(voxophone: voxophone, transfer: viewModel.getFileTransferWith(id:)),
+            .outgoingAudio(voxophone: voxophone, transfer: viewModel.getFileTransferWith(id:)),
             .incomingText(performReply: performReply, showRound: showRound),
             .outgoingText(performReply: performReply, showRound: showRound),
             .outgoingFailedText(performReply: performReply),
-            .incomingReply(performReply: performReply, name: name, text: text, showRound: showRound),
-            .outgoingReply(performReply: performReply, name: name, text: text, showRound: showRound),
-            .outgoingFailedReply(performReply: performReply, name: name, text: text)
+            .incomingReply(performReply: performReply, replyContent: replyContent, showRound: showRound),
+            .outgoingReply(performReply: performReply, replyContent: replyContent, showRound: showRound),
+            .outgoingFailedReply(performReply: performReply, replyContent: replyContent)
         ])
 
         return factory(item: item, collectionView: collectionView, indexPath: indexPath)
@@ -561,7 +573,7 @@ extension SingleChatController: UICollectionViewDelegate {
 
         let status = sections[section].elements[item].status
 
-        if status == .received || status == .read || status == .receivingAttachment {
+        if status == .received || status == .receiving {
             var leftView: UIView!
 
             if let cell = cell as? IncomingReplyCell {

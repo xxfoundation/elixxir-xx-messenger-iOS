@@ -3,6 +3,7 @@ import Theme
 import Models
 import Shared
 import Combine
+import XXModels
 import Voxophone
 import ChatLayout
 import DrawerFeature
@@ -32,13 +33,13 @@ public final class GroupChatController: UIViewController {
     private let layoutDelegate = LayoutDelegate()
     private var cancellables = Set<AnyCancellable>()
     private var drawerCancellables = Set<AnyCancellable>()
-    private var sections = [ArraySection<ChatSection, GroupChatItem>]()
+    private var sections = [ArraySection<ChatSection, Message>]()
     private var currentInterfaceActions = SetActor<Set<InterfaceActions>, ReactionTypes>()
 
     public override var canBecomeFirstResponder: Bool { true }
     public override var inputAccessoryView: UIView? { inputComponent }
 
-    public init(_ info: GroupChatInfo) {
+    public init(_ info: GroupInfo) {
         let viewModel = GroupChatViewModel(info)
         self.viewModel = viewModel
         self.members = .init(with: info.members)
@@ -59,7 +60,14 @@ public final class GroupChatController: UIViewController {
 
         super.init(nibName: nil, bundle: nil)
 
-        header.setup(title: info.group.name, memberList: info.members.map { ($0.username, $0.photo) })
+        let memberList = info.members.map {
+            Member(
+                title: ($0.nickname ?? $0.username) ?? "Fetching username...",
+                photo: $0.photo
+            )
+        }
+
+        header.setup(title: info.group.name, memberList: memberList)
     }
 
     public required init?(coder: NSCoder) { nil }
@@ -154,7 +162,9 @@ public final class GroupChatController: UIViewController {
 
         viewModel.replyPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in inputComponent.setupReply(message: $0.text, sender: $0.sender) }
+            .sink { [unowned self] senderTitle, messageText in
+                inputComponent.setupReply(message: messageText, sender: senderTitle)
+            }
             .store(in: &cancellables)
     }
 
@@ -317,9 +327,7 @@ extension GroupChatController: UICollectionViewDataSource {
 
         let item = sections[indexPath.section].elements[indexPath.item]
         let canReply: () -> Bool = {
-            item.status == .sent ||
-            item.status == .received ||
-            item.status == .read
+            (item.status == .sent || item.status == .received) && item.networkId != nil
         }
 
         let performReply: () -> Void = { [weak self] in
@@ -327,21 +335,18 @@ extension GroupChatController: UICollectionViewDataSource {
         }
 
         let name: (Data) -> String = viewModel.getName(from:)
-        let text: (Data) -> String = viewModel.getText(from:)
         let showRound: (String?) -> Void = viewModel.showRoundFrom(_:)
+        let replyContent: (Data) -> (String, String) = viewModel.getReplyContent(for:)
 
         if item.status == .received {
-            if item.payload.reply != nil {
+            if let replyMessageId = item.replyMessageId {
                 let cell: IncomingGroupReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
                 Bubbler.buildReplyGroup(
                     bubble: cell.leftView,
                     with: item,
-                    reply: .init(
-                        text: text(item.payload.reply!.messageId),
-                        sender: name(item.payload.reply!.senderId)
-                    ),
-                    sender: name(item.sender)
+                    reply: replyContent(replyMessageId),
+                    sender: name(item.senderId)
                 )
 
                 cell.canReply = canReply()
@@ -351,25 +356,27 @@ extension GroupChatController: UICollectionViewDataSource {
                 return cell
             } else {
                 let cell: IncomingGroupTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
-                Bubbler.buildGroup(bubble: cell.leftView, with: item, with: name(item.sender))
+                Bubbler.buildGroup(
+                    bubble: cell.leftView,
+                    with: item,
+                    with: name(item.senderId)
+                )
+
                 cell.canReply = canReply()
                 cell.performReply = performReply
                 cell.leftView.didTapShowRound = { showRound(item.roundURL) }
 
                 return cell
             }
-        } else if item.status == .failed {
-            if item.payload.reply != nil {
+        } else if item.status == .sendingFailed {
+            if let replyMessageId = item.replyMessageId {
                 let cell: OutgoingFailedGroupReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
                 Bubbler.buildReplyGroup(
                     bubble: cell.rightView,
                     with: item,
-                    reply: .init(
-                        text: text(item.payload.reply!.messageId),
-                        sender: name(item.payload.reply!.senderId)
-                    ),
-                    sender: name(item.sender)
+                    reply: replyContent(replyMessageId),
+                    sender: name(item.senderId)
                 )
 
                 cell.canReply = canReply()
@@ -379,24 +386,26 @@ extension GroupChatController: UICollectionViewDataSource {
             } else {
                 let cell: OutgoingFailedGroupTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
-                Bubbler.buildGroup(bubble: cell.rightView, with: item, with: name(item.sender))
+                Bubbler.buildGroup(
+                    bubble: cell.rightView,
+                    with: item,
+                    with: name(item.senderId)
+                )
+
                 cell.canReply = canReply()
                 cell.performReply = performReply
 
                 return cell
             }
         } else {
-            if item.payload.reply != nil {
+            if let replyMessageId = item.replyMessageId {
                 let cell: OutgoingGroupReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
                 Bubbler.buildReplyGroup(
                     bubble: cell.rightView,
                     with: item,
-                    reply: .init(
-                        text: text(item.payload.reply!.messageId),
-                        sender: name(item.payload.reply!.senderId)
-                    ),
-                    sender: name(item.sender)
+                    reply: replyContent(replyMessageId),
+                    sender: name(item.senderId)
                 )
 
                 cell.canReply = canReply()
@@ -407,7 +416,12 @@ extension GroupChatController: UICollectionViewDataSource {
             } else {
                 let cell: OutgoingGroupTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
-                Bubbler.buildGroup(bubble: cell.rightView, with: item, with: name(item.sender))
+                Bubbler.buildGroup(
+                    bubble: cell.rightView,
+                    with: item,
+                    with: name(item.senderId)
+                )
+
                 cell.canReply = canReply()
                 cell.performReply = performReply
                 cell.rightView.didTapShowRound = { showRound(item.roundURL) }
@@ -527,7 +541,7 @@ extension GroupChatController: UICollectionViewDelegate {
             let item = self.sections[indexPath.section].elements[indexPath.item]
 
             let copy = UIAction(title: Localized.Chat.BubbleMenu.copy, state: .off) { _ in
-                UIPasteboard.general.string = item.payload.text
+                UIPasteboard.general.string = item.text
             }
 
             let reply = UIAction(title: Localized.Chat.BubbleMenu.reply, state: .off) { [weak self] _ in
@@ -544,7 +558,7 @@ extension GroupChatController: UICollectionViewDelegate {
 
             let menu: UIMenu
 
-            if item.status == .failed {
+            if item.status == .sendingFailed {
                 menu = UIMenu(title: "", children: [copy, retry, delete])
             } else if item.status == .sending {
                 menu = UIMenu(title: "", children: [copy])

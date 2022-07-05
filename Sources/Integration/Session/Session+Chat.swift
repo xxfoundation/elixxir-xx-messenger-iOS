@@ -1,63 +1,32 @@
-import Models
-import Foundation
 import UIKit
+import Models
 import Shared
+import XXModels
+import Foundation
 
 extension Session {
-    public func readAll(from contact: Contact) {
-        do {
-            try dbManager.updateAll(
-                Message.self,
-                Message.Request.unreadsFromContactId(contact.userId),
-                with: [Message.Column.unread.set(to: false)]
-            )
-        } catch {
-            log(string: error.localizedDescription, type: .error)
-        }
-    }
-
-    public func readAll(from group: Group) {
-        do {
-            try dbManager.updateAll(
-                GroupMessage.self,
-                GroupMessage.Request.unreadsFromGroup(group.groupId),
-                with: [GroupMessage.Column.unread.set(to: false)]
-            )
-        } catch {
-            log(string: error.localizedDescription, type: .error)
-        }
-    }
-
-    public func deleteAll(from contact: Contact) {
-        do {
-            try dbManager.delete(Message.self, .withContact(contact.userId))
-        } catch {
-            log(string: error.localizedDescription, type: .error)
-        }
-    }
-
-    public func deleteAll(from group: Group) {
-        do {
-            try dbManager.delete(GroupMessage.self, .fromGroup(group.groupId))
-        } catch {
-            log(string: error.localizedDescription, type: .error)
-        }
-    }
-
     public func send(imageData: Data, to contact: Contact, completion: @escaping (Result<Void, Error>) -> Void) {
-        client.bindings.compress(image: imageData) { [weak self] in
+        client.bindings.compress(image: imageData) { [weak self] result in
             guard let self = self else {
                 completion(.success(()))
                 return
             }
 
-            switch $0 {
-            case .success(let compressed):
-                let name = "image_\(Date.asTimestamp)"
-                try! FileManager.store(data: compressed, name: name, type: Attachment.Extension.image.written)
-                let attachment = Attachment(name: name, data: compressed, _extension: .image)
-                self.send(Payload(text: "You sent an image", reply: nil, attachment: attachment), toContact: contact)
-                completion(.success(()))
+            switch result {
+            case .success(let compressedImage):
+                do {
+                    let url = try FileManager.store(
+                        data: compressedImage,
+                        name: "image_\(Date.asTimestamp)",
+                        type: "jpeg"
+                    )
+
+                    self.sendFile(url: url, to: contact)
+                    completion(.success(()))
+                } catch {
+                    completion(.failure(error))
+                }
+
             case .failure(let error):
                 completion(.failure(error))
                 log(string: "Error when compressing image: \(error.localizedDescription)", type: .error)
@@ -65,59 +34,119 @@ extension Session {
         }
     }
 
-    public func send(_ payload: Payload, toContact contact: Contact) {
-        var message = Message(
-            sender: client.bindings.meMarshalled,
-            receiver: contact.userId,
-            payload: payload,
-            unread: false,
-            timestamp: Date.asTimestamp,
-            uniqueId: nil,
-            status: payload.attachment == nil ? .sending : .sendingAttachment
-        )
+    public func sendFile(url: URL, to contact: Contact) {
+        guard let manager = client.transferManager else { fatalError("A transfer manager was not created") }
 
-        do {
-            message = try dbManager.save(message)
-            send(message: message)
-        } catch {
-            log(string: error.localizedDescription, type: .error)
-        }
-    }
+        DispatchQueue.global().async { [weak self] in
+            guard let self = self else { return }
 
-    public func delete(messages: [Int64]) {
-        messages.forEach {
+            var tid: Data?
+
             do {
-                try dbManager.delete(Message.self, .withId($0))
+                tid = try manager.uploadFile(url: url, to: contact.id) { completed, send, arrived, total, error in
+                    guard let tid = tid else { return }
+
+                    if completed {
+                        self.endTransferWith(tid: tid)
+                    } else {
+                        if error != nil {
+                            self.failTransferWith(tid: tid)
+                        } else {
+                            self.progressTransferWith(tid: tid, arrived: Float(arrived), total: Float(total))
+                        }
+                    }
+                }
+
+                guard let tid = tid else { return }
+
+                let content = url.pathExtension == "m4a" ? "a voice message" : "an image"
+
+                let transfer = FileTransfer(
+                    id: tid,
+                    contactId: contact.id,
+                    name: url.deletingPathExtension().lastPathComponent,
+                    type: url.pathExtension,
+                    data: try? Data(contentsOf: url),
+                    progress: 0.0,
+                    isIncoming: false,
+                    createdAt: Date()
+                )
+
+                _ = try? self.dbManager.saveFileTransfer(transfer)
+
+                let message = Message(
+                    networkId: nil,
+                    senderId: self.client.bindings.myId,
+                    recipientId: contact.id,
+                    groupId: nil,
+                    date: Date(),
+                    status: .sending,
+                    isUnread: false,
+                    text: "You sent \(content)",
+                    replyMessageId: nil,
+                    roundURL: nil,
+                    fileTransferId: tid
+                )
+
+                _ = try? self.dbManager.saveMessage(message)
             } catch {
-                log(string: error.localizedDescription, type: .error)
+                print(error.localizedDescription)
             }
         }
     }
 
-    public func retryMessage(_ id: Int64) {
-        guard var message: Message = try? dbManager.fetch(withId: id) else { return }
-        message.timestamp = Date.asTimestamp
-        message.status = message.payload.attachment == nil ? .sending : .sendingAttachment
+    public func send(_ payload: Payload, toContact contact: Contact) {
+        var message = Message(
+            networkId: nil,
+            senderId: client.bindings.myId,
+            recipientId: contact.id,
+            groupId: nil,
+            date: Date(),
+            status: .sending,
+            isUnread: false,
+            text: payload.text,
+            replyMessageId: payload.reply?.messageId,
+            roundURL: nil,
+            fileTransferId: nil
+        )
 
         do {
-            message = try dbManager.save(message)
+            message = try dbManager.saveMessage(message)
             send(message: message)
         } catch {
             log(string: error.localizedDescription, type: .error)
         }
     }
 
-    private func send(message: Message) {
+    public func retryMessage(_ id: Int64) {
+        if var message = try? dbManager.fetchMessages(.init(id: [id])).first {
+            message.status = .sending
+            message.date = Date()
+
+            if let message = try? dbManager.saveMessage(message) {
+                if let _ = message.recipientId {
+                    send(message: message)
+                } else {
+                    send(groupMessage: message)
+                }
+            }
+        }
+    }
+
+    func send(message: Message) {
         var message = message
 
-        if let _ = message.payload.attachment {
-            sendAttachment(message: message)
-            return
+        var reply: Reply?
+        if let replyId = message.replyMessageId,
+           let replyMessage = try? dbManager.fetchMessages(Message.Query(networkId: replyId)).first {
+            reply = Reply(messageId: replyId, senderId: replyMessage.senderId)
         }
+
+        let payloadData = Payload(text: message.text, reply: reply).asData()
 
         DispatchQueue.global().async { [weak self] in
             guard let self = self else { return }
-            switch self.client.bindings.send(message.payload.asData(), to: message.receiver) {
+            switch self.client.bindings.send(payloadData, to: message.recipientId!) {
             case .success(let report):
                 message.roundURL = report.roundURL
 
@@ -126,34 +155,34 @@ extension Session {
                     case .success(let status):
                         switch status {
                         case .failed:
-                            message.status = .failedToSend
+                            message.status = .sendingFailed
                         case .sent:
                             message.status = .sent
                         case .timedout:
-                            message.status = .timedOut
+                            message.status = .sendingTimedOut
                         }
                     case .failure:
-                        message.status = .failedToSend
+                        message.status = .sendingFailed
                     }
 
-                    message.uniqueId = report.uniqueId
-                    message.timestamp = Int(report.timestamp)
+                    message.networkId = report.uniqueId
+                    message.date = Date.fromTimestamp(Int(report.timestamp))
                     DispatchQueue.main.async {
                         do {
-                            _ = try self.dbManager.save(message)
+                            _ = try self.dbManager.saveMessage(message)
                         } catch {
                             log(string: error.localizedDescription, type: .error)
                         }
                     }
                 }
             case .failure(let error):
-                message.status = .failedToSend
+                message.status = .sendingFailed
                 log(string: error.localizedDescription, type: .error)
             }
 
             DispatchQueue.main.async {
                 do {
-                    _ = try self.dbManager.save(message)
+                    _ = try self.dbManager.saveMessage(message)
                 } catch {
                     log(string: error.localizedDescription, type: .error)
                 }
@@ -161,157 +190,80 @@ extension Session {
         }
     }
 
-    private func sendAttachment(message: Message) {
-        guard let manager = client.transferManager else { fatalError("A transfer manager was not created") }
+    private func endTransferWith(tid: Data) {
+        guard let manager = client.transferManager else {
+            fatalError("A transfer manager was not created")
+        }
 
-        var message = message
-        let attachment = message.payload.attachment!
+        try? manager.endTransferUpload(with: tid)
 
-        DispatchQueue.global().async { [weak self] in
-            guard let self = self else { return }
+        if var message = try? dbManager.fetchMessages(.init(fileTransferId: tid)).first {
+            message.status = .sent
+            _ = try? dbManager.saveMessage(message)
+        }
 
-            do {
-                let tid = try manager.uploadFile(attachment, to: message.receiver) { completed, send, arrived, total, error in
-                    if completed {
-                        self.endTransferFrom(message: message)
-                        message.status = .sent
-                        message.payload.attachment?.progress = 1.0
-                        log(string: "FT Up finished", type: .info)
-                    } else {
-                        if let error = error {
-                            log(string: error.localizedDescription, type: .error)
-                            message.status = .failedToSend
-                        } else {
-                            let progress = Float(arrived)/Float(total)
-                            message.payload.attachment?.progress = progress
-                            log(string: "FT Up: \(progress)", type: .crumbs)
-                        }
-                    }
-
-                    do {
-                        _ = try self.dbManager.save(message) // If it fails here, means the chat was cleared.
-                    } catch {
-                        log(string: error.localizedDescription, type: .error)
-                    }
-                }
-
-                let transfer = FileTransfer(
-                    tid: tid,
-                    contact: message.receiver,
-                    fileName: attachment.name,
-                    fileType: attachment._extension.written,
-                    isIncoming: false
-                )
-
-                message.payload.attachment?.transferId = tid
-                message.status = .sendingAttachment
-
-                do {
-                    _ = try self.dbManager.save(message)
-                    _ = try self.dbManager.save(transfer)
-                } catch {
-                    log(string: error.localizedDescription, type: .error)
-                }
-            } catch {
-                message.status = .failedToSend
-                log(string: error.localizedDescription, type: .error)
-
-                do {
-                    _ = try self.dbManager.save(message)
-                } catch let otherError {
-                    log(string: otherError.localizedDescription, type: .error)
-                }
-            }
+        if var transfer = try? dbManager.fetchFileTransfers(.init(id: [tid])).first {
+            transfer.progress = 1.0
+            _ = try? dbManager.saveFileTransfer(transfer)
         }
     }
 
-    private func endTransferFrom(message: Message) {
-        guard let manager = client.transferManager else { fatalError("A transfer manager was not created") }
-        guard let tid = message.payload.attachment?.transferId else { fatalError("Tried to finish a transfer that had no TID") }
+    private func failTransferWith(tid: Data) {
+        if var message = try? dbManager.fetchMessages(.init(fileTransferId: tid)).first {
+            message.status = .sendingFailed
+            _ = try? dbManager.saveMessage(message)
+        }
+    }
 
-        do {
-            try manager.endTransferUpload(with: tid)
-
-            if let transfer: FileTransfer = try? dbManager.fetch(.withTID(tid)).first {
-                try dbManager.delete(transfer)
-            }
-        } catch {
-            log(string: error.localizedDescription, type: .error)
+    private func progressTransferWith(tid: Data, arrived: Float, total: Float) {
+        if var transfer = try? dbManager.fetchFileTransfers(.init(id: [tid])).first {
+            transfer.progress = arrived/total
+            _ = try? dbManager.saveFileTransfer(transfer)
         }
     }
 
     func handle(incomingTransfer transfer: FileTransfer) {
-        guard let manager = client.transferManager else { fatalError("A transfer manager was not created") }
-
-        let fileExtension: Attachment.Extension = transfer.fileType == "m4a" ? .audio : .image
-        let name = "\(Date.asTimestamp)_\(transfer.fileName)"
-
-        var fakeContent: Data
-
-        if fileExtension == .image {
-            fakeContent = Asset.transferImagePlaceholder.image.jpegData(compressionQuality: 0.1)!
-        } else {
-            fakeContent = FileManager.dummyAudio()
+        guard let manager = client.transferManager else {
+            fatalError("A transfer manager was not created")
         }
 
-        let attachment = Attachment(name: name, data: fakeContent, transferId: transfer.tid, _extension: fileExtension)
+        let content = transfer.type == "m4a" ? "a voice message" : "an image"
 
-        var message = Message(
-            sender: transfer.contact,
-            receiver: client.bindings.meMarshalled,
-            payload: .init(text: "Sent you a \(fileExtension.writtenExtended)", reply: nil, attachment: attachment),
-            unread: true,
-            timestamp: Date.asTimestamp,
-            uniqueId: nil,
-            status: .receivingAttachment
+        var message = try! dbManager.saveMessage(
+            Message(
+                networkId: nil,
+                senderId: transfer.contactId,
+                recipientId: myId,
+                groupId: nil,
+                date: transfer.createdAt,
+                status: .receiving,
+                isUnread: true,
+                text: "Sent you \(content)",
+                replyMessageId: nil,
+                roundURL: nil,
+                fileTransferId: transfer.id
+            )
         )
 
-        do {
-            message = try self.dbManager.save(message)
-            try self.dbManager.save(transfer)
-        } catch {
-            log(string: "Failed to save message/transfer to the database. Will not start listening to transfer... \(error.localizedDescription)", type: .info)
-            return
-        }
-
-        log(string: "FT Down starting", type: .info)
-
-        try! manager.listenDownloadFromTransfer(with: transfer.tid) { completed, arrived, total, error in
+        try! manager.listenDownloadFromTransfer(with: transfer.id) { completed, arrived, total, error in
             if let error = error {
-                fatalError(error.localizedDescription)
+                print(error.localizedDescription)
+                return
             }
 
             if completed {
-                log(string: "FT Down finished", type: .info)
+                if let data = try? manager.downloadFileFromTransfer(with: transfer.id),
+                   let _ = try? FileManager.store(data: data, name: transfer.name, type: transfer.type) {
+                    var transfer = transfer
+                    transfer.data = data
+                    transfer.progress = 1.0
+                    message.status = .received
 
-                guard let rawFile = try? manager.downloadFileFromTransfer(with: transfer.tid) else {
-                    log(string: "Received finalized transfer, file was nil. Ignoring...", type: .error)
-                    return
-                }
-
-                try! FileManager.store(data: rawFile, name: name, type: fileExtension.written)
-                var realAttachment = Attachment(name: name, data: rawFile, transferId: transfer.tid, _extension: fileExtension)
-                realAttachment.progress = 1.0
-                message.payload = .init(text: "Sent you a \(transfer.fileType)", reply: nil, attachment: realAttachment)
-                message.status = .received
-
-                if let toDelete: FileTransfer = try? self.dbManager.fetch(.withTID(transfer.tid)).first {
-                    do {
-                        try self.dbManager.delete(toDelete)
-                    } catch {
-                        log(string: error.localizedDescription, type: .error)
-                    }
+                    _ = try? self.dbManager.saveFileTransfer(transfer)
+                    _ = try? self.dbManager.saveMessage(message)
                 }
             } else {
-                let progress = Float(arrived)/Float(total)
-                log(string: "FT Down: \(progress)", type: .crumbs)
-                message.payload.attachment?.progress = progress
-            }
-
-            do {
-                try self.dbManager.save(message) // If it fails here, means the chat was cleared.
-            } catch {
-                log(string: "Failed to update message model from an incoming transfer. Probably chat was cleared: \(error.localizedDescription)", type: .error)
+                self.progressTransferWith(tid: transfer.id, arrived: Float(arrived), total: Float(total))
             }
         }
     }

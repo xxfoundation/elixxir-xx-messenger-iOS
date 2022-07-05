@@ -1,38 +1,73 @@
 import Models
+import XXModels
 import Foundation
-
-public typealias GroupCompletion = (Result<(Group, [GroupMember]), Error>) -> Void
 
 extension Session {
     public func join(group: Group) throws {
         guard let manager = client.groupManager else { fatalError("A group manager was not created") }
 
-        try manager.join(group.serialize)
+        try manager.join(group.serialized)
         var group = group
-        group.status = .participating
+        group.authStatus = .participating
         scanStrangers {}
-        try dbManager.save(group)
+        try dbManager.saveGroup(group)
     }
 
     public func leave(group: Group) throws {
         guard let manager = client.groupManager else { fatalError("A group manager was not created") }
-        try manager.leave(group.groupId)
-        try dbManager.delete(group)
+        try manager.leave(group.id)
+        try dbManager.deleteGroup(group)
     }
 
-    public func createGroup(name: String, welcome: String?, members: [Contact], _ completion: @escaping GroupCompletion) {
-        guard let manager = client.groupManager else { fatalError("A group manager was not created") }
+    public func createGroup(
+        name: String,
+        welcome: String?,
+        members: [Contact],
+        _ completion: @escaping (Result<GroupInfo, Error>) -> Void
+    ) {
+        guard let manager = client.groupManager else {
+            fatalError("A group manager was not created")
+        }
 
-        let me = client.bindings.meMarshalled
-        let memberIds = members.map { $0.userId }
-
-        manager.create(me: me, name: name, welcome: welcome, with: memberIds) { [weak self] in
+        manager.create(
+            me: myId,
+            name: name,
+            welcome: welcome,
+            with: members.map { $0.id }) { [weak self] result in
             guard let self = self else { return }
 
-            switch $0 {
+            switch result {
             case .success(let group):
-                completion(.success((group, self.processGroupCreation(group, memberIds: memberIds, welcome: welcome))))
-                break
+                try! self.dbManager.saveGroup(group)
+
+                members
+                    .map { GroupMember(groupId: group.id, contactId: $0.id) }
+                    .forEach { try! self.dbManager.saveGroupMember($0) }
+
+                // TODO: Add saveBulkGroupMembers to the database
+
+                if let welcome = welcome {
+                    let message = Message(
+                        networkId: nil,
+                        senderId: self.myId,
+                        recipientId: nil,
+                        groupId: group.id,
+                        date: group.createdAt,
+                        status: .received,
+                        isUnread: false,
+                        text: welcome,
+                        replyMessageId: nil,
+                        roundURL: nil,
+                        fileTransferId: nil
+                    )
+
+                    try! self.dbManager.saveMessage(message)
+                }
+
+                let query = GroupInfo.Query(groupId: group.id)
+                let info = try! self.dbManager.fetchGroupInfos(query).first
+                completion(.success(info!))
+
             case .failure(let error):
                 completion(.failure(error))
             }
@@ -40,118 +75,137 @@ extension Session {
     }
 
     @discardableResult
-    func processGroupCreation(_ group: Group, memberIds: [Data], welcome: String?) -> [GroupMember] {
-        try! dbManager.save(group)
+    func processGroupCreation(_ group: Group, memberIds: [Data], welcome: String?) -> GroupInfo {
+        /// Save the group
+        ///
+        _ = try! dbManager.saveGroup(group)
 
-        if let welcome = welcome {
-            try! dbManager.save(GroupMessage(group: group, text: welcome, me: client.bindings.meMarshalled))
-        }
+        /// Which of those members are not my friends?
+        ///
+        let friendsParticipating = try! dbManager.fetchContacts(Contact.Query(id: Set(memberIds)))
 
-        var members: [GroupMember] = []
-
-        if let contactsOnGroup: [Contact] = try? dbManager.fetch(.withUserIds(memberIds)) {
-            contactsOnGroup.forEach { members.append(GroupMember(contact: $0, group: group)) }
-        }
-
-        let strangersOnGroup = memberIds
-            .filter { !members.map { $0.userId }.contains($0) }
-            .filter { $0 != client.bindings.myId }
-
-        if !strangersOnGroup.isEmpty {
-            for stranger in strangersOnGroup.enumerated() {
-                members.append(GroupMember(
-                    userId: stranger.element,
-                    groupId: group.groupId,
-                    status: .pendingUsername,
-                    username: "Fetching username...",
-                    photo: nil
+        /// Save the strangers as contacts
+        ///
+        let friendIds = friendsParticipating.map(\.id)
+        memberIds.forEach {
+            if !friendIds.contains($0) {
+                try! dbManager.saveContact(.init(
+                    id: $0,
+                    marshaled: nil,
+                    username: nil,
+                    email: nil,
+                    phone: nil,
+                    nickname: nil,
+                    photo: nil,
+                    authStatus: .stranger,
+                    isRecent: false,
+                    createdAt: Date()
                 ))
             }
         }
 
-        members.forEach { try! dbManager.save($0) }
+        /// Save group members relation
+        ///
+        memberIds.forEach {
+            try! dbManager.saveGroupMember(.init(groupId: group.id, contactId: $0))
+        }
 
-        if group.leader != client.bindings.meMarshalled, inappnotifications {
+        /// Save the welcome message (if any)
+        ///
+        if let welcome = welcome {
+            _ = try! dbManager.saveMessage(.init(
+                networkId: nil,
+                senderId: group.leaderId,
+                recipientId: nil,
+                groupId: group.id,
+                date: group.createdAt,
+                status: .received,
+                isUnread: true,
+                text: welcome,
+                replyMessageId: nil,
+                roundURL: nil,
+                fileTransferId: nil
+            ))
+        }
+
+
+        if inappnotifications {
             DeviceFeedback.sound(.contactAdded)
             DeviceFeedback.shake(.notification)
         }
 
         scanStrangers {}
-        return members
+
+        let info = try! dbManager.fetchGroupInfos(.init(groupId: group.id)).first
+        return info!
     }
 }
 
 // MARK: - GroupMessages
 
 extension Session {
-    public func delete(groupMessages: [Int64]) {
-        groupMessages.forEach {
-            do {
-                try dbManager.delete(GroupMessage.self, .id($0))
-            } catch {
-                log(string: error.localizedDescription, type: .error)
-            }
-        }
-    }
-
     public func send(_ payload: Payload, toGroup group: Group) {
-        var groupMessage = GroupMessage(
-            sender: client.bindings.meMarshalled,
-            groupId: group.groupId,
-            payload: payload,
-            unread: false,
-            timestamp: Date.asTimestamp,
-            uniqueId: nil,
-            status: .sending
+        var message = Message(
+            senderId: client.bindings.myId,
+            recipientId: nil,
+            groupId: group.id,
+            date: Date(),
+            status: .sending,
+            isUnread: false,
+            text: payload.text,
+            replyMessageId: payload.reply?.messageId,
+            roundURL: nil,
+            fileTransferId: nil
         )
 
         do {
-            groupMessage = try dbManager.save(groupMessage)
-            send(groupMessage: groupMessage)
+            message = try dbManager.saveMessage(message)
+            send(groupMessage: message)
         } catch {
             log(string: error.localizedDescription, type: .error)
         }
     }
 
-    public func retryGroupMessage(_ id: Int64) {
-        guard var message: GroupMessage = try? dbManager.fetch(withId: id) else { return }
-        message.timestamp = Date.asTimestamp
-        message.status = .sending
-        send(groupMessage: try! dbManager.save(message))
-    }
-
-    private func send(groupMessage: GroupMessage) {
+    func send(groupMessage: Message) {
         guard let manager = client.groupManager else { fatalError("A group manager was not created") }
-        var groupMessage = groupMessage
+        var message = groupMessage
+
+        var reply: Reply?
+        if let replyId = message.replyMessageId,
+           let replyMessage = try? dbManager.fetchMessages(Message.Query(networkId: replyId)).first {
+            reply = Reply(messageId: replyId, senderId: replyMessage.senderId)
+        }
+
+        let payloadData = Payload(text: message.text, reply: reply).asData()
 
         DispatchQueue.global().async { [weak self] in
             guard let self = self else { return }
 
-            switch manager.send(groupMessage.payload.asData(), to: groupMessage.groupId) {
+            switch manager.send(payloadData, to: message.groupId!) {
             case .success((let roundId, let uniqueId, let roundURL)):
-                groupMessage.roundURL = roundURL
+                message.roundURL = roundURL
 
                 self.client.bindings.listenRound(id: Int(roundId)) { result in
                     switch result {
                     case .success(let succeeded):
-                        groupMessage.uniqueId = uniqueId
-                        groupMessage.status = succeeded ? .sent : .failed
+                        message.networkId = uniqueId
+                        message.status = succeeded ? .sent : .sendingFailed
                     case .failure:
-                        groupMessage.status = .failed
+                        message.status = .sendingFailed
                     }
 
                     do {
-                        try self.dbManager.save(groupMessage)
+                        try self.dbManager.saveMessage(message)
                     } catch {
                         log(string: error.localizedDescription, type: .error)
                     }
                 }
             case .failure:
-                groupMessage.status = .failed
+                message.status = .sendingFailed
             }
 
             do {
-                try self.dbManager.save(groupMessage)
+                try self.dbManager.saveMessage(message)
             } catch {
                 log(string: error.localizedDescription, type: .error)
             }
@@ -160,77 +214,30 @@ extension Session {
 
     public func scanStrangers(_ completion: @escaping () -> Void) {
         DispatchQueue.global().async { [weak self] in
-            guard let self = self, let ud = self.client.userDiscovery else { return }
+            guard let self = self,
+                  let ud = self.client.userDiscovery,
+                  let strangers = try? self.dbManager.fetchContacts(.init(username: .some(nil))),
+                  !strangers.isEmpty else { return }
 
-            guard let strangers: [GroupMember] = try? self.dbManager.fetch(.strangers) else {
-                DispatchQueue.main.async {
+            ud.lookup(idList: strangers.map(\.id)) { result in
+                switch result {
+                case .success(let strangersWithUsernames):
+                    let acquaintances = strangers.map { stranger -> Contact in
+                        var exStranger = stranger
+                        exStranger.username = strangersWithUsernames.first(where: { $0.id == stranger.id })?.username
+                        return exStranger
+                    }
+
+                    DispatchQueue.main.async {
+                        acquaintances.forEach { _ = try? self.dbManager.saveContact($0) }
+                    }
+
                     completion()
-                }
-
-                return
-            }
-
-            let ids = strangers.map { $0.userId }
-
-            var updatedStrangers: [GroupMember] = []
-
-            ud.lookup(idList: ids) {
-                switch $0 {
-                case .success(let contacts):
-                    strangers.forEach { stranger in
-                        if let found = contacts.first(where: { contact in contact.userId == stranger.userId }) {
-                            var updatedStranger = stranger
-                            updatedStranger.status = .usernameSet
-                            updatedStranger.username = found.username
-                            updatedStrangers.append(updatedStranger)
-                        }
-                    }
-
-                    DispatchQueue.main.async {
-                        updatedStrangers.forEach {
-                            do {
-                                try self.dbManager.save($0)
-                            } catch {
-                                log(string: error.localizedDescription, type:.error)
-                            }
-                        }
-
-                        log(string: "Scanned unknown group members", type: .info)
-                        completion()
-                    }
                 case .failure(let error):
-                    DispatchQueue.main.async {
-                        log(string: error.localizedDescription, type: .error)
-                        completion()
-                    }
+                    print(error.localizedDescription)
+                    DispatchQueue.main.async { completion() }
                 }
             }
         }
-    }
-}
-
-private extension GroupMessage {
-    init(group: Group, text: String, me: Data) {
-        self.init(
-            sender: group.leader,
-            groupId: group.groupId,
-            payload: .init(text: text, reply: nil, attachment: nil),
-            unread: false,
-            timestamp: Date.asTimestamp,
-            uniqueId: nil,
-            status: group.leader == me ? .sent : .received
-        )
-    }
-}
-
-private extension GroupMember {
-    init(contact: Contact, group: Group) {
-        self.init(
-            userId: contact.userId,
-            groupId: group.groupId,
-            status: .usernameSet,
-            username: contact.username,
-            photo: contact.photo
-        )
     }
 }

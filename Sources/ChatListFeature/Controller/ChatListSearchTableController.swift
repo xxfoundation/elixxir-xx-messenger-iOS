@@ -32,49 +32,41 @@ final class ChatSearchTableController: UITableViewController {
         ) { table, indexPath, item in
             let cell = table.dequeueReusableCell(forIndexPath: indexPath, ofType: ChatListCell.self)
             switch item {
-            case .chat(let subitem):
-                if case .contact(let info) = subitem {
-                    cell.setupContact(
-                        name: info.contact.nickname ?? info.contact.username,
-                        image: info.contact.photo,
-                        date: Date.fromTimestamp(info.lastMessage!.timestamp),
-                        hasUnread: info.lastMessage!.unread,
-                        preview: info.lastMessage!.payload.text
-                    )
-                }
-
-                if case .group(let info) = subitem {
-                    let date: Date = {
-                        guard let lastMessage = info.lastMessage else {
-                            return info.group.createdAt
-                        }
-
-                        return Date.fromTimestamp(lastMessage.timestamp)
-                    }()
-
-                    let hasUnread: Bool = {
-                        guard let lastMessage = info.lastMessage else {
-                            return false
-                        }
-
-                        return lastMessage.unread
-                    }()
-
+            case .chat(let info):
+                switch info {
+                case .group(let group):
                     cell.setupGroup(
-                        name: info.group.name,
-                        date: date,
-                        preview: info.lastMessage?.payload.text,
-                        hasUnread: hasUnread
+                        name: group.name,
+                        date: group.createdAt,
+                        preview: nil,
+                        unreadCount: 0
+                    )
+
+                case .groupChat(let groupChatInfo):
+                    cell.setupGroup(
+                        name: groupChatInfo.group.name,
+                        date: groupChatInfo.lastMessage.date,
+                        preview: groupChatInfo.lastMessage.text,
+                        unreadCount: groupChatInfo.unreadCount
+                    )
+
+                case .contactChat(let contactChatInfo):
+                    cell.setupContact(
+                        name: (contactChatInfo.contact.nickname ?? contactChatInfo.contact.username) ?? "",
+                        image: contactChatInfo.contact.photo,
+                        date: contactChatInfo.lastMessage.date,
+                        unreadCount: contactChatInfo.unreadCount,
+                        preview: contactChatInfo.lastMessage.text
                     )
                 }
 
             case .connection(let contact):
                 cell.setupContact(
-                    name: contact.nickname ?? contact.username,
+                    name: (contact.nickname ?? contact.username) ?? "",
                     image: contact.photo,
                     date: nil,
-                    hasUnread: false,
-                    preview: contact.username
+                    unreadCount: 0,
+                    preview: contact.username ?? ""
                 )
             }
 
@@ -112,14 +104,23 @@ extension ChatSearchTableController {
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if let item = tableDataSource?.itemIdentifier(for: indexPath) {
             switch item {
-            case .chat(let chat):
-                switch chat {
-                case .contact(let info):
-                    guard info.contact.status == .friend else { return }
+            case .chat(let chatInfo):
+                switch chatInfo {
+                case .group(let group):
+                    if let groupInfo = viewModel.groupInfo(from: group) {
+                        coordinator.toGroupChat(with: groupInfo, from: self)
+                    }
+
+                case .groupChat(let info):
+                    if let groupInfo = viewModel.groupInfo(from: info.group) {
+                        coordinator.toGroupChat(with: groupInfo, from: self)
+                    }
+
+                case .contactChat(let info):
+                    guard info.contact.authStatus == .friend else { return }
                     coordinator.toSingleChat(with: info.contact, from: self)
-                case .group(let info):
-                    coordinator.toGroupChat(with: info, from: self)
                 }
+
             case .connection(let contact):
                 coordinator.toContact(contact, from: self)
             }

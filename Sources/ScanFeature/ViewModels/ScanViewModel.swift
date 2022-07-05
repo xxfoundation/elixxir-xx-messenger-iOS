@@ -1,6 +1,7 @@
 import Shared
 import Models
 import Combine
+import XXModels
 import Foundation
 import Integration
 import CombineSchedulers
@@ -53,10 +54,12 @@ final class ScanViewModel {
                     return
                 }
 
-                if let previouslyAdded = self.session.find(by: usernameAndId.0) {
+
+
+                if let previouslyAdded = try? self.session.dbManager.fetchContacts(.init(id: [usernameAndId.1])).first {
                     var error = ScanError.unknown(Localized.Scan.Error.general)
 
-                    switch previouslyAdded.status {
+                    switch previouslyAdded.authStatus {
                     case .friend:
                         error = .alreadyFriends(usernameAndId.0)
                     case .requested, .verified:
@@ -70,16 +73,16 @@ final class ScanViewModel {
                 }
 
                 let contact = Contact(
-                    photo: nil,
-                    userId: usernameAndId.1,
-                    email: try? self.session.extract(fact: .email, from: data),
-                    phone: try? self.session.extract(fact: .phone, from: data),
-                    status: .stranger,
+                    id: usernameAndId.1,
                     marshaled: data,
                     username: usernameAndId.0,
+                    email: try? self.session.extract(fact: .email, from: data),
+                    phone: try? self.session.extract(fact: .phone, from: data),
                     nickname: nil,
-                    createdAt: Date(),
-                    isRecent: false
+                    photo: nil,
+                    authStatus: .stranger,
+                    isRecent: false,
+                    createdAt: Date()
                 )
 
                 self.succeed(with: contact)

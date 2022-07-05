@@ -1,6 +1,7 @@
 import UIKit
 import Shared
 import Models
+import XXModels
 
 final class ContactAlmostView: UIView {
     // MARK: UI
@@ -19,7 +20,7 @@ final class ContactAlmostView: UIView {
 
     // MARK: Public
 
-    func set(status: Contact.Status) {
+    func set(status: Contact.AuthStatus) {
         switch status {
         case .requestFailed, .confirmationFailed:
             feedback.set(

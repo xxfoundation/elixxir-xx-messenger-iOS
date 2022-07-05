@@ -1,8 +1,10 @@
 import HUD
 import Shared
 import Models
+
 import Combine
 import Defaults
+import XXModels
 import Foundation
 import Integration
 import Permissions
@@ -119,16 +121,16 @@ final class LaunchViewModel {
 
     func getContactWith(userId: Data) -> Contact? {
         guard let session = try? DependencyInjection.Container.shared.resolve() as SessionType,
-              let contact = session.getContactWith(userId: userId) else {
+              let contact = try? session.dbManager.fetchContacts(.init(id: [userId])).first else {
             return nil
         }
 
         return contact
     }
 
-    func getGroupInfoWith(groupId: Data) -> GroupChatInfo? {
+    func getGroupInfoWith(groupId: Data) -> GroupInfo? {
         guard let session: SessionType = try? DependencyInjection.Container.shared.resolve(),
-              let info = session.getGroupChatInfoWith(groupId: groupId) else {
+              let info = try? session.dbManager.fetchGroupInfos(.init(groupId: groupId)).first else {
             return nil
         }
 

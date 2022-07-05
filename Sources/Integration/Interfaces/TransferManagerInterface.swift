@@ -1,4 +1,3 @@
-import Models
 import Foundation
 
 public protocol TransferManagerInterface {
@@ -20,9 +19,8 @@ public protocol TransferManagerInterface {
         with: Data
     ) throws -> Data
 
-
     func uploadFile(
-        _: Attachment,
+        url: URL,
         to: Data,
         _: @escaping (Bool, Int, Int, Int, Error?) -> Void
     ) throws -> Data

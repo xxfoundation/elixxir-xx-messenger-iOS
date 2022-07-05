@@ -74,17 +74,20 @@ public final class DrawerTable: DrawerItem {
 }
 
 public struct DrawerTableCellModel: Hashable {
+    let id: Data
     let title: String
     let image: Data?
     let isCreator: Bool
     let isConnection: Bool
 
     public init(
+        id: Data,
         title: String,
         image: Data? = nil,
         isCreator: Bool = false,
         isConnection: Bool = true
     ) {
+        self.id = id
         self.title = title
         self.image = image
         self.isCreator = isCreator

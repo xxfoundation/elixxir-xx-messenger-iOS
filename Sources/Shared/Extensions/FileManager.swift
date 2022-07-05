@@ -36,12 +36,13 @@ public extension FileManager {
         root.appendingPathComponent("\(fileName)")
     }
 
-    static func store(data: Data, name: String, type: String) throws {
+    static func store(data: Data, name: String, type: String) throws -> URL {
         guard let url = Self.url(for: "\(name).\(type)") else {
             throw NSError.create("The file path could not be retrieved")
         }
 
         try data.write(to: url)
+        return url
     }
 
     static func delete(name: String, type: String) {

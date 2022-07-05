@@ -39,7 +39,7 @@ extension BindingsFileTransfer: TransferManagerInterface {
     }
 
     public func uploadFile(
-        _ file: Attachment,
+        url: URL,
         to recipient: Data,
         _ callback: @escaping (Bool, Int, Int, Int, Error?) -> Void
     ) throws -> Data {
@@ -47,10 +47,12 @@ extension BindingsFileTransfer: TransferManagerInterface {
             callback(completed, sent, arrived, total, error)
         }
 
+        guard let file = try? Data(contentsOf: url) else { fatalError() }
+
         return try send(
-            file.name,
-            fileType: file._extension.written,
-            fileData: file.data!,
+            url.lastPathComponent,
+            fileType: url.pathExtension,
+            fileData: file,
             recipientID: recipient,
             retry: 1,
             preview: nil,
