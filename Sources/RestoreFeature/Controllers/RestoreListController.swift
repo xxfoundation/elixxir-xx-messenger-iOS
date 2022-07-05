@@ -88,7 +88,7 @@ public final class RestoreListController: UIViewController {
         screenView.sftpButton
             .publisher(for: .touchUpInside)
             .sink { [unowned self] in
-                coordinator.toSFTP(from: self) //viewModel.didTapCloud(.sftp, from: self)
+                coordinator.toSFTP(from: self)
             }.store(in: &cancellables)
     }
 

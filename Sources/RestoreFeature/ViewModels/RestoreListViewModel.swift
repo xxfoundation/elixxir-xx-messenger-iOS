@@ -34,7 +34,7 @@ final class RestoreListViewModel {
         case .dropbox:
             didRequestDropboxAuthorization(from: parent)
         case .sftp:
-            didRequestSFTPAuthorization()
+            break
         }
     }
 
