@@ -5,9 +5,9 @@ import InputField
 final class SFTPView: UIView {
     let titleLabel = UILabel()
     let subtitleLabel = UILabel()
-    let hostField = InputField()
-    let usernameField = InputField()
-    let passwordField = InputField()
+    let hostField = OutlinedInputField()
+    let usernameField = OutlinedInputField()
+    let passwordField = OutlinedInputField()
     let loginButton = CapsuleButton()
     let stackView = UIStackView()
 
@@ -34,21 +34,9 @@ final class SFTPView: UIView {
         subtitleLabel.numberOfLines = 0
         subtitleLabel.attributedText = attString
 
-        hostField.setup(
-            style: .regular,
-            placeholder: Localized.AccountRestore.Sftp.host
-        )
-
-        usernameField.setup(
-            style: .regular,
-            placeholder: Localized.AccountRestore.Sftp.username
-        )
-
-        passwordField.setup(
-            style: .regular,
-            placeholder: Localized.AccountRestore.Sftp.password,
-            rightView: .toggleSecureEntry
-        )
+        hostField.setup(title: Localized.AccountRestore.Sftp.host)
+        usernameField.setup(title: Localized.AccountRestore.Sftp.username)
+        passwordField.setup(title: Localized.AccountRestore.Sftp.password, sensitive: true)
 
         loginButton.set(style: .brandColored, title: Localized.AccountRestore.Sftp.login)
 
