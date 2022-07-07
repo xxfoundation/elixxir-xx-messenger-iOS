@@ -6,22 +6,24 @@ import Combine
 import BackupFeature
 import DependencyInjection
 
-import SFTPFeature
 import iCloudFeature
 import DropboxFeature
 import GoogleDriveFeature
 
 final class RestoreListViewModel {
-    @Dependency private var sftpService: SFTPService
     @Dependency private var icloudService: iCloudInterface
     @Dependency private var dropboxService: DropboxInterface
     @Dependency private var googleDriveService: GoogleDriveInterface
 
-    var hud: AnyPublisher<HUDStatus, Never> { hudSubject.eraseToAnyPublisher() }
-    var didFetchBackup: AnyPublisher<RestoreSettings, Never> { backupSubject.eraseToAnyPublisher() }
+    var hud: AnyPublisher<HUDStatus, Never> {
+        hudSubject.eraseToAnyPublisher()
+    }
+
+    var didFetchBackup: AnyPublisher<RestoreSettings, Never> {
+        backupSubject.eraseToAnyPublisher()
+    }
 
     private var dropboxAuthCancellable: AnyCancellable?
-
     private let hudSubject = PassthroughSubject<HUDStatus, Never>()
     private let backupSubject = PassthroughSubject<RestoreSettings, Never>()
 

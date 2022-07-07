@@ -1,8 +1,8 @@
 import HUD
-import DrawerFeature
 import Shared
 import UIKit
 import Combine
+import DrawerFeature
 import DependencyInjection
 
 public final class RestoreListController: UIViewController {
@@ -88,7 +88,7 @@ public final class RestoreListController: UIViewController {
         screenView.sftpButton
             .publisher(for: .touchUpInside)
             .sink { [unowned self] in
-                coordinator.toSFTP(from: self)
+                coordinator.toSFTP(using: ndf, from: self)
             }.store(in: &cancellables)
     }
 

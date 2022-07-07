@@ -152,9 +152,7 @@ extension BackupService {
                     }.store(in: &cancellables)
             }
         case .sftp:
-            if !sftpService.isAuthorized() {
-                // TODO
-            }
+            break
         }
     }
 }
@@ -209,7 +207,25 @@ extension BackupService {
         }
 
         if sftpService.isAuthorized() {
-            // TODO
+            let host = ""
+            let username = ""
+            let password = ""
+
+            let completion: SFTPFetchResult = { result in
+                switch result {
+                case .success(let settings):
+                    if let settings = settings {
+                        print("")
+                    } else {
+                        print("")
+                    }
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            }
+
+            let authParams = SFTPAuthParams(host, username, password)
+            sftpService.fetch((authParams, completion))
         }
 
         if dropboxService.isAuthorized() {

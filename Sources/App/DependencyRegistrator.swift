@@ -64,6 +64,7 @@ struct DependencyRegistrator {
 
         /// Restore / Backup
 
+        container.register(SFTPService.mock)
         container.register(iCloudServiceMock() as iCloudInterface)
         container.register(DropboxServiceMock() as DropboxInterface)
         container.register(GoogleDriveServiceMock() as GoogleDriveInterface)
@@ -121,6 +122,7 @@ struct DependencyRegistrator {
 
         container.register(
             BackupCoordinator(
+                sftpFactory: BackupSFTPController.init,
                 passphraseFactory: BackupPassphraseController.init(_:_:)
             ) as BackupCoordinating)
 
@@ -161,9 +163,9 @@ struct DependencyRegistrator {
 
         container.register(
             RestoreCoordinator(
-                sftpFactory: SFTPController.init,
                 successFactory: RestoreSuccessController.init,
                 chatListFactory: ChatListController.init,
+                sftpFactory: RestoreSFTPController.init(_:),
                 restoreFactory: RestoreController.init(_:_:),
                 passphraseFactory: RestorePassphraseController.init(_:)
             ) as RestoreCoordinating)

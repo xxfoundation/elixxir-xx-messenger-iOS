@@ -8,7 +8,6 @@ import Integration
 import BackupFeature
 import DependencyInjection
 
-import SFTPFeature
 import iCloudFeature
 import DropboxFeature
 import GoogleDriveFeature
@@ -39,7 +38,6 @@ extension RestorationStep: Equatable {
 }
 
 final class RestoreViewModel {
-    @Dependency private var sftpService: SFTPService
     @Dependency private var iCloudService: iCloudInterface
     @Dependency private var dropboxService: DropboxInterface
     @Dependency private var googleService: GoogleDriveInterface

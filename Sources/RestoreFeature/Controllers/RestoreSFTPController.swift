@@ -1,15 +1,28 @@
+import HUD
 import UIKit
 import Combine
+import DependencyInjection
 
-public final class SFTPController: UIViewController {
-    lazy private var screenView = SFTPView()
+public final class RestoreSFTPController: UIViewController {
+    @Dependency private var hud: HUDType
+    @Dependency private var coordinator: RestoreCoordinating
 
-    private let viewModel = SFTPViewModel()
+    lazy private var screenView = RestoreSFTPView()
+
+    private let ndf: String
+    private let viewModel = RestoreSFTPViewModel()
     private var cancellables = Set<AnyCancellable>()
 
     public override func loadView() {
         view = screenView
     }
+
+    public init(_ ndf: String) {
+        self.ndf = ndf
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) { nil }
 
     public override func viewDidLoad() {
         super.viewDidLoad()
@@ -29,6 +42,17 @@ public final class SFTPController: UIViewController {
     }
 
     private func setupBindings() {
+        viewModel.hudPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [hud] in hud.update(with: $0) }
+            .store(in: &cancellables)
+
+        viewModel.backupPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                coordinator.toRestoreReplacing(using: ndf, with: $0, from: self)
+            }.store(in: &cancellables)
+
         screenView.hostField
             .textPublisher
             .receive(on: DispatchQueue.main)
