@@ -11,7 +11,7 @@ import DrawerFeature
 import DependencyInjection
 import ScrollViewController
 
-public final class SearchController: UIViewController {
+final class SearchController: UIViewController {
     @KeyObject(.email, defaultValue: nil) var email: String?
     @KeyObject(.phone, defaultValue: nil) var phone: String?
     @KeyObject(.sharingEmail, defaultValue: false) var isSharingEmail: Bool
@@ -19,26 +19,25 @@ public final class SearchController: UIViewController {
 
     @Dependency private var hud: HUDType
     @Dependency private var coordinator: SearchCoordinating
-    @Dependency private var statusBarController: StatusBarStyleControlling
 
     lazy private var tableController = SearchTableController(viewModel)
     lazy private var screenView = SearchView {
         let actionButton = CapsuleButton()
         actionButton.set(
             style: .seeThrough,
-            title: Localized.ContactSearch.Placeholder.Drawer.action
+            title: Localized.Ud.Placeholder.Drawer.action
         )
 
         let drawer = DrawerController(with: [
             DrawerText(
                 font: Fonts.Mulish.bold.font(size: 26.0),
-                text: Localized.ContactSearch.Placeholder.Drawer.title,
+                text: Localized.Ud.Placeholder.Drawer.title,
                 color: Asset.neutralActive.color,
                 alignment: .left,
                 spacingAfter: 19
             ),
             DrawerLinkText(
-                text: Localized.ContactSearch.Placeholder.Drawer.subtitle,
+                text: Localized.Ud.Placeholder.Drawer.subtitle,
                 urlString: "https://links.xx.network/adrp",
                 spacingAfter: 37
             ),
@@ -64,26 +63,16 @@ public final class SearchController: UIViewController {
     private var cancellables = Set<AnyCancellable>()
     private var drawerCancellables = Set<AnyCancellable>()
 
-    public override func loadView() {
+    override func loadView() {
         view = screenView
     }
 
-    public override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        statusBarController.style.send(.darkContent)
-
-        navigationController?.navigationBar.customize(
-            backgroundColor: Asset.neutralWhite.color,
-            shadowColor: Asset.neutralDisabled.color
-        )
-    }
-
-    public override func viewDidAppear(_ animated: Bool) {
+    override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         viewModel.didAppear()
     }
 
-    public override func viewDidLoad() {
+    override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
         setupTableView()
@@ -110,7 +99,7 @@ public final class SearchController: UIViewController {
         navigationItem.backButtonTitle = " "
 
         let titleLabel = UILabel()
-        titleLabel.text = Localized.ContactSearch.title
+        titleLabel.text = Localized.Ud.title
         titleLabel.textColor = Asset.neutralActive.color
         titleLabel.font = Fonts.Mulish.semiBold.font(size: 18.0)
 
@@ -231,7 +220,7 @@ public final class SearchController: UIViewController {
         navigationController?.popViewController(animated: true)
     }
 
-    public func tableView(_: UITableView, didSelectRowAt indexPath: IndexPath) {
+    func tableView(_: UITableView, didSelectRowAt indexPath: IndexPath) {
         let contact = viewModel.itemsRelay.value[indexPath.row]
 
         guard contact.authStatus == .stranger else {
@@ -253,7 +242,7 @@ extension SearchController {
 
         let drawerTitle = DrawerText(
             font: Fonts.Mulish.extraBold.font(size: 26.0),
-            text: Localized.ContactSearch.RequestDrawer.title,
+            text: Localized.Ud.RequestDrawer.title,
             color: Asset.neutralDark.color,
             spacingAfter: 20
         )
@@ -288,7 +277,7 @@ extension SearchController {
 
         if let email = email {
             let drawerEmail = DrawerSwitch(
-                title: Localized.ContactSearch.RequestDrawer.email,
+                title: Localized.Ud.RequestDrawer.email,
                 content: email,
                 spacingAfter: phone != nil ? 23 : 31,
                 isInitiallyOn: isSharingEmail
@@ -304,7 +293,7 @@ extension SearchController {
 
         if let phone = phone {
             let drawerPhone = DrawerSwitch(
-                title: Localized.ContactSearch.RequestDrawer.phone,
+                title: Localized.Ud.RequestDrawer.phone,
                 content: "\(Country.findFrom(phone).prefix) \(phone.dropLast(2))",
                 spacingAfter: 31,
                 isInitiallyOn: isSharingPhone
@@ -320,14 +309,14 @@ extension SearchController {
 
         let drawerSendButton = DrawerCapsuleButton(
             model: .init(
-                title: Localized.ContactSearch.RequestDrawer.send,
+                title: Localized.Ud.RequestDrawer.send,
                 style: .brandColored
             ), spacingAfter: 5
         )
 
         let drawerCancelButton = DrawerCapsuleButton(
             model: .init(
-                title: Localized.ContactSearch.RequestDrawer.cancel,
+                title: Localized.Ud.RequestDrawer.cancel,
                 style: .simplestColoredBrand
             ), spacingAfter: 5
         )
@@ -423,14 +412,14 @@ extension SearchController {
 
         let drawerTitle = DrawerText(
             font: Fonts.Mulish.extraBold.font(size: 26.0),
-            text: Localized.ContactSearch.NicknameDrawer.title,
+            text: Localized.Ud.NicknameDrawer.title,
             color: Asset.neutralDark.color,
             spacingAfter: 20
         )
 
         let drawerSubtitle = DrawerText(
             font: Fonts.Mulish.regular.font(size: 16.0),
-            text: Localized.ContactSearch.NicknameDrawer.subtitle,
+            text: Localized.Ud.NicknameDrawer.subtitle,
             color: Asset.neutralDark.color,
             spacingAfter: 20
         )
@@ -454,7 +443,7 @@ extension SearchController {
 
         let drawerSaveButton = DrawerCapsuleButton(
             model: .init(
-                title: Localized.ContactSearch.NicknameDrawer.save,
+                title: Localized.Ud.NicknameDrawer.save,
                 style: .brandColored
             ), spacingAfter: 5
         )

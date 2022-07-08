@@ -931,41 +931,43 @@
 
 // SearchFeature
 
-"contactSearch.title"
+"ud.title"
 = "Search";
-"contactSearch.placeholder.title"
+"ud.placeholder.title"
 = "Searching is private by nature. The network cannot identify who a search request came from.";
-"contactSearch.placeholder.drawer.title"
+"ud.placeholder.drawer.title"
 = "Search";
-"contactSearch.placeholder.drawer.subtitle"
+"ud.placeholder.drawer.subtitle"
 = "You can search for users by their username, email, or phone number using the xx network’s #Anonymous Data Retrieval protocol# which keeps a user’s identity anonymous while requesting data. All sent requests contain salted hashes of what you are searching for. Raw data on emails, usernames, and phone numbers do not leave your phone.";
-"contactSearch.placeholder.drawer.action"
+"ud.placeholder.drawer.action"
 = "Got it";
-"contactSearch.filter.phone"
+"ud.tab.phone"
 = "Phone";
-"contactSearch.filter.email"
+"ud.tab.email"
 = "Email";
-"contactSearch.filter.username"
+"ud.tab.username"
 = "Username";
-"contactSearch.sectionTitle"
+"ud.tab.qr"
+= "QR Code";
+"ud.sectionTitle"
 = "User";
-"contactSearch.noneFound"
+"ud.noneFound"
 = "There are no users with that %@.";
-"contactSearch.requestDrawer.title"
+"ud.requestDrawer.title"
 = "Request Contact";
-"contactSearch.requestDrawer.email"
+"ud.requestDrawer.email"
 = "EMAIL ADDRESS";
-"contactSearch.requestDrawer.phone"
+"ud.requestDrawer.phone"
 = "PHONE NUMBER";
-"contactSearch.requestDrawer.send"
+"ud.requestDrawer.send"
 = "Send Contact Request";
-"contactSearch.requestDrawer.cancel"
+"ud.requestDrawer.cancel"
 = "Cancel";
-"contactSearch.nicknameDrawer.title"
+"ud.nicknameDrawer.title"
 = "Add a nickname";
-"contactSearch.nicknameDrawer.subtitle"
+"ud.nicknameDrawer.subtitle"
 = "Edit your new contact’s nickname so you know who they are.";
-"contactSearch.nicknameDrawer.save"
+"ud.nicknameDrawer.save"
 = "Save";
 
 // LaunchFeature

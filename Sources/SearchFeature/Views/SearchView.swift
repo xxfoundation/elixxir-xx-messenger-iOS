@@ -4,9 +4,9 @@ import InputField
 
 final class SearchView: UIView {
     private enum Constants {
-        static let phone = Localized.ContactSearch.Filter.phone
-        static let email = Localized.ContactSearch.Filter.email
-        static let username = Localized.ContactSearch.Filter.username
+        static let phone = Localized.Ud.Tab.phone
+        static let email = Localized.Ud.Tab.email
+        static let username = Localized.Ud.Tab.username
     }
 
     let input = InputField()
@@ -66,7 +66,7 @@ final class SearchView: UIView {
         backgroundColor = Asset.neutralWhite.color
 
         input.setup(
-            placeholder: Localized.ContactSearch.title,
+            placeholder: Localized.Ud.title,
             leftView: .image(Asset.lens.image.withTintColor(Asset.neutralDisabled.color)),
             accessibility: Localized.Accessibility.Search.input,
             allowsEmptySpace: false,

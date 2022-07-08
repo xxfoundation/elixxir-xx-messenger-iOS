@@ -60,6 +60,6 @@ final class SearchEmptyView: UIView {
     required init?(coder: NSCoder) { nil }
 
     func set(filter: String) {
-        title.text = Localized.ContactSearch.noneFound(filter)
+        title.text = Localized.Ud.noneFound(filter)
     }
 }
