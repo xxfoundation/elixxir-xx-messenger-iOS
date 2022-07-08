@@ -1,13 +1,14 @@
 import UIKit
 import Shared
 
-final class SegmentedControlButton: UIControl {
-    private let titleLabel = UILabel()
-    private let imageView = UIImageView()
+final class SearchSegmentedButton: UIControl {
+    let titleLabel = UILabel()
+    let imageView = UIImageView()
 
     init() {
         super.init(frame: .zero)
 
+        imageView.contentMode = .center
         titleLabel.textAlignment = .center
         titleLabel.textColor = Asset.neutralWhite.color
         titleLabel.font = Fonts.Mulish.semiBold.font(size: 13.0)

@@ -1,14 +1,14 @@
 import UIKit
 import Shared
 
-final class ScanContainerView: UIView {
+final class SearchContainerView: UIView {
     let scrollView = UIScrollView()
-    let segmentedControl = ScanSegmentedControl()
+    let segmentedControl = SearchSegmentedControl()
 
     init() {
         super.init(frame: .zero)
 
-        backgroundColor = Asset.neutralDark.color
+        backgroundColor = Asset.neutralWhite.color
         addSubview(segmentedControl)
         addSubview(scrollView)
 

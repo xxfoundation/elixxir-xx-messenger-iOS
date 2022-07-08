@@ -2,15 +2,15 @@ import UIKit
 import Shared
 import SnapKit
 
-final class SegmentedControl: UIView {
+final class ScanSegmentedControl: UIView {
     private let trackHeight = 2.0
     private let numberOfTabs = 2.0
     private let trackView = UIView()
     private let stackView = UIStackView()
     private var leftConstraint: Constraint?
     private let trackIndicatorView = UIView()
-    private(set) var leftButton = SegmentedControlButton()
-    private(set) var rightButton = SegmentedControlButton()
+    private(set) var leftButton = ScanSegmentedControlButton()
+    private(set) var rightButton = ScanSegmentedControlButton()
 
     init() {
         super.init(frame: .zero)

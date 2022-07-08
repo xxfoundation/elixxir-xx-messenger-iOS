@@ -185,7 +185,7 @@ struct DependencyRegistrator {
 
         container.register(
             RequestsCoordinator(
-                searchFactory: SearchController.init,
+                searchFactory: SearchContainerController.init,
                 contactFactory: ContactController.init(_:),
                 singleChatFactory: SingleChatController.init(_:),
                 groupChatFactory: GroupChatController.init(_:),
@@ -197,7 +197,7 @@ struct DependencyRegistrator {
             OnboardingCoordinator(
                 emailFactory: OnboardingEmailController.init,
                 phoneFactory: OnboardingPhoneController.init,
-                searchFactory: SearchController.init,
+                searchFactory: SearchContainerController.init,
                 welcomeFactory: OnboardingWelcomeController.init,
                 chatListFactory: ChatListController.init,
                 usernameFactory: OnboardingUsernameController.init(_:),
@@ -211,7 +211,7 @@ struct DependencyRegistrator {
         container.register(
             ContactListCoordinator(
                 scanFactory: ScanContainerController.init,
-                searchFactory: SearchController.init,
+                searchFactory: SearchContainerController.init,
                 newGroupFactory: CreateGroupController.init,
                 requestsFactory: RequestsContainerController.init,
                 contactFactory: ContactController.init(_:),
@@ -235,7 +235,7 @@ struct DependencyRegistrator {
         container.register(
             ChatListCoordinator(
                 scanFactory: ScanContainerController.init,
-                searchFactory: SearchController.init,
+                searchFactory: SearchContainerController.init,
                 newGroupFactory: CreateGroupController.init,
                 contactsFactory: ContactListController.init,
                 contactFactory: ContactController.init(_:),
