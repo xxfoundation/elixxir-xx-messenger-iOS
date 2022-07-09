@@ -2,72 +2,81 @@ import UIKit
 import Shared
 
 final class SearchCell: UITableViewCell {
-    // MARK: UI
-
-    let title = UILabel()
-    let subtitle = UILabel()
-    let separator = UIView()
-    let avatar = AvatarView()
-
-    // MARK: Lifecycle
+    private let titleLabel = UILabel()
+    private let subtitleLabel = UILabel()
+    private let separatorView = UIView()
+    private let avatarView = AvatarView()
 
     override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
-        setup()
+
+        selectionStyle = .none
+        backgroundColor = Asset.neutralWhite.color
+
+        titleLabel.textColor = Asset.neutralActive.color
+        subtitleLabel.textColor = Asset.neutralDisabled.color
+        separatorView.backgroundColor = Asset.neutralLine.color
+
+        titleLabel.font = Fonts.Mulish.semiBold.font(size: 14.0)
+        subtitleLabel.font = Fonts.Mulish.regular.font(size: 12.0)
+
+        contentView.addSubview(titleLabel)
+        contentView.addSubview(avatarView)
+        contentView.addSubview(subtitleLabel)
+        contentView.addSubview(separatorView)
+
+        setupConstraints()
     }
 
     required init?(coder: NSCoder) { nil }
 
     override func prepareForReuse() {
         super.prepareForReuse()
-        title.text = nil
+        titleLabel.text = nil
+        subtitleLabel.text = nil
+        avatarView.prepareForReuse()
     }
 
-    // MARK: Private
-
-    private func setup() {
-        selectionStyle = .none
-        backgroundColor = Asset.neutralWhite.color
-
-        title.textColor = Asset.neutralActive.color
-        subtitle.textColor = Asset.neutralDisabled.color
-        separator.backgroundColor = Asset.neutralLine.color
-
-        title.font = Fonts.Mulish.semiBold.font(size: 14.0)
-        subtitle.font = Fonts.Mulish.regular.font(size: 12.0)
-
-        contentView.addSubview(title)
-        contentView.addSubview(avatar)
-        contentView.addSubview(subtitle)
-        contentView.addSubview(separator)
-
-        setupConstraints()
+    func setup(
+        title: String,
+        subtitle: String,
+        avatarTitle: String,
+        avatarImage: Data?,
+        avatarSize: AvatarView.Size
+    ) {
+        titleLabel.text = title
+        subtitleLabel.text = subtitle
+        avatarView.setupProfile(
+            title: avatarTitle,
+            image: avatarImage,
+            size: avatarSize
+        )
     }
 
     private func setupConstraints() {
-        title.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(10)
-            make.left.equalTo(avatar.snp.right).offset(16)
-            make.right.lessThanOrEqualToSuperview().offset(-20)
+        titleLabel.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(10)
+            $0.left.equalTo(avatarView.snp.right).offset(16)
+            $0.right.lessThanOrEqualToSuperview().offset(-20)
         }
 
-        subtitle.snp.makeConstraints { make in
-            make.top.equalTo(title.snp.bottom).offset(3)
-            make.left.equalTo(title)
-            make.bottom.equalToSuperview().offset(-22)
+        subtitleLabel.snp.makeConstraints {
+            $0.top.equalTo(titleLabel.snp.bottom).offset(3)
+            $0.left.equalTo(titleLabel)
+            $0.bottom.equalToSuperview().offset(-22)
         }
 
-        avatar.snp.makeConstraints { make in
-            make.left.equalToSuperview().offset(28)
-            make.width.height.equalTo(48)
-            make.bottom.equalToSuperview().offset(-16)
+        avatarView.snp.makeConstraints {
+            $0.left.equalToSuperview().offset(28)
+            $0.width.height.equalTo(48)
+            $0.bottom.equalToSuperview().offset(-16)
         }
 
-        separator.snp.makeConstraints { make in
-            make.height.equalTo(1)
-            make.left.equalToSuperview().offset(24)
-            make.right.equalToSuperview().offset(-24)
-            make.bottom.equalToSuperview()
+        separatorView.snp.makeConstraints {
+            $0.height.equalTo(1)
+            $0.left.equalToSuperview().offset(24)
+            $0.right.equalToSuperview().offset(-24)
+            $0.bottom.equalToSuperview()
         }
     }
 }
