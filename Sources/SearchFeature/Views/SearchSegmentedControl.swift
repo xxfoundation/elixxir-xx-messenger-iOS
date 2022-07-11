@@ -1,53 +1,88 @@
 import UIKit
 import Shared
 import SnapKit
+import Combine
 
 final class SearchSegmentedControl: UIView {
+    enum Item: Int {
+        case username = 0
+        case email
+        case phone
+        case qr
+    }
+
     private let trackView = UIView()
     private let stackView = UIStackView()
-    private var leftConstraint: Constraint?
     private let trackIndicatorView = UIView()
+    private(set) var leftConstraint: Constraint?
     private(set) var usernameButton = SearchSegmentedButton()
     private(set) var emailButton = SearchSegmentedButton()
     private(set) var phoneButton = SearchSegmentedButton()
     private(set) var qrCodeButton = SearchSegmentedButton()
+
+    var actionPublisher: AnyPublisher<Item, Never> {
+        actionSubject.eraseToAnyPublisher()
+    }
+
+    private var cancellables = Set<AnyCancellable>()
+    private let actionSubject = PassthroughSubject<Item, Never>()
 
     init() {
         super.init(frame: .zero)
         trackView.backgroundColor = Asset.neutralLine.color
         trackIndicatorView.backgroundColor = Asset.brandPrimary.color
 
-        qrCodeButton.titleLabel.text = Localized.Ud.Tab.qr
-        emailButton.titleLabel.text = Localized.Ud.Tab.email
-        phoneButton.titleLabel.text = Localized.Ud.Tab.phone
-        usernameButton.titleLabel.text = Localized.Ud.Tab.username
+        usernameButton.setup(
+            title: Localized.Ud.Tab.username,
+            icon: Asset.searchTabUsername.image,
+            iconColor: Asset.brandPrimary.color,
+            titleColor: Asset.brandPrimary.color
+        )
 
-        usernameButton.titleLabel.textColor = Asset.brandPrimary.color
-        emailButton.titleLabel.textColor = Asset.neutralDisabled.color
-        phoneButton.titleLabel.textColor = Asset.neutralDisabled.color
-        qrCodeButton.titleLabel.textColor = Asset.neutralDisabled.color
+        qrCodeButton.setup(title: Localized.Ud.Tab.qr, icon: Asset.searchTabQr.image)
+        emailButton.setup(title: Localized.Ud.Tab.email, icon: Asset.searchTabEmail.image)
+        phoneButton.setup(title: Localized.Ud.Tab.phone, icon: Asset.searchTabPhone.image)
 
-        usernameButton.imageView.tintColor = Asset.brandPrimary.color
-        emailButton.imageView.tintColor = Asset.neutralDisabled.color
-        phoneButton.imageView.tintColor = Asset.neutralDisabled.color
-        qrCodeButton.imageView.tintColor = Asset.neutralDisabled.color
-
-        qrCodeButton.imageView.image = Asset.searchTabQr.image
-        emailButton.imageView.image = Asset.searchTabEmail.image
-        phoneButton.imageView.image = Asset.searchTabPhone.image
-        usernameButton.imageView.image = Asset.searchTabUsername.image
-
+        stackView.distribution = .fillEqually
         stackView.addArrangedSubview(usernameButton)
         stackView.addArrangedSubview(emailButton)
         stackView.addArrangedSubview(phoneButton)
         stackView.addArrangedSubview(qrCodeButton)
-        stackView.distribution = .fillEqually
         stackView.backgroundColor = Asset.neutralWhite.color
 
         addSubview(stackView)
         addSubview(trackView)
         trackView.addSubview(trackIndicatorView)
 
+        setupBindings()
+        setupConstraints()
+    }
+
+    required init?(coder: NSCoder) { nil }
+
+    private func setupBindings() {
+        usernameButton
+            .publisher(for: .touchUpInside)
+            .sink { [unowned self] in actionSubject.send(.username) }
+            .store(in: &cancellables)
+
+        emailButton
+            .publisher(for: .touchUpInside)
+            .sink { [unowned self] in actionSubject.send(.email) }
+            .store(in: &cancellables)
+
+        phoneButton
+            .publisher(for: .touchUpInside)
+            .sink { [unowned self] in actionSubject.send(.phone) }
+            .store(in: &cancellables)
+
+        qrCodeButton
+            .publisher(for: .touchUpInside)
+            .sink { [unowned self] in actionSubject.send(.qr) }
+            .store(in: &cancellables)
+    }
+
+    private func setupConstraints() {
         stackView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
@@ -65,56 +100,5 @@ final class SearchSegmentedControl: UIView {
             $0.width.equalToSuperview().dividedBy(4)
             $0.bottom.equalToSuperview()
         }
-    }
-
-    required init?(coder: NSCoder) { nil }
-
-    func updateSwipePercentage(_ percentageScrolled: CGFloat) {
-        let amountOfTabs = 4.0
-        let tabWidth = bounds.width / amountOfTabs
-        let leftOffset = percentageScrolled * tabWidth
-
-        leftConstraint?.update(offset: leftOffset)
-
-        let usernamePercentage = percentageScrolled > 1 ? 1 : percentageScrolled
-        let phonePercentage = percentageScrolled <= 1 ? 0 : percentageScrolled - 1
-        let emailPercentage = percentageScrolled > 1 ? 1 - (percentageScrolled-1) : percentageScrolled
-        let qrPercentage = percentageScrolled > 1 ? 1 - (percentageScrolled-1) : percentageScrolled
-
-        let usernameColor = UIColor.fade(
-            from: Asset.brandPrimary.color,
-            to: Asset.neutralDisabled.color,
-            pcent: usernamePercentage
-        )
-
-        let emailColor = UIColor.fade(
-            from: Asset.neutralDisabled.color,
-            to: Asset.brandPrimary.color,
-            pcent: emailPercentage
-        )
-
-        let phoneColor = UIColor.fade(
-            from: Asset.neutralDisabled.color,
-            to: Asset.brandPrimary.color,
-            pcent: phonePercentage
-        )
-
-        let qrColor = UIColor.fade(
-            from: Asset.brandPrimary.color,
-            to: Asset.neutralDisabled.color,
-            pcent: qrPercentage
-        )
-
-        usernameButton.imageView.tintColor = usernameColor
-        usernameButton.titleLabel.textColor = usernameColor
-
-        emailButton.imageView.tintColor = emailColor
-        emailButton.titleLabel.textColor = emailColor
-
-        phoneButton.imageView.tintColor = phoneColor
-        phoneButton.titleLabel.textColor = phoneColor
-
-        qrCodeButton.imageView.tintColor = qrColor
-        qrCodeButton.titleLabel.textColor = qrColor
     }
 }

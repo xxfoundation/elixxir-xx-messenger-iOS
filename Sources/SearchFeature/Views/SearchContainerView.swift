@@ -12,17 +12,24 @@ final class SearchContainerView: UIView {
         addSubview(segmentedControl)
         addSubview(scrollView)
 
-        scrollView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
-        }
+        setupConstraints()
+    }
 
+    required init?(coder: NSCoder) { nil }
+
+    private func setupConstraints() {
         segmentedControl.snp.makeConstraints {
             $0.top.equalTo(safeAreaLayoutGuide).offset(10)
             $0.left.equalToSuperview()
             $0.right.equalToSuperview()
             $0.height.equalTo(60)
         }
-    }
 
-    required init?(coder: NSCoder) { nil }
+        scrollView.snp.makeConstraints {
+            $0.top.equalTo(segmentedControl.snp.bottom)
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
+            $0.bottom.equalToSuperview()
+        }
+    }
 }

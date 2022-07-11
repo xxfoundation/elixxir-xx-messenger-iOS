@@ -4,13 +4,9 @@ import Combine
 import XXModels
 
 final class SearchTableController: UITableViewController {
-    // MARK: Properties
-
     private let viewModel: SearchViewModel
     private var cancellables = Set<AnyCancellable>()
     private(set) var dataSource = [Contact]()
-
-    // MARK: Lifecycle
 
     init(_ viewModel: SearchViewModel) {
         self.viewModel = viewModel
@@ -21,21 +17,11 @@ final class SearchTableController: UITableViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupTableView()
-        setupBindings()
-    }
-
-    // MARK: Private
-
-    private func setupTableView() {
         tableView.backgroundColor = .clear
         tableView.separatorStyle = .none
         tableView.register(SearchCell.self)
-    }
 
-    private func setupBindings() {
-        viewModel
-            .itemsRelay
+        viewModel.itemsRelay
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
                 dataSource = $0
@@ -43,18 +29,27 @@ final class SearchTableController: UITableViewController {
             }.store(in: &cancellables)
     }
 
-    // MARK: UITableViewDataSource
-
-    override func tableView(_ tableView: UITableView,
-                            cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    override func tableView(
+        _ tableView: UITableView,
+        cellForRowAt indexPath: IndexPath
+    ) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: SearchCell.self)
-        cell.title.text = dataSource[indexPath.row].username
-        cell.subtitle.text = dataSource[indexPath.row].username
-        cell.avatar.setupProfile(title: dataSource[indexPath.row].username!, image: nil, size: .large)
+        let username = dataSource[indexPath.row].username!
+
+        cell.setup(
+            title: username,
+            subtitle: username,
+            avatarTitle: username,
+            avatarImage: nil,
+            avatarSize: .large
+        )
+
         return cell
     }
 
-    override func tableView(_ tableView: UITableView,
-                            numberOfRowsInSection section: Int) -> Int { dataSource.count }
+    override func tableView(
+        _: UITableView,
+        numberOfRowsInSection: Int
+    ) -> Int { dataSource.count }
 }
 
