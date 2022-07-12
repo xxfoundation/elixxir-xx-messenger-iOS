@@ -40,9 +40,17 @@ final class MenuSectionButton: UIControl {
         notificationLabel.text = "  \(count)  "
     }
 
-    func set(title: String, image: UIImage, color: UIColor = Asset.neutralWeak.color) {
-        titleLabel.text = title
+    func set(color: UIColor) {
         titleLabel.textColor = color
-        imageView.image = image.withTintColor(color)
+
+        if let image = imageView.image {
+            imageView.image = image.withTintColor(color)
+        }
+    }
+
+    func set(title: String, image: UIImage) {
+        titleLabel.text = title
+        titleLabel.textColor = Asset.neutralWeak.color
+        imageView.image = image.withTintColor(Asset.neutralWeak.color)
     }
 }
