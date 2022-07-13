@@ -154,7 +154,14 @@ extension BackupService {
                     }.store(in: &cancellables)
             }
         case .sftp:
-            break
+            if !sftpService.isAuthorized() {
+                sftpService.authorizeFlow((screen, { [weak self] in
+                    guard let self = self else { return }
+                    screen.navigationController?.popViewController(animated: true)
+                    self.refreshConnections()
+                    self.refreshBackups()
+                }))
+            }
         }
     }
 }
@@ -209,25 +216,20 @@ extension BackupService {
         }
 
         if sftpService.isAuthorized() {
-            if let keychain = try? DependencyInjection.Container.shared.resolve() as KeychainHandling,
-               let pwd = try? keychain.get(key: .pwd),
-               let host = try? keychain.get(key: .host),
-               let username = try? keychain.get(key: .username) {
+            sftpService.fetchMetadata({ [weak settings] in
+                guard let settings = settings else { return }
 
-                let completion: SFTPFetchResult = { [weak settings] result in
-                    guard let settings = settings else { return }
-
-                    switch result {
-                    case .success(let backupSettings):
-                        settings.value.backups[.sftp] = backupSettings?.backup
-                    case .failure(let error):
-                        print(error.localizedDescription)
-                    }
+                guard let metadata = try? $0.get()?.backup else {
+                    settings.value.backups[.sftp] = nil
+                    return
                 }
 
-                let authParams = SFTPAuthParams(host, username, pwd)
-                sftpService.fetch((authParams, completion))
-            }
+                settings.value.backups[.sftp] = Backup(
+                    id: metadata.id,
+                    date: metadata.date,
+                    size: metadata.size
+                )
+            })
         }
 
         if dropboxService.isAuthorized() {
@@ -329,7 +331,7 @@ extension BackupService {
             }
         case .sftp:
             do {
-                try sftpService.upload(url)
+                try sftpService.uploadBackup(url)
             } catch {
                 print(error.localizedDescription)
             }

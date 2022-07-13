@@ -1,6 +1,6 @@
 import HUD
-import Shared
 import UIKit
+import Shared
 import Combine
 import DrawerFeature
 import DependencyInjection
@@ -51,12 +51,12 @@ public final class RestoreListController: UIViewController {
     }
 
     private func setupBindings() {
-        viewModel.hud
+        viewModel.hudPublisher
             .receive(on: DispatchQueue.main)
             .sink { [hud] in hud.update(with: $0) }
             .store(in: &cancellables)
 
-        viewModel.didFetchBackup
+        viewModel.backupPublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
                 coordinator.toRestore(using: ndf, with: $0, from: self)
@@ -88,7 +88,7 @@ public final class RestoreListController: UIViewController {
         screenView.sftpButton
             .publisher(for: .touchUpInside)
             .sink { [unowned self] in
-                coordinator.toSFTP(using: ndf, from: self)
+                viewModel.didTapCloud(.sftp, from: self)
             }.store(in: &cancellables)
     }
 

@@ -834,7 +834,7 @@
 "accountRestore.sftp.title"
 = "Login to your SFTP";
 "accountRestore.sftp.subtitle"
-= "Login to your server. Your credentials will be automatically and securley saved locally on your device.";
+= "Login to your server. Your credentials will be automatically and securely saved locally on your device.";
 "accountRestore.sftp.host"
 = "Host";
 "accountRestore.sftp.username"

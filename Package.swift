@@ -216,6 +216,7 @@ let package = Package(
             .target(
                 name: "SFTPFeature",
                 dependencies: [
+                    "HUD",
                     "Shared",
                     "Keychain",
                     "InputField",

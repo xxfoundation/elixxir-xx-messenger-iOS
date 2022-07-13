@@ -8,8 +8,6 @@ public protocol BackupCoordinating {
         from: UIViewController
     )
 
-    func toSFTP(from: UIViewController)
-
     func toPassphrase(
         from: UIViewController,
         cancelClosure: @escaping EmptyClosure,
@@ -18,27 +16,18 @@ public protocol BackupCoordinating {
 }
 
 public struct BackupCoordinator: BackupCoordinating {
-    var pushPresenter: Presenting = PushPresenter()
     var bottomPresenter: Presenting = BottomPresenter()
 
-    var sftpFactory: () -> UIViewController
     var passphraseFactory: (@escaping EmptyClosure, @escaping StringClosure) -> UIViewController
 
     public init(
-        sftpFactory: @escaping () -> UIViewController,
         passphraseFactory: @escaping (@escaping EmptyClosure, @escaping StringClosure) -> UIViewController
     ) {
-        self.sftpFactory = sftpFactory
         self.passphraseFactory = passphraseFactory
     }
 }
 
 public extension BackupCoordinator {
-    func toSFTP(from parent: UIViewController) {
-        let screen = sftpFactory()
-        pushPresenter.present(screen, from: parent)
-    }
-
     func toDrawer(
         _ screen: UIViewController,
         from parent: UIViewController

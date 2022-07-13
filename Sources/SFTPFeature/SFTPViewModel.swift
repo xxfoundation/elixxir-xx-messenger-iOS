@@ -1,35 +1,33 @@
 import HUD
-import Models
 import Combine
 import Foundation
-import SFTPFeature
 import DependencyInjection
 
-struct RestoreSFTPViewState {
+struct SFTPViewState {
     var host: String = ""
     var username: String = ""
     var password: String = ""
     var isButtonEnabled: Bool = false
 }
 
-final class RestoreSFTPViewModel {
+final class SFTPViewModel {
     @Dependency private var service: SFTPService
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
     }
 
-    var backupPublisher: AnyPublisher<RestoreSettings, Never> {
-        backupSubject.eraseToAnyPublisher()
-    }
-
-    var statePublisher: AnyPublisher<RestoreSFTPViewState, Never> {
+    var statePublisher: AnyPublisher<SFTPViewState, Never> {
         stateSubject.eraseToAnyPublisher()
     }
 
+    var authPublisher: AnyPublisher<Void, Never> {
+        authSubject.eraseToAnyPublisher()
+    }
+
+    private let authSubject = PassthroughSubject<Void, Never>()
     private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
-    private let backupSubject = PassthroughSubject<RestoreSettings, Never>()
-    private let stateSubject = CurrentValueSubject<RestoreSFTPViewState, Never>(.init())
+    private let stateSubject = CurrentValueSubject<SFTPViewState, Never>(.init())
 
     func didEnterHost(_ string: String) {
         stateSubject.value.host = string
@@ -53,23 +51,16 @@ final class RestoreSFTPViewModel {
         let username = stateSubject.value.username
         let password = stateSubject.value.password
 
-        let completion: SFTPFetchResult = { result in
-            switch result {
-            case .success(let backup):
+        DispatchQueue.global().async { [weak self] in
+            guard let self = self else { return }
+            do {
+                try self.service.authenticate(host, username, password)
                 self.hudSubject.send(.none)
-
-                if let backup = backup {
-                    self.backupSubject.send(backup)
-                } else {
-                    self.backupSubject.send(.init(cloudService: .sftp))
-                }
-            case .failure(let error):
+                self.authSubject.send(())
+            } catch {
                 self.hudSubject.send(.error(.init(with: error)))
             }
         }
-
-        let authParams = SFTPAuthParams(host, username, password)
-        service.fetch((authParams, completion))
     }
 
     private func validate() {

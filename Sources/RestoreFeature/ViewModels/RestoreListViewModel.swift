@@ -6,20 +6,22 @@ import Combine
 import BackupFeature
 import DependencyInjection
 
+import SFTPFeature
 import iCloudFeature
 import DropboxFeature
 import GoogleDriveFeature
 
 final class RestoreListViewModel {
+    @Dependency private var sftpService: SFTPService
     @Dependency private var icloudService: iCloudInterface
     @Dependency private var dropboxService: DropboxInterface
     @Dependency private var googleDriveService: GoogleDriveInterface
 
-    var hud: AnyPublisher<HUDStatus, Never> {
+    var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
     }
 
-    var didFetchBackup: AnyPublisher<RestoreSettings, Never> {
+    var backupPublisher: AnyPublisher<RestoreSettings, Never> {
         backupSubject.eraseToAnyPublisher()
     }
 
@@ -36,8 +38,34 @@ final class RestoreListViewModel {
         case .dropbox:
             didRequestDropboxAuthorization(from: parent)
         case .sftp:
-            break
+            didRequestSFTPAuthorization(from: parent)
         }
+    }
+
+    private func didRequestSFTPAuthorization(from controller: UIViewController) {
+        let params = SFTPAuthorizationParams(controller, { [weak self] in
+            guard let self = self else { return }
+            controller.navigationController?.popViewController(animated: true)
+
+            self.hudSubject.send(.on(nil))
+
+            self.sftpService.fetchMetadata{ result in
+                switch result {
+                case .success(let settings):
+                    self.hudSubject.send(.none)
+
+                    if let settings = settings {
+                        self.backupSubject.send(settings)
+                    } else {
+                        self.backupSubject.send(.init(cloudService: .sftp))
+                    }
+                case .failure(let error):
+                    self.hudSubject.send(.error(.init(with: error)))
+                }
+            }
+        })
+
+        sftpService.authorizeFlow(params)
     }
 
     private func didRequestDriveAuthorization(from controller: UIViewController) {

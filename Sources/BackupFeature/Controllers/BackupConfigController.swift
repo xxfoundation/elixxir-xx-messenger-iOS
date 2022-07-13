@@ -122,7 +122,7 @@ final class BackupConfigController: UIViewController {
 
         screenView.sftpButton
             .publisher(for: .touchUpInside)
-            .sink { [unowned self] in coordinator.toSFTP(from: self) }
+            .sink { [unowned self] in viewModel.didTapService(.sftp, self) }
             .store(in: &cancellables)
 
         screenView.iCloudButton

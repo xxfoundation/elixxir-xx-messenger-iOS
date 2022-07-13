@@ -91,7 +91,7 @@ final class RestoreViewModel {
 
     private func downloadBackupForSFTP(_ backup: Backup) {
         do {
-            try sftpService.download(backup.id)
+            try sftpService.downloadBackup(backup.id)
         } catch {
             print(error.localizedDescription)
         }

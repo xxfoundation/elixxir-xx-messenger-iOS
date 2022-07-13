@@ -122,7 +122,6 @@ struct DependencyRegistrator {
 
         container.register(
             BackupCoordinator(
-                sftpFactory: BackupSFTPController.init,
                 passphraseFactory: BackupPassphraseController.init(_:_:)
             ) as BackupCoordinating)
 
@@ -165,7 +164,6 @@ struct DependencyRegistrator {
             RestoreCoordinator(
                 successFactory: RestoreSuccessController.init,
                 chatListFactory: ChatListController.init,
-                sftpFactory: RestoreSFTPController.init(_:),
                 restoreFactory: RestoreController.init(_:_:),
                 passphraseFactory: RestorePassphraseController.init(_:)
             ) as RestoreCoordinating)

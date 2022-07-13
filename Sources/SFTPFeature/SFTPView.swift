@@ -2,7 +2,7 @@ import UIKit
 import Shared
 import InputField
 
-final class BackupSFTPView: UIView {
+final class SFTPView: UIView {
     let titleLabel = UILabel()
     let subtitleLabel = UILabel()
     let hostField = OutlinedInputField()
