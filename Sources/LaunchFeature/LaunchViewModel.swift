@@ -5,6 +5,7 @@ import Models
 import Combine
 import Defaults
 import XXModels
+import Keychain
 import Foundation
 import Integration
 import Permissions
@@ -31,6 +32,7 @@ final class LaunchViewModel {
     @Dependency private var network: XXNetworking
     @Dependency private var versionChecker: VersionChecker
     @Dependency private var dropboxService: DropboxInterface
+    @Dependency private var keychainHandler: KeychainHandling
     @Dependency private var permissionHandler: PermissionHandling
 
     @KeyObject(.username, defaultValue: nil) var username: String?
@@ -90,6 +92,7 @@ final class LaunchViewModel {
                     self.hudSubject.send(.none)
                     self.routeSubject.send(.onboarding(ndf))
                     self.dropboxService.unlink()
+                    try? self.keychainHandler.clear()
                     return
                 }
 
@@ -98,6 +101,7 @@ final class LaunchViewModel {
                     self.hudSubject.send(.none)
                     self.routeSubject.send(.onboarding(ndf))
                     self.dropboxService.unlink()
+                    try? self.keychainHandler.clear()
                     return
                 }
 

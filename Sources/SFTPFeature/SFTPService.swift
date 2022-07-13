@@ -1,5 +1,6 @@
 import UIKit
 import Shout
+import Socket
 import Models
 import Combine
 import Keychain
@@ -7,16 +8,17 @@ import Foundation
 import Presentation
 import DependencyInjection
 
-public typealias SFTPFetchResult = (Result<RestoreSettings?, Error>) -> Void
+public typealias SFTPDownloadResult = (Result<Data, Error>) -> Void
 public typealias SFTPAuthorizationParams = (UIViewController, () -> Void)
+public typealias SFTPFetchResult = (Result<RestoreSettings?, Error>) -> Void
 
 public struct SFTPService {
     public var isAuthorized: () -> Bool
     public var uploadBackup: (URL) throws -> Void
-    public var downloadBackup: (String) throws -> Void
     public var fetchMetadata: (SFTPFetchResult) -> Void
-    public var authenticate: (String, String, String) throws -> Void
     public var authorizeFlow: (SFTPAuthorizationParams) -> Void
+    public var authenticate: (String, String, String) throws -> Void
+    public var downloadBackup: (String, SFTPDownloadResult) -> Void
 }
 
 public extension SFTPService {
@@ -29,13 +31,13 @@ public extension SFTPService {
             print("^^^ Requested upload on sftp service")
             print("^^^ URL path: \(url.path)")
         },
-        downloadBackup: { path in
-            print("^^^ Requested backup download on sftp service.")
-            print("^^^ Path: \(path)")
-        },
         fetchMetadata: { completion in
             print("^^^ Requested backup metadata on sftp service.")
             completion(.success(nil))
+        },
+        authorizeFlow: { (_, completion) in
+            print("^^^ Requested authorizing flow on sftp service.")
+            completion()
         },
         authenticate: { host, username, password in
             print("^^^ Requested authentication on sftp service.")
@@ -43,9 +45,9 @@ public extension SFTPService {
             print("^^^ Username: \(username)")
             print("^^^ Password: \(password)")
         },
-        authorizeFlow: { (_, completion) in
-            print("^^^ Requested authorizing flow on sftp service.")
-            completion()
+        downloadBackup: { path, completion in
+            print("^^^ Requested backup download on sftp service.")
+            print("^^^ Path: \(path)")
         }
     )
 
@@ -71,20 +73,6 @@ public extension SFTPService {
             let sftp = try ssh.openSftp()
 
             try sftp.upload(localURL: url, remotePath: "backup/backup.xxm")
-        },
-        downloadBackup: { path in
-            let keychain = try DependencyInjection.Container.shared.resolve() as KeychainHandling
-            let host = try keychain.get(key: .host)
-            let password = try keychain.get(key: .pwd)
-            let username = try keychain.get(key: .username)
-
-            let ssh = try SSH(host: host!, port: 22)
-            try ssh.authenticate(username: username!, password: password!)
-            let sftp = try ssh.openSftp()
-
-            let temp = NSTemporaryDirectory()
-            try sftp.download(remotePath: path, localURL: URL(string: temp)!)
-            print(FileManager.default.fileExists(atPath: temp))
         },
         fetchMetadata: { completion in
             do {
@@ -113,22 +101,87 @@ public extension SFTPService {
 
                 completion(.success(nil))
             } catch {
+                if let error = error as? SSHError {
+                    print(error.kind)
+                    print(error.message)
+                    print(error.description)
+                } else if let error = error as? Socket.Error {
+                    print(error.errorCode)
+                    print(error.description)
+                    print(error.errorReason)
+                    print(error.localizedDescription)
+                } else {
+                    print(error.localizedDescription)
+                }
+
                 completion(.failure(error))
             }
-        },
-        authenticate: { host, username, password in
-            let ssh = try SSH(host: host, port: 22)
-            try ssh.authenticate(username: username, password: password)
-            let sftp = try ssh.openSftp()
-
-            let keychain = try DependencyInjection.Container.shared.resolve() as KeychainHandling
-            try keychain.store(key: .host, value: host)
-            try keychain.store(key: .pwd, value: password)
-            try keychain.store(key: .username, value: username)
         },
         authorizeFlow: { controller, completion in
             var pushPresenter: Presenting = PushPresenter()
             pushPresenter.present(SFTPController(completion), from: controller)
+        },
+        authenticate: { host, username, password in
+            do {
+                try SSH.connect(
+                    host: host,
+                    port: 22,
+                    username: username,
+                    authMethod: SSHPassword(password)) { ssh in
+                        _ = try ssh.openSftp()
+
+                        let keychain = try DependencyInjection.Container.shared.resolve() as KeychainHandling
+                        try keychain.store(key: .host, value: host)
+                        try keychain.store(key: .pwd, value: password)
+                        try keychain.store(key: .username, value: username)
+                    }
+            } catch {
+                if let error = error as? SSHError {
+                    print(error.kind)
+                    print(error.message)
+                    print(error.description)
+                } else if let error = error as? Socket.Error {
+                    print(error.errorCode)
+                    print(error.description)
+                    print(error.errorReason)
+                    print(error.localizedDescription)
+                } else {
+                    print(error.localizedDescription)
+                }
+
+                throw error
+            }
+        },
+        downloadBackup: { path, completion in
+            do {
+                let keychain = try DependencyInjection.Container.shared.resolve() as KeychainHandling
+                let host = try keychain.get(key: .host)
+                let password = try keychain.get(key: .pwd)
+                let username = try keychain.get(key: .username)
+
+                let ssh = try SSH(host: host!, port: 22)
+                try ssh.authenticate(username: username!, password: password!)
+                let sftp = try ssh.openSftp()
+
+                let localURL = FileManager.default
+                    .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
+                    .appendingPathComponent("sftp")
+
+                try sftp.download(remotePath: path, localURL: localURL)
+
+                let data = try Data(contentsOf: localURL)
+                completion(.success(data))
+            } catch {
+                completion(.failure(error))
+
+                if var error = error as? SSHError {
+                    print(error.kind)
+                    print(error.message)
+                    print(error.description)
+                } else {
+                    print(error.localizedDescription)
+                }
+            }
         }
     )
 }

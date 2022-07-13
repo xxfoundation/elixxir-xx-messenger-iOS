@@ -90,11 +90,17 @@ final class RestoreViewModel {
     }
 
     private func downloadBackupForSFTP(_ backup: Backup) {
-        do {
-            try sftpService.downloadBackup(backup.id)
-        } catch {
-            print(error.localizedDescription)
-        }
+        sftpService.downloadBackup(backup.id, { [weak self] in
+            guard let self = self else { return }
+            self.stepRelay.send(.downloading(backup.size, backup.size))
+
+            switch $0 {
+            case .success(let data):
+                self.continueRestoring(data: data)
+            case .failure(let error):
+                self.stepRelay.send(.failDownload(error))
+            }
+        })
     }
 
     private func downloadBackupForDropbox(_ backup: Backup) {

@@ -24,6 +24,7 @@ public final class OutlinedInputField: UIView {
 
         textField.delegate = self
         textField.backgroundColor = .clear
+        textField.textColor = Asset.neutralDark.color
         placeholderLabel.textColor = Asset.neutralWeak.color
         placeholderLabel.font = Fonts.Mulish.regular.font(size: 16.0)
 
