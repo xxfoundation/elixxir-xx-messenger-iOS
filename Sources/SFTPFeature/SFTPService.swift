@@ -10,6 +10,7 @@ public typealias SFTPFetchParams = (SFTPAuthParams, SFTPFetchResult)
 
 public struct SFTPService {
     public var isAuthorized: () -> Bool
+    public var upload: (URL) throws -> Void
     public var fetch: (SFTPFetchParams) -> Void
     public var download: (String) throws -> Void
     public var justAuthenticate: (SFTPAuthParams) throws -> Void
@@ -18,15 +19,29 @@ public struct SFTPService {
 public extension SFTPService {
     static var mock = SFTPService(
         isAuthorized: {
-            true
+            print("^^^ Requested auth status on sftp service")
+            return true
+        },
+        upload: { url in
+            print("^^^ Requested upload on sftp service")
+            print("^^^ URL path: \(url.path)")
         },
         fetch: { (authParams, completion) in
+            print("^^^ Requested backup metadata on sftp service.")
+            print("^^^ Host: \(authParams.0)")
+            print("^^^ Username: \(authParams.1)")
+            print("^^^ Password: \(authParams.2)")
             completion(.success(nil))
         },
         download: { path in
-
+            print("^^^ Requested backup download on sftp service.")
+            print("^^^ Path: \(path)")
         },
         justAuthenticate: { host, username, password in
+            print("^^^ Requested to authenticate on sftp service")
+            print("^^^ Host: \(host)")
+            print("^^^ Username: \(username)")
+            print("^^^ Password: \(password)")
         })
 
     static var live = SFTPService(
@@ -39,6 +54,18 @@ public extension SFTPService {
             } else {
                 return false
             }
+        },
+        upload: { url in
+            let keychain = try DependencyInjection.Container.shared.resolve() as KeychainHandling
+            let host = try keychain.get(key: .host)
+            let password = try keychain.get(key: .pwd)
+            let username = try keychain.get(key: .username)
+
+            let ssh = try SSH(host: host!, port: 22)
+            try ssh.authenticate(username: username!, password: password!)
+            let sftp = try ssh.openSftp()
+
+            try sftp.upload(localURL: url, remotePath: "backup/backup.xxm")
         },
         fetch: { (authParams, completion) in
             let host = authParams.0

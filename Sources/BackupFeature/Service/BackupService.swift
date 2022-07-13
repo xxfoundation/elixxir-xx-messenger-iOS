@@ -2,6 +2,7 @@ import UIKit
 import Models
 import Combine
 import Defaults
+import Keychain
 import SFTPFeature
 import iCloudFeature
 import DropboxFeature
@@ -14,6 +15,7 @@ public final class BackupService {
     @Dependency private var icloudService: iCloudInterface
     @Dependency private var dropboxService: DropboxInterface
     @Dependency private var networkManager: NetworkMonitoring
+    @Dependency private var keychainHandler: KeychainHandling
     @Dependency private var driveService: GoogleDriveInterface
 
     @KeyObject(.backupSettings, defaultValue: Data()) private var storedSettings: Data
@@ -207,25 +209,25 @@ extension BackupService {
         }
 
         if sftpService.isAuthorized() {
-            let host = ""
-            let username = ""
-            let password = ""
+            if let keychain = try? DependencyInjection.Container.shared.resolve() as KeychainHandling,
+               let pwd = try? keychain.get(key: .pwd),
+               let host = try? keychain.get(key: .host),
+               let username = try? keychain.get(key: .username) {
 
-            let completion: SFTPFetchResult = { result in
-                switch result {
-                case .success(let settings):
-                    if let settings = settings {
-                        print("")
-                    } else {
-                        print("")
+                let completion: SFTPFetchResult = { [weak settings] result in
+                    guard let settings = settings else { return }
+
+                    switch result {
+                    case .success(let backupSettings):
+                        settings.value.backups[.sftp] = backupSettings?.backup
+                    case .failure(let error):
+                        print(error.localizedDescription)
                     }
-                case .failure(let error):
-                    print(error.localizedDescription)
                 }
-            }
 
-            let authParams = SFTPAuthParams(host, username, password)
-            sftpService.fetch((authParams, completion))
+                let authParams = SFTPAuthParams(host, username, pwd)
+                sftpService.fetch((authParams, completion))
+            }
         }
 
         if dropboxService.isAuthorized() {
@@ -326,7 +328,11 @@ extension BackupService {
                 // try? FileManager.default.removeItem(at: url)
             }
         case .sftp:
-            break // TODO
+            do {
+                try sftpService.upload(url)
+            } catch {
+                print(error.localizedDescription)
+            }
         }
     }
 }

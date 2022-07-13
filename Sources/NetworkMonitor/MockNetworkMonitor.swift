@@ -32,11 +32,11 @@ public struct MockNetworkMonitor: NetworkMonitoring {
         statusRelay.send(status)
 
         if status == .available {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
                 simulateOscilation(.internetNotAvailable)
             }
         } else if status == .internetNotAvailable {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 5) {
                 simulateOscilation(.available)
             }
         }
