@@ -430,6 +430,10 @@ public enum Localized {
       /// Cancel
       public static let cancel = Localized.tr("Localizable", "chatList.navigationBar.cancel")
     }
+    public enum Search {
+      /// Search chats
+      public static let title = Localized.tr("Localizable", "chatList.search.title")
+    }
     public enum Traffic {
       /// Not now
       public static let negative = Localized.tr("Localizable", "chatList.traffic.negative")
@@ -1246,6 +1250,18 @@ public enum Localized {
       public static let qr = Localized.tr("Localizable", "ud.tab.qr")
       /// Username
       public static let username = Localized.tr("Localizable", "ud.tab.username")
+    }
+    public enum Username {
+      public enum Search {
+        /// Search by username
+        public static let inputPlaceholder = Localized.tr("Localizable", "ud.username.search.inputPlaceholder")
+        public enum Placeholder {
+          /// Your searches are anonymous. Search information is never linked to your account or personally identifiable.
+          public static let subtitle = Localized.tr("Localizable", "ud.username.search.placeholder.subtitle")
+          /// Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.
+          public static let title = Localized.tr("Localizable", "ud.username.search.placeholder.title")
+        }
+      }
     }
   }
 

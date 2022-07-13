@@ -3,34 +3,37 @@ import Shared
 import InputField
 
 final class SearchUsernameView: UIView {
-    let inputField = InputField()
+    let inputField = SearchComponent()
     let placeholderView = SearchUsernamePlaceholderView()
 
     init() {
         super.init(frame: .zero)
 
-        inputField.setup(
-            style: .regular,
-            title: "Username",
-            placeholder: "Username"
+        inputField.set(
+            placeholder: Localized.Ud.Username.Search.inputPlaceholder,
+            imageAtRight: nil
         )
 
         addSubview(inputField)
         addSubview(placeholderView)
 
+        setupConstraints()
+    }
+
+    required init?(coder: NSCoder) { nil }
+
+    private func setupConstraints() {
         inputField.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(15)
-            $0.left.equalToSuperview().offset(15)
-            $0.right.equalToSuperview().offset(-15)
+            $0.top.equalToSuperview().offset(20)
+            $0.left.equalToSuperview().offset(20)
+            $0.right.equalToSuperview().offset(-20)
         }
 
         placeholderView.snp.makeConstraints {
             $0.top.equalTo(inputField.snp.bottom)
-            $0.left.equalToSuperview()
-            $0.right.equalToSuperview()
+            $0.left.equalToSuperview().offset(32.5)
+            $0.right.equalToSuperview().offset(-32.5)
             $0.bottom.equalToSuperview()
         }
     }
-
-    required init?(coder: NSCoder) { nil }
 }
