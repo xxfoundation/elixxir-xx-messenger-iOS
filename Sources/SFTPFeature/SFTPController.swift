@@ -2,11 +2,13 @@ import HUD
 import UIKit
 import Combine
 import DependencyInjection
+import ScrollViewController
 
 public final class SFTPController: UIViewController {
     @Dependency private var hud: HUDType
 
     lazy private var screenView = SFTPView()
+    lazy private var scrollViewController = ScrollViewController()
 
     private let completion: () -> Void
     private let viewModel = SFTPViewModel()
@@ -19,14 +21,21 @@ public final class SFTPController: UIViewController {
 
     required init?(coder: NSCoder) { nil }
 
-    public override func loadView() {
-        view = screenView
-    }
-
     public override func viewDidLoad() {
         super.viewDidLoad()
+        setupScrollView()
         setupNavigationBar()
         setupBindings()
+    }
+
+    private func setupScrollView() {
+        scrollViewController.scrollView.backgroundColor = .white
+
+        addChild(scrollViewController)
+        view.addSubview(scrollViewController.view)
+        scrollViewController.view.snp.makeConstraints { $0.edges.equalToSuperview() }
+        scrollViewController.didMove(toParent: self)
+        scrollViewController.contentView = screenView
     }
 
     private func setupNavigationBar() {
