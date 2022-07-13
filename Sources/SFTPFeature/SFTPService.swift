@@ -9,13 +9,14 @@ import Presentation
 import DependencyInjection
 
 public typealias SFTPDownloadResult = (Result<Data, Error>) -> Void
-public typealias SFTPAuthorizationParams = (UIViewController, () -> Void)
+public typealias SFTPUploadResult = (Result<Backup, Error>) -> Void
 public typealias SFTPFetchResult = (Result<RestoreSettings?, Error>) -> Void
+public typealias SFTPAuthorizationParams = (UIViewController, () -> Void)
 
 public struct SFTPService {
     public var isAuthorized: () -> Bool
-    public var uploadBackup: (URL) throws -> Void
     public var fetchMetadata: (SFTPFetchResult) -> Void
+    public var uploadBackup: (URL, SFTPUploadResult) -> Void
     public var authorizeFlow: (SFTPAuthorizationParams) -> Void
     public var authenticate: (String, String, String) throws -> Void
     public var downloadBackup: (String, SFTPDownloadResult) -> Void
@@ -27,13 +28,13 @@ public extension SFTPService {
             print("^^^ Requested auth status on sftp service")
             return true
         },
-        uploadBackup: { url in
-            print("^^^ Requested upload on sftp service")
-            print("^^^ URL path: \(url.path)")
-        },
         fetchMetadata: { completion in
             print("^^^ Requested backup metadata on sftp service.")
             completion(.success(nil))
+        },
+        uploadBackup: { url, completion in
+            print("^^^ Requested upload on sftp service")
+            print("^^^ URL path: \(url.path)")
         },
         authorizeFlow: { (_, completion) in
             print("^^^ Requested authorizing flow on sftp service.")
@@ -62,18 +63,6 @@ public extension SFTPService {
 
             return false
         },
-        uploadBackup: { url in
-            let keychain = try DependencyInjection.Container.shared.resolve() as KeychainHandling
-            let host = try keychain.get(key: .host)
-            let password = try keychain.get(key: .pwd)
-            let username = try keychain.get(key: .username)
-
-            let ssh = try SSH(host: host!, port: 22)
-            try ssh.authenticate(username: username!, password: password!)
-            let sftp = try ssh.openSftp()
-
-            try sftp.upload(localURL: url, remotePath: "backup/backup.xxm")
-        },
         fetchMetadata: { completion in
             do {
                 let keychain = try DependencyInjection.Container.shared.resolve() as KeychainHandling
@@ -100,6 +89,47 @@ public extension SFTPService {
                 }
 
                 completion(.success(nil))
+            } catch {
+                if let error = error as? SSHError {
+                    print(error.kind)
+                    print(error.message)
+                    print(error.description)
+                } else if let error = error as? Socket.Error {
+                    print(error.errorCode)
+                    print(error.description)
+                    print(error.errorReason)
+                    print(error.localizedDescription)
+                } else {
+                    print(error.localizedDescription)
+                }
+
+                completion(.failure(error))
+            }
+        },
+        uploadBackup: { url, completion in
+            do {
+                let keychain = try DependencyInjection.Container.shared.resolve() as KeychainHandling
+                let host = try keychain.get(key: .host)
+                let password = try keychain.get(key: .pwd)
+                let username = try keychain.get(key: .username)
+
+                let ssh = try SSH(host: host!, port: 22)
+                try ssh.authenticate(username: username!, password: password!)
+                let sftp = try ssh.openSftp()
+
+                let data = try Data(contentsOf: url)
+
+                if (try? sftp.listFiles(in: "backup")) == nil {
+                    try sftp.createDirectory("backup")
+                }
+
+                try sftp.upload(data: data, remotePath: "backup/backup.xxm")
+
+                completion(.success(.init(
+                    id: "backup/backup.xxm",
+                    date: Date(),
+                    size: Float(data.count)
+                )))
             } catch {
                 if let error = error as? SSHError {
                     print(error.kind)

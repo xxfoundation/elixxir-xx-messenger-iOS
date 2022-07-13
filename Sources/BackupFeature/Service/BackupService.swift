@@ -296,8 +296,6 @@ extension BackupService {
                 case .failure(let error):
                     print(error.localizedDescription)
                 }
-
-                // try? FileManager.default.removeItem(at: url)
             }
         case .icloud:
             icloudService.uploadBackup(url) {
@@ -311,8 +309,6 @@ extension BackupService {
                 case .failure(let error):
                     print(error.localizedDescription)
                 }
-
-                // try? FileManager.default.removeItem(at: url)
             }
         case .dropbox:
             dropboxService.uploadBackup(url) {
@@ -326,15 +322,16 @@ extension BackupService {
                 case .failure(let error):
                     print(error.localizedDescription)
                 }
-
-                // try? FileManager.default.removeItem(at: url)
             }
         case .sftp:
-            do {
-                try sftpService.uploadBackup(url)
-            } catch {
-                print(error.localizedDescription)
-            }
+            sftpService.uploadBackup(url, {
+                switch $0 {
+                case .success(let backup):
+                    self.settings.value.backups[.sftp] = backup
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
+            })
         }
     }
 }
