@@ -54,9 +54,14 @@ final class BackupSFTPViewModel {
         let password = stateSubject.value.password
 
         let authParams = SFTPAuthParams(host, username, password)
-        service.justAuthenticate(authParams)
-        hudSubject.send(.none)
-        popSubject.send(())
+
+        do {
+            try service.justAuthenticate(authParams)
+            hudSubject.send(.none)
+            popSubject.send(())
+        } catch {
+            hudSubject.send(.error(.init(with: error)))
+        }
     }
 
     private func validate() {
