@@ -216,7 +216,7 @@ extension BackupService {
         }
 
         if sftpService.isAuthorized() {
-            sftpService.fetchMetadata({ [weak settings] in
+            sftpService.fetchMetadata { [weak settings] in
                 guard let settings = settings else { return }
 
                 guard let metadata = try? $0.get()?.backup else {
@@ -229,7 +229,7 @@ extension BackupService {
                     date: metadata.date,
                     size: metadata.size
                 )
-            })
+            }
         }
 
         if dropboxService.isAuthorized() {

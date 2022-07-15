@@ -1,26 +1,26 @@
 import Shout
 import Socket
+import Models
 import Keychain
 import Foundation
 import DependencyInjection
 
-public struct SFTPServiceBackupUploader {
-    public var upload: (URL, @escaping SFTPUploadResult) -> Void
+public typealias SFTPFetchResult = (Result<RestoreSettings?, Error>) -> Void
 
-    public func callAsFunction(url: URL, completion: @escaping SFTPUploadResult) {
-        upload(url, completion)
+public struct SFTPFetcher {
+    public var fetch: (@escaping SFTPFetchResult) -> Void
+
+    public func callAsFunction(completion: @escaping SFTPFetchResult) {
+        fetch(completion)
     }
 }
 
-extension SFTPServiceBackupUploader {
-    static let mock = SFTPServiceBackupUploader(
-        upload: { url, _ in
-            print("^^^ Requested upload on sftp service")
-            print("^^^ URL path: \(url.path)")
-        }
-    )
+extension SFTPFetcher {
+    static let mock = SFTPFetcher { _ in
+        print("^^^ Requested backup metadata on sftp service.")
+    }
 
-    static let live = SFTPServiceBackupUploader { url, completion in
+    static let live = SFTPFetcher { completion in
         DispatchQueue.global().async {
             do {
                 let keychain = try DependencyInjection.Container.shared.resolve() as KeychainHandling
@@ -32,19 +32,21 @@ extension SFTPServiceBackupUploader {
                 try ssh.authenticate(username: username!, password: password!)
                 let sftp = try ssh.openSftp()
 
-                let data = try Data(contentsOf: url)
+                if let files = try? sftp.listFiles(in: "backup"),
+                   let backup = files.filter({ file in file.0 == "backup.xxm" }).first {
+                    completion(.success(.init(
+                        backup: .init(
+                            id: "backup/backup.xxm",
+                            date: backup.value.lastModified,
+                            size: Float(backup.value.size)
+                        ),
+                        cloudService: .sftp
+                    )))
 
-                if (try? sftp.listFiles(in: "backup")) == nil {
-                    try sftp.createDirectory("backup")
+                    return
                 }
 
-                try sftp.upload(data: data, remotePath: "backup/backup.xxm")
-
-                completion(.success(.init(
-                    id: "backup/backup.xxm",
-                    date: Date(),
-                    size: Float(data.count)
-                )))
+                completion(.success(nil))
             } catch {
                 if let error = error as? SSHError {
                     print(error.kind)

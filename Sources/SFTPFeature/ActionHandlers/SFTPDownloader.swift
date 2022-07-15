@@ -4,7 +4,9 @@ import Keychain
 import Foundation
 import DependencyInjection
 
-public struct SFTPServiceBackupDownloader {
+public typealias SFTPDownloadResult = (Result<Data, Error>) -> Void
+
+public struct SFTPDownloader {
     public var download: (String, @escaping SFTPDownloadResult) -> Void
 
     public func callAsFunction(path: String, completion: @escaping SFTPDownloadResult) {
@@ -12,13 +14,13 @@ public struct SFTPServiceBackupDownloader {
     }
 }
 
-extension SFTPServiceBackupDownloader {
-    static let mock = SFTPServiceBackupDownloader { path, _ in
+extension SFTPDownloader {
+    static let mock = SFTPDownloader { path, _ in
         print("^^^ Requested backup download on sftp service.")
         print("^^^ Path: \(path)")
     }
 
-    static let live = SFTPServiceBackupDownloader { path, completion in
+    static let live = SFTPDownloader { path, completion in
         DispatchQueue.global().async {
             do {
                 let keychain = try DependencyInjection.Container.shared.resolve() as KeychainHandling

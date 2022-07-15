@@ -54,7 +54,12 @@ final class SFTPViewModel {
         DispatchQueue.global().async { [weak self] in
             guard let self = self else { return }
             do {
-                try self.service.authenticate(host, username, password)
+                try self.service.authenticate(
+                    host: host,
+                    username: username,
+                    password: password
+                )
+
                 self.hudSubject.send(.none)
                 self.authSubject.send(())
             } catch {
