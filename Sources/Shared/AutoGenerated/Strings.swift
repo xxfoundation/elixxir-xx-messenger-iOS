@@ -1205,8 +1205,6 @@ public enum Localized {
     public static func noneFound(_ p1: Any) -> String {
       return Localized.tr("Localizable", "ud.noneFound", String(describing: p1))
     }
-    /// User
-    public static let sectionTitle = Localized.tr("Localizable", "ud.sectionTitle")
     /// Search
     public static let title = Localized.tr("Localizable", "ud.title")
     public enum NicknameDrawer {
@@ -1218,8 +1216,6 @@ public enum Localized {
       public static let title = Localized.tr("Localizable", "ud.nicknameDrawer.title")
     }
     public enum Placeholder {
-      /// Searching is private by nature. The network cannot identify who a search request came from.
-      public static let title = Localized.tr("Localizable", "ud.placeholder.title")
       public enum Drawer {
         /// Got it
         public static let action = Localized.tr("Localizable", "ud.placeholder.drawer.action")
@@ -1241,6 +1237,26 @@ public enum Localized {
       /// Request Contact
       public static let title = Localized.tr("Localizable", "ud.requestDrawer.title")
     }
+    public enum Search {
+      public enum Email {
+        /// Search by email
+        public static let input = Localized.tr("Localizable", "ud.search.email.input")
+      }
+      public enum Phone {
+        /// Search by phone number
+        public static let input = Localized.tr("Localizable", "ud.search.phone.input")
+      }
+      public enum Username {
+        /// Search by username
+        public static let input = Localized.tr("Localizable", "ud.search.username.input")
+        public enum Placeholder {
+          /// Your searches are anonymous. Search information is never linked to your account or personally identifiable.
+          public static let subtitle = Localized.tr("Localizable", "ud.search.username.placeholder.subtitle")
+          /// Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.
+          public static let title = Localized.tr("Localizable", "ud.search.username.placeholder.title")
+        }
+      }
+    }
     public enum Tab {
       /// Email
       public static let email = Localized.tr("Localizable", "ud.tab.email")
@@ -1250,18 +1266,6 @@ public enum Localized {
       public static let qr = Localized.tr("Localizable", "ud.tab.qr")
       /// Username
       public static let username = Localized.tr("Localizable", "ud.tab.username")
-    }
-    public enum Username {
-      public enum Search {
-        /// Search by username
-        public static let inputPlaceholder = Localized.tr("Localizable", "ud.username.search.inputPlaceholder")
-        public enum Placeholder {
-          /// Your searches are anonymous. Search information is never linked to your account or personally identifiable.
-          public static let subtitle = Localized.tr("Localizable", "ud.username.search.placeholder.subtitle")
-          /// Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.
-          public static let title = Localized.tr("Localizable", "ud.username.search.placeholder.title")
-        }
-      }
     }
   }
 

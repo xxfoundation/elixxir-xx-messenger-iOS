@@ -1,6 +1,5 @@
 import UIKit
 import Shared
-import InputField
 
 final class SearchUsernameView: UIView {
     let inputField = SearchComponent()
@@ -10,7 +9,7 @@ final class SearchUsernameView: UIView {
         super.init(frame: .zero)
 
         inputField.set(
-            placeholder: Localized.Ud.Username.Search.inputPlaceholder,
+            placeholder: Localized.Ud.Search.Username.input,
             imageAtRight: nil
         )
 

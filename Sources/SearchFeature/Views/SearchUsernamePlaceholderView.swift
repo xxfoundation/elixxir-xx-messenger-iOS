@@ -16,7 +16,7 @@ final class SearchUsernamePlaceholderView: UIView {
         super.init(frame: .zero)
 
         let attrString = NSMutableAttributedString(
-            string: Localized.Ud.Username.Search.Placeholder.title,
+            string: Localized.Ud.Search.Username.Placeholder.title,
             attributes: [
                 .foregroundColor: Asset.neutralDark.color,
                 .font: Fonts.Mulish.bold.font(size: 32.0)
@@ -36,7 +36,7 @@ final class SearchUsernamePlaceholderView: UIView {
         paragraph.lineHeightMultiple = 1.3
 
         subtitleWithInfo.setup(
-            text: Localized.Ud.Username.Search.Placeholder.subtitle,
+            text: Localized.Ud.Search.Username.Placeholder.subtitle,
             attributes: [
                 .paragraphStyle: paragraph,
                 .foregroundColor: Asset.neutralBody.color,

@@ -950,24 +950,20 @@
 
 "ud.title"
 = "Search";
-"ud.placeholder.title"
-= "Searching is private by nature. The network cannot identify who a search request came from.";
+"ud.tab.username"
+= "Username";
+"ud.tab.email"
+= "Email";
+"ud.tab.phone"
+= "Phone";
+"ud.tab.qr"
+= "QR Code";
 "ud.placeholder.drawer.title"
 = "Search";
 "ud.placeholder.drawer.subtitle"
 = "You can search for users by their username, email, or phone number using the xx network’s #Anonymous Data Retrieval protocol# which keeps a user’s identity anonymous while requesting data. All sent requests contain salted hashes of what you are searching for. Raw data on emails, usernames, and phone numbers do not leave your phone.";
 "ud.placeholder.drawer.action"
 = "Got it";
-"ud.tab.phone"
-= "Phone";
-"ud.tab.email"
-= "Email";
-"ud.tab.username"
-= "Username";
-"ud.tab.qr"
-= "QR Code";
-"ud.sectionTitle"
-= "User";
 "ud.noneFound"
 = "There are no users with that %@.";
 "ud.requestDrawer.title"
@@ -986,12 +982,16 @@
 = "Edit your new contact’s nickname so you know who they are.";
 "ud.nicknameDrawer.save"
 = "Save";
-
-"ud.username.search.inputPlaceholder"
+"ud.search.username.input"
 = "Search by username";
-"ud.username.search.placeholder.title"
+"ud.search.email.input"
+= "Search by email";
+"ud.search.phone.input"
+= "Search by phone number";
+
+"ud.search.username.placeholder.title"
 = "Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.";
-"ud.username.search.placeholder.subtitle"
+"ud.search.username.placeholder.subtitle"
 = "Your searches are anonymous. Search information is never linked to your account or personally identifiable.";
 
 // LaunchFeature

@@ -1,17 +1,15 @@
 import UIKit
 import Shared
-import InputField
 
 final class SearchPhoneView: UIView {
-    let inputField = InputField()
+    let inputField = SearchComponent()
 
     init() {
         super.init(frame: .zero)
 
-        inputField.setup(
-            style: .regular,
-            title: "Phone",
-            placeholder: "Phone"
+        inputField.set(
+            placeholder: Localized.Ud.Search.Phone.input,
+            imageAtRight: nil
         )
 
         addSubview(inputField)

@@ -1,17 +1,15 @@
 import UIKit
 import Shared
-import InputField
 
 final class SearchEmailView: UIView {
-    let inputField = InputField()
+    let inputField = SearchComponent()
 
     init() {
         super.init(frame: .zero)
 
-        inputField.setup(
-            style: .regular,
-            title: "Email",
-            placeholder: "Email"
+        inputField.set(
+            placeholder: Localized.Ud.Search.Email.input,
+            imageAtRight: nil
         )
 
         addSubview(inputField)
