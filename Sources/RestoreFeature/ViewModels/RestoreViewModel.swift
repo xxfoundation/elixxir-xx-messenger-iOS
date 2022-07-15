@@ -90,7 +90,7 @@ final class RestoreViewModel {
     }
 
     private func downloadBackupForSFTP(_ backup: Backup) {
-        sftpService.downloadBackup(backup.id, { [weak self] in
+        sftpService.downloadBackup(path: backup.id) { [weak self] in
             guard let self = self else { return }
             self.stepRelay.send(.downloading(backup.size, backup.size))
 
@@ -100,7 +100,7 @@ final class RestoreViewModel {
             case .failure(let error):
                 self.stepRelay.send(.failDownload(error))
             }
-        })
+        }
     }
 
     private func downloadBackupForDropbox(_ backup: Backup) {

@@ -303,6 +303,11 @@ public final class Session: SessionType {
         ).jsonFormat
 
         client.addJson(params)
+
+        guard username!.isEmpty == false else {
+            fatalError("Tried to build a backup with my username but an empty string was set to it")
+        }
+
         backupService.performBackupIfAutomaticIsEnabled()
     }
 
@@ -328,7 +333,6 @@ public final class Session: SessionType {
             .store(in: &cancellables)
 
         client.backup
-            .throttle(for: .seconds(5), scheduler: DispatchQueue.main, latest: true)
             .sink { [unowned self] in backupService.updateBackup(data: $0) }
             .store(in: &cancellables)
 
@@ -349,7 +353,6 @@ public final class Session: SessionType {
                 if $0 == true {
                     guard let passphrase = backupService.passphrase else {
                         client.resumeBackup()
-                        updateFactsOnBackup()
                         return
                     }
 
@@ -361,10 +364,6 @@ public final class Session: SessionType {
                     client.stopListeningBackup()
                 }
             }
-            .store(in: &cancellables)
-
-        networkMonitor.statusPublisher
-            .sink { print($0) }
             .store(in: &cancellables)
 
         client.messages

@@ -277,7 +277,7 @@ extension BackupService {
             .appendingPathComponent(UUID().uuidString)
 
         do {
-            try data.write(to: url)
+            try data.write(to: url, options: .atomic)
         } catch {
             print("Couldn't write to temp: \(error.localizedDescription)")
             return
@@ -324,14 +324,14 @@ extension BackupService {
                 }
             }
         case .sftp:
-            sftpService.uploadBackup(url, {
+            sftpService.uploadBackup(url: url) {
                 switch $0 {
                 case .success(let backup):
                     self.settings.value.backups[.sftp] = backup
                 case .failure(let error):
                     print(error.localizedDescription)
                 }
-            })
+            }
         }
     }
 }
