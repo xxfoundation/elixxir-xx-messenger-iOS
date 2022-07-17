@@ -3,6 +3,7 @@ import UIKit
 import Models
 import Shared
 import Combine
+import XXModels
 import Integration
 import ToastFeature
 import CombineSchedulers
@@ -32,7 +33,12 @@ final class RequestsSentViewModel {
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
     init() {
-        session.dbManager.fetchContactsPublisher(.init(authStatus: [.requested]))
+        let query = Contact.Query(authStatus: [
+            .requested,
+            .requesting
+        ])
+
+        session.dbManager.fetchContactsPublisher(query)
             .assertNoFailure()
             .removeDuplicates()
             .map { data -> NSDiffableDataSourceSnapshot<Section, RequestSent> in

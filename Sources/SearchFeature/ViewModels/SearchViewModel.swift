@@ -163,12 +163,9 @@ final class SearchViewModel {
     }
 
     func didSet(nickname: String, for contact: Contact) {
-        var contact = contact
-        contact.nickname = nickname
-
-        backgroundScheduler.schedule { [weak self] in
-            guard let self = self else { return }
-            _ = try? self.session.dbManager.saveContact(contact)
+        if var contact = try? session.dbManager.fetchContacts(.init(id: [contact.id])).first {
+            contact.nickname = nickname
+            _ = try? session.dbManager.saveContact(contact)
         }
     }
 
