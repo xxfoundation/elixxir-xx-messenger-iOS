@@ -499,11 +499,11 @@ extension BindingsClient: BindingsInterface {
             fatalError("Couldn't retrieve cert.")
         }
 
-        try! udb!.setAlternative(
-            "18.198.117.203:11420".data(using: .utf8),
-            cert: try! Data(contentsOf: URL(fileURLWithPath: certPath)),
-            contactFile: try! Data(contentsOf: URL(fileURLWithPath: contactFilePath))
-        )
+//        try! udb!.setAlternative(
+//            "18.198.117.203:11420".data(using: .utf8),
+//            cert: try! Data(contentsOf: URL(fileURLWithPath: certPath)),
+//            contactFile: try! Data(contentsOf: URL(fileURLWithPath: contactFilePath))
+//        )
 
         guard let error = error else { return udb! }
         throw error.friendly()
@@ -525,11 +525,11 @@ extension BindingsClient: BindingsInterface {
             fatalError("Couldn't retrieve cert.")
         }
 
-        try! udb!.setAlternative(
-            "18.198.117.203:11420".data(using: .utf8),
-            cert: try! Data(contentsOf: URL(fileURLWithPath: certPath)),
-            contactFile: try! Data(contentsOf: URL(fileURLWithPath: contactFilePath))
-        )
+//        try! udb!.setAlternative(
+//            "18.198.117.203:11420".data(using: .utf8),
+//            cert: try! Data(contentsOf: URL(fileURLWithPath: certPath)),
+//            contactFile: try! Data(contentsOf: URL(fileURLWithPath: contactFilePath))
+//        )
 
         guard let error = error else { return udb! }
         throw error.friendly()

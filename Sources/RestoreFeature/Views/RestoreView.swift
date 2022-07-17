@@ -39,36 +39,36 @@ final class RestoreView: UIView {
         bottomStackView.addArrangedSubview(cancelButton)
         bottomStackView.addArrangedSubview(backButton)
 
-        titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(safeAreaLayoutGuide).offset(20)
-            make.left.equalToSuperview().offset(38)
-            make.right.equalToSuperview().offset(-38)
+        titleLabel.snp.makeConstraints {
+            $0.top.equalTo(safeAreaLayoutGuide).offset(20)
+            $0.left.equalToSuperview().offset(38)
+            $0.right.equalToSuperview().offset(-38)
         }
 
-        subtitleLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(20)
-            make.left.equalToSuperview().offset(38)
-            make.right.equalToSuperview().offset(-38)
+        subtitleLabel.snp.makeConstraints {
+            $0.top.equalTo(titleLabel.snp.bottom).offset(20)
+            $0.left.equalToSuperview().offset(38)
+            $0.right.equalToSuperview().offset(-38)
         }
 
-        detailsView.snp.makeConstraints { make in
-            make.top.equalTo(subtitleLabel.snp.bottom).offset(40)
-            make.left.equalToSuperview()
-            make.right.equalToSuperview()
+        detailsView.snp.makeConstraints {
+            $0.top.equalTo(subtitleLabel.snp.bottom).offset(40)
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
         }
 
-        progressView.snp.makeConstraints { make in
-            make.top.greaterThanOrEqualTo(detailsView.snp.bottom)
-            make.left.equalToSuperview()
-            make.right.equalToSuperview()
-            make.bottom.lessThanOrEqualTo(bottomStackView.snp.top)
+        progressView.snp.makeConstraints {
+            $0.top.greaterThanOrEqualTo(detailsView.snp.bottom)
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
+            $0.bottom.lessThanOrEqualTo(bottomStackView.snp.top)
         }
 
-        bottomStackView.snp.makeConstraints { make in
-            make.top.greaterThanOrEqualTo(detailsView.snp.bottom).offset(10)
-            make.left.equalToSuperview().offset(40)
-            make.right.equalToSuperview().offset(-40)
-            make.bottom.equalTo(safeAreaLayoutGuide).offset(-20)
+        bottomStackView.snp.makeConstraints {
+            $0.top.greaterThanOrEqualTo(detailsView.snp.bottom).offset(10)
+            $0.left.equalToSuperview().offset(40)
+            $0.right.equalToSuperview().offset(-40)
+            $0.bottom.equalTo(safeAreaLayoutGuide).offset(-20)
         }
     }
 
@@ -151,6 +151,8 @@ private extension CloudService {
             return Localized.Backup.iCloud
         case .dropbox:
             return Localized.Backup.dropbox
+        case .sftp:
+            return Localized.Backup.sftp
         }
     }
 
@@ -162,6 +164,8 @@ private extension CloudService {
             return Asset.restoreIcloud.image
         case .dropbox:
             return Asset.restoreDropbox.image
+        case .sftp:
+            return Asset.restoreSFTP.image
         }
     }
 }

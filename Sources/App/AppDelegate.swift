@@ -1,8 +1,8 @@
 import UIKit
 import BackgroundTasks
 
-import XXModels
 import Theme
+import XXModels
 import XXLogger
 import Defaults
 import Integration

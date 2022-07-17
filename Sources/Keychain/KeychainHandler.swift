@@ -1,15 +1,24 @@
 import Foundation
 import KeychainAccess
 
+public enum KeychainSFTP: String {
+    case pwd
+    case host
+    case username
+}
+
 public protocol KeychainHandling {
     func clear() throws
     func getPassword() throws -> Data?
     func store(password pwd: Data) throws
+
+    func get(key: KeychainSFTP) throws -> String?
+    func store(key: KeychainSFTP, value: String) throws
 }
 
 public struct KeychainHandler: KeychainHandling {
-    private let password = "password"
     private let keychain: Keychain
+    private let password = "password"
 
     public init() {
         self.keychain = Keychain(service: "XXM")
@@ -25,5 +34,13 @@ public struct KeychainHandler: KeychainHandling {
 
     public func getPassword() throws -> Data? {
         try keychain.getData(password)
+    }
+
+    public func get(key: KeychainSFTP) throws -> String? {
+        try keychain.get(key.rawValue)
+    }
+
+    public func store(key: KeychainSFTP, value: String) throws {
+        try keychain.set(value, key: key.rawValue)
     }
 }

@@ -6,6 +6,7 @@ final class RestoreListView: UIView {
     let stackView = UIStackView()
     let firstSubtitleLabel = UILabel()
     let secondSubtitleLabel = UILabel()
+    let sftpButton = RowButton()
     let driveButton = RowButton()
     let icloudButton = RowButton()
     let dropboxButton = RowButton()
@@ -34,6 +35,7 @@ final class RestoreListView: UIView {
         secondSubtitleLabel.numberOfLines = 0
         secondSubtitleLabel.attributedText = attrString
 
+        sftpButton.setup(title: Localized.Backup.sftp, icon: Asset.restoreSFTP.image)
         icloudButton.setup(title: Localized.Backup.iCloud, icon: Asset.restoreIcloud.image)
         dropboxButton.setup(title: Localized.Backup.dropbox, icon: Asset.restoreDropbox.image)
         driveButton.setup(title: Localized.Backup.googleDrive, icon: Asset.restoreDrive.image)
@@ -41,9 +43,11 @@ final class RestoreListView: UIView {
         cancelButton.set(style: .seeThrough, title: Localized.AccountRestore.List.cancel)
 
         stackView.axis = .vertical
+        stackView.distribution = .fillEqually
         stackView.addArrangedSubview(driveButton)
         stackView.addArrangedSubview(icloudButton)
         stackView.addArrangedSubview(dropboxButton)
+        stackView.addArrangedSubview(sftpButton)
 
         addSubview(titleLabel)
         addSubview(firstSubtitleLabel)
@@ -51,35 +55,35 @@ final class RestoreListView: UIView {
         addSubview(stackView)
         addSubview(cancelButton)
 
-        titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(safeAreaLayoutGuide).offset(15)
-            make.left.equalToSuperview().offset(38)
-            make.right.equalToSuperview().offset(-41)
+        titleLabel.snp.makeConstraints {
+            $0.top.equalTo(safeAreaLayoutGuide).offset(15)
+            $0.left.equalToSuperview().offset(38)
+            $0.right.equalToSuperview().offset(-41)
         }
 
-        firstSubtitleLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(8)
-            make.left.equalToSuperview().offset(38)
-            make.right.equalToSuperview().offset(-41)
+        firstSubtitleLabel.snp.makeConstraints {
+            $0.top.equalTo(titleLabel.snp.bottom).offset(8)
+            $0.left.equalToSuperview().offset(38)
+            $0.right.equalToSuperview().offset(-41)
         }
 
-        secondSubtitleLabel.snp.makeConstraints { make in
-            make.top.equalTo(firstSubtitleLabel.snp.bottom).offset(8)
-            make.left.equalToSuperview().offset(38)
-            make.right.equalToSuperview().offset(-41)
+        secondSubtitleLabel.snp.makeConstraints {
+            $0.top.equalTo(firstSubtitleLabel.snp.bottom).offset(8)
+            $0.left.equalToSuperview().offset(38)
+            $0.right.equalToSuperview().offset(-41)
         }
 
-        stackView.snp.makeConstraints { make in
-            make.top.equalTo(secondSubtitleLabel.snp.bottom).offset(28)
-            make.left.equalToSuperview().offset(24)
-            make.right.equalToSuperview().offset(-24)
+        stackView.snp.makeConstraints {
+            $0.top.equalTo(secondSubtitleLabel.snp.bottom).offset(28)
+            $0.left.equalToSuperview().offset(24)
+            $0.right.equalToSuperview().offset(-24)
         }
 
-        cancelButton.snp.makeConstraints { make in
-            make.top.greaterThanOrEqualTo(stackView.snp.bottom).offset(20)
-            make.left.equalToSuperview().offset(40)
-            make.right.equalToSuperview().offset(-40)
-            make.bottom.equalTo(safeAreaLayoutGuide).offset(-50)
+        cancelButton.snp.makeConstraints {
+            $0.top.greaterThanOrEqualTo(stackView.snp.bottom).offset(20)
+            $0.left.equalToSuperview().offset(40)
+            $0.right.equalToSuperview().offset(-40)
+            $0.bottom.equalTo(safeAreaLayoutGuide).offset(-50)
         }
     }
 

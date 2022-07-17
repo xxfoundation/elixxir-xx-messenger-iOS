@@ -37,5 +37,10 @@ final class BackupSetupController: UIViewController {
             .publisher(for: .touchUpInside)
             .sink { [unowned self] in viewModel.didTapService(.icloud, self) }
             .store(in: &cancellables)
+
+        screenView.sftpButton
+            .publisher(for: .touchUpInside)
+            .sink { [unowned self] in viewModel.didTapService(.sftp, self) }
+            .store(in: &cancellables)
     }
 }

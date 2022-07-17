@@ -27,6 +27,7 @@ let package = Package(
         .library(name: "Integration", targets: ["Integration"]),
         .library(name: "ChatFeature", targets: ["ChatFeature"]),
         .library(name: "PushFeature", targets: ["PushFeature"]),
+        .library(name: "SFTPFeature", targets: ["SFTPFeature"]),
         .library(name: "CrashService", targets: ["CrashService"]),
         .library(name: "Presentation", targets: ["Presentation"]),
         .library(name: "BackupFeature", targets: ["BackupFeature"]),
@@ -68,6 +69,7 @@ let package = Package(
         .package(url: "https://github.com/google/google-api-objectivec-client-for-rest", from: "1.6.0"),
         .package(url: "https://git.xx.network/elixxir/client-ios-db.git", .upToNextMajor(from: "1.0.5")),
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", .upToNextMajor(from: "8.10.0")),
+        .package(url: "https://github.com/darrarski/Shout.git", revision: "df5a662293f0ac15eeb4f2fd3ffd0c07b73d0de0"),
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture.git",.upToNextMajor(from: "0.32.0"))
     ],
     targets: [
@@ -81,6 +83,7 @@ let package = Package(
                 "ChatFeature",
                 "MenuFeature",
                 "PushFeature",
+                "SFTPFeature",
                 "ToastFeature",
                 "CrashService",
                 "BackupFeature",
@@ -204,6 +207,23 @@ let package = Package(
                     .product(
                         name: "FirebaseCrashlytics",
                         package: "firebase-ios-sdk"
+                    )
+                ]
+            ),
+
+        // MARK: - SFTPFeature
+
+            .target(
+                name: "SFTPFeature",
+                dependencies: [
+                    "HUD",
+                    "Shared",
+                    "Keychain",
+                    "InputField",
+                    "DependencyInjection",
+                    .product(
+                        name: "Shout",
+                        package: "Shout"
                     )
                 ]
             ),
@@ -398,6 +418,7 @@ let package = Package(
                 dependencies: [
                     "HUD",
                     "Shared",
+                    "SFTPFeature",
                     "Integration",
                     "Presentation",
                     "iCloudFeature",
@@ -612,6 +633,7 @@ let package = Package(
                     "Shared",
                     "Models",
                     "InputField",
+                    "SFTPFeature",
                     "Presentation",
                     "iCloudFeature",
                     "DrawerFeature",

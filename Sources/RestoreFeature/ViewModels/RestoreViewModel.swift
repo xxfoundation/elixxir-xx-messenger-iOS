@@ -8,6 +8,7 @@ import Integration
 import BackupFeature
 import DependencyInjection
 
+import SFTPFeature
 import iCloudFeature
 import DropboxFeature
 import GoogleDriveFeature
@@ -38,13 +39,16 @@ extension RestorationStep: Equatable {
 }
 
 final class RestoreViewModel {
+    @Dependency private var sftpService: SFTPService
     @Dependency private var iCloudService: iCloudInterface
     @Dependency private var dropboxService: DropboxInterface
     @Dependency private var googleService: GoogleDriveInterface
 
     @KeyObject(.username, defaultValue: nil) var username: String?
 
-    var step: AnyPublisher<RestorationStep, Never> { stepRelay.eraseToAnyPublisher() }
+    var step: AnyPublisher<RestorationStep, Never> {
+        stepRelay.eraseToAnyPublisher()
+    }
 
     // TO REFACTOR:
     //
@@ -80,6 +84,22 @@ final class RestoreViewModel {
             downloadBackupForDropbox(backup)
         case .icloud:
             downloadBackupForiCloud(backup)
+        case .sftp:
+            downloadBackupForSFTP(backup)
+        }
+    }
+
+    private func downloadBackupForSFTP(_ backup: Backup) {
+        sftpService.downloadBackup(path: backup.id) { [weak self] in
+            guard let self = self else { return }
+            self.stepRelay.send(.downloading(backup.size, backup.size))
+
+            switch $0 {
+            case .success(let data):
+                self.continueRestoring(data: data)
+            case .failure(let error):
+                self.stepRelay.send(.failDownload(error))
+            }
         }
     }
 

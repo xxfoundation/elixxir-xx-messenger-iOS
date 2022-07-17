@@ -105,6 +105,11 @@ final class BackupConfigController: UIViewController {
             .sink { [unowned self] in viewModel.didToggleService(self, .dropbox, screenView.dropboxButton.switcherView.isOn) }
             .store(in: &cancellables)
 
+        screenView.sftpButton.switcherView
+            .publisher(for: .valueChanged)
+            .sink { [unowned self] in viewModel.didToggleService(self, .sftp, screenView.sftpButton.switcherView.isOn) }
+            .store(in: &cancellables)
+
         screenView.iCloudButton.switcherView
             .publisher(for: .valueChanged)
             .sink { [unowned self] in viewModel.didToggleService(self, .icloud, screenView.iCloudButton.switcherView.isOn) }
@@ -113,6 +118,11 @@ final class BackupConfigController: UIViewController {
         screenView.dropboxButton
             .publisher(for: .touchUpInside)
             .sink { [unowned self] in viewModel.didTapService(.dropbox, self) }
+            .store(in: &cancellables)
+
+        screenView.sftpButton
+            .publisher(for: .touchUpInside)
+            .sink { [unowned self] in viewModel.didTapService(.sftp, self) }
             .store(in: &cancellables)
 
         screenView.iCloudButton
@@ -128,16 +138,17 @@ final class BackupConfigController: UIViewController {
         case .none:
             break
         case .icloud:
-            serviceName = "iCloud"
+            serviceName = Localized.Backup.iCloud
             button = screenView.iCloudButton
-
         case .dropbox:
-            serviceName = "Dropbox"
+            serviceName = Localized.Backup.dropbox
             button = screenView.dropboxButton
-
         case .drive:
-            serviceName = "Google Drive"
+            serviceName = Localized.Backup.googleDrive
             button = screenView.googleDriveButton
+        case .sftp:
+            serviceName = Localized.Backup.sftp
+            button = screenView.sftpButton
         }
 
         screenView.enabledSubtitleLabel.text
@@ -146,10 +157,12 @@ final class BackupConfigController: UIViewController {
         = Localized.Backup.Config.frequency(serviceName).uppercased()
 
         guard let button = button else {
+            screenView.sftpButton.isHidden = false
             screenView.iCloudButton.isHidden = false
             screenView.dropboxButton.isHidden = false
             screenView.googleDriveButton.isHidden = false
 
+            screenView.sftpButton.switcherView.isOn = false
             screenView.iCloudButton.switcherView.isOn = false
             screenView.dropboxButton.switcherView.isOn = false
             screenView.googleDriveButton.switcherView.isOn = false
@@ -166,11 +179,13 @@ final class BackupConfigController: UIViewController {
         screenView.latestBackupDetailView.isHidden = false
         screenView.infrastructureDetailView.isHidden = false
 
-        [screenView.iCloudButton, screenView.dropboxButton, screenView.googleDriveButton]
-            .forEach {
-                $0.isHidden = $0 != button
-                $0.switcherView.isOn = $0 == button
-            }
+        [screenView.iCloudButton,
+         screenView.dropboxButton,
+         screenView.googleDriveButton,
+         screenView.sftpButton].forEach {
+            $0.isHidden = $0 != button
+            $0.switcherView.isOn = $0 == button
+        }
     }
 
     private func decorate(connectedServices: Set<CloudService>) {
@@ -190,6 +205,12 @@ final class BackupConfigController: UIViewController {
             screenView.googleDriveButton.showSwitcher(enabled: false)
         } else {
             screenView.googleDriveButton.showChevron()
+        }
+
+        if connectedServices.contains(.sftp) {
+            screenView.sftpButton.showSwitcher(enabled: false)
+        } else {
+            screenView.sftpButton.showChevron()
         }
     }
 
