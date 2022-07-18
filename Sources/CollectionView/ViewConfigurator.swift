@@ -8,7 +8,7 @@ public struct ViewConfigurator<View: UIView, Model> {
 
   public var configure: (View, Model) -> Void
 
-  public func callAsFunction(view: View, with model: Model) {
+  public func callAsFunction(_ view: View, with model: Model) {
     configure(view, model)
   }
 }
