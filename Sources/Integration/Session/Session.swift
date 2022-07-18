@@ -194,6 +194,26 @@ public final class Session: SessionType {
             }
             .store(in: &cancellables)
 
+        /// Create a contact for myself, for foreign key purposes
+        ///
+        if var myself = try? dbManager.fetchContacts(.init(id: [client.bindings.myId])).first {
+            myself.username = username
+            _ = try? dbManager.saveContact(myself)
+        } else {
+            _ = try? dbManager.saveContact(.init(
+                id: client.bindings.myId,
+                marshaled: client.bindings.meMarshalled,
+                username: username,
+                email: email,
+                phone: phone,
+                nickname: nil,
+                photo: nil,
+                authStatus: .friend,
+                isRecent: false,
+                createdAt: Date()
+            ))
+        }
+
         registerUnfinishedUploadTransfers()
         registerUnfinishedDownloadTransfers()
 
