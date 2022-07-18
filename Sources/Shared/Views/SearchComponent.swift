@@ -15,6 +15,10 @@ public final class SearchComponent: UIView {
         textSubject.eraseToAnyPublisher()
     }
 
+    public var returnPublisher: AnyPublisher<Void, Never> {
+        returnSubject.eraseToAnyPublisher()
+    }
+
     private var rightImage = Asset.sharedScan.image {
         didSet {
             rightButton.setImage(rightImage, for: .normal)
@@ -26,9 +30,10 @@ public final class SearchComponent: UIView {
     }
 
     private var cancellables = Set<AnyCancellable>()
-    private var rightSubject = PassthroughSubject<Void, Never>()
-    private var textSubject = PassthroughSubject<String, Never>()
-    private var isEditingSubject = CurrentValueSubject<Bool, Never>(false)
+    private let rightSubject = PassthroughSubject<Void, Never>()
+    private let textSubject = PassthroughSubject<String, Never>()
+    private let returnSubject = PassthroughSubject<Void, Never>()
+    private let isEditingSubject = CurrentValueSubject<Bool, Never>(false)
 
     public init() {
         super.init(frame: .zero)
@@ -167,6 +172,12 @@ public final class SearchComponent: UIView {
     public func textFieldDidBeginEditing(_ textField: UITextField) {
         rightButton.setImage(Asset.sharedCross.image, for: .normal)
         isEditingSubject.send(true)
+    }
+
+    public func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+        inputField.resignFirstResponder()
+        returnSubject.send(())
+        return true
     }
 
     public func textFieldDidEndEditing(_ textField: UITextField) {

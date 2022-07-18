@@ -1,16 +1,29 @@
+import HUD
 import UIKit
 import Shared
 import Combine
+import XXModels
+import Defaults
+import Countries
 import DrawerFeature
 import DependencyInjection
 
 final class SearchUsernameController: UIViewController {
+    @Dependency private var hud: HUDType
     @Dependency private var coordinator: SearchCoordinating
+
+    @KeyObject(.email, defaultValue: nil) var email: String?
+    @KeyObject(.phone, defaultValue: nil) var phone: String?
+    @KeyObject(.sharingEmail, defaultValue: false) var isSharingEmail: Bool
+    @KeyObject(.sharingPhone, defaultValue: false) var isSharingPhone: Bool
 
     lazy private var screenView = SearchUsernameView()
 
     private var cancellables = Set<AnyCancellable>()
+    private let viewModel = SearchUsernameViewModel()
     private var drawerCancellables = Set<AnyCancellable>()
+    private let adrpURLString = "https://links.xx.network/adrp"
+    private var dataSource: SearchTableViewDiffableDataSource!
 
     override func loadView() {
         view = screenView
@@ -18,14 +31,81 @@ final class SearchUsernameController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
+        setupTableView()
         setupBindings()
     }
 
+    private func setupTableView() {
+        screenView.tableView.separatorStyle = .none
+        screenView.tableView.tableFooterView = UIView()
+        screenView.tableView.register(SmallAvatarAndTitleCell.self)
+        screenView.tableView.dataSource = dataSource
+        screenView.tableView.delegate = self
+
+        dataSource = SearchTableViewDiffableDataSource(
+            tableView: screenView.tableView
+        ) { tableView, indexPath, item in
+            let contact: Contact
+            let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: SmallAvatarAndTitleCell.self)
+
+            switch item {
+            case .stranger(let stranger):
+                contact = stranger
+            case .connection(let connection):
+                contact = connection
+            }
+
+            let title = (contact.nickname ?? contact.username) ?? ""
+            cell.titleLabel.text = title
+            cell.avatarView.setupProfile(title: title, image: contact.photo, size: .medium)
+            return cell
+        }
+    }
+
     private func setupBindings() {
+        viewModel.hudPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [hud] in hud.update(with: $0) }
+            .store(in: &cancellables)
+
+        viewModel.statePublisher
+            .compactMap(\.snapshot)
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                screenView.placeholderView.isHidden = true
+                dataSource.apply($0, animatingDifferences: false)
+            }.store(in: &cancellables)
+
         screenView.placeholderView
             .infoPublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in presentSearchDisclaimer() }
+            .store(in: &cancellables)
+
+        screenView.inputField
+            .textPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in viewModel.didEnterInput($0) }
+            .store(in: &cancellables)
+
+        screenView.inputField
+            .returnPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] _ in viewModel.didStartSearching() }
+            .store(in: &cancellables)
+
+        screenView.inputField
+            .isEditingPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] isEditing in
+                UIView.animate(withDuration: 0.25) {
+                    self.screenView.placeholderView.alpha = isEditing ? 0.1 : 1.0
+                }
+            }.store(in: &cancellables)
+
+        viewModel.successPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in presentSucessDrawerFor(contact: $0) }
             .store(in: &cancellables)
     }
 
@@ -46,7 +126,7 @@ final class SearchUsernameController: UIViewController {
             ),
             DrawerLinkText(
                 text: Localized.Ud.Placeholder.Drawer.subtitle,
-                urlString: "https://links.xx.network/adrp",
+                urlString: adrpURLString,
                 spacingAfter: 37
             ),
             DrawerStack(views: [
@@ -65,5 +145,209 @@ final class SearchUsernameController: UIViewController {
             }.store(in: &self.drawerCancellables)
 
         coordinator.toDrawer(drawer, from: self)
+    }
+
+    private func presentSucessDrawerFor(contact: Contact) {
+        var items: [DrawerItem] = []
+
+        let drawerTitle = DrawerText(
+            font: Fonts.Mulish.extraBold.font(size: 26.0),
+            text: Localized.Ud.NicknameDrawer.title,
+            color: Asset.neutralDark.color,
+            spacingAfter: 20
+        )
+
+        let drawerSubtitle = DrawerText(
+            font: Fonts.Mulish.regular.font(size: 16.0),
+            text: Localized.Ud.NicknameDrawer.subtitle,
+            color: Asset.neutralDark.color,
+            spacingAfter: 20
+        )
+
+        items.append(contentsOf: [
+            drawerTitle,
+            drawerSubtitle
+        ])
+
+        let drawerNicknameInput = DrawerInput(
+            placeholder: contact.username!,
+            validator: .init(
+                wrongIcon: .image(Asset.sharedError.image),
+                correctIcon: .image(Asset.sharedSuccess.image),
+                shouldAcceptPlaceholder: true
+            ),
+            spacingAfter: 29
+        )
+
+        items.append(drawerNicknameInput)
+
+        let drawerSaveButton = DrawerCapsuleButton(
+            model: .init(
+                title: Localized.Ud.NicknameDrawer.save,
+                style: .brandColored
+            ), spacingAfter: 5
+        )
+
+        items.append(drawerSaveButton)
+
+        let drawer = DrawerController(with: items)
+        var nickname: String?
+        var allowsSave = true
+
+        drawerNicknameInput.validationPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { allowsSave = $0 }
+            .store(in: &drawerCancellables)
+
+        drawerNicknameInput.inputPublisher
+            .receive(on: DispatchQueue.main)
+            .sink {
+                guard !$0.isEmpty else {
+                    nickname = contact.username
+                    return
+                }
+
+                nickname = $0
+            }
+            .store(in: &drawerCancellables)
+
+        drawerSaveButton.action
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                guard allowsSave else { return }
+
+                drawer.dismiss(animated: true) {
+                    self.viewModel.didSet(nickname: nickname ?? contact.username!, for: contact)
+                }
+            }
+            .store(in: &drawerCancellables)
+
+        coordinator.toNicknameDrawer(drawer, from: self)
+    }
+
+    private func presentRequestDrawer(forContact contact: Contact) {
+        var items: [DrawerItem] = []
+
+        let drawerTitle = DrawerText(
+            font: Fonts.Mulish.extraBold.font(size: 26.0),
+            text: Localized.Ud.RequestDrawer.title,
+            color: Asset.neutralDark.color,
+            spacingAfter: 20
+        )
+
+        var subtitleFragment = "Share your information with #\(contact.username ?? "")"
+
+        if let email = contact.email {
+            subtitleFragment.append(contentsOf: " (\(email))#")
+        } else if let phone = contact.phone {
+            subtitleFragment.append(contentsOf: " (\(Country.findFrom(phone).prefix) \(phone.dropLast(2)))#")
+        } else {
+            subtitleFragment.append(contentsOf: "#")
+        }
+
+        subtitleFragment.append(contentsOf: " so they know its you.")
+
+        let drawerSubtitle = DrawerText(
+            font: Fonts.Mulish.regular.font(size: 16.0),
+            text: subtitleFragment,
+            color: Asset.neutralDark.color,
+            spacingAfter: 31.5,
+            customAttributes: [
+                .font: Fonts.Mulish.regular.font(size: 16.0) as Any,
+                .foregroundColor: Asset.brandPrimary.color
+            ]
+        )
+
+        items.append(contentsOf: [
+            drawerTitle,
+            drawerSubtitle
+        ])
+
+        if let email = email {
+            let drawerEmail = DrawerSwitch(
+                title: Localized.Ud.RequestDrawer.email,
+                content: email,
+                spacingAfter: phone != nil ? 23 : 31,
+                isInitiallyOn: isSharingEmail
+            )
+
+            items.append(drawerEmail)
+
+            drawerEmail.isOnPublisher
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] in self?.isSharingEmail = $0 }
+                .store(in: &drawerCancellables)
+        }
+
+        if let phone = phone {
+            let drawerPhone = DrawerSwitch(
+                title: Localized.Ud.RequestDrawer.phone,
+                content: "\(Country.findFrom(phone).prefix) \(phone.dropLast(2))",
+                spacingAfter: 31,
+                isInitiallyOn: isSharingPhone
+            )
+
+            items.append(drawerPhone)
+
+            drawerPhone.isOnPublisher
+                .receive(on: DispatchQueue.main)
+                .sink { [weak self] in self?.isSharingPhone = $0 }
+                .store(in: &drawerCancellables)
+        }
+
+        let drawerSendButton = DrawerCapsuleButton(
+            model: .init(
+                title: Localized.Ud.RequestDrawer.send,
+                style: .brandColored
+            ), spacingAfter: 5
+        )
+
+        let drawerCancelButton = DrawerCapsuleButton(
+            model: .init(
+                title: Localized.Ud.RequestDrawer.cancel,
+                style: .simplestColoredBrand
+            ), spacingAfter: 5
+        )
+
+        items.append(contentsOf: [drawerSendButton, drawerCancelButton])
+        let drawer = DrawerController(with: items)
+
+        drawerSendButton.action
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                drawer.dismiss(animated: true) {
+                    self.viewModel.didTapRequest(contact: contact)
+                }
+            }.store(in: &drawerCancellables)
+
+        drawerCancelButton.action
+            .receive(on: DispatchQueue.main)
+            .sink { drawer.dismiss(animated: true) }
+            .store(in: &drawerCancellables)
+
+        coordinator.toDrawer(drawer, from: self)
+    }
+
+}
+
+extension SearchUsernameController: UITableViewDelegate {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        if let item = dataSource.itemIdentifier(for: indexPath) {
+            switch item {
+            case .stranger(let contact):
+                didTap(contact: contact)
+            case .connection(let contact):
+                didTap(contact: contact)
+            }
+        }
+    }
+
+    private func didTap(contact: Contact) {
+        guard contact.authStatus == .stranger else {
+            coordinator.toContact(contact, from: self)
+            return
+        }
+
+        presentRequestDrawer(forContact: contact)
     }
 }

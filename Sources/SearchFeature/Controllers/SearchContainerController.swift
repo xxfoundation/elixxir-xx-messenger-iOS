@@ -2,17 +2,43 @@ import UIKit
 import Theme
 import Shared
 import Combine
+import XXModels
+import DrawerFeature
 import DependencyInjection
 
+enum SearchSection {
+    case stranger
+    case connections
+}
+
+enum SearchItem: Equatable, Hashable {
+    case stranger(Contact)
+    case connection(Contact)
+}
+
+class SearchTableViewDiffableDataSource: UITableViewDiffableDataSource<SearchSection, SearchItem> {
+    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+        switch snapshot().sectionIdentifiers[section] {
+        case .stranger:
+            return ""
+        case .connections:
+            return "CONNECTIONS"
+        }
+    }
+}
+
 public final class SearchContainerController: UIViewController {
-    @Dependency private var statusBarController: StatusBarStyleControlling
+    @Dependency var coordinator: SearchCoordinating
+    @Dependency var statusBarController: StatusBarStyleControlling
 
     lazy private var screenView = SearchContainerView()
 
-    private var cancellables = Set<AnyCancellable>()
     private let qrController = SearchQRController()
+    private var cancellables = Set<AnyCancellable>()
+    private let viewModel = SearchContainerViewModel()
     private let emailController = SearchEmailController()
     private let phoneController = SearchPhoneController()
+    private var drawerCancellables = Set<AnyCancellable>()
     private let usernameController = SearchUsernameController()
 
     public override func loadView() {
@@ -28,6 +54,11 @@ public final class SearchContainerController: UIViewController {
         navigationController?.navigationBar.customize(
             backgroundColor: Asset.neutralWhite.color
         )
+    }
+
+    public override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        viewModel.didAppear()
     }
 
     public override func viewDidLoad() {
@@ -61,6 +92,12 @@ public final class SearchContainerController: UIViewController {
                 let point: CGPoint = CGPoint(x: screenView.frame.width * page, y: 0.0)
                 screenView.scrollView.setContentOffset(point, animated: true)
             }.store(in: &cancellables)
+
+        viewModel.coverTrafficPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in presentCoverTrafficDrawer() }
+            .store(in: &cancellables)
+
     }
 
     @objc private func didTapBack() {
@@ -154,5 +191,68 @@ extension SearchContainerController: UIScrollViewDelegate {
         } else {
             return 0
         }
+    }
+}
+
+extension SearchContainerController {
+    private func presentCoverTrafficDrawer() {
+        let enableButton = CapsuleButton()
+        enableButton.set(
+            style: .brandColored,
+            title: Localized.ChatList.Traffic.positive
+        )
+
+        let dismissButton = CapsuleButton()
+        dismissButton.set(
+            style: .seeThrough,
+            title: Localized.ChatList.Traffic.negative
+        )
+
+        let drawer = DrawerController(with: [
+            DrawerText(
+                font: Fonts.Mulish.bold.font(size: 26.0),
+                text: Localized.ChatList.Traffic.title,
+                color: Asset.neutralActive.color,
+                alignment: .left,
+                spacingAfter: 19
+            ),
+            DrawerText(
+                font: Fonts.Mulish.regular.font(size: 16.0),
+                text: Localized.ChatList.Traffic.subtitle,
+                color: Asset.neutralBody.color,
+                alignment: .left,
+                lineHeightMultiple: 1.1,
+                spacingAfter: 39
+            ),
+            DrawerStack(
+                axis: .horizontal,
+                spacing: 20,
+                distribution: .fillEqually,
+                views: [enableButton, dismissButton]
+            )
+        ])
+
+        enableButton
+            .publisher(for: .touchUpInside)
+            .receive(on: DispatchQueue.main)
+            .sink {
+                drawer.dismiss(animated: true) { [weak self] in
+                    guard let self = self else { return }
+                    self.drawerCancellables.removeAll()
+                    self.viewModel.didEnableCoverTraffic()
+                }
+            }.store(in: &drawerCancellables)
+
+        dismissButton
+            .publisher(for: .touchUpInside)
+            .receive(on: DispatchQueue.main)
+            .sink {
+                drawer.dismiss(animated: true) { [weak self] in
+                    guard let self = self else { return }
+                    self.drawerCancellables.removeAll()
+                }
+            }.store(in: &drawerCancellables)
+
+        coordinator.toDrawer(drawer, from: self)
     }
 }

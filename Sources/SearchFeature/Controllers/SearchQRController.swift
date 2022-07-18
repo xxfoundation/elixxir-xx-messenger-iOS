@@ -65,7 +65,7 @@ final class SearchQRController: UIViewController {
             } else {
                 DispatchQueue.main.async {
                     self.status = .failed(.cameraPermission)
-                    self.screenView.update(with: .failed(.cameraPermission))
+//                    self.screenView.update(with: .failed(.cameraPermission))
                 }
             }
         }

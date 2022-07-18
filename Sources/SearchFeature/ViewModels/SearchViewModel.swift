@@ -36,12 +36,9 @@ struct SearchViewState: Equatable {
 }
 
 final class SearchViewModel {
-    @KeyObject(.dummyTrafficOn, defaultValue: false) var isCoverTrafficEnabled: Bool
-    @KeyObject(.pushNotifications, defaultValue: false) private var pushNotifications
-    @KeyObject(.askedDummyTrafficOnce, defaultValue: false) var offeredCoverTraffic: Bool
 
     @Dependency private var session: SessionType
-    @Dependency private var pushHandler: PushHandling
+
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
@@ -49,10 +46,6 @@ final class SearchViewModel {
 
     var placeholderPublisher: AnyPublisher<Bool, Never> {
         placeholderSubject.eraseToAnyPublisher()
-    }
-
-    var coverTrafficPublisher: AnyPublisher<Void, Never> {
-        coverTrafficSubject.eraseToAnyPublisher()
     }
 
     var statePublisher: AnyPublisher<SearchViewState, Never> {
@@ -68,15 +61,12 @@ final class SearchViewModel {
 
     let itemsRelay = CurrentValueSubject<[Contact], Never>([])
     private let successSubject = PassthroughSubject<Contact, Never>()
-    private let coverTrafficSubject = PassthroughSubject<Void, Never>()
+
     private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
     private let placeholderSubject = CurrentValueSubject<Bool, Never>(true)
     private let stateSubject = CurrentValueSubject<SearchViewState, Never>(.init())
 
-    func didAppear() {
-        verifyCoverTraffic()
-        verifyNotifications()
-    }
+
 
     func didSelect(filter: SelectedFilter) {
         stateSubject.value.selectedFilter = filter
@@ -94,10 +84,6 @@ final class SearchViewModel {
         stateSubject.value.country = country
     }
 
-    func didEnableCoverTraffic() {
-        isCoverTrafficEnabled = true
-        session.setDummyTraffic(status: true)
-    }
 
     func didTapSearch() {
         hudSubject.send(.on(nil))
@@ -132,35 +118,6 @@ final class SearchViewModel {
         }
     }
 
-    private func verifyCoverTraffic() {
-        guard offeredCoverTraffic == false else {
-            return
-        }
-
-        offeredCoverTraffic = true
-        coverTrafficSubject.send()
-    }
-
-    private func verifyNotifications() {
-        guard pushNotifications == false else { return }
-
-        pushHandler.requestAuthorization { [weak self] result in
-            guard let self = self else { return }
-
-            switch result {
-            case .success(let granted):
-                if granted {
-                    DispatchQueue.main.async {
-                        UIApplication.shared.registerForRemoteNotifications()
-                    }
-                }
-
-                self.pushNotifications = granted
-            case .failure:
-                self.pushNotifications = false
-            }
-        }
-    }
 
     func didSet(nickname: String, for contact: Contact) {
         if var contact = try? session.dbManager.fetchContacts(.init(id: [contact.id])).first {

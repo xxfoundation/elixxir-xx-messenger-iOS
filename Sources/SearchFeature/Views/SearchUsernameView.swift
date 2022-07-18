@@ -2,6 +2,7 @@ import UIKit
 import Shared
 
 final class SearchUsernameView: UIView {
+    let tableView = UITableView()
     let inputField = SearchComponent()
     let placeholderView = SearchUsernamePlaceholderView()
 
@@ -13,6 +14,7 @@ final class SearchUsernameView: UIView {
             imageAtRight: nil
         )
 
+        addSubview(tableView)
         addSubview(inputField)
         addSubview(placeholderView)
 
@@ -26,6 +28,13 @@ final class SearchUsernameView: UIView {
             $0.top.equalToSuperview().offset(20)
             $0.left.equalToSuperview().offset(20)
             $0.right.equalToSuperview().offset(-20)
+        }
+
+        tableView.snp.makeConstraints {
+            $0.top.equalTo(inputField.snp.bottom)
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
+            $0.bottom.equalToSuperview()
         }
 
         placeholderView.snp.makeConstraints {
