@@ -1,4 +1,5 @@
 import UIKit
+import XCTestDynamicOverlay
 
 public struct CellFactory<Model> {
   public struct Registrar {
@@ -65,10 +66,10 @@ extension CellFactory {
 
 #if DEBUG
 extension CellFactory {
-  public static func failing() -> CellFactory {
+  public static func unimplemented() -> CellFactory {
     CellFactory(
-      register: .init { _ in fatalError("Not implemented") },
-      build: .init { _, _, _ in fatalError("Not implemented") }
+      register: .init(register: XCTUnimplemented("\(Self.self).Registrar")),
+      build: .init(build: XCTUnimplemented("\(Self.self).Builder"))
     )
   }
 }

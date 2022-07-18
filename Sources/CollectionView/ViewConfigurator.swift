@@ -1,4 +1,5 @@
 import UIKit
+import XCTestDynamicOverlay
 
 public struct ViewConfigurator<View: UIView, Model> {
   public init(configure: @escaping (View, Model) -> Void) {
@@ -14,8 +15,8 @@ public struct ViewConfigurator<View: UIView, Model> {
 
 #if DEBUG
 extension ViewConfigurator {
-  public static func failing() -> ViewConfigurator {
-    ViewConfigurator { _, _ in fatalError("Not implemented") }
+  public static func unimplemented() -> ViewConfigurator {
+    ViewConfigurator(configure: XCTUnimplemented("\(Self.self)"))
   }
 }
 #endif
