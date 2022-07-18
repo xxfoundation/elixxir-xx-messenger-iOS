@@ -183,6 +183,15 @@ public final class Session: SessionType {
     }
 
     private func continueInitialization() throws {
+        var myContact = try self.myContact()
+        myContact.marshaled = client.bindings.meMarshalled
+        myContact.username = username
+        myContact.email = email
+        myContact.phone = phone
+        myContact.authStatus = .friend
+        myContact.isRecent = false
+        _ = try dbManager.saveContact(myContact)
+
         setupBindings()
         networkMonitor.start()
 
@@ -193,26 +202,6 @@ public final class Session: SessionType {
                 scanStrangers {}
             }
             .store(in: &cancellables)
-
-        /// Create a contact for myself, for foreign key purposes
-        ///
-        if var myself = try? dbManager.fetchContacts(.init(id: [client.bindings.myId])).first {
-            myself.username = username
-            _ = try? dbManager.saveContact(myself)
-        } else {
-            _ = try? dbManager.saveContact(.init(
-                id: client.bindings.myId,
-                marshaled: client.bindings.meMarshalled,
-                username: username,
-                email: email,
-                phone: phone,
-                nickname: nil,
-                photo: nil,
-                authStatus: .friend,
-                isRecent: false,
-                createdAt: Date()
-            ))
-        }
 
         registerUnfinishedUploadTransfers()
         registerUnfinishedDownloadTransfers()
@@ -486,5 +475,13 @@ public final class Session: SessionType {
                 handle(incomingTransfer: transfer)
             }
             .store(in: &cancellables)
+    }
+
+    func myContact() throws -> Contact {
+        if let contact = try dbManager.fetchContacts(.init(id: [client.bindings.myId])).first {
+            return contact
+        } else {
+            return try dbManager.saveContact(.init(id: client.bindings.myId))
+        }
     }
 }

@@ -42,11 +42,10 @@ extension Session {
                 switch $0 {
                 case .success(_):
                     self.username = value
-                    let query = Contact.Query(id: [self.client.bindings.myId])
 
-                    if var myself = try? self.dbManager.fetchContacts(query).first {
-                        myself.username = value
-                        _ = try? self.dbManager.saveContact(myself)
+                    if var me = try? self.myContact() {
+                        me.username = value
+                        _ = try? self.dbManager.saveContact(me)
                     }
 
                     completion(.success(nil))
