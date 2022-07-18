@@ -35,6 +35,7 @@ let package = Package(
         .library(name: "iCloudFeature", targets: ["iCloudFeature"]),
         .library(name: "SearchFeature", targets: ["SearchFeature"]),
         .library(name: "DrawerFeature", targets: ["DrawerFeature"]),
+        .library(name: "CollectionView", targets: ["CollectionView"]),
         .library(name: "RestoreFeature", targets: ["RestoreFeature"]),
         .library(name: "CrashReporting", targets: ["CrashReporting"]),
         .library(name: "ProfileFeature", targets: ["ProfileFeature"]),
@@ -857,6 +858,21 @@ let package = Package(
                     .product(name: "Quick", package: "Quick"),
                     .product(name: "Nimble", package: "Nimble")
                 ]
-            )
+            ),
+
+        // MARK: - CollectionView
+
+            .target(
+                name: "CollectionView",
+                dependencies: [
+                    .product(name: "ChatLayout", package: "ChatLayout"),
+                ]
+            ),
+            .testTarget(
+                name: "CollectionViewTests",
+                dependencies: [
+                    .target(name: "CollectionView"),
+                ]
+            ),
     ]
 )
