@@ -41,20 +41,13 @@ extension Session {
 
                 switch $0 {
                 case .success(_):
-                    _ = try? self.dbManager.saveContact(.init(
-                        id: self.client.bindings.myId,
-                        marshaled: self.client.bindings.meMarshalled,
-                        username: value,
-                        email: nil,
-                        phone: nil,
-                        nickname: nil,
-                        photo: nil,
-                        authStatus: .friend,
-                        isRecent: false,
-                        createdAt: Date()
-                    ))
-
                     self.username = value
+
+                    if var me = try? self.myContact() {
+                        me.username = value
+                        _ = try? self.dbManager.saveContact(me)
+                    }
+
                     completion(.success(nil))
                 case .failure(let error):
                     completion(.failure(error))
