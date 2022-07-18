@@ -38,7 +38,7 @@ final class SearchUsernameController: UIViewController {
     private func setupTableView() {
         screenView.tableView.separatorStyle = .none
         screenView.tableView.tableFooterView = UIView()
-        screenView.tableView.register(SmallAvatarAndTitleCell.self)
+        screenView.tableView.register(AvatarCell.self)
         screenView.tableView.dataSource = dataSource
         screenView.tableView.delegate = self
 
@@ -46,7 +46,7 @@ final class SearchUsernameController: UIViewController {
             tableView: screenView.tableView
         ) { tableView, indexPath, item in
             let contact: Contact
-            let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: SmallAvatarAndTitleCell.self)
+            let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: AvatarCell.self)
 
             switch item {
             case .stranger(let stranger):
@@ -56,8 +56,15 @@ final class SearchUsernameController: UIViewController {
             }
 
             let title = (contact.nickname ?? contact.username) ?? ""
-            cell.titleLabel.text = title
-            cell.avatarView.setupProfile(title: title, image: contact.photo, size: .medium)
+
+            cell.setup(
+                title: title,
+                image: contact.photo,
+                firstSubtitle: contact.username,
+                secondSubtitle: contact.email,
+                thirdSubtitle: contact.phone,
+                showSeparator: false
+            )
             return cell
         }
     }

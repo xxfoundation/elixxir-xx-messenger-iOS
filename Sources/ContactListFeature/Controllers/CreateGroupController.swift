@@ -66,7 +66,7 @@ public final class CreateGroupController: UIViewController {
 
     private func setupTableAndCollection() {
         screenView.tableView.rowHeight = 64.0
-        screenView.tableView.register(SmallAvatarAndTitleCell.self)
+        screenView.tableView.register(AvatarCell.self)
         screenView.collectionView.register(CreateGroupCollectionCell.self)
 
         collectionDataSource = UICollectionViewDiffableDataSource<SectionId, Contact>(
@@ -84,10 +84,10 @@ public final class CreateGroupController: UIViewController {
         tableDataSource = DiffEditableDataSource<SectionId, Contact>(
             tableView: screenView.tableView
         ) { [weak self] tableView, indexPath, contact in
-            let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: SmallAvatarAndTitleCell.self)
+            let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: AvatarCell.self)
             let title = (contact.nickname ?? contact.username) ?? ""
-            cell.titleLabel.text = title
-            cell.avatarView.setupProfile(title: title, image: contact.photo, size: .medium)
+
+            cell.setup(title: title, image: contact.photo)
 
             if let selectedElements = self?.selectedElements, selectedElements.contains(contact) {
                 tableView.selectRow(at: indexPath, animated: true, scrollPosition: .none)

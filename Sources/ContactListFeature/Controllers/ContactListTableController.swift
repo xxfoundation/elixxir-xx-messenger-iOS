@@ -30,7 +30,7 @@ final class ContactListTableController: UITableViewController {
 
     private func setupTableView() {
         tableView.separatorStyle = .none
-        tableView.register(SmallAvatarAndTitleCell.self)
+        tableView.register(AvatarCell.self)
         tableView.backgroundColor = Asset.neutralWhite.color
         tableView.sectionIndexColor = Asset.neutralDark.color
         tableView.contentInset = UIEdgeInsets(top: -20, left: 0, bottom: 0, right: 0)
@@ -45,11 +45,11 @@ final class ContactListTableController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell: SmallAvatarAndTitleCell = tableView.dequeueReusableCell(forIndexPath: indexPath)
+        let cell: AvatarCell = tableView.dequeueReusableCell(forIndexPath: indexPath)
         let contact = sections[indexPath.section][indexPath.row]
         let name = (contact.nickname ?? contact.username) ?? "Fetching username..."
-        cell.titleLabel.text = name
-        cell.avatarView.setupProfile(title: name, image: contact.photo, size: .medium)
+
+        cell.setup(title: name, image: contact.photo)
         return cell
     }
 

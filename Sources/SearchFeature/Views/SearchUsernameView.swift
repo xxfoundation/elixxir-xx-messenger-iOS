@@ -31,7 +31,7 @@ final class SearchUsernameView: UIView {
         }
 
         tableView.snp.makeConstraints {
-            $0.top.equalTo(inputField.snp.bottom)
+            $0.top.equalTo(inputField.snp.bottom).offset(20)
             $0.left.equalToSuperview()
             $0.right.equalToSuperview()
             $0.bottom.equalToSuperview()
