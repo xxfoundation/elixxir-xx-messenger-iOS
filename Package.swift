@@ -73,6 +73,7 @@ let package = Package(
         .package(url: "https://github.com/darrarski/Shout.git", revision: "df5a662293f0ac15eeb4f2fd3ffd0c07b73d0de0"),
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture.git",.upToNextMajor(from: "0.32.0")),
         .package(url: "https://github.com/pointfreeco/swift-custom-dump.git", .upToNextMajor(from: "0.5.0")),
+        .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay.git", .upToNextMajor(from: "0.3.3")),
     ],
     targets: [
         .target(
@@ -867,6 +868,7 @@ let package = Package(
                 name: "CollectionView",
                 dependencies: [
                     .product(name: "ChatLayout", package: "ChatLayout"),
+                    .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
                 ]
             ),
             .testTarget(
