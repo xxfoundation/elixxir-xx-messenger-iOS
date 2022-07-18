@@ -52,9 +52,12 @@ extension CellFactory {
         factories.forEach { $0.register(in: collectionView) }
       },
       build: .init { model, collectionView, indexPath in
-        factories.lazy
-          .compactMap { $0.build(for: model, in: collectionView, at: indexPath) }
-          .first
+        for factory in factories {
+          if let cell = factory.build(for: model, in: collectionView, at: indexPath) {
+            return cell
+          }
+        }
+        return nil
       }
     )
   }
