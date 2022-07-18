@@ -218,7 +218,7 @@ public enum Localized {
       public static let login = Localized.tr("Localizable", "accountRestore.sftp.login")
       /// Password
       public static let password = Localized.tr("Localizable", "accountRestore.sftp.password")
-      /// Login to your server. Your credentials will be automatically and securley saved locally on your device.
+      /// Login to your server. Your credentials will be automatically and securely saved locally on your device.
       public static let subtitle = Localized.tr("Localizable", "accountRestore.sftp.subtitle")
       /// Login to your SFTP
       public static let title = Localized.tr("Localizable", "accountRestore.sftp.title")
@@ -1249,6 +1249,10 @@ public enum Localized {
       public enum Username {
         /// Search by username
         public static let input = Localized.tr("Localizable", "ud.search.username.input")
+        public enum Empty {
+          /// There are no users with that username
+          public static let title = Localized.tr("Localizable", "ud.search.username.empty.title")
+        }
         public enum Placeholder {
           /// Your searches are anonymous. Search information is never linked to your account or personally identifiable.
           public static let subtitle = Localized.tr("Localizable", "ud.search.username.placeholder.subtitle")

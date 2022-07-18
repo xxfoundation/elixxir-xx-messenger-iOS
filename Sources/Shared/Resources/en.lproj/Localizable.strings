@@ -989,6 +989,9 @@
 "ud.search.phone.input"
 = "Search by phone number";
 
+"ud.search.username.empty.title"
+= "There are no users with that username";
+
 "ud.search.username.placeholder.title"
 = "Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.";
 "ud.search.username.placeholder.subtitle"

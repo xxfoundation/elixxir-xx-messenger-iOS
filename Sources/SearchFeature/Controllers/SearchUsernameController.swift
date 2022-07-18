@@ -80,6 +80,8 @@ final class SearchUsernameController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
                 screenView.placeholderView.isHidden = true
+                screenView.emptyView.isHidden = $0.numberOfItems != 0
+
                 dataSource.apply($0, animatingDifferences: false)
             }.store(in: &cancellables)
 

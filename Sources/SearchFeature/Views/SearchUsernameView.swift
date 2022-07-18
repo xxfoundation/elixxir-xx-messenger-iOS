@@ -4,6 +4,26 @@ import Shared
 final class SearchUsernameView: UIView {
     let tableView = UITableView()
     let inputField = SearchComponent()
+    let emptyView: UIView = {
+        let view = UIView()
+        let label = UILabel()
+
+        label.numberOfLines = 0
+        label.textAlignment = .center
+        label.font = Fonts.Mulish.regular.font(size: 15.0)
+        label.text = Localized.Ud.Search.Username.Empty.title
+        label.textColor = Asset.neutralSecondaryAlternative.color
+
+        view.addSubview(label)
+        label.snp.makeConstraints {
+            $0.center.equalToSuperview()
+            $0.left.equalToSuperview().offset(20)
+            $0.right.equalToSuperview().offset(-20)
+        }
+
+        return view
+    }()
+
     let placeholderView = SearchUsernamePlaceholderView()
 
     init() {
@@ -14,8 +34,11 @@ final class SearchUsernameView: UIView {
             imageAtRight: nil
         )
 
+        emptyView.isHidden = true
+
         addSubview(tableView)
         addSubview(inputField)
+        addSubview(emptyView)
         addSubview(placeholderView)
 
         setupConstraints()
@@ -31,6 +54,13 @@ final class SearchUsernameView: UIView {
         }
 
         tableView.snp.makeConstraints {
+            $0.top.equalTo(inputField.snp.bottom).offset(20)
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
+            $0.bottom.equalToSuperview()
+        }
+
+        emptyView.snp.makeConstraints {
             $0.top.equalTo(inputField.snp.bottom).offset(20)
             $0.left.equalToSuperview()
             $0.right.equalToSuperview()
