@@ -1,14 +1,19 @@
+import Shared
+import Combine
+import XXModels
+import Foundation
 import Permissions
+import Integration
 import DependencyInjection
 
-enum SearchQRStatus: Equatable {
+enum ScanningStatus: Equatable {
     case reading
     case processing
     case success
-    case failed(SearchQRError)
+    case failed(ScanningError)
 }
 
-enum SearchQRError: Equatable {
+enum ScanningError: Equatable {
     case requestOpened
     case unknown(String)
     case cameraPermission
@@ -16,97 +21,91 @@ enum SearchQRError: Equatable {
 }
 
 final class SearchRightViewModel {
-    @Dependency private var permissions: PermissionHandling
-}
+    @Dependency var session: SessionType
+    @Dependency var permissions: PermissionHandling
 
-//
-//
-//import Combine
-//import AVFoundation
-//
-//protocol CameraType {
-//    func start()
-//    func stop()
-//
-//    var previewLayer: CALayer { get }
-//    var dataPublisher: AnyPublisher<Data, Never> { get }
-//}
-//
-//final class Camera: NSObject, CameraType {
-//    var dataPublisher: AnyPublisher<Data, Never> {
-//        dataSubject
-//            .receive(on: DispatchQueue.main)
-//            .eraseToAnyPublisher()
-//    }
-//
-//    lazy var previewLayer: CALayer = {
-//        let layer = AVCaptureVideoPreviewLayer(session: session)
-//        layer.videoGravity = .resizeAspectFill
-//        return layer
-//    }()
-//
-//    private let session = AVCaptureSession()
-//    private let metadataOutput = AVCaptureMetadataOutput()
-//    private let dataSubject = PassthroughSubject<Data, Never>()
-//
-//    override init() {
-//        super.init()
-//        setupCameraDevice()
-//    }
-//
-//    func start() {
-//        guard session.isRunning == false else { return }
-//        session.startRunning()
-//    }
-//
-//    func stop() {
-//        guard session.isRunning == true else { return }
-//        session.stopRunning()
-//    }
-//
-//    private func setupCameraDevice() {
-//        if let captureDevice = AVCaptureDevice.default(for: .video),
-//           let input = try? AVCaptureDeviceInput(device: captureDevice) {
-//
-//            if session.canAddInput(input) && session.canAddOutput(metadataOutput) {
-//                session.addInput(input)
-//                session.addOutput(metadataOutput)
-//            }
-//
-//            metadataOutput.setMetadataObjectsDelegate(self, queue: .main)
-//            metadataOutput.metadataObjectTypes = [.qr]
-//        }
-//    }
-//}
-//
-//extension Camera: AVCaptureMetadataOutputObjectsDelegate {
-//    func metadataOutput(
-//        _ output: AVCaptureMetadataOutput,
-//        didOutput metadataObjects: [AVMetadataObject],
-//        from connection: AVCaptureConnection
-//    ) {
-//        guard let object = metadataObjects.first as? AVMetadataMachineReadableCodeObject,
-//              let data = object.stringValue?.data(using: .nonLossyASCII), object.type == .qr else { return }
-//        dataSubject.send(data)
-//    }
-//}
-//
-//final class MockCamera: NSObject, CameraType {
-//    private let dataSubject = PassthroughSubject<Data, Never>()
-//
-//    func start() {
-//        DispatchQueue.global().asyncAfter(deadline: .now() + 2) { [weak self] in
-//            self?.dataSubject.send("###".data(using: .utf8)!)
-//        }
-//    }
-//
-//    func stop() {}
-//
-//    var previewLayer: CALayer { CALayer() }
-//
-//    var dataPublisher: AnyPublisher<Data, Never> {
-//        dataSubject
-//            .receive(on: DispatchQueue.main)
-//            .eraseToAnyPublisher()
-//    }
-//}
+    var foundPublisher: AnyPublisher<Contact, Never> {
+        foundSubject.eraseToAnyPublisher()
+    }
+
+    var cameraSemaphorePublisher: AnyPublisher<Bool, Never> {
+        cameraSemaphoreSubject.eraseToAnyPublisher()
+    }
+
+    var statusPublisher: AnyPublisher<ScanningStatus, Never> {
+        statusSubject.eraseToAnyPublisher()
+    }
+
+    private let foundSubject = PassthroughSubject<Contact, Never>()
+    private let cameraSemaphoreSubject = PassthroughSubject<Bool, Never>()
+    private(set) var statusSubject = CurrentValueSubject<ScanningStatus, Never>(.reading)
+
+    func viewDidAppear() {
+        permissions.requestCamera { [weak self] granted in
+            guard let self = self else { return }
+
+            if granted {
+                self.statusSubject.value = .reading
+                self.cameraSemaphoreSubject.send(true)
+            } else {
+                self.statusSubject.send(.failed(.cameraPermission))
+            }
+        }
+    }
+
+    func viewWillDisappear() {
+        cameraSemaphoreSubject.send(false)
+    }
+
+    func didScan(data: Data) {
+        /// We need to be accepting new readings in order
+        /// to process what just got scanned.
+        ///
+        guard statusSubject.value == .reading else { return }
+        statusSubject.send(.processing)
+
+        /// Whatever got scanned, needs to have id and username
+        /// otherwise is just noise or an unknown qr code
+        ///
+        guard let userId = session.getId(from: data),
+              let username = try? session.extract(fact: .username, from: data) else {
+            let errorTitle = Localized.Scan.Error.invalid
+            statusSubject.send(.failed(.unknown(errorTitle)))
+            return
+        }
+
+        /// Make sure we are not processing a contact
+        /// that we already have
+        ///
+        if let alreadyContact = try? session.dbManager.fetchContacts(.init(id: [userId])).first {
+            /// Show error accordingly to the auth status
+            ///
+            if alreadyContact.authStatus == .friend {
+                statusSubject.send(.failed(.alreadyFriends(username)))
+            } else if [.requested, .verified].contains(alreadyContact.authStatus) {
+                statusSubject.send(.failed(.requestOpened))
+            } else {
+                let generalErrorTitle = Localized.Scan.Error.general
+                statusSubject.send(.failed(.unknown(generalErrorTitle)))
+            }
+
+            return
+        }
+
+        statusSubject.send(.success)
+        cameraSemaphoreSubject.send(false)
+
+        foundSubject.send(.init(
+            id: userId,
+            marshaled: data,
+            username: username,
+            email: try? session.extract(fact: .email, from: data),
+            phone: try? session.extract(fact: .phone, from: data),
+            nickname: nil,
+            photo: nil,
+            authStatus: .stranger,
+            isRecent: false,
+            createdAt: Date()
+        ))
+    }
+}

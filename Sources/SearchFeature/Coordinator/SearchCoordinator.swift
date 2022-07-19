@@ -6,6 +6,8 @@ import Presentation
 import ScrollViewController
 
 public protocol SearchCoordinating {
+    func toRequests(from: UIViewController)
+    func toContacts(from: UIViewController)
     func toContact(_: Contact, from: UIViewController)
     func toDrawer(_: UIViewController, from: UIViewController)
     func toNicknameDrawer(_: UIViewController, from: UIViewController)
@@ -15,21 +17,38 @@ public protocol SearchCoordinating {
 public struct SearchCoordinator {
     var pushPresenter: Presenting = PushPresenter()
     var bottomPresenter: Presenting = BottomPresenter()
+    var replacePresenter: Presenting = ReplacePresenter()
     var fullscreenPresenter: Presenting = FullscreenPresenter()
 
+    var contactsFactory: () -> UIViewController
+    var requestsFactory: () -> UIViewController
     var contactFactory: (Contact) -> UIViewController
     var countriesFactory: (@escaping (Country) -> Void) -> UIViewController
 
     public init(
+        contactsFactory: @escaping () -> UIViewController,
+        requestsFactory: @escaping () -> UIViewController,
         contactFactory: @escaping (Contact) -> UIViewController,
         countriesFactory: @escaping (@escaping (Country) -> Void) -> UIViewController
     ) {
         self.contactFactory = contactFactory
+        self.contactsFactory = contactsFactory
+        self.requestsFactory = requestsFactory
         self.countriesFactory = countriesFactory
     }
 }
 
 extension SearchCoordinator: SearchCoordinating {
+    public func toRequests(from parent: UIViewController) {
+        let screen = requestsFactory()
+        replacePresenter.present(screen, from: parent)
+    }
+
+    public func toContacts(from parent: UIViewController) {
+        let screen = contactsFactory()
+        replacePresenter.present(screen, from: parent)
+    }
+
     public func toContact(_ contact: Contact, from parent: UIViewController) {
         let screen = contactFactory(contact)
         pushPresenter.present(screen, from: parent)

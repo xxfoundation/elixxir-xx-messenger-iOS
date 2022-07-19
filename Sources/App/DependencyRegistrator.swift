@@ -137,6 +137,8 @@ struct DependencyRegistrator {
 
         container.register(
             SearchCoordinator(
+                contactsFactory: ContactListController.init,
+                requestsFactory: RequestsContainerController.init,
                 contactFactory: ContactController.init(_:),
                 countriesFactory: CountryListController.init(_:)
             ) as SearchCoordinating)

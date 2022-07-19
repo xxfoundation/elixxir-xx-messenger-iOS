@@ -134,6 +134,12 @@ public final class Session: SessionType {
             email = params.email
         }
 
+        print(report.parameters)
+
+        guard username!.isEmpty == false else {
+            fatalError("Trying to restore an account that has no username")
+        }
+
         try continueInitialization()
 
         if !report.contactIds.isEmpty {
