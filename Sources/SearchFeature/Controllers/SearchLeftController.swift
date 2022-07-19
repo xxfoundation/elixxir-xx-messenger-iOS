@@ -8,7 +8,7 @@ import Countries
 import DrawerFeature
 import DependencyInjection
 
-final class SearchUsernameController: UIViewController {
+final class SearchLeftController: UIViewController {
     @Dependency private var hud: HUDType
     @Dependency private var coordinator: SearchCoordinating
 
@@ -17,10 +17,10 @@ final class SearchUsernameController: UIViewController {
     @KeyObject(.sharingEmail, defaultValue: false) var isSharingEmail: Bool
     @KeyObject(.sharingPhone, defaultValue: false) var isSharingPhone: Bool
 
-    lazy private var screenView = SearchUsernameView()
+    lazy private var screenView = SearchLeftView()
 
+    private let viewModel = SearchLeftViewModel()
     private var cancellables = Set<AnyCancellable>()
-    private let viewModel = SearchUsernameViewModel()
     private var drawerCancellables = Set<AnyCancellable>()
     private let adrpURLString = "https://links.xx.network/adrp"
     private var dataSource: SearchTableViewDiffableDataSource!
@@ -339,7 +339,7 @@ final class SearchUsernameController: UIViewController {
 
 }
 
-extension SearchUsernameController: UITableViewDelegate {
+extension SearchLeftController: UITableViewDelegate {
     func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if let item = dataSource.itemIdentifier(for: indexPath) {
             switch item {

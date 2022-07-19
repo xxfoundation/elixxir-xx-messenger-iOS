@@ -1,7 +1,7 @@
 import UIKit
 import Shared
 
-final class SearchUsernameView: UIView {
+final class SearchLeftView: UIView {
     let tableView = UITableView()
     let inputField = SearchComponent()
     let emptyView: UIView = {
@@ -24,7 +24,7 @@ final class SearchUsernameView: UIView {
         return view
     }()
 
-    let placeholderView = SearchUsernamePlaceholderView()
+    let placeholderView = SearchLeftPlaceholderView()
 
     init() {
         super.init(frame: .zero)

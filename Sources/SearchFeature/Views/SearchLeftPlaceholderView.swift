@@ -2,7 +2,7 @@ import UIKit
 import Shared
 import Combine
 
-final class SearchUsernamePlaceholderView: UIView {
+final class SearchLeftPlaceholderView: UIView {
     let titleLabel = UILabel()
     let subtitleWithInfo = TextWithInfoView()
 

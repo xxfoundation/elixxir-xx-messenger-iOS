@@ -7,12 +7,12 @@ import DependencyInjection
 
 typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchItem>
 
-struct SearchUsernameViewState {
+struct SearchLeftViewState {
     var input = ""
     var snapshot: SearchSnapshot?
 }
 
-final class SearchUsernameViewModel {
+final class SearchLeftViewModel {
     @Dependency var session: SessionType
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
@@ -23,13 +23,13 @@ final class SearchUsernameViewModel {
         successSubject.eraseToAnyPublisher()
     }
 
-    var statePublisher: AnyPublisher<SearchUsernameViewState, Never> {
+    var statePublisher: AnyPublisher<SearchLeftViewState, Never> {
         stateSubject.eraseToAnyPublisher()
     }
 
     private let successSubject = PassthroughSubject<Contact, Never>()
     private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
-    private let stateSubject = CurrentValueSubject<SearchUsernameViewState, Never>(.init())
+    private let stateSubject = CurrentValueSubject<SearchLeftViewState, Never>(.init())
 
     func didEnterInput(_ string: String) {
         stateSubject.value.input = string

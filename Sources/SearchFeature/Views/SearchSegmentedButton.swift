@@ -12,7 +12,6 @@ final class SearchSegmentedButton: UIControl {
 
         imageView.contentMode = .center
         titleLabel.textAlignment = .center
-        titleLabel.textColor = Asset.neutralWhite.color
         titleLabel.font = Fonts.Mulish.semiBold.font(size: 13.0)
 
         addSubview(titleLabel)
@@ -23,27 +22,16 @@ final class SearchSegmentedButton: UIControl {
 
     required init?(coder: NSCoder) { nil }
 
-    func setup(
-        title: String,
-        icon: UIImage,
-        iconColor: UIColor = Asset.neutralDisabled.color,
-        titleColor: UIColor = Asset.neutralDisabled.color
-    ) {
-        self.imageView.image = icon
-        self.titleLabel.text = title
-        self.imageView.tintColor = iconColor
-        self.titleLabel.textColor = titleColor
+    func setup(title: String, icon: UIImage) {
+        imageView.image = icon
+        titleLabel.text = title
+        imageView.tintColor = discreteColor
+        titleLabel.textColor = discreteColor
     }
 
-    func updateHighlighting(rate: CGFloat) {
-        let color = UIColor.fade(
-            from: discreteColor,
-            to: highlightColor,
-            pcent: rate
-        )
-
-        imageView.tintColor = color
-        titleLabel.textColor = color
+    func setSelected(_ bool: Bool) {
+        imageView.tintColor = bool ? highlightColor : discreteColor
+        titleLabel.textColor = bool ? highlightColor : discreteColor
     }
 
     private func setupConstraints() {

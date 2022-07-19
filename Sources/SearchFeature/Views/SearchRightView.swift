@@ -1,12 +1,12 @@
 import UIKit
 import Shared
 
-final class SearchQRView: UIView {
+final class SearchRightView: UIView {
     let statusLabel = UILabel()
     let imageView = UIImageView()
     let stackView = UIStackView()
-    let animationView = DotAnimation()
     let overlayView = OverlayView()
+    let animationView = DotAnimation()
     let actionButton = CapsuleButton()
 
     init() {

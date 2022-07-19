@@ -16,10 +16,10 @@ enum SearchQRError: Equatable {
     case alreadyFriends(String)
 }
 
-final class SearchQRController: UIViewController {
+final class SearchRightController: UIViewController {
     @Dependency private var permissions: PermissionHandling
 
-    lazy private var screenView = SearchQRView()
+    lazy private var screenView = SearchRightView()
 
     private let camera = Camera()
     private var status: SearchQRStatus?
