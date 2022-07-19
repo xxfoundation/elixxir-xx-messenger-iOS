@@ -6,6 +6,7 @@ final class SearchLeftEmptyView: UIView {
 
     init() {
         super.init(frame: .zero)
+        backgroundColor = Asset.neutralWhite.color
 
         titleLabel.numberOfLines = 0
         titleLabel.textAlignment = .center

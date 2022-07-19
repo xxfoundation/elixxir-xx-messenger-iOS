@@ -115,7 +115,8 @@ final class SearchLeftController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] isEditing in
                 UIView.animate(withDuration: 0.25) {
-                    self.screenView.placeholderView.alpha = isEditing ? 0.1 : 1.0
+                    self.screenView.placeholderView.titleLabel.alpha = isEditing ? 0.1 : 1.0
+                    self.screenView.placeholderView.subtitleWithInfo.alpha = isEditing ? 0.1 : 1.0
                 }
             }.store(in: &cancellables)
 

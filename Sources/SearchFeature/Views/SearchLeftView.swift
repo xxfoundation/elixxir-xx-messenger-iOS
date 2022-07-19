@@ -9,7 +9,10 @@ final class SearchLeftView: UIView {
 
     init() {
         super.init(frame: .zero)
+
         emptyView.isHidden = true
+        backgroundColor = Asset.neutralWhite.color
+        tableView.backgroundColor = Asset.neutralWhite.color
 
         addSubview(tableView)
         addSubview(inputField)
@@ -52,8 +55,8 @@ final class SearchLeftView: UIView {
 
         placeholderView.snp.makeConstraints {
             $0.top.equalTo(inputField.snp.bottom)
-            $0.left.equalToSuperview().offset(32.5)
-            $0.right.equalToSuperview().offset(-32.5)
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
             $0.bottom.equalToSuperview()
         }
     }

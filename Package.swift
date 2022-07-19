@@ -220,6 +220,7 @@ let package = Package(
                 name: "SFTPFeature",
                 dependencies: [
                     "HUD",
+                    "Models",
                     "Shared",
                     "Keychain",
                     "InputField",

@@ -14,6 +14,7 @@ final class SearchLeftPlaceholderView: UIView {
 
     init() {
         super.init(frame: .zero)
+        backgroundColor = Asset.neutralWhite.color
 
         let attrString = NSMutableAttributedString(
             string: Localized.Ud.Search.Placeholder.title,
@@ -59,14 +60,14 @@ final class SearchLeftPlaceholderView: UIView {
     private func setupConstraints() {
         titleLabel.snp.makeConstraints {
             $0.top.equalToSuperview().offset(50)
-            $0.left.equalToSuperview()
-            $0.right.equalToSuperview()
+            $0.left.equalToSuperview().offset(32.5)
+            $0.right.equalToSuperview().offset(-32.5)
         }
 
         subtitleWithInfo.snp.makeConstraints {
             $0.top.equalTo(titleLabel.snp.bottom).offset(30)
-            $0.left.equalToSuperview()
-            $0.right.equalToSuperview()
+            $0.left.equalToSuperview().offset(32.5)
+            $0.right.equalToSuperview().offset(-32.5)
             $0.bottom.equalToSuperview()
         }
     }
