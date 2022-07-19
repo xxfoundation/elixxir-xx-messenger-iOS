@@ -10,6 +10,7 @@ typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchIte
 struct SearchLeftViewState {
     var input = ""
     var snapshot: SearchSnapshot?
+    var item: SearchSegmentedControl.Item = .username
 }
 
 final class SearchLeftViewModel {
@@ -35,11 +36,17 @@ final class SearchLeftViewModel {
         stateSubject.value.input = string
     }
 
+    func didSelectItem(_ item: SearchSegmentedControl.Item) {
+        stateSubject.value.item = item
+    }
+
     func didStartSearching() {
         hudSubject.send(.on(nil))
 
+        let prefix = stateSubject.value.item.written.first!.uppercased()
+
         do {
-            try session.search(fact: "U\(stateSubject.value.input)") { [weak self] in
+            try session.search(fact: "\(prefix)\(stateSubject.value.input)") { [weak self] in
                 guard let self = self else { return }
 
                 switch $0 {

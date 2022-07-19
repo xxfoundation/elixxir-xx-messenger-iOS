@@ -9,6 +9,15 @@ final class SearchSegmentedControl: UIView {
         case email
         case phone
         case qr
+
+        var written: String {
+            switch self {
+            case .qr: return "qr"
+            case .email: return "email"
+            case .phone: return "phone number"
+            case .username: return "username"
+            }
+        }
     }
 
     private let trackView = UIView()

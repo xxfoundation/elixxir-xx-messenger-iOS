@@ -4,36 +4,11 @@ import Shared
 final class SearchLeftView: UIView {
     let tableView = UITableView()
     let inputField = SearchComponent()
-    let emptyView: UIView = {
-        let view = UIView()
-        let label = UILabel()
-
-        label.numberOfLines = 0
-        label.textAlignment = .center
-        label.font = Fonts.Mulish.regular.font(size: 15.0)
-        label.text = Localized.Ud.Search.Username.Empty.title
-        label.textColor = Asset.neutralSecondaryAlternative.color
-
-        view.addSubview(label)
-        label.snp.makeConstraints {
-            $0.center.equalToSuperview()
-            $0.left.equalToSuperview().offset(20)
-            $0.right.equalToSuperview().offset(-20)
-        }
-
-        return view
-    }()
-
+    let emptyView = SearchLeftEmptyView()
     let placeholderView = SearchLeftPlaceholderView()
 
     init() {
         super.init(frame: .zero)
-
-        inputField.set(
-            placeholder: Localized.Ud.Search.Username.input,
-            imageAtRight: nil
-        )
-
         emptyView.isHidden = true
 
         addSubview(tableView)
@@ -45,6 +20,14 @@ final class SearchLeftView: UIView {
     }
 
     required init?(coder: NSCoder) { nil }
+
+    func updateUIForItem(item: SearchSegmentedControl.Item) {
+        let emptyTitle = Localized.Ud.Search.empty(item.written)
+        emptyView.titleLabel.text = emptyTitle
+
+        let inputFieldTitle = Localized.Ud.Search.input(item.written)
+        inputField.set(placeholder: inputFieldTitle, imageAtRight: nil)
+    }
 
     private func setupConstraints() {
         inputField.snp.makeConstraints {

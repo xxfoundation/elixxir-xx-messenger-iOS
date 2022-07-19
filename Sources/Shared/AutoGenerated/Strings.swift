@@ -1238,27 +1238,19 @@ public enum Localized {
       public static let title = Localized.tr("Localizable", "ud.requestDrawer.title")
     }
     public enum Search {
-      public enum Email {
-        /// Search by email
-        public static let input = Localized.tr("Localizable", "ud.search.email.input")
+      /// There are no users with that %@.
+      public static func empty(_ p1: Any) -> String {
+        return Localized.tr("Localizable", "ud.search.empty", String(describing: p1))
       }
-      public enum Phone {
-        /// Search by phone number
-        public static let input = Localized.tr("Localizable", "ud.search.phone.input")
+      /// Search by %@
+      public static func input(_ p1: Any) -> String {
+        return Localized.tr("Localizable", "ud.search.input", String(describing: p1))
       }
-      public enum Username {
-        /// Search by username
-        public static let input = Localized.tr("Localizable", "ud.search.username.input")
-        public enum Empty {
-          /// There are no users with that username
-          public static let title = Localized.tr("Localizable", "ud.search.username.empty.title")
-        }
-        public enum Placeholder {
-          /// Your searches are anonymous. Search information is never linked to your account or personally identifiable.
-          public static let subtitle = Localized.tr("Localizable", "ud.search.username.placeholder.subtitle")
-          /// Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.
-          public static let title = Localized.tr("Localizable", "ud.search.username.placeholder.title")
-        }
+      public enum Placeholder {
+        /// Your searches are anonymous. Search information is never linked to your account or personally identifiable.
+        public static let subtitle = Localized.tr("Localizable", "ud.search.placeholder.subtitle")
+        /// Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.
+        public static let title = Localized.tr("Localizable", "ud.search.placeholder.title")
       }
     }
     public enum Tab {

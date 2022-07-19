@@ -6,27 +6,6 @@ import XXModels
 import DrawerFeature
 import DependencyInjection
 
-enum SearchSection {
-    case stranger
-    case connections
-}
-
-enum SearchItem: Equatable, Hashable {
-    case stranger(Contact)
-    case connection(Contact)
-}
-
-class SearchTableViewDiffableDataSource: UITableViewDiffableDataSource<SearchSection, SearchItem> {
-    override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
-        switch snapshot().sectionIdentifiers[section] {
-        case .stranger:
-            return ""
-        case .connections:
-            return "CONNECTIONS"
-        }
-    }
-}
-
 public final class SearchContainerController: UIViewController {
     @Dependency var coordinator: SearchCoordinating
     @Dependency var statusBarController: StatusBarStyleControlling
@@ -89,6 +68,7 @@ public final class SearchContainerController: UIViewController {
                     screenView.scrollView.setContentOffset(point, animated: true)
                 } else {
                     screenView.scrollView.setContentOffset(.zero, animated: true)
+                    leftController.viewModel.didSelectItem($0)
                 }
             }.store(in: &cancellables)
 

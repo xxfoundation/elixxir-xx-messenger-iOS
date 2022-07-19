@@ -982,19 +982,15 @@
 = "Edit your new contact’s nickname so you know who they are.";
 "ud.nicknameDrawer.save"
 = "Save";
-"ud.search.username.input"
-= "Search by username";
-"ud.search.email.input"
-= "Search by email";
-"ud.search.phone.input"
-= "Search by phone number";
 
-"ud.search.username.empty.title"
-= "There are no users with that username";
+"ud.search.input"
+= "Search by %@";
+"ud.search.empty"
+= "There are no users with that %@.";
 
-"ud.search.username.placeholder.title"
+"ud.search.placeholder.title"
 = "Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.";
-"ud.search.username.placeholder.subtitle"
+"ud.search.placeholder.subtitle"
 = "Your searches are anonymous. Search information is never linked to your account or personally identifiable.";
 
 // LaunchFeature

@@ -19,11 +19,11 @@ final class SearchLeftController: UIViewController {
 
     lazy private var screenView = SearchLeftView()
 
-    private let viewModel = SearchLeftViewModel()
     private var cancellables = Set<AnyCancellable>()
+    private var dataSource: SearchDiffableDataSource!
+    private(set) var viewModel = SearchLeftViewModel()
     private var drawerCancellables = Set<AnyCancellable>()
     private let adrpURLString = "https://links.xx.network/adrp"
-    private var dataSource: SearchTableViewDiffableDataSource!
 
     override func loadView() {
         view = screenView
@@ -42,7 +42,7 @@ final class SearchLeftController: UIViewController {
         screenView.tableView.dataSource = dataSource
         screenView.tableView.delegate = self
 
-        dataSource = SearchTableViewDiffableDataSource(
+        dataSource = SearchDiffableDataSource(
             tableView: screenView.tableView
         ) { tableView, indexPath, item in
             let contact: Contact
@@ -73,6 +73,13 @@ final class SearchLeftController: UIViewController {
         viewModel.hudPublisher
             .receive(on: DispatchQueue.main)
             .sink { [hud] in hud.update(with: $0) }
+            .store(in: &cancellables)
+
+        viewModel.statePublisher
+            .map(\.item)
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in screenView.updateUIForItem(item: $0) }
             .store(in: &cancellables)
 
         viewModel.statePublisher
