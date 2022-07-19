@@ -403,9 +403,10 @@ public final class Session: SessionType {
                 /// This will get called when my contact restore its contact.
                 /// TODO: Hold a record on the chat that this contact restored.
                 ///
-                var contact = $0
-                contact.authStatus = .friend
-                _ = try? dbManager.saveContact(contact)
+                if var contact = try? dbManager.fetchContacts(.init(id: [$0.id])).first {
+                    contact.authStatus = .friend
+                    _ = try? dbManager.saveContact(contact)
+                }
             }.store(in: &cancellables)
 
         backupService.settingsPublisher
