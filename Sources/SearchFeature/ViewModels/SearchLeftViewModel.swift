@@ -30,6 +30,7 @@ final class SearchLeftViewModel {
         stateSubject.eraseToAnyPublisher()
     }
 
+    private var searchCancellables = Set<AnyCancellable>()
     private let successSubject = PassthroughSubject<Contact, Never>()
     private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
     private let stateSubject = CurrentValueSubject<SearchLeftViewState, Never>(.init())
@@ -46,6 +47,12 @@ final class SearchLeftViewModel {
         stateSubject.value.item = item
     }
 
+    func didTapCancelSearch() {
+        searchCancellables.forEach { $0.cancel() }
+        searchCancellables.removeAll()
+        hudSubject.send(.none)
+    }
+
     func didStartSearching() {
         guard stateSubject.value.input.isEmpty == false else { return }
 
@@ -58,23 +65,16 @@ final class SearchLeftViewModel {
             content += stateSubject.value.country.code
         }
 
-        do {
-            try session.search(fact: "\(prefix)\(content)") { [weak self] in
-                guard let self = self else { return }
-
-                switch $0 {
-                case .success(let contact):
-                    self.hudSubject.send(.none)
-                    self.appendToLocalSearch(contact)
-
-                case .failure(let error):
+        session.search(fact: "\(prefix)\(content)")
+            .sink { [unowned self] in
+                if case .failure(let error) = $0 {
                     self.appendToLocalSearch(nil)
                     self.hudSubject.send(.error(.init(with: error)))
                 }
-            }
-        } catch {
-            hudSubject.send(.error(.init(with: error)))
-        }
+            } receiveValue: { contact in
+                self.hudSubject.send(.none)
+                self.appendToLocalSearch(contact)
+            }.store(in: &searchCancellables)
     }
 
     func didTapRequest(contact: Contact) {
