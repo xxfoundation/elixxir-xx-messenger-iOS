@@ -41,6 +41,8 @@ final class SearchLeftViewModel {
     }
 
     func didStartSearching() {
+        guard stateSubject.value.input.isEmpty == false else { return }
+
         hudSubject.send(.on(nil))
 
         let prefix = stateSubject.value.item.written.first!.uppercased()

@@ -61,11 +61,14 @@ public final class SearchContainerController: UIViewController {
     private func setupBindings() {
         screenView.segmentedControl
             .actionPublisher
+            .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
                 if $0 == .qr {
                     let point = CGPoint(x: screenView.frame.width, y: 0.0)
                     screenView.scrollView.setContentOffset(point, animated: true)
+                    leftController.endEditing()
+                    rightController.viewModel.viewWillAppear()
                 } else {
                     screenView.scrollView.setContentOffset(.zero, animated: true)
                     leftController.viewModel.didSelectItem($0)

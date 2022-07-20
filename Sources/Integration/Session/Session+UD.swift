@@ -69,6 +69,8 @@ extension Session {
             phone = confirmation.content
         }
 
-        updateFactsOnBackup()
+        if let _ = client.backupManager {
+            updateFactsOnBackup()
+        }
     }
 }

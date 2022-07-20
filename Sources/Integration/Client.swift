@@ -90,7 +90,7 @@ public class Client {
 
     public func addJson(_ string: String) {
         guard let backupManager = backupManager else {
-            fatalError()
+            fatalError("Trying to add json parameters to backup but no backup manager created yet")
         }
 
         print("^^^ Set params: \(string) to backup")

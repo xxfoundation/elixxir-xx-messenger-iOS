@@ -7,9 +7,9 @@ final class SearchRightController: UIViewController {
 
     lazy private var screenView = SearchRightView()
 
-    private let viewModel = SearchRightViewModel()
     private var cancellables = Set<AnyCancellable>()
     private let cameraController = CameraController()
+    private(set) var viewModel = SearchRightViewModel()
 
     override func loadView() {
         view = screenView
@@ -24,11 +24,6 @@ final class SearchRightController: UIViewController {
     override func viewDidLayoutSubviews() {
         super.viewDidLayoutSubviews()
         cameraController.previewLayer.frame = screenView.bounds
-    }
-
-    override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        viewModel.viewDidAppear()
     }
 
     override func viewWillDisappear(_ animated: Bool) {

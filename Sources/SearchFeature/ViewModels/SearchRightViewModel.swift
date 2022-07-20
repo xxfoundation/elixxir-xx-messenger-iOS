@@ -40,7 +40,7 @@ final class SearchRightViewModel {
     private let cameraSemaphoreSubject = PassthroughSubject<Bool, Never>()
     private(set) var statusSubject = CurrentValueSubject<ScanningStatus, Never>(.reading)
 
-    func viewDidAppear() {
+    func viewWillAppear() {
         permissions.requestCamera { [weak self] granted in
             guard let self = self else { return }
 

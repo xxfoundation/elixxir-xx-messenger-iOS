@@ -71,8 +71,10 @@ final class RequestsSentViewModel {
                 item.isResent = true
                 allRequests.append(item)
 
+                let name = (contact.nickname ?? contact.username) ?? ""
+
                 self.toastController.enqueueToast(model: .init(
-                    title: Localized.Requests.Sent.Toast.resent(contact.nickname ?? contact.username),
+                    title: Localized.Requests.Sent.Toast.resent(name),
                     leftImage: Asset.requestSentToaster.image
                 ))
 

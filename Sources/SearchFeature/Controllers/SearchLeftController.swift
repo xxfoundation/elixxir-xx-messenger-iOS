@@ -35,6 +35,10 @@ final class SearchLeftController: UIViewController {
         setupBindings()
     }
 
+    func endEditing() {
+        screenView.inputField.endEditing(true)
+    }
+
     private func setupTableView() {
         screenView.tableView.separatorStyle = .none
         screenView.tableView.tableFooterView = UIView()
