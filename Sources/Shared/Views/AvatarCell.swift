@@ -1,4 +1,38 @@
 import UIKit
+import Combine
+
+final class AvatarCellButton: UIControl {
+    let titleLabel = UILabel()
+    let imageView = UIImageView()
+
+    init() {
+        super.init(frame: .zero)
+        titleLabel.numberOfLines = 0
+        titleLabel.textAlignment = .right
+        titleLabel.font = Fonts.Mulish.semiBold.font(size: 13.0)
+
+        addSubview(imageView)
+        addSubview(titleLabel)
+
+        imageView.snp.makeConstraints {
+            $0.top.greaterThanOrEqualToSuperview()
+            $0.left.equalToSuperview()
+            $0.centerY.equalToSuperview()
+            $0.bottom.lessThanOrEqualToSuperview()
+        }
+
+        titleLabel.snp.makeConstraints {
+            $0.top.greaterThanOrEqualToSuperview()
+            $0.left.equalTo(imageView.snp.right).offset(5)
+            $0.centerY.equalToSuperview()
+            $0.right.equalToSuperview()
+            $0.width.equalTo(60)
+            $0.bottom.lessThanOrEqualToSuperview()
+        }
+    }
+
+    required init?(coder: NSCoder) { nil }
+}
 
 public final class AvatarCell: UITableViewCell {
     let h1Label = UILabel()
@@ -8,6 +42,10 @@ public final class AvatarCell: UITableViewCell {
     let separatorView = UIView()
     let avatarView = AvatarView()
     let stackView = UIStackView()
+    let stateButton = AvatarCellButton()
+
+    var cancellables = Set<AnyCancellable>()
+    public var didTapStateButton: (() -> Void)!
 
     public override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
@@ -38,6 +76,7 @@ public final class AvatarCell: UITableViewCell {
 
         contentView.addSubview(stackView)
         contentView.addSubview(avatarView)
+        contentView.addSubview(stateButton)
         contentView.addSubview(separatorView)
 
         setupConstraints()
@@ -52,7 +91,11 @@ public final class AvatarCell: UITableViewCell {
         h3Label.text = nil
         h4Label.text = nil
 
+        stateButton.imageView.image = nil
+        stateButton.titleLabel.text = nil
+
         avatarView.prepareForReuse()
+        cancellables.removeAll()
     }
 
     public func setup(
@@ -90,6 +133,45 @@ public final class AvatarCell: UITableViewCell {
         separatorView.alpha = showSeparator ? 1.0 : 0.0
     }
 
+    public func setupForRequestSent(resent: Bool) {
+        cancellables.removeAll()
+
+        var buttonTitle: String? = nil
+        var buttonImage: UIImage? = nil
+        var buttonTitleColor: UIColor? = nil
+
+        if resent {
+            buttonTitle = Localized.Requests.Cell.resent
+            buttonImage = Asset.requestsResent.image
+            buttonTitleColor = Asset.neutralWeak.color
+        } else {
+            buttonTitle = Localized.Requests.Cell.requested
+            buttonImage = Asset.requestsResend.image
+            buttonTitleColor = Asset.brandPrimary.color
+        }
+
+        setupStateButton(
+            image: buttonImage,
+            title: buttonTitle,
+            color: buttonTitleColor
+        )
+    }
+
+    private func setupStateButton(
+        image: UIImage?,
+        title: String?,
+        color: UIColor?
+    ) {
+        stateButton.imageView.image = image
+        stateButton.titleLabel.text = title
+        stateButton.titleLabel.textColor = color
+
+        stateButton
+            .publisher(for: .touchUpInside)
+            .sink { [unowned self] in didTapStateButton() }
+            .store(in: &cancellables)
+    }
+
     private func setupConstraints() {
         avatarView.snp.makeConstraints {
             $0.width.height.equalTo(36)
@@ -111,6 +193,11 @@ public final class AvatarCell: UITableViewCell {
             $0.left.equalToSuperview().offset(25)
             $0.right.equalToSuperview()
             $0.bottom.equalToSuperview()
+        }
+
+        stateButton.snp.makeConstraints {
+            $0.centerY.equalTo(stackView)
+            $0.right.equalToSuperview().offset(-24)
         }
     }
 }

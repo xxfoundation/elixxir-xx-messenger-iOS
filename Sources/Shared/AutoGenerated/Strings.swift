@@ -965,6 +965,10 @@ public enum Localized {
         public static func resent(_ p1: Any) -> String {
           return Localized.tr("Localizable", "requests.sent.toast.resent", String(describing: p1))
         }
+        /// Request successfully sent to %@
+        public static func sent(_ p1: Any) -> String {
+          return Localized.tr("Localizable", "requests.sent.toast.sent", String(describing: p1))
+        }
       }
     }
   }

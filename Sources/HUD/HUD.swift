@@ -66,6 +66,7 @@ public final class HUD {
                 self.errorView = nil
                 self.animation = nil
                 self.window = nil
+                self.actionButton = nil
                 self.titleLabel = nil
 
                 switch status {

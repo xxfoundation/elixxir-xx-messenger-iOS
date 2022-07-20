@@ -107,7 +107,11 @@ final class SearchLeftViewModel {
             snapshot.appendItems([.stranger(contact)], toSection: .stranger)
         }
 
-        if let locals = try? session.dbManager.fetchContacts(Contact.Query(username: stateSubject.value.input)), locals.count > 0 {
+        let localsQuery = Contact.Query(text: stateSubject.value.input)
+
+        if let locals = try? session.dbManager.fetchContacts(localsQuery), locals.count > 0 {
+            // TODO: Remove myself
+            //
             snapshot.appendSections([.connections])
             snapshot.appendItems(locals.map(SearchItem.connection), toSection: .connections)
         }

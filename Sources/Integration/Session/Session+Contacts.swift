@@ -170,6 +170,13 @@ extension Session {
                     contact.authStatus = success ? .requested : .requestFailed
                     contact = try self.dbManager.saveContact(contact)
 
+                    let name = contact.nickname ?? contact.username
+
+                    self.toastController.enqueueToast(model: .init(
+                        title: Localized.Requests.Sent.Toast.sent(name ?? ""),
+                        leftImage: Asset.sharedSuccess.image
+                    ))
+
                 case .failure:
                     contact.createdAt = Date()
                     contact.authStatus = .requestFailed

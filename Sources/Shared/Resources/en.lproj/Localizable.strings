@@ -353,6 +353,8 @@
 = "Search for connections";
 "requests.sent.empty"
 = "You haven't sent any requests";
+"requests.sent.toast.sent"
+= "Request successfully sent to %@";
 "requests.sent.toast.resent"
 = "Request successfully resent to %@";
 
