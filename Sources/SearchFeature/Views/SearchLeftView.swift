@@ -17,7 +17,6 @@ final class SearchLeftView: UIView {
         tableView.backgroundColor = Asset.neutralWhite.color
 
         inputStackView.spacing = 5
-        countryButton.isHidden = true
         inputStackView.addArrangedSubview(countryButton)
         inputStackView.addArrangedSubview(inputField)
 

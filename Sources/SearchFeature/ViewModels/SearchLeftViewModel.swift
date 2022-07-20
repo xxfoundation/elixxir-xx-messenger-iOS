@@ -2,6 +2,7 @@ import HUD
 import UIKit
 import Combine
 import XXModels
+import Countries
 import Integration
 import DependencyInjection
 
@@ -10,6 +11,7 @@ typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchIte
 struct SearchLeftViewState {
     var input = ""
     var snapshot: SearchSnapshot?
+    var country: Country = .fromMyPhone()
     var item: SearchSegmentedControl.Item = .username
 }
 
@@ -36,6 +38,10 @@ final class SearchLeftViewModel {
         stateSubject.value.input = string
     }
 
+    func didPick(country: Country) {
+        stateSubject.value.country = country
+    }
+
     func didSelectItem(_ item: SearchSegmentedControl.Item) {
         stateSubject.value.item = item
     }
@@ -45,10 +51,15 @@ final class SearchLeftViewModel {
 
         hudSubject.send(.on(nil))
 
+        var content = stateSubject.value.input
         let prefix = stateSubject.value.item.written.first!.uppercased()
 
+        if stateSubject.value.item == .phone {
+            content += stateSubject.value.country.code
+        }
+
         do {
-            try session.search(fact: "\(prefix)\(stateSubject.value.input)") { [weak self] in
+            try session.search(fact: "\(prefix)\(content)") { [weak self] in
                 guard let self = self else { return }
 
                 switch $0 {

@@ -87,6 +87,13 @@ final class SearchLeftController: UIViewController {
             .store(in: &cancellables)
 
         viewModel.statePublisher
+            .map(\.country)
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in screenView.countryButton.setFlag($0.flag, prefix: $0.prefix) }
+            .store(in: &cancellables)
+
+        viewModel.statePublisher
             .compactMap(\.snapshot)
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
@@ -101,6 +108,16 @@ final class SearchLeftController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in presentSearchDisclaimer() }
             .store(in: &cancellables)
+
+        screenView.countryButton
+            .publisher(for: .touchUpInside)
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                coordinator.toCountries(from: self) { [weak self] country in
+                    guard let self = self else { return }
+                    self.viewModel.didPick(country: country)
+                }
+            }.store(in: &cancellables)
 
         screenView.inputField
             .textPublisher
