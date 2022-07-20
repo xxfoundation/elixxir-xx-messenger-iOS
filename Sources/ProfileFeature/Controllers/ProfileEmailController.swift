@@ -7,7 +7,7 @@ import DependencyInjection
 import ScrollViewController
 
 public final class ProfileEmailController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
     @Dependency private var coordinator: ProfileCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
 

@@ -6,7 +6,7 @@ import Combine
 import DependencyInjection
 
 public final class BackupController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency var hud: HUD
 
     private let viewModel = BackupViewModel.live()
     private var cancellables = Set<AnyCancellable>()
@@ -14,7 +14,7 @@ public final class BackupController: UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = Asset.neutralWhite.color
-        hud.update(with: .on(nil))
+        hud.update(with: .on)
 
         setupNavigationBar()
         setupBindings()

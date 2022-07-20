@@ -42,7 +42,7 @@ final class OnboardingUsernameViewModel {
     }
 
     func didTapRegister() {
-        hudRelay.send(.on(nil))
+        hudRelay.send(.on)
 
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }

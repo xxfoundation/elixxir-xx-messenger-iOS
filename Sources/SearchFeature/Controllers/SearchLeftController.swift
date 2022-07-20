@@ -9,7 +9,7 @@ import DrawerFeature
 import DependencyInjection
 
 final class SearchLeftController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
     @Dependency private var coordinator: SearchCoordinating
 
     @KeyObject(.email, defaultValue: nil) var email: String?
@@ -19,11 +19,13 @@ final class SearchLeftController: UIViewController {
 
     lazy private var screenView = SearchLeftView()
 
-    private var cancellables = Set<AnyCancellable>()
     private var dataSource: SearchDiffableDataSource!
     private(set) var viewModel = SearchLeftViewModel()
     private var drawerCancellables = Set<AnyCancellable>()
     private let adrpURLString = "https://links.xx.network/adrp"
+
+    private var cancellables = Set<AnyCancellable>()
+    private var hudCancellables = Set<AnyCancellable>()
 
     override func loadView() {
         view = screenView
@@ -75,9 +77,23 @@ final class SearchLeftController: UIViewController {
 
     private func setupBindings() {
         viewModel.hudPublisher
+            .removeDuplicates()
             .receive(on: DispatchQueue.main)
-            .sink { [hud] in hud.update(with: $0) }
+            .sink { [unowned self] in
+                hud.update(with: $0)
+
+                if case .onAction = $0, let hudBtn = hud.actionButton {
+                    hudBtn.publisher(for: .touchUpInside)
+                        .receive(on: DispatchQueue.main)
+                        .sink { [unowned self] in viewModel.didTapCancelSearch() }
+                        .store(in: &self.hudCancellables)
+                } else {
+                    hudCancellables.forEach { $0.cancel() }
+                    hudCancellables.removeAll()
+                }
+            }
             .store(in: &cancellables)
+
 
         viewModel.statePublisher
             .map(\.item)

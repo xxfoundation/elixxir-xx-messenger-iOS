@@ -107,7 +107,7 @@ final class SingleChatViewModel {
 
     func didSend(image: UIImage) {
         guard let imageData = image.orientedUp().jpegData(compressionQuality: 1.0) else { return }
-        hudRelay.send(.on(nil))
+        hudRelay.send(.on)
 
         session.send(imageData: imageData, to: contact) { [weak self] in
             switch $0 {

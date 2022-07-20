@@ -7,7 +7,7 @@ import XXModels
 import DependencyInjection
 
 public final class CreateGroupController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
     @Dependency private var coordinator: ContactListCoordinating
 
     lazy private var titleLabel = UILabel()

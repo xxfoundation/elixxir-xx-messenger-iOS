@@ -1,5 +1,6 @@
 import HUD
 import UIKit
+import Shared
 import Combine
 import XXModels
 import Countries
@@ -56,7 +57,7 @@ final class SearchLeftViewModel {
     func didStartSearching() {
         guard stateSubject.value.input.isEmpty == false else { return }
 
-        hudSubject.send(.on(nil))
+        hudSubject.send(.onAction(Localized.Ud.Search.cancel))
 
         var content = stateSubject.value.input
         let prefix = stateSubject.value.item.written.first!.uppercased()
@@ -78,7 +79,7 @@ final class SearchLeftViewModel {
     }
 
     func didTapRequest(contact: Contact) {
-        hudSubject.send(.on(nil))
+        hudSubject.send(.on)
         var contact = contact
         contact.nickname = contact.username
 

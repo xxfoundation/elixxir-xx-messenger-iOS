@@ -8,7 +8,7 @@ import DependencyInjection
 import ScrollViewController
 
 public final class OnboardingEmailController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
     @Dependency private var coordinator: OnboardingCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
 

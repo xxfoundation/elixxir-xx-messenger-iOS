@@ -1238,6 +1238,8 @@ public enum Localized {
       public static let title = Localized.tr("Localizable", "ud.requestDrawer.title")
     }
     public enum Search {
+      /// Cancel search
+      public static let cancel = Localized.tr("Localizable", "ud.search.cancel")
       /// There are no users with that %@.
       public static func empty(_ p1: Any) -> String {
         return Localized.tr("Localizable", "ud.search.empty", String(describing: p1))

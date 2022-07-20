@@ -10,7 +10,7 @@ import DependencyInjection
 import ScrollViewController
 
 public final class ContactController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
     @Dependency private var coordinator: ContactCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
 

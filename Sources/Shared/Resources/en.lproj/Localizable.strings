@@ -987,6 +987,8 @@
 = "Search by %@";
 "ud.search.empty"
 = "There are no users with that %@.";
+"ud.search.cancel"
+= "Cancel search";
 
 "ud.search.placeholder.title"
 = "Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.";

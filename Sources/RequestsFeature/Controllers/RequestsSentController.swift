@@ -5,7 +5,7 @@ import Combine
 import DependencyInjection
 
 final class RequestsSentController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
 
     var connectionsPublisher: AnyPublisher<Void, Never> {
         connectionSubject.eraseToAnyPublisher()

@@ -8,7 +8,7 @@ import DependencyInjection
 import ScrollViewController
 
 public final class SettingsController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
     @Dependency private var coordinator: SettingsCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
 

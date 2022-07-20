@@ -10,15 +10,17 @@ private enum Constants {
 }
 
 public enum HUDStatus: Equatable {
-    case on(String?)
     case none
+    case on
+    case onTitle(String)
+    case onAction(String)
     case error(HUDError)
 
     var isPresented: Bool {
         switch self {
         case .none:
             return false
-        case .on, .error:
+        case .on, .error, .onTitle, .onAction:
             return true
         }
     }
@@ -50,15 +52,12 @@ public struct HUDError: Equatable {
     }
 }
 
-public protocol HUDType {
-    func update(with status: HUDStatus)
-}
-
-public final class HUD: HUDType {
+public final class HUD {
     private(set) var window: UIWindow?
     private(set) var errorView: ErrorView?
     private(set) var titleLabel: UILabel?
     private(set) var animation: DotAnimation?
+    public var actionButton: CapsuleButton?
     private var cancellables = Set<AnyCancellable>()
 
     private var status: HUDStatus = .none {
@@ -70,13 +69,19 @@ public final class HUD: HUDType {
                 self.titleLabel = nil
 
                 switch status {
-                case .on(let text):
+                case .on:
                     animation = DotAnimation()
 
-                    if let text = text {
-                        titleLabel = UILabel()
-                        titleLabel!.text = text
-                    }
+                case .onTitle(let text):
+                    animation = DotAnimation()
+                    titleLabel = UILabel()
+                    titleLabel!.text = text
+
+                case .onAction(let title):
+                    animation = DotAnimation()
+                    actionButton = CapsuleButton()
+                    actionButton!.set(style: .seeThroughWhite, title: title)
+
                 case .error(let error):
                     errorView = ErrorView(with: error)
                 case .none:
@@ -88,13 +93,19 @@ public final class HUD: HUDType {
 
             if oldValue.isPresented == false && status.isPresented == true {
                 switch status {
-                case .on(let text):
+                case .on:
                     animation = DotAnimation()
 
-                    if let text = text {
-                        titleLabel = UILabel()
-                        titleLabel!.text = text
-                    }
+                case .onTitle(let text):
+                    animation = DotAnimation()
+                    titleLabel = UILabel()
+                    titleLabel!.text = text
+
+                case .onAction(let title):
+                    animation = DotAnimation()
+                    actionButton = CapsuleButton()
+                    actionButton!.set(style: .seeThroughWhite, title: title)
+
                 case .error(let error):
                     errorView = ErrorView(with: error)
                 case .none:
@@ -118,7 +129,7 @@ public final class HUD: HUDType {
 
     private func showWindow() {
         window = Window()
-        window?.backgroundColor = UIColor.black.withAlphaComponent(0.5)
+        window?.backgroundColor = UIColor.black.withAlphaComponent(0.8)
         window?.rootViewController = StatusBarViewController(nil)
 
         if let animation = animation {
@@ -135,6 +146,15 @@ public final class HUD: HUDType {
                 make.left.equalToSuperview().offset(18)
                 make.center.equalToSuperview().offset(50)
                 make.right.equalToSuperview().offset(-18)
+            }
+        }
+
+        if let actionButton = actionButton {
+            window?.addSubview(actionButton)
+            actionButton.snp.makeConstraints {
+                $0.left.equalToSuperview().offset(18)
+                $0.right.equalToSuperview().offset(-18)
+                $0.bottom.equalToSuperview().offset(-50)
             }
         }
 
@@ -166,6 +186,7 @@ public final class HUD: HUDType {
             self.cancellables.removeAll()
             self.errorView = nil
             self.animation = nil
+            self.actionButton = nil
             self.titleLabel = nil
             self.window = nil
         }

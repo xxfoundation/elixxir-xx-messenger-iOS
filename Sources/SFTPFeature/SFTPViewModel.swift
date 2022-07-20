@@ -45,7 +45,7 @@ final class SFTPViewModel {
     }
 
     func didTapLogin() {
-        hudSubject.send(.on(nil))
+        hudSubject.send(.on)
 
         let host = stateSubject.value.host
         let username = stateSubject.value.username

@@ -147,7 +147,7 @@ final class ChatListViewModel {
     }
 
     func leave(_ group: Group) {
-        hudSubject.send(.on(nil))
+        hudSubject.send(.on)
 
         do {
             try session.leave(group: group)

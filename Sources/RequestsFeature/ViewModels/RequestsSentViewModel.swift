@@ -53,7 +53,7 @@ final class RequestsSentViewModel {
     func didTapStateButtonFor(request item: RequestSent) {
         guard case let .contact(contact) = item.request, item.request.status == .requested else { return }
 
-        hudSubject.send(.on(nil))
+        hudSubject.send(.on)
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }
 
