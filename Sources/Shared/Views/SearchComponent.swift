@@ -37,7 +37,52 @@ public final class SearchComponent: UIView {
 
     public init() {
         super.init(frame: .zero)
-        setup()
+
+        containerView.layer.cornerRadius = 25
+        containerView.backgroundColor = Asset.neutralSecondary.color
+
+        leftImageView.image = Asset.lens.image
+        leftImageView.contentMode = .center
+        leftImageView.tintColor = Asset.neutralDisabled.color
+
+        rightButton.tintColor = Asset.neutralBody.color
+        rightButton.setImage(rightImage, for: .normal)
+        rightButton.setContentHuggingPriority(.required, for: .horizontal)
+        rightButton.setContentCompressionResistancePriority(.required, for: .horizontal)
+
+        inputField.delegate = self
+        inputField.textColor = Asset.neutralActive.color
+        inputField.font = Fonts.Mulish.regular.font(size: 16.0)
+
+        let attrPlaceholder
+        = NSAttributedString(
+            string: Localized.Shared.Search.placeholder,
+            attributes: [
+                .font: Fonts.Mulish.regular.font(size: 14.0) as Any,
+                .foregroundColor: Asset.neutralWeak.color
+            ])
+
+        inputField.attributedPlaceholder = attrPlaceholder
+
+        inputField.textPublisher
+            .sink { [weak textSubject] in textSubject?.send($0) }
+            .store(in: &cancellables)
+
+        rightButton.publisher(for: .touchUpInside)
+            .sink { [weak rightSubject, self] in
+                if isEditingSubject.value == true {
+                    abortEditing()
+                } else {
+                    rightSubject?.send()
+                }
+            }.store(in: &cancellables)
+
+        addSubview(containerView)
+        containerView.addSubview(inputField)
+        containerView.addSubview(leftImageView)
+        containerView.addSubview(rightButton)
+
+        setupConstraints()
     }
 
     required init?(coder: NSCoder) { nil }
@@ -86,55 +131,6 @@ public final class SearchComponent: UIView {
         isEditingSubject.send(false)
     }
 
-    private func setup() {
-        containerView.layer.cornerRadius = 25
-        containerView.backgroundColor = Asset.neutralSecondary.color
-
-        leftImageView.image = Asset.lens.image
-        leftImageView.contentMode = .center
-        leftImageView.tintColor = Asset.neutralDisabled.color
-
-        rightButton.tintColor = Asset.neutralBody.color
-        rightButton.setImage(rightImage, for: .normal)
-        rightButton.setContentHuggingPriority(.required, for: .horizontal)
-        rightButton.setContentCompressionResistancePriority(.required, for: .horizontal)
-
-        inputField.delegate = self
-        inputField.textColor = Asset.neutralActive.color
-        inputField.font = Fonts.Mulish.regular.font(size: 16.0)
-
-        let attrPlaceholder
-            = NSAttributedString(
-                string: Localized.Shared.Search.placeholder,
-                attributes: [
-                    .font: Fonts.Mulish.regular.font(size: 14.0) as Any,
-                    .foregroundColor: Asset.neutralWeak.color
-                ])
-
-        inputField.attributedPlaceholder = attrPlaceholder
-
-        inputField.textPublisher
-            .sink { [weak textSubject] in textSubject?.send($0) }
-            .store(in: &cancellables)
-
-        rightButton.publisher(for: .touchUpInside)
-            .sink { [weak rightSubject, self] in
-                if isEditingSubject.value == true {
-                    abortEditing()
-                } else {
-                    rightSubject?.send()
-                }
-            }.store(in: &cancellables)
-
-        addSubview(containerView)
-        containerView.addSubview(inputField)
-        containerView.addSubview(leftImageView)
-        containerView.addSubview(rightButton)
-
-        setupConstraints()
-        setupAccessibility()
-    }
-
     private func setupConstraints() {
         containerView.snp.makeConstraints {
             $0.top.equalToSuperview()
@@ -162,11 +158,6 @@ public final class SearchComponent: UIView {
             $0.right.equalToSuperview().offset(-13)
             $0.bottom.equalToSuperview()
         }
-    }
-
-    private func setupAccessibility() {
-        inputField.accessibilityIdentifier = Localized.Accessibility.Shared.Search.textField
-        rightButton.accessibilityIdentifier = Localized.Accessibility.Shared.Search.rightButton
     }
 
     public func textFieldDidBeginEditing(_ textField: UITextField) {

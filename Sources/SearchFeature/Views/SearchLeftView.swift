@@ -3,8 +3,10 @@ import Shared
 
 final class SearchLeftView: UIView {
     let tableView = UITableView()
+    let inputStackView = UIStackView()
     let inputField = SearchComponent()
     let emptyView = SearchLeftEmptyView()
+    let countryButton = SearchCountryComponent()
     let placeholderView = SearchLeftPlaceholderView()
 
     init() {
@@ -14,8 +16,13 @@ final class SearchLeftView: UIView {
         backgroundColor = Asset.neutralWhite.color
         tableView.backgroundColor = Asset.neutralWhite.color
 
+        inputStackView.spacing = 5
+        countryButton.isHidden = true
+        inputStackView.addArrangedSubview(countryButton)
+        inputStackView.addArrangedSubview(inputField)
+
+        addSubview(inputStackView)
         addSubview(tableView)
-        addSubview(inputField)
         addSubview(emptyView)
         addSubview(placeholderView)
 
@@ -25,6 +32,8 @@ final class SearchLeftView: UIView {
     required init?(coder: NSCoder) { nil }
 
     func updateUIForItem(item: SearchSegmentedControl.Item) {
+        countryButton.isHidden = item != .phone
+
         let emptyTitle = Localized.Ud.Search.empty(item.written)
         emptyView.titleLabel.text = emptyTitle
 
@@ -33,7 +42,7 @@ final class SearchLeftView: UIView {
     }
 
     private func setupConstraints() {
-        inputField.snp.makeConstraints {
+        inputStackView.snp.makeConstraints {
             $0.top.equalToSuperview().offset(20)
             $0.left.equalToSuperview().offset(20)
             $0.right.equalToSuperview().offset(-20)
