@@ -357,6 +357,8 @@
 = "Request successfully sent to %@";
 "requests.sent.toast.resent"
 = "Request successfully resent to %@";
+"requests.sent.toast.resentFailed"
+= "Request couldn't be resent to %@";
 
 // RequestsFeature - Failed
 

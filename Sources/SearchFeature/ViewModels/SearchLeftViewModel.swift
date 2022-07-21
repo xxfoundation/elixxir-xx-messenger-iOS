@@ -78,6 +78,17 @@ final class SearchLeftViewModel {
             }.store(in: &searchCancellables)
     }
 
+    func didTapResend(contact: Contact) {
+        hudSubject.send(.on)
+
+        do {
+            try self.session.retryRequest(contact)
+            hudSubject.send(.none)
+        } catch {
+            hudSubject.send(.error(.init(with: error)))
+        }
+    }
+
     func didTapRequest(contact: Contact) {
         hudSubject.send(.on)
         var contact = contact

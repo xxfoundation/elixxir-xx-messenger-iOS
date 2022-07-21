@@ -104,7 +104,8 @@ public final class AvatarCell: UITableViewCell {
         firstSubtitle: String? = nil,
         secondSubtitle: String? = nil,
         thirdSubtitle: String? = nil,
-        showSeparator: Bool = true
+        showSeparator: Bool = true,
+        sent: Bool = false
     ) {
         h1Label.text = title
 
@@ -131,45 +132,28 @@ public final class AvatarCell: UITableViewCell {
 
         avatarView.setupProfile(title: title, image: image, size: .medium)
         separatorView.alpha = showSeparator ? 1.0 : 0.0
-    }
 
-    public func setupForRequestSent(resent: Bool) {
         cancellables.removeAll()
 
-        var buttonTitle: String? = nil
-        var buttonImage: UIImage? = nil
-        var buttonTitleColor: UIColor? = nil
+        if sent {
+            stateButton.imageView.image = Asset.requestsResend.image
+            stateButton.titleLabel.text = Localized.Requests.Cell.requested
+            stateButton.titleLabel.textColor = Asset.brandPrimary.color
 
-        if resent {
-            buttonTitle = Localized.Requests.Cell.resent
-            buttonImage = Asset.requestsResent.image
-            buttonTitleColor = Asset.neutralWeak.color
-        } else {
-            buttonTitle = Localized.Requests.Cell.requested
-            buttonImage = Asset.requestsResend.image
-            buttonTitleColor = Asset.brandPrimary.color
+            stateButton
+                .publisher(for: .touchUpInside)
+                .sink { [unowned self] in didTapStateButton() }
+                .store(in: &cancellables)
         }
-
-        setupStateButton(
-            image: buttonImage,
-            title: buttonTitle,
-            color: buttonTitleColor
-        )
     }
 
-    private func setupStateButton(
-        image: UIImage?,
-        title: String?,
-        color: UIColor?
-    ) {
-        stateButton.imageView.image = image
-        stateButton.titleLabel.text = title
-        stateButton.titleLabel.textColor = color
+    public func updateToResent() {
+        stateButton.imageView.image = Asset.requestsResent.image
+        stateButton.titleLabel.text = Localized.Requests.Cell.resent
+        stateButton.titleLabel.textColor = Asset.neutralWeak.color
 
-        stateButton
-            .publisher(for: .touchUpInside)
-            .sink { [unowned self] in didTapStateButton() }
-            .store(in: &cancellables)
+        cancellables.forEach { $0.cancel() }
+        cancellables.removeAll()
     }
 
     private func setupConstraints() {

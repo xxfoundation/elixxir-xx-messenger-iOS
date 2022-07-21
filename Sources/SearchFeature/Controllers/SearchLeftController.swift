@@ -61,16 +61,31 @@ final class SearchLeftController: UIViewController {
                 contact = connection
             }
 
-            let title = (contact.nickname ?? contact.username) ?? ""
+            let h1Text: String
+            var h2Text: String?
+
+            h1Text = (contact.nickname ?? contact.username) ?? ""
+
+            if let _ = contact.nickname, let username = contact.username {
+                h2Text = username
+            }
 
             cell.setup(
-                title: title,
+                title: h1Text,
                 image: contact.photo,
-                firstSubtitle: contact.username,
+                firstSubtitle: h2Text,
                 secondSubtitle: contact.email,
                 thirdSubtitle: contact.phone,
-                showSeparator: false
+                showSeparator: false,
+                sent: contact.authStatus == .requested
             )
+
+            cell.didTapStateButton = { [weak self] in
+                guard let self = self else { return }
+                self.viewModel.didTapResend(contact: contact)
+                cell.updateToResent()
+            }
+
             return cell
         }
     }
@@ -394,6 +409,10 @@ extension SearchLeftController: UITableViewDelegate {
                 didTap(contact: contact)
             }
         }
+    }
+
+    func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
+        (view as! UITableViewHeaderFooterView).textLabel?.textColor = Asset.neutralWeak.color
     }
 
     private func didTap(contact: Contact) {

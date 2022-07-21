@@ -94,7 +94,7 @@ extension Session {
     }
 
     public func retryRequest(_ contact: Contact) throws {
-        log(string: "Retrying to request a contact", type: .info)
+        let name = (contact.nickname ?? contact.username) ?? ""
 
         client.bindings.add(contact.marshaled!, from: myQR) { [weak self, contact] in
             var contact = contact
@@ -103,11 +103,21 @@ extension Session {
             do {
                 switch $0 {
                 case .success:
-                    log(string: "Retrying to request a contact -- Success", type: .info)
                     contact.authStatus = .requested
-                case .failure(let error):
-                    log(string: "Retrying to request a contact -- Failed: \(error.localizedDescription)", type: .error)
+
+                    self.toastController.enqueueToast(model: .init(
+                        title: Localized.Requests.Sent.Toast.resent(name),
+                        leftImage: Asset.sharedSuccess.image
+                    ))
+
+                case .failure:
                     contact.createdAt = Date()
+
+                    self.toastController.enqueueToast(model: .init(
+                        title: Localized.Requests.Sent.Toast.resentFailed(name),
+                        color: Asset.accentDanger.color,
+                        leftImage: Asset.requestFailedToaster.image
+                    ))
                 }
 
                 _ = try self.dbManager.saveContact(contact)
