@@ -12,6 +12,7 @@ public final class SearchContainerController: UIViewController {
 
     lazy private var screenView = SearchContainerView()
 
+    private var contentOffset: CGPoint?
     private var cancellables = Set<AnyCancellable>()
     private let viewModel = SearchContainerViewModel()
     private let leftController = SearchLeftController()
@@ -29,11 +30,21 @@ public final class SearchContainerController: UIViewController {
         navigationController?.navigationBar.customize(
             backgroundColor: Asset.neutralWhite.color
         )
+
+        if let contentOffset = self.contentOffset {
+            screenView.scrollView.setContentOffset(contentOffset, animated: true)
+        }
+    }
+
+    public override func viewWillDisappear(_ animated: Bool) {
+        super.viewWillDisappear(animated)
+        contentOffset = screenView.scrollView.contentOffset
     }
 
     public override func viewDidAppear(_ animated: Bool) {
         super.viewDidAppear(animated)
         viewModel.didAppear()
+        rightController.viewModel.viewWillAppear()
     }
 
     public override func viewDidLoad() {
@@ -68,7 +79,6 @@ public final class SearchContainerController: UIViewController {
                     let point = CGPoint(x: screenView.frame.width, y: 0.0)
                     screenView.scrollView.setContentOffset(point, animated: true)
                     leftController.endEditing()
-                    rightController.viewModel.viewWillAppear()
                 } else {
                     screenView.scrollView.setContentOffset(.zero, animated: true)
                     leftController.viewModel.didSelectItem($0)
