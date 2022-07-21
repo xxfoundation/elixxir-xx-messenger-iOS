@@ -154,17 +154,15 @@ extension BindingsClient: BindingsInterface {
         for env: NetworkEnvironment,
         _ completion: @escaping (Result<Data?, Error>) -> Void
     ) {
-        log(type: .crumbs)
-
         var error: NSError?
         let ndf = BindingsDownloadAndVerifySignedNdfWithUrl(env.url, env.cert, &error)
 
-        if let error = error {
-            log(string: error.localizedDescription, type: .error)
-            completion(.failure(error))
-        } else {
-            completion(.success(ndf))
+        guard error == nil else {
+            Self.updateNDF(for: env, completion)
+            return
         }
+
+        completion(.success(ndf))
     }
 
     /// Fetches a JSON with up-to-date error descriptions
