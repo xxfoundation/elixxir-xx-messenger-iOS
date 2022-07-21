@@ -68,7 +68,7 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/combine-schedulers", from: "0.5.0"),
         .package(url: "https://github.com/kishikawakatsumi/KeychainAccess", from: "4.2.1"),
         .package(url: "https://github.com/google/google-api-objectivec-client-for-rest", from: "1.6.0"),
-        .package(url: "https://git.xx.network/elixxir/client-ios-db.git", .upToNextMajor(from: "1.0.7")),
+        .package(url: "https://git.xx.network/elixxir/client-ios-db.git", .upToNextMajor(from: "1.0.8")),
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", .upToNextMajor(from: "8.10.0")),
         .package(url: "https://github.com/darrarski/Shout.git", revision: "df5a662293f0ac15eeb4f2fd3ffd0c07b73d0de0"),
         .package(url: "https://github.com/pointfreeco/swift-composable-architecture.git",.upToNextMajor(from: "0.32.0")),
