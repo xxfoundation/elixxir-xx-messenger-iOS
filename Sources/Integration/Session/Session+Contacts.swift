@@ -94,7 +94,7 @@ extension Session {
     }
 
     public func retryRequest(_ contact: Contact) throws {
-        log(string: "Retrying to request a contact", type: .info)
+        let name = (contact.nickname ?? contact.username) ?? ""
 
         client.bindings.add(contact.marshaled!, from: myQR) { [weak self, contact] in
             var contact = contact
@@ -103,11 +103,21 @@ extension Session {
             do {
                 switch $0 {
                 case .success:
-                    log(string: "Retrying to request a contact -- Success", type: .info)
                     contact.authStatus = .requested
-                case .failure(let error):
-                    log(string: "Retrying to request a contact -- Failed: \(error.localizedDescription)", type: .error)
+
+                    self.toastController.enqueueToast(model: .init(
+                        title: Localized.Requests.Sent.Toast.resent(name),
+                        leftImage: Asset.sharedSuccess.image
+                    ))
+
+                case .failure:
                     contact.createdAt = Date()
+
+                    self.toastController.enqueueToast(model: .init(
+                        title: Localized.Requests.Sent.Toast.resentFailed(name),
+                        color: Asset.accentDanger.color,
+                        leftImage: Asset.requestFailedToaster.image
+                    ))
                 }
 
                 _ = try self.dbManager.saveContact(contact)
@@ -118,29 +128,41 @@ extension Session {
     }
 
     public func add(_ contact: Contact) throws {
+        /// Make sure we are not adding ourselves
+        ///
         guard contact.username != username else {
             throw NSError.create("You can't add yourself")
         }
 
-        var contactToOperate: Contact!
+        var contact = contact
 
-        if [.requestFailed, .confirmationFailed, .stranger].contains(contact.authStatus) {
-            contactToOperate = contact
+        /// Check if this contact is actually
+        /// being requested/confirmed after failing
+        ///
+        if [.requestFailed, .confirmationFailed].contains(contact.authStatus) {
+            /// If it is being re-requested or
+            /// re-confirmed, no need to save again
+            ///
+            contact.createdAt = Date()
+
+            if contact.authStatus == .confirmationFailed {
+                try confirm(contact)
+                return
+            }
         } else {
+            /// If its not failed, lets make sure that
+            /// this is an actual new contact
+            ///
             if let _ = try? dbManager.fetchContacts(.init(id: [contact.id])).first {
+                /// Found a user w/ that id already stored
+                ///
                 throw NSError.create("This user has already been requested")
             }
 
-            contactToOperate = try dbManager.saveContact(contact)
+            contact.authStatus = .requesting
         }
 
-        guard contactToOperate.authStatus != .confirmationFailed else {
-            contactToOperate.createdAt = Date()
-            try confirm(contact)
-            return
-        }
-
-        contactToOperate.authStatus = .requesting
+        contact = try dbManager.saveContact(contact)
 
         let myself = client.bindings.meMarshalled(
             username!,
@@ -148,22 +170,30 @@ extension Session {
             phone: isSharingPhone ? phone : nil
         )
 
-        client.bindings.add(contactToOperate.marshaled!, from: myself) { [weak self, contactToOperate] in
-            guard let self = self, var contactToOperate = contactToOperate else { return }
+        client.bindings.add(contact.marshaled!, from: myself) { [weak self, contact] in
+            guard let self = self else { return }
+            var contact = contact
 
             do {
                 switch $0 {
                 case .success(let success):
-                    contactToOperate.authStatus = success ? .requested : .requestFailed
-                    contactToOperate = try self.dbManager.saveContact(contactToOperate)
+                    contact.authStatus = success ? .requested : .requestFailed
+                    contact = try self.dbManager.saveContact(contact)
 
-                case .failure:
-                    contactToOperate.authStatus = .requestFailed
-                    contactToOperate.createdAt = Date()
-                    contactToOperate = try self.dbManager.saveContact(contactToOperate)
+                    let name = contact.nickname ?? contact.username
 
                     self.toastController.enqueueToast(model: .init(
-                        title: Localized.Requests.Failed.toast(contactToOperate.nickname ?? contact.username!),
+                        title: Localized.Requests.Sent.Toast.sent(name ?? ""),
+                        leftImage: Asset.sharedSuccess.image
+                    ))
+
+                case .failure:
+                    contact.createdAt = Date()
+                    contact.authStatus = .requestFailed
+                    contact = try self.dbManager.saveContact(contact)
+
+                    self.toastController.enqueueToast(model: .init(
+                        title: Localized.Requests.Failed.toast(contact.nickname ?? contact.username!),
                         color: Asset.accentDanger.color,
                         leftImage: Asset.requestFailedToaster.image
                     ))

@@ -47,7 +47,7 @@ final class ProfilePhoneViewModel {
     }
 
     func didTapNext() {
-        hudRelay.send(.on(nil))
+        hudRelay.send(.on)
 
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }

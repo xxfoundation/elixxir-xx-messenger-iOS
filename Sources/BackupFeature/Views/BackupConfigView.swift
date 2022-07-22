@@ -7,6 +7,7 @@ final class BackupConfigView: UIView {
     let actionView = BackupActionView()
 
     let stackView = UIStackView()
+    let sftpButton = BackupSwitcherButton()
     let iCloudButton = BackupSwitcherButton()
     let dropboxButton = BackupSwitcherButton()
     let googleDriveButton = BackupSwitcherButton()
@@ -44,6 +45,9 @@ final class BackupConfigView: UIView {
         subtitleLabel.numberOfLines = 0
         subtitleLabel.attributedText = attString
 
+        sftpButton.titleLabel.text = Localized.Backup.sftp
+        sftpButton.logoImageView.image = Asset.restoreSFTP.image
+
         iCloudButton.titleLabel.text = Localized.Backup.iCloud
         iCloudButton.logoImageView.image = Asset.restoreIcloud.image
 
@@ -65,6 +69,7 @@ final class BackupConfigView: UIView {
         stackView.addArrangedSubview(googleDriveButton)
         stackView.addArrangedSubview(iCloudButton)
         stackView.addArrangedSubview(dropboxButton)
+        stackView.addArrangedSubview(sftpButton)
         stackView.addArrangedSubview(enabledSubtitleView)
         stackView.addArrangedSubview(latestBackupDetailView)
         stackView.addArrangedSubview(frequencyDetailView)
@@ -75,36 +80,36 @@ final class BackupConfigView: UIView {
         addSubview(actionView)
         addSubview(stackView)
 
-        titleLabel.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(15)
-            make.left.equalToSuperview().offset(38)
-            make.right.equalToSuperview().offset(-41)
+        titleLabel.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(15)
+            $0.left.equalToSuperview().offset(38)
+            $0.right.equalToSuperview().offset(-41)
         }
 
-        enabledSubtitleLabel.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(-10)
-            make.left.equalToSuperview().offset(92)
-            make.right.equalToSuperview().offset(-48)
-            make.bottom.equalToSuperview()
+        enabledSubtitleLabel.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(-10)
+            $0.left.equalToSuperview().offset(92)
+            $0.right.equalToSuperview().offset(-48)
+            $0.bottom.equalToSuperview()
         }
 
-        subtitleLabel.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(8)
-            make.left.equalToSuperview().offset(38)
-            make.right.equalToSuperview().offset(-41)
+        subtitleLabel.snp.makeConstraints {
+            $0.top.equalTo(titleLabel.snp.bottom).offset(8)
+            $0.left.equalToSuperview().offset(38)
+            $0.right.equalToSuperview().offset(-41)
         }
 
-        actionView.snp.makeConstraints { make in
-            make.top.equalTo(subtitleLabel.snp.bottom).offset(15)
-            make.left.equalToSuperview().offset(38)
-            make.right.equalToSuperview().offset(-38)
+        actionView.snp.makeConstraints {
+            $0.top.equalTo(subtitleLabel.snp.bottom).offset(15)
+            $0.left.equalToSuperview().offset(38)
+            $0.right.equalToSuperview().offset(-38)
         }
 
-        stackView.snp.makeConstraints { make in
-            make.top.equalTo(actionView.snp.bottom).offset(28)
-            make.left.equalToSuperview()
-            make.right.equalToSuperview()
-            make.bottom.lessThanOrEqualToSuperview()
+        stackView.snp.makeConstraints {
+            $0.top.equalTo(actionView.snp.bottom).offset(28)
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
+            $0.bottom.lessThanOrEqualToSuperview()
         }
     }
 

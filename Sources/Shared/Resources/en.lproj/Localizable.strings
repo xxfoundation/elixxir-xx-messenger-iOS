@@ -25,6 +25,8 @@
 
 // ChatListFeature
 
+"chatList.search.title"
+= "Search chats";
 "chatList.navigationBar.cancel"
 = "Cancel";
 "chatList.title"
@@ -351,8 +353,12 @@
 = "Search for connections";
 "requests.sent.empty"
 = "You haven't sent any requests";
+"requests.sent.toast.sent"
+= "Request successfully sent to %@";
 "requests.sent.toast.resent"
 = "Request successfully resent to %@";
+"requests.sent.toast.resentFailed"
+= "Request couldn't be resent to %@";
 
 // RequestsFeature - Failed
 
@@ -629,6 +635,8 @@
 = "Dropbox";
 "backup.googleDrive"
 = "Google Drive";
+"backup.SFTP"
+= "SFTP";
 
 // Settings - Delete Account
 
@@ -838,6 +846,19 @@
 "accountRestore.list.cancel"
 = "Cancel";
 
+"accountRestore.sftp.title"
+= "Login to your SFTP";
+"accountRestore.sftp.subtitle"
+= "Login to your server. Your credentials will be automatically and securely saved locally on your device.";
+"accountRestore.sftp.host"
+= "Host";
+"accountRestore.sftp.username"
+= "Username";
+"accountRestore.sftp.password"
+= "Password";
+"accountRestore.sftp.login"
+= "Login";
+
 "accountRestore.header"
 = "Account restore";
 "accountRestore.found.title"
@@ -931,42 +952,52 @@
 
 // SearchFeature
 
-"contactSearch.title"
+"ud.title"
 = "Search";
-"contactSearch.placeholder.title"
-= "Searching is private by nature. The network cannot identify who a search request came from.";
-"contactSearch.placeholder.drawer.title"
-= "Search";
-"contactSearch.placeholder.drawer.subtitle"
-= "You can search for users by their username, email, or phone number using the xx network’s #Anonymous Data Retrieval protocol# which keeps a user’s identity anonymous while requesting data. All sent requests contain salted hashes of what you are searching for. Raw data on emails, usernames, and phone numbers do not leave your phone.";
-"contactSearch.placeholder.drawer.action"
-= "Got it";
-"contactSearch.filter.phone"
-= "Phone";
-"contactSearch.filter.email"
-= "Email";
-"contactSearch.filter.username"
+"ud.tab.username"
 = "Username";
-"contactSearch.sectionTitle"
-= "User";
-"contactSearch.noneFound"
+"ud.tab.email"
+= "Email";
+"ud.tab.phone"
+= "Phone";
+"ud.tab.qr"
+= "QR Code";
+"ud.placeholder.drawer.title"
+= "Search";
+"ud.placeholder.drawer.subtitle"
+= "You can search for users by their username, email, or phone number using the xx network’s #Anonymous Data Retrieval protocol# which keeps a user’s identity anonymous while requesting data. All sent requests contain salted hashes of what you are searching for. Raw data on emails, usernames, and phone numbers do not leave your phone.";
+"ud.placeholder.drawer.action"
+= "Got it";
+"ud.noneFound"
 = "There are no users with that %@.";
-"contactSearch.requestDrawer.title"
+"ud.requestDrawer.title"
 = "Request Contact";
-"contactSearch.requestDrawer.email"
+"ud.requestDrawer.email"
 = "EMAIL ADDRESS";
-"contactSearch.requestDrawer.phone"
+"ud.requestDrawer.phone"
 = "PHONE NUMBER";
-"contactSearch.requestDrawer.send"
+"ud.requestDrawer.send"
 = "Send Contact Request";
-"contactSearch.requestDrawer.cancel"
+"ud.requestDrawer.cancel"
 = "Cancel";
-"contactSearch.nicknameDrawer.title"
+"ud.nicknameDrawer.title"
 = "Add a nickname";
-"contactSearch.nicknameDrawer.subtitle"
+"ud.nicknameDrawer.subtitle"
 = "Edit your new contact’s nickname so you know who they are.";
-"contactSearch.nicknameDrawer.save"
+"ud.nicknameDrawer.save"
 = "Save";
+
+"ud.search.input"
+= "Search by %@";
+"ud.search.empty"
+= "There are no users with that %@.";
+"ud.search.cancel"
+= "Cancel search";
+
+"ud.search.placeholder.title"
+= "Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.";
+"ud.search.placeholder.subtitle"
+= "Your searches are anonymous. Search information is never linked to your account or personally identifiable.";
 
 // LaunchFeature
 

@@ -211,6 +211,20 @@ public enum Localized {
       /// Backup not found
       public static let title = Localized.tr("Localizable", "accountRestore.notFound.title")
     }
+    public enum Sftp {
+      /// Host
+      public static let host = Localized.tr("Localizable", "accountRestore.sftp.host")
+      /// Login
+      public static let login = Localized.tr("Localizable", "accountRestore.sftp.login")
+      /// Password
+      public static let password = Localized.tr("Localizable", "accountRestore.sftp.password")
+      /// Login to your server. Your credentials will be automatically and securely saved locally on your device.
+      public static let subtitle = Localized.tr("Localizable", "accountRestore.sftp.subtitle")
+      /// Login to your SFTP
+      public static let title = Localized.tr("Localizable", "accountRestore.sftp.title")
+      /// Username
+      public static let username = Localized.tr("Localizable", "accountRestore.sftp.username")
+    }
     public enum Success {
       /// You now have access to all your contacts.
       public static let subtitle = Localized.tr("Localizable", "accountRestore.success.subtitle")
@@ -236,6 +250,8 @@ public enum Localized {
     public static let header = Localized.tr("Localizable", "backup.header")
     /// iCloud
     public static let iCloud = Localized.tr("Localizable", "backup.iCloud")
+    /// SFTP
+    public static let sftp = Localized.tr("Localizable", "backup.SFTP")
     /// Back up your account to a cloud storage service, you can restore it along with only your contacts when you reinstall xx Messenger on another device.
     public static let subtitle = Localized.tr("Localizable", "backup.subtitle")
     public enum Config {
@@ -414,6 +430,10 @@ public enum Localized {
       /// Cancel
       public static let cancel = Localized.tr("Localizable", "chatList.navigationBar.cancel")
     }
+    public enum Search {
+      /// Search chats
+      public static let title = Localized.tr("Localizable", "chatList.search.title")
+    }
     public enum Traffic {
       /// Not now
       public static let negative = Localized.tr("Localizable", "chatList.traffic.negative")
@@ -531,57 +551,6 @@ public enum Localized {
       public static let action = Localized.tr("Localizable", "contactList.empty.action")
       /// Add a contact to start messaging
       public static let title = Localized.tr("Localizable", "contactList.empty.title")
-    }
-  }
-
-  public enum ContactSearch {
-    /// There are no users with that %@.
-    public static func noneFound(_ p1: Any) -> String {
-      return Localized.tr("Localizable", "contactSearch.noneFound", String(describing: p1))
-    }
-    /// User
-    public static let sectionTitle = Localized.tr("Localizable", "contactSearch.sectionTitle")
-    /// Search
-    public static let title = Localized.tr("Localizable", "contactSearch.title")
-    public enum Filter {
-      /// Email
-      public static let email = Localized.tr("Localizable", "contactSearch.filter.email")
-      /// Phone
-      public static let phone = Localized.tr("Localizable", "contactSearch.filter.phone")
-      /// Username
-      public static let username = Localized.tr("Localizable", "contactSearch.filter.username")
-    }
-    public enum NicknameDrawer {
-      /// Save
-      public static let save = Localized.tr("Localizable", "contactSearch.nicknameDrawer.save")
-      /// Edit your new contact’s nickname so you know who they are.
-      public static let subtitle = Localized.tr("Localizable", "contactSearch.nicknameDrawer.subtitle")
-      /// Add a nickname
-      public static let title = Localized.tr("Localizable", "contactSearch.nicknameDrawer.title")
-    }
-    public enum Placeholder {
-      /// Searching is private by nature. The network cannot identify who a search request came from.
-      public static let title = Localized.tr("Localizable", "contactSearch.placeholder.title")
-      public enum Drawer {
-        /// Got it
-        public static let action = Localized.tr("Localizable", "contactSearch.placeholder.drawer.action")
-        /// You can search for users by their username, email, or phone number using the xx network’s #Anonymous Data Retrieval protocol# which keeps a user’s identity anonymous while requesting data. All sent requests contain salted hashes of what you are searching for. Raw data on emails, usernames, and phone numbers do not leave your phone.
-        public static let subtitle = Localized.tr("Localizable", "contactSearch.placeholder.drawer.subtitle")
-        /// Search
-        public static let title = Localized.tr("Localizable", "contactSearch.placeholder.drawer.title")
-      }
-    }
-    public enum RequestDrawer {
-      /// Cancel
-      public static let cancel = Localized.tr("Localizable", "contactSearch.requestDrawer.cancel")
-      /// EMAIL ADDRESS
-      public static let email = Localized.tr("Localizable", "contactSearch.requestDrawer.email")
-      /// PHONE NUMBER
-      public static let phone = Localized.tr("Localizable", "contactSearch.requestDrawer.phone")
-      /// Send Contact Request
-      public static let send = Localized.tr("Localizable", "contactSearch.requestDrawer.send")
-      /// Request Contact
-      public static let title = Localized.tr("Localizable", "contactSearch.requestDrawer.title")
     }
   }
 
@@ -996,6 +965,14 @@ public enum Localized {
         public static func resent(_ p1: Any) -> String {
           return Localized.tr("Localizable", "requests.sent.toast.resent", String(describing: p1))
         }
+        /// Request couldn't be resent to %@
+        public static func resentFailed(_ p1: Any) -> String {
+          return Localized.tr("Localizable", "requests.sent.toast.resentFailed", String(describing: p1))
+        }
+        /// Request successfully sent to %@
+        public static func sent(_ p1: Any) -> String {
+          return Localized.tr("Localizable", "requests.sent.toast.sent", String(describing: p1))
+        }
       }
     }
   }
@@ -1228,6 +1205,73 @@ public enum Localized {
     public enum SnackBar {
       /// Connecting to xx network...
       public static let title = Localized.tr("Localizable", "shared.snackBar.title")
+    }
+  }
+
+  public enum Ud {
+    /// There are no users with that %@.
+    public static func noneFound(_ p1: Any) -> String {
+      return Localized.tr("Localizable", "ud.noneFound", String(describing: p1))
+    }
+    /// Search
+    public static let title = Localized.tr("Localizable", "ud.title")
+    public enum NicknameDrawer {
+      /// Save
+      public static let save = Localized.tr("Localizable", "ud.nicknameDrawer.save")
+      /// Edit your new contact’s nickname so you know who they are.
+      public static let subtitle = Localized.tr("Localizable", "ud.nicknameDrawer.subtitle")
+      /// Add a nickname
+      public static let title = Localized.tr("Localizable", "ud.nicknameDrawer.title")
+    }
+    public enum Placeholder {
+      public enum Drawer {
+        /// Got it
+        public static let action = Localized.tr("Localizable", "ud.placeholder.drawer.action")
+        /// You can search for users by their username, email, or phone number using the xx network’s #Anonymous Data Retrieval protocol# which keeps a user’s identity anonymous while requesting data. All sent requests contain salted hashes of what you are searching for. Raw data on emails, usernames, and phone numbers do not leave your phone.
+        public static let subtitle = Localized.tr("Localizable", "ud.placeholder.drawer.subtitle")
+        /// Search
+        public static let title = Localized.tr("Localizable", "ud.placeholder.drawer.title")
+      }
+    }
+    public enum RequestDrawer {
+      /// Cancel
+      public static let cancel = Localized.tr("Localizable", "ud.requestDrawer.cancel")
+      /// EMAIL ADDRESS
+      public static let email = Localized.tr("Localizable", "ud.requestDrawer.email")
+      /// PHONE NUMBER
+      public static let phone = Localized.tr("Localizable", "ud.requestDrawer.phone")
+      /// Send Contact Request
+      public static let send = Localized.tr("Localizable", "ud.requestDrawer.send")
+      /// Request Contact
+      public static let title = Localized.tr("Localizable", "ud.requestDrawer.title")
+    }
+    public enum Search {
+      /// Cancel search
+      public static let cancel = Localized.tr("Localizable", "ud.search.cancel")
+      /// There are no users with that %@.
+      public static func empty(_ p1: Any) -> String {
+        return Localized.tr("Localizable", "ud.search.empty", String(describing: p1))
+      }
+      /// Search by %@
+      public static func input(_ p1: Any) -> String {
+        return Localized.tr("Localizable", "ud.search.input", String(describing: p1))
+      }
+      public enum Placeholder {
+        /// Your searches are anonymous. Search information is never linked to your account or personally identifiable.
+        public static let subtitle = Localized.tr("Localizable", "ud.search.placeholder.subtitle")
+        /// Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.
+        public static let title = Localized.tr("Localizable", "ud.search.placeholder.title")
+      }
+    }
+    public enum Tab {
+      /// Email
+      public static let email = Localized.tr("Localizable", "ud.tab.email")
+      /// Phone
+      public static let phone = Localized.tr("Localizable", "ud.tab.phone")
+      /// QR Code
+      public static let qr = Localized.tr("Localizable", "ud.tab.qr")
+      /// Username
+      public static let username = Localized.tr("Localizable", "ud.tab.username")
     }
   }
 

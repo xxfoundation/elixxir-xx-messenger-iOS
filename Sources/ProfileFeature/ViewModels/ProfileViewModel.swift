@@ -83,7 +83,7 @@ final class ProfileViewModel {
     }
 
     func didTapDelete(isEmail: Bool) {
-        hudRelay.send(.on(nil))
+        hudRelay.send(.on)
 
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }

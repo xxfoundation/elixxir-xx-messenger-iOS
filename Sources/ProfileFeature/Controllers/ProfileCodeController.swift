@@ -10,7 +10,7 @@ import ScrollViewController
 public typealias ControllerClosure = (UIViewController, AttributeConfirmation) -> Void
 
 public final class ProfileCodeController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
 
     lazy private var screenView = ProfileCodeView()
     lazy private var scrollViewController = ScrollViewController()

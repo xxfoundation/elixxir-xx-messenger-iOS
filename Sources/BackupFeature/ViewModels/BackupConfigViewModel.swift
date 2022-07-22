@@ -30,7 +30,7 @@ struct BackupConfigViewModel {
 extension BackupConfigViewModel {
     static func live() -> Self {
         class Context {
-            @Dependency var hud: HUDType
+            @Dependency var hud: HUD
             @Dependency var service: BackupService
             @Dependency var coordinator: BackupCoordinating
         }
@@ -40,7 +40,7 @@ extension BackupConfigViewModel {
         return .init(
             didTapBackupNow: {
                 context.service.performBackup()
-                context.hud.update(with: .on(nil))
+                context.hud.update(with: .on)
                 DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
                     context.hud.update(with: .none)
                 }
@@ -57,7 +57,7 @@ extension BackupConfigViewModel {
                     context.service.toggle(service: service, enabling: false)
                 }, passphraseClosure: { passphrase in
                     context.service.passphrase = passphrase
-                    context.hud.update(with: .on("Initializing and securing your backup file will take few seconds, please keep the app open."))
+                    context.hud.update(with: .onTitle("Initializing and securing your backup file will take few seconds, please keep the app open."))
                     DispatchQueue.global().async {
                         context.service.toggle(service: service, enabling: enabling)
 

@@ -18,6 +18,7 @@ import Voxophone
 import Integration
 import Permissions
 import PushFeature
+import SFTPFeature
 import CrashService
 import ToastFeature
 import iCloudFeature
@@ -63,6 +64,7 @@ struct DependencyRegistrator {
 
         /// Restore / Backup
 
+        container.register(SFTPService.mock)
         container.register(iCloudServiceMock() as iCloudInterface)
         container.register(DropboxServiceMock() as DropboxInterface)
         container.register(GoogleDriveServiceMock() as GoogleDriveInterface)
@@ -86,6 +88,7 @@ struct DependencyRegistrator {
 
         /// Restore / Backup
 
+        container.register(SFTPService.live)
         container.register(iCloudService() as iCloudInterface)
         container.register(DropboxService() as DropboxInterface)
         container.register(GoogleDriveService() as GoogleDriveInterface)
@@ -101,7 +104,7 @@ struct DependencyRegistrator {
 
         // MARK: Isolated
 
-        container.register(HUD() as HUDType)
+        container.register(HUD())
         container.register(ThemeController() as ThemeControlling)
         container.register(ToastController())
         container.register(StatusBarController() as StatusBarStyleControlling)
@@ -134,6 +137,8 @@ struct DependencyRegistrator {
 
         container.register(
             SearchCoordinator(
+                contactsFactory: ContactListController.init,
+                requestsFactory: RequestsContainerController.init,
                 contactFactory: ContactController.init(_:),
                 countriesFactory: CountryListController.init(_:)
             ) as SearchCoordinating)
@@ -185,7 +190,7 @@ struct DependencyRegistrator {
 
         container.register(
             RequestsCoordinator(
-                searchFactory: SearchController.init,
+                searchFactory: SearchContainerController.init,
                 contactFactory: ContactController.init(_:),
                 singleChatFactory: SingleChatController.init(_:),
                 groupChatFactory: GroupChatController.init(_:),
@@ -197,7 +202,7 @@ struct DependencyRegistrator {
             OnboardingCoordinator(
                 emailFactory: OnboardingEmailController.init,
                 phoneFactory: OnboardingPhoneController.init,
-                searchFactory: SearchController.init,
+                searchFactory: SearchContainerController.init,
                 welcomeFactory: OnboardingWelcomeController.init,
                 chatListFactory: ChatListController.init,
                 usernameFactory: OnboardingUsernameController.init(_:),
@@ -211,7 +216,7 @@ struct DependencyRegistrator {
         container.register(
             ContactListCoordinator(
                 scanFactory: ScanContainerController.init,
-                searchFactory: SearchController.init,
+                searchFactory: SearchContainerController.init,
                 newGroupFactory: CreateGroupController.init,
                 requestsFactory: RequestsContainerController.init,
                 contactFactory: ContactController.init(_:),
@@ -235,7 +240,7 @@ struct DependencyRegistrator {
         container.register(
             ChatListCoordinator(
                 scanFactory: ScanContainerController.init,
-                searchFactory: SearchController.init,
+                searchFactory: SearchContainerController.init,
                 newGroupFactory: CreateGroupController.init,
                 contactsFactory: ContactListController.init,
                 contactFactory: ContactController.init(_:),

@@ -3,6 +3,7 @@ import UIKit
 import Models
 import Shared
 import Combine
+import XXModels
 import Integration
 import ToastFeature
 import CombineSchedulers
@@ -32,7 +33,12 @@ final class RequestsSentViewModel {
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
     init() {
-        session.dbManager.fetchContactsPublisher(.init(authStatus: [.requested]))
+        let query = Contact.Query(authStatus: [
+            .requested,
+            .requesting
+        ])
+
+        session.dbManager.fetchContactsPublisher(query)
             .assertNoFailure()
             .removeDuplicates()
             .map { data -> NSDiffableDataSourceSnapshot<Section, RequestSent> in
@@ -47,7 +53,7 @@ final class RequestsSentViewModel {
     func didTapStateButtonFor(request item: RequestSent) {
         guard case let .contact(contact) = item.request, item.request.status == .requested else { return }
 
-        hudSubject.send(.on(nil))
+        hudSubject.send(.on)
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }
 
@@ -65,8 +71,10 @@ final class RequestsSentViewModel {
                 item.isResent = true
                 allRequests.append(item)
 
+                let name = (contact.nickname ?? contact.username) ?? ""
+
                 self.toastController.enqueueToast(model: .init(
-                    title: Localized.Requests.Sent.Toast.resent(contact.nickname ?? contact.username),
+                    title: Localized.Requests.Sent.Toast.resent(name),
                     leftImage: Asset.requestSentToaster.image
                 ))
 

@@ -1,7 +1,7 @@
 import UIKit
 import Shared
 
-final class SegmentedControlButton: UIControl {
+final class ScanSegmentedControlButton: UIControl {
     private let titleLabel = UILabel()
     private let imageView = UIImageView()
 

@@ -130,8 +130,20 @@ public final class Session: SessionType {
             let params = try! JSONDecoder().decode(BackupParameters.self, from: Data(report.parameters.utf8))
 
             username = params.username
-            phone = params.phone
-            email = params.email
+
+            if let paramsPhone = params.phone, !paramsPhone.isEmpty {
+                phone = paramsPhone
+            }
+
+            if let paramsEmail = params.email, !paramsEmail.isEmpty {
+                email = paramsEmail
+            }
+        }
+
+        print("^^^ \(report.parameters)")
+
+        guard username!.isEmpty == false else {
+            fatalError("Trying to restore an account that has no username")
         }
 
         try continueInitialization()
@@ -183,6 +195,15 @@ public final class Session: SessionType {
     }
 
     private func continueInitialization() throws {
+        var myContact = try self.myContact()
+        myContact.marshaled = client.bindings.meMarshalled
+        myContact.username = username
+        myContact.email = email
+        myContact.phone = phone
+        myContact.authStatus = .friend
+        myContact.isRecent = false
+        _ = try dbManager.saveContact(myContact)
+
         setupBindings()
         networkMonitor.start()
 
@@ -356,6 +377,11 @@ public final class Session: SessionType {
         ).jsonFormat
 
         client.addJson(params)
+
+        guard username!.isEmpty == false else {
+            fatalError("Tried to build a backup with my username but an empty string was set to it")
+        }
+
         backupService.performBackupIfAutomaticIsEnabled()
     }
 
@@ -381,7 +407,6 @@ public final class Session: SessionType {
             .store(in: &cancellables)
 
         client.backup
-            .throttle(for: .seconds(5), scheduler: DispatchQueue.main, latest: true)
             .sink { [unowned self] in backupService.updateBackup(data: $0) }
             .store(in: &cancellables)
 
@@ -390,9 +415,10 @@ public final class Session: SessionType {
                 /// This will get called when my contact restore its contact.
                 /// TODO: Hold a record on the chat that this contact restored.
                 ///
-                var contact = $0
-                contact.authStatus = .friend
-                _ = try? dbManager.saveContact(contact)
+                if var contact = try? dbManager.fetchContacts(.init(id: [$0.id])).first {
+                    contact.authStatus = .friend
+                    _ = try? dbManager.saveContact(contact)
+                }
             }.store(in: &cancellables)
 
         backupService.settingsPublisher
@@ -402,7 +428,6 @@ public final class Session: SessionType {
                 if $0 == true {
                     guard let passphrase = backupService.passphrase else {
                         client.resumeBackup()
-                        updateFactsOnBackup()
                         return
                     }
 
@@ -414,10 +439,6 @@ public final class Session: SessionType {
                     client.stopListeningBackup()
                 }
             }
-            .store(in: &cancellables)
-
-        networkMonitor.statusPublisher
-            .sink { print($0) }
             .store(in: &cancellables)
 
         client.messages
@@ -467,5 +488,13 @@ public final class Session: SessionType {
                 handle(incomingTransfer: transfer)
             }
             .store(in: &cancellables)
+    }
+
+    func myContact() throws -> Contact {
+        if let contact = try dbManager.fetchContacts(.init(id: [client.bindings.myId])).first {
+            return contact
+        } else {
+            return try dbManager.saveContact(.init(id: client.bindings.myId))
+        }
     }
 }

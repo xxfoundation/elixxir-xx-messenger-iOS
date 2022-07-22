@@ -9,7 +9,7 @@ import ScrollViewController
 import Models
 
 public final class OnboardingEmailConfirmationController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
     @Dependency private var coordinator: OnboardingCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
 

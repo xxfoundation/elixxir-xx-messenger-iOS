@@ -10,7 +10,7 @@ import DrawerFeature
 import DependencyInjection
 
 final class RequestsReceivedController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
     @Dependency private var toaster: ToastController
     @Dependency private var coordinator: RequestsCoordinating
 

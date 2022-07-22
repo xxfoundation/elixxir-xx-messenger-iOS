@@ -3,7 +3,7 @@ import Shared
 
 final class ScanContainerView: UIView {
     let scrollView = UIScrollView()
-    let segmentedControl = SegmentedControl()
+    let segmentedControl = ScanSegmentedControl()
 
     init() {
         super.init(frame: .zero)

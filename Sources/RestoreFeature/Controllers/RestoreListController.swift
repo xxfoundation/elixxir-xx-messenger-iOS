@@ -1,12 +1,12 @@
 import HUD
-import DrawerFeature
-import Shared
 import UIKit
+import Shared
 import Combine
+import DrawerFeature
 import DependencyInjection
 
 public final class RestoreListController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
     @Dependency private var coordinator: RestoreCoordinating
 
     lazy private var screenView = RestoreListView()
@@ -51,15 +51,16 @@ public final class RestoreListController: UIViewController {
     }
 
     private func setupBindings() {
-        viewModel.hud
+        viewModel.hudPublisher
             .receive(on: DispatchQueue.main)
             .sink { [hud] in hud.update(with: $0) }
             .store(in: &cancellables)
 
-        viewModel.didFetchBackup
+        viewModel.backupPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in coordinator.toRestore(using: ndf, with: $0, from: self) }
-            .store(in: &cancellables)
+            .sink { [unowned self] in
+                coordinator.toRestore(using: ndf, with: $0, from: self)
+            }.store(in: &cancellables)
 
         screenView.cancelButton
             .publisher(for: .touchUpInside)
@@ -68,18 +69,27 @@ public final class RestoreListController: UIViewController {
 
         screenView.driveButton
             .publisher(for: .touchUpInside)
-            .sink { [unowned self] in viewModel.didTapCloud(.drive, from: self) }
-            .store(in: &cancellables)
+            .sink { [unowned self] in
+                viewModel.didTapCloud(.drive, from: self)
+            }.store(in: &cancellables)
 
         screenView.icloudButton
             .publisher(for: .touchUpInside)
-            .sink { [unowned self] in viewModel.didTapCloud(.icloud, from: self) }
-            .store(in: &cancellables)
+            .sink { [unowned self] in
+                viewModel.didTapCloud(.icloud, from: self)
+            }.store(in: &cancellables)
 
         screenView.dropboxButton
             .publisher(for: .touchUpInside)
-            .sink { [unowned self] in viewModel.didTapCloud(.dropbox, from: self) }
-            .store(in: &cancellables)
+            .sink { [unowned self] in
+                viewModel.didTapCloud(.dropbox, from: self)
+            }.store(in: &cancellables)
+
+        screenView.sftpButton
+            .publisher(for: .touchUpInside)
+            .sink { [unowned self] in
+                viewModel.didTapCloud(.sftp, from: self)
+            }.store(in: &cancellables)
     }
 
     @objc private func didTapBack() {

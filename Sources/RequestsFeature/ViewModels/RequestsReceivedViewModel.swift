@@ -150,7 +150,7 @@ final class RequestsReceivedViewModel {
     }
 
     func didRequestAccept(group: Group) {
-        hudSubject.send(.on(nil))
+        hudSubject.send(.on)
 
         backgroundScheduler.schedule { [weak self] in
             do {
@@ -208,7 +208,7 @@ final class RequestsReceivedViewModel {
     }
 
     func didRequestAccept(contact: Contact, nickname: String? = nil) {
-        hudSubject.send(.on(nil))
+        hudSubject.send(.on)
 
         var contact = contact
         contact.nickname = nickname ?? contact.username

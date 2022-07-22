@@ -62,7 +62,7 @@ final class ContactViewModel {
     }
 
     func didTapDelete() {
-        hudRelay.send(.on(nil))
+        hudRelay.send(.on)
 
         do {
             try session.deleteContact(contact)
@@ -91,7 +91,7 @@ final class ContactViewModel {
     }
 
     func didTapResend() {
-        hudRelay.send(.on(nil))
+        hudRelay.send(.on)
 
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }
@@ -107,7 +107,7 @@ final class ContactViewModel {
     }
 
     func didTapRequest(with nickname: String) {
-        hudRelay.send(.on(nil))
+        hudRelay.send(.on)
         contact.nickname = nickname
 
         backgroundScheduler.schedule { [weak self] in
@@ -124,7 +124,7 @@ final class ContactViewModel {
     }
 
     func didTapAccept(_ nickname: String) {
-        hudRelay.send(.on(nil))
+        hudRelay.send(.on)
         contact.nickname = nickname
 
         backgroundScheduler.schedule { [weak self] in

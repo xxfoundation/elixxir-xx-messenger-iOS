@@ -2,6 +2,8 @@ import UIKit
 import Models
 import Combine
 import Defaults
+import Keychain
+import SFTPFeature
 import iCloudFeature
 import DropboxFeature
 import NetworkMonitor
@@ -9,10 +11,12 @@ import GoogleDriveFeature
 import DependencyInjection
 
 public final class BackupService {
+    @Dependency private var sftpService: SFTPService
     @Dependency private var icloudService: iCloudInterface
     @Dependency private var dropboxService: DropboxInterface
-    @Dependency private var driveService: GoogleDriveInterface
     @Dependency private var networkManager: NetworkMonitoring
+    @Dependency private var keychainHandler: KeychainHandling
+    @Dependency private var driveService: GoogleDriveInterface
 
     @KeyObject(.backupSettings, defaultValue: Data()) private var storedSettings: Data
 
@@ -149,6 +153,15 @@ extension BackupService {
                         self.refreshBackups()
                     }.store(in: &cancellables)
             }
+        case .sftp:
+            if !sftpService.isAuthorized() {
+                sftpService.authorizeFlow((screen, { [weak self] in
+                    guard let self = self else { return }
+                    screen.navigationController?.popViewController(animated: true)
+                    self.refreshConnections()
+                    self.refreshBackups()
+                }))
+            }
         }
     }
 }
@@ -165,6 +178,12 @@ extension BackupService {
             settings.value.connectedServices.insert(.dropbox)
         } else if !dropboxService.isAuthorized() && settings.value.connectedServices.contains(.dropbox) {
             settings.value.connectedServices.remove(.dropbox)
+        }
+
+        if sftpService.isAuthorized() && !settings.value.connectedServices.contains(.sftp) {
+            settings.value.connectedServices.insert(.sftp)
+        } else if !sftpService.isAuthorized() && settings.value.connectedServices.contains(.sftp) {
+            settings.value.connectedServices.remove(.sftp)
         }
 
         driveService.isAuthorized { [weak settings] isAuthorized in
@@ -191,6 +210,23 @@ extension BackupService {
                 settings.value.backups[.icloud] = Backup(
                     id: metadata.path,
                     date: metadata.modifiedDate,
+                    size: metadata.size
+                )
+            }
+        }
+
+        if sftpService.isAuthorized() {
+            sftpService.fetchMetadata { [weak settings] in
+                guard let settings = settings else { return }
+
+                guard let metadata = try? $0.get()?.backup else {
+                    settings.value.backups[.sftp] = nil
+                    return
+                }
+
+                settings.value.backups[.sftp] = Backup(
+                    id: metadata.id,
+                    date: metadata.date,
                     size: metadata.size
                 )
             }
@@ -241,7 +277,7 @@ extension BackupService {
             .appendingPathComponent(UUID().uuidString)
 
         do {
-            try data.write(to: url)
+            try data.write(to: url, options: .atomic)
         } catch {
             print("Couldn't write to temp: \(error.localizedDescription)")
             return
@@ -260,8 +296,6 @@ extension BackupService {
                 case .failure(let error):
                     print(error.localizedDescription)
                 }
-
-                // try? FileManager.default.removeItem(at: url)
             }
         case .icloud:
             icloudService.uploadBackup(url) {
@@ -275,8 +309,6 @@ extension BackupService {
                 case .failure(let error):
                     print(error.localizedDescription)
                 }
-
-                // try? FileManager.default.removeItem(at: url)
             }
         case .dropbox:
             dropboxService.uploadBackup(url) {
@@ -290,8 +322,15 @@ extension BackupService {
                 case .failure(let error):
                     print(error.localizedDescription)
                 }
-
-                // try? FileManager.default.removeItem(at: url)
+            }
+        case .sftp:
+            sftpService.uploadBackup(url: url) {
+                switch $0 {
+                case .success(let backup):
+                    self.settings.value.backups[.sftp] = backup
+                case .failure(let error):
+                    print(error.localizedDescription)
+                }
             }
         }
     }

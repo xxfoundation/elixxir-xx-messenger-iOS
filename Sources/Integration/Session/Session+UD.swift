@@ -1,8 +1,35 @@
 import Models
 import XXModels
 import Foundation
+import Combine
 
 extension Session {
+    public func search(fact: String) -> AnyPublisher<Contact, Error> {
+        Deferred {
+            Future { promise in
+                guard let ud = self.client.userDiscovery else {
+                    let error = NSError(domain: "", code: 0)
+                    promise(.failure(error))
+                    return
+                }
+
+                do {
+                    try self.client.bindings.nodeRegistrationStatus()
+                    try ud.search(fact: fact) {
+                        switch $0 {
+                        case .success(let contact):
+                            promise(.success(contact))
+                        case .failure(let error):
+                            promise(.failure(error))
+                        }
+                    }
+                } catch {
+                    promise(.failure(error))
+                }
+            }
+        }.eraseToAnyPublisher()
+    }
+
     public func search(fact: String, _ completion: @escaping (Result<Contact, Error>) -> Void) throws {
         guard let ud = client.userDiscovery else { return }
         try client.bindings.nodeRegistrationStatus()
@@ -41,20 +68,13 @@ extension Session {
 
                 switch $0 {
                 case .success(_):
-                    _ = try? self.dbManager.saveContact(.init(
-                        id: self.client.bindings.myId,
-                        marshaled: self.client.bindings.meMarshalled,
-                        username: value,
-                        email: nil,
-                        phone: nil,
-                        nickname: nil,
-                        photo: nil,
-                        authStatus: .friend,
-                        isRecent: false,
-                        createdAt: Date()
-                    ))
-
                     self.username = value
+
+                    if var me = try? self.myContact() {
+                        me.username = value
+                        _ = try? self.dbManager.saveContact(me)
+                    }
+
                     completion(.success(nil))
                 case .failure(let error):
                     completion(.failure(error))
@@ -76,6 +96,8 @@ extension Session {
             phone = confirmation.content
         }
 
-        updateFactsOnBackup()
+        if let _ = client.backupManager {
+            updateFactsOnBackup()
+        }
     }
 }

@@ -38,7 +38,7 @@ final class RequestsFailedViewModel {
     func didTapStateButtonFor(request: Request) {
         guard case let .contact(contact) = request, request.status == .failedToRequest else { return }
 
-        hudSubject.send(.on(nil))
+        hudSubject.send(.on)
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }
 

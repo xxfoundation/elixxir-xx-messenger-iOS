@@ -27,6 +27,7 @@ let package = Package(
         .library(name: "Integration", targets: ["Integration"]),
         .library(name: "ChatFeature", targets: ["ChatFeature"]),
         .library(name: "PushFeature", targets: ["PushFeature"]),
+        .library(name: "SFTPFeature", targets: ["SFTPFeature"]),
         .library(name: "CrashService", targets: ["CrashService"]),
         .library(name: "Presentation", targets: ["Presentation"]),
         .library(name: "BackupFeature", targets: ["BackupFeature"]),
@@ -34,6 +35,7 @@ let package = Package(
         .library(name: "iCloudFeature", targets: ["iCloudFeature"]),
         .library(name: "SearchFeature", targets: ["SearchFeature"]),
         .library(name: "DrawerFeature", targets: ["DrawerFeature"]),
+        .library(name: "CollectionView", targets: ["CollectionView"]),
         .library(name: "RestoreFeature", targets: ["RestoreFeature"]),
         .library(name: "CrashReporting", targets: ["CrashReporting"]),
         .library(name: "ProfileFeature", targets: ["ProfileFeature"]),
@@ -66,9 +68,12 @@ let package = Package(
         .package(url: "https://github.com/pointfreeco/combine-schedulers", from: "0.5.0"),
         .package(url: "https://github.com/kishikawakatsumi/KeychainAccess", from: "4.2.1"),
         .package(url: "https://github.com/google/google-api-objectivec-client-for-rest", from: "1.6.0"),
-        .package(url: "https://git.xx.network/elixxir/client-ios-db.git", .upToNextMajor(from: "1.0.6")),
+        .package(url: "https://git.xx.network/elixxir/client-ios-db.git", .upToNextMajor(from: "1.0.8")),
         .package(url: "https://github.com/firebase/firebase-ios-sdk.git", .upToNextMajor(from: "8.10.0")),
-        .package(url: "https://github.com/pointfreeco/swift-composable-architecture.git",.upToNextMajor(from: "0.32.0"))
+        .package(url: "https://github.com/darrarski/Shout.git", revision: "df5a662293f0ac15eeb4f2fd3ffd0c07b73d0de0"),
+        .package(url: "https://github.com/pointfreeco/swift-composable-architecture.git",.upToNextMajor(from: "0.32.0")),
+        .package(url: "https://github.com/pointfreeco/swift-custom-dump.git", .upToNextMajor(from: "0.5.0")),
+        .package(url: "https://github.com/pointfreeco/xctest-dynamic-overlay.git", .upToNextMajor(from: "0.3.3")),
     ],
     targets: [
         .target(
@@ -81,6 +86,7 @@ let package = Package(
                 "ChatFeature",
                 "MenuFeature",
                 "PushFeature",
+                "SFTPFeature",
                 "ToastFeature",
                 "CrashService",
                 "BackupFeature",
@@ -204,6 +210,25 @@ let package = Package(
                     .product(
                         name: "FirebaseCrashlytics",
                         package: "firebase-ios-sdk"
+                    )
+                ]
+            ),
+
+        // MARK: - SFTPFeature
+
+            .target(
+                name: "SFTPFeature",
+                dependencies: [
+                    "HUD",
+                    "Models",
+                    "Shared",
+                    "Keychain",
+                    "InputField",
+                    "Presentation",
+                    "DependencyInjection",
+                    .product(
+                        name: "Shout",
+                        package: "Shout"
                     )
                 ]
             ),
@@ -398,6 +423,7 @@ let package = Package(
                 dependencies: [
                     "HUD",
                     "Shared",
+                    "SFTPFeature",
                     "Integration",
                     "Presentation",
                     "iCloudFeature",
@@ -612,6 +638,7 @@ let package = Package(
                     "Shared",
                     "Models",
                     "InputField",
+                    "SFTPFeature",
                     "Presentation",
                     "iCloudFeature",
                     "DrawerFeature",
@@ -835,6 +862,23 @@ let package = Package(
                     .product(name: "Quick", package: "Quick"),
                     .product(name: "Nimble", package: "Nimble")
                 ]
-            )
+            ),
+
+        // MARK: - CollectionView
+
+            .target(
+                name: "CollectionView",
+                dependencies: [
+                    .product(name: "ChatLayout", package: "ChatLayout"),
+                    .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
+                ]
+            ),
+            .testTarget(
+                name: "CollectionViewTests",
+                dependencies: [
+                    .target(name: "CollectionView"),
+                    .product(name: "CustomDump", package: "swift-custom-dump"),
+                ]
+            ),
     ]
 )

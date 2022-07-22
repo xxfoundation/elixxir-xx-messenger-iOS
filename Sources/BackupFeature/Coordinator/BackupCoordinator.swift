@@ -18,16 +18,10 @@ public protocol BackupCoordinating {
 public struct BackupCoordinator: BackupCoordinating {
     var bottomPresenter: Presenting = BottomPresenter()
 
-    var passphraseFactory: (
-        @escaping EmptyClosure,
-        @escaping StringClosure
-    ) -> UIViewController
+    var passphraseFactory: (@escaping EmptyClosure, @escaping StringClosure) -> UIViewController
 
     public init(
-        passphraseFactory: @escaping (
-            @escaping EmptyClosure,
-            @escaping StringClosure
-        ) -> UIViewController
+        passphraseFactory: @escaping (@escaping EmptyClosure, @escaping StringClosure) -> UIViewController
     ) {
         self.passphraseFactory = passphraseFactory
     }

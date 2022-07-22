@@ -28,6 +28,15 @@
       }
     },
     {
+      "identity" : "bluesocket",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/IBM-Swift/BlueSocket.git",
+      "state" : {
+        "revision" : "c9894fd117457f1d006575fbfb2fdfd6f79eac03",
+        "version" : "1.0.200"
+      }
+    },
+    {
       "identity" : "boringssl-swiftpm",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/firebase/boringssl-SwiftPM.git",
@@ -50,8 +59,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://git.xx.network/elixxir/client-ios-db.git",
       "state" : {
-        "revision" : "f52a83a8095c36f4e84afa51b52c929117c8779a",
-        "version" : "1.0.6"
+        "revision" : "785e1f653ee5eaaaf58a82c8abbcda2174fbc27a",
+        "version" : "1.0.8"
       }
     },
     {
@@ -208,6 +217,15 @@
       }
     },
     {
+      "identity" : "libssh2prebuild",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/DimaRU/Libssh2Prebuild.git",
+      "state" : {
+        "branch" : "1.10.0+OpenSSL_1_1_1o",
+        "revision" : "a91bcf205a6cbc84144f840c44145656abbd266a"
+      }
+    },
+    {
       "identity" : "nanopb",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/firebase/nanopb.git",
@@ -262,6 +280,14 @@
       }
     },
     {
+      "identity" : "shout",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/darrarski/Shout.git",
+      "state" : {
+        "revision" : "df5a662293f0ac15eeb4f2fd3ffd0c07b73d0de0"
+      }
+    },
+    {
       "identity" : "snapkit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/SnapKit/SnapKit",
@@ -302,8 +328,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-custom-dump",
       "state" : {
-        "revision" : "51698ece74ecf31959d3fa81733f0a5363ef1b4e",
-        "version" : "0.3.0"
+        "revision" : "21ec1d717c07cea5a026979cb0471dd95c7087e7",
+        "version" : "0.5.0"
       }
     },
     {
@@ -347,8 +373,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/xctest-dynamic-overlay",
       "state" : {
-        "revision" : "50a70a9d3583fe228ce672e8923010c8df2deddd",
-        "version" : "0.2.1"
+        "revision" : "ef8e14e7ce1c0c304c644c6ba365d06c468ded6b",
+        "version" : "0.3.3"
       }
     }
   ],

@@ -1,14 +1,14 @@
 import HUD
-import DrawerFeature
 import Theme
 import UIKit
 import Shared
 import Combine
+import DrawerFeature
 import DependencyInjection
 import ScrollViewController
 
 public final class OnboardingUsernameController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
     @Dependency private var coordinator: OnboardingCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
 
