@@ -2,71 +2,76 @@ import UIKit
 import Shared
 
 final class ContactListView: UIView {
-    let newGroupButton = ItemButton()
-    let requestsButton = ItemButton()
-    let topStackView = UIStackView()
-    let stackView = UIStackView()
-    let emptyTitleLabel = UILabel()
-    let searchButton = CapsuleButton()
+    private let separatorView = UIView()
+    private(set) var emptyView = ContactListEmptyView()
+    private(set) var newGroupButton = ContactListActionButton()
+    private(set) var requestsButton = ContactListActionButton()
+
+    lazy var collectionView: UICollectionView = {
+        var config = UICollectionLayoutListConfiguration(appearance: .plain)
+        config.backgroundColor = Asset.neutralWhite.color
+        config.showsSeparators = false
+        let layout = UICollectionViewCompositionalLayout.list(using: config)
+        let collectionView = UICollectionView(frame: bounds, collectionViewLayout: layout)
+        collectionView.contentInset = .init(top: 20, left: 0, bottom: 0, right: 0)
+        return collectionView
+    }()
 
     init() {
         super.init(frame: .zero)
-        setup()
-    }
-
-    required init?(coder: NSCoder) { nil }
-
-    private func setup() {
         backgroundColor = Asset.neutralWhite.color
+        separatorView.backgroundColor = Asset.neutralLine.color
 
-        requestsButton.separatorView.isHidden = true
-        requestsButton.setup(title: "Requests", image: Asset.contactListRequests.image)
-        newGroupButton.setup(title: Localized.ContactList.newGroup, image: Asset.contactListNewGroup.image)
+        let requestsTitle = Localized.ContactList.requests
+        let requestsImage = Asset.contactListRequests.image
+        requestsButton.setup(title: requestsTitle, image: requestsImage)
 
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.lineHeightMultiple = 1.2
-        paragraph.alignment = .center
+        let newGroupTitle = Localized.ContactList.newGroup
+        let newGroupImage = Asset.contactListNewGroup.image
+        newGroupButton.setup(title: newGroupTitle, image: newGroupImage)
 
-        emptyTitleLabel.attributedText = NSAttributedString(
-            string: Localized.ContactList.Empty.title,
-            attributes: [
-                .paragraphStyle: paragraph,
-                .foregroundColor: Asset.neutralActive.color,
-                .font: Fonts.Mulish.bold.font(size: 24.0) as UIFont
-            ]
-        )
-        emptyTitleLabel.numberOfLines = 0
-
-        searchButton.setStyle(.brandColored)
-        searchButton.setTitle(Localized.ContactList.Empty.action, for: .normal)
-
-        stackView.spacing = 24
-        stackView.axis = .vertical
-        stackView.alignment = .center
-        stackView.addArrangedSubview(emptyTitleLabel)
-        stackView.addArrangedSubview(searchButton)
-
-        topStackView.axis = .vertical
-        topStackView.addArrangedSubview(newGroupButton)
-        topStackView.addArrangedSubview(requestsButton)
-
-        addSubview(topStackView)
-        addSubview(stackView)
+        addSubview(emptyView)
+        addSubview(separatorView)
+        addSubview(collectionView)
+        addSubview(newGroupButton)
+        addSubview(requestsButton)
 
         setupConstraints()
     }
 
+    required init?(coder: NSCoder) { nil }
+
     private func setupConstraints() {
-        topStackView.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(20)
-            make.left.equalToSuperview()
-            make.right.equalToSuperview()
+        newGroupButton.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(20)
+            $0.left.equalToSuperview().offset(24)
+            $0.right.equalToSuperview().offset(-24)
         }
 
-        stackView.snp.makeConstraints { make in
-            make.centerY.equalToSuperview()
-            make.left.equalToSuperview().offset(24)
-            make.right.equalToSuperview().offset(-24)
+        separatorView.snp.makeConstraints {
+            $0.top.equalTo(newGroupButton.snp.bottom).offset(10)
+            $0.left.equalToSuperview().offset(24)
+            $0.right.equalToSuperview().offset(-24)
+            $0.height.equalTo(1)
+        }
+
+        requestsButton.snp.makeConstraints {
+            $0.top.equalTo(separatorView.snp.bottom).offset(10)
+            $0.left.equalToSuperview().offset(24)
+            $0.right.equalToSuperview().offset(-24)
+        }
+
+        emptyView.snp.makeConstraints {
+            $0.centerY.equalToSuperview()
+            $0.left.equalToSuperview().offset(24)
+            $0.right.equalToSuperview().offset(-24)
+        }
+
+        collectionView.snp.makeConstraints {
+            $0.top.equalTo(requestsButton.snp.bottom)
+            $0.left.equalToSuperview()
+            $0.right.equalToSuperview()
+            $0.bottom.equalToSuperview()
         }
     }
 }

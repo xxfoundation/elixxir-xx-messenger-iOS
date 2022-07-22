@@ -79,7 +79,7 @@ final class SearchLeftView: UIView {
         countryButton.isHidden = item != .phone
 
         let emptyTitle = Localized.Ud.Search.empty(item.written)
-        emptyView.titleLabel.text = emptyTitle
+        emptyView.set(title: emptyTitle)
 
         let inputFieldTitle = Localized.Ud.Search.input(item.written)
         inputField.set(placeholder: inputFieldTitle, imageAtRight: nil)

@@ -1,16 +1,25 @@
+import UIKit
 import Models
 import Combine
 import XXModels
 import Integration
 import DependencyInjection
 
-final class ContactListViewModel {
-    @Dependency private var session: SessionType
+typealias ContactListSnapshot = NSDiffableDataSourceSnapshot<Int, Contact>
 
-    var contacts: AnyPublisher<[Contact], Never> {
+final class ContactListViewModel {
+    @Dependency var session: SessionType
+
+    var snapshotPublisher: AnyPublisher<ContactListSnapshot, Never> {
         session.dbManager.fetchContactsPublisher(.init(authStatus: [.friend]))
             .assertNoFailure()
-            .map { $0.filter { $0.id != self.session.myId }}
+            .map {
+                let removingMyself = $0.filter { $0.id != self.session.myId }
+                var snapshot = ContactListSnapshot()
+                snapshot.appendSections([0])
+                snapshot.appendItems(removingMyself, toSection: 0)
+                return snapshot
+            }
             .eraseToAnyPublisher()
     }
 

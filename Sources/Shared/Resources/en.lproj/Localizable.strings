@@ -914,8 +914,8 @@
 
 "contactList.newGroup"
 = "New Group";
-"contactList.userSearch"
-= "User Search";
+"contactList.requests"
+= "Requests";
 "contactList.title"
 = "Connections";
 "contactList.empty.title"

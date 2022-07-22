@@ -2,7 +2,7 @@ import UIKit
 import Shared
 
 final class SearchLeftEmptyView: UIView {
-    let titleLabel = UILabel()
+    private let titleLabel = UILabel()
 
     init() {
         super.init(frame: .zero)
@@ -15,12 +15,20 @@ final class SearchLeftEmptyView: UIView {
 
         addSubview(titleLabel)
 
+        setupConstraints()
+    }
+
+    required init?(coder: NSCoder) { nil }
+
+    func set(title: String) {
+        titleLabel.text = title
+    }
+
+    private func setupConstraints() {
         titleLabel.snp.makeConstraints {
             $0.center.equalToSuperview()
             $0.left.equalToSuperview().offset(20)
             $0.right.equalToSuperview().offset(-20)
         }
     }
-
-    required init?(coder: NSCoder) { nil }
 }

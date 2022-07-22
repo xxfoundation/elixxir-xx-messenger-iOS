@@ -542,10 +542,10 @@ public enum Localized {
   public enum ContactList {
     /// New Group
     public static let newGroup = Localized.tr("Localizable", "contactList.newGroup")
+    /// Requests
+    public static let requests = Localized.tr("Localizable", "contactList.requests")
     /// Connections
     public static let title = Localized.tr("Localizable", "contactList.title")
-    /// User Search
-    public static let userSearch = Localized.tr("Localizable", "contactList.userSearch")
     public enum Empty {
       /// Add contact
       public static let action = Localized.tr("Localizable", "contactList.empty.action")
