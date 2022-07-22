@@ -77,21 +77,37 @@ final class SearchLeftController: UIViewController {
                 }
             }
 
-            cell.setup(
-                title: h1Text,
-                image: contact.photo,
-                firstSubtitle: h2Text,
-                secondSubtitle: contact.email,
-                thirdSubtitle: contact.phone,
-                showSeparator: false,
-                sent: contact.authStatus == .requested
-            )
+            var action: AvatarCell.Action?
 
-            cell.didTapStateButton = { [weak self] in
-                guard let self = self else { return }
-                self.viewModel.didTapResend(contact: contact)
-                cell.updateToResent()
+            if contact.authStatus == .requested {
+                action = .init(
+                    title: Localized.Requests.Cell.requested,
+                    color: Asset.brandPrimary.color,
+                    image: Asset.requestsResend.image,
+                    action: { [weak self] in
+                        guard let self = self else { return }
+
+                        self.viewModel.didTapResend(contact: contact)
+
+                        cell.update(action: .init(
+                            title: Localized.Requests.Cell.resent,
+                            color: Asset.neutralWeak.color,
+                            image: Asset.requestsResent.image,
+                            action: {}
+                        ))
+                    }
+                )
             }
+
+            cell.set(
+                image: contact.photo,
+                h1Text: h1Text,
+                h2Text: h2Text,
+                h3Text: contact.email,
+                h4Text: contact.phone,
+                showSeparator: false,
+                action: action
+            )
 
             return cell
         }

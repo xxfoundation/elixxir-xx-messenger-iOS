@@ -1,58 +1,42 @@
 import UIKit
 import Combine
 
-final class AvatarCellButton: UIControl {
-    let titleLabel = UILabel()
-    let imageView = UIImageView()
+public final class AvatarCell: UITableViewCell {
+    public struct Action {
+        public var title: String
+        public var color: UIColor
+        public var image: UIImage?
+        public var action: () -> Void
 
-    init() {
-        super.init(frame: .zero)
-        titleLabel.numberOfLines = 0
-        titleLabel.textAlignment = .right
-        titleLabel.font = Fonts.Mulish.semiBold.font(size: 13.0)
-
-        addSubview(imageView)
-        addSubview(titleLabel)
-
-        imageView.snp.makeConstraints {
-            $0.top.greaterThanOrEqualToSuperview()
-            $0.left.equalToSuperview()
-            $0.centerY.equalToSuperview()
-            $0.bottom.lessThanOrEqualToSuperview()
-        }
-
-        titleLabel.snp.makeConstraints {
-            $0.top.greaterThanOrEqualToSuperview()
-            $0.left.equalTo(imageView.snp.right).offset(5)
-            $0.centerY.equalToSuperview()
-            $0.right.equalToSuperview()
-            $0.width.equalTo(60)
-            $0.bottom.lessThanOrEqualToSuperview()
+        public init(
+            title: String,
+            color: UIColor,
+            image: UIImage? = nil,
+            action: @escaping () -> Void
+        ) {
+            self.title = title
+            self.color = color
+            self.image = image
+            self.action = action
         }
     }
 
-    required init?(coder: NSCoder) { nil }
-}
-
-public final class AvatarCell: UITableViewCell {
-    let h1Label = UILabel()
-    let h2Label = UILabel()
-    let h3Label = UILabel()
-    let h4Label = UILabel()
-    let separatorView = UIView()
-    let avatarView = AvatarView()
-    let stackView = UIStackView()
-    let stateButton = AvatarCellButton()
-
-    var cancellables = Set<AnyCancellable>()
-    public var didTapStateButton: (() -> Void)!
+    private let h1Label = UILabel()
+    private let h2Label = UILabel()
+    private let h3Label = UILabel()
+    private let h4Label = UILabel()
+    private let separatorView = UIView()
+    private let avatarView = AvatarView()
+    private let stackView = UIStackView()
+    private var didTapAction: (() -> Void)?
+    private let actionButton = AvatarCellButton()
+    private var cancellables = Set<AnyCancellable>()
 
     public override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
         super.init(style: style, reuseIdentifier: reuseIdentifier)
 
-        selectedBackgroundView = UIView()
-        multipleSelectionBackgroundView = UIView()
         backgroundColor = Asset.neutralWhite.color
+        separatorView.backgroundColor = Asset.neutralLine.color
 
         h1Label.textColor = Asset.neutralActive.color
         h2Label.textColor = Asset.neutralSecondaryAlternative.color
@@ -66,17 +50,14 @@ public final class AvatarCell: UITableViewCell {
 
         stackView.spacing = 4
         stackView.axis = .vertical
-        
         stackView.addArrangedSubview(h1Label)
         stackView.addArrangedSubview(h2Label)
         stackView.addArrangedSubview(h3Label)
         stackView.addArrangedSubview(h4Label)
 
-        separatorView.backgroundColor = Asset.neutralLine.color
-
         contentView.addSubview(stackView)
         contentView.addSubview(avatarView)
-        contentView.addSubview(stateButton)
+        contentView.addSubview(actionButton)
         contentView.addSubview(separatorView)
 
         setupConstraints()
@@ -90,70 +71,73 @@ public final class AvatarCell: UITableViewCell {
         h2Label.text = nil
         h3Label.text = nil
         h4Label.text = nil
-
-        stateButton.imageView.image = nil
-        stateButton.titleLabel.text = nil
+        didTapAction = nil
 
         avatarView.prepareForReuse()
+        actionButton.prepareForReuse()
+
+        cancellables.forEach { $0.cancel() }
         cancellables.removeAll()
     }
 
-    public func setup(
-        title: String,
+    public func set(
         image: Data?,
-        firstSubtitle: String? = nil,
-        secondSubtitle: String? = nil,
-        thirdSubtitle: String? = nil,
+        h1Text: String,
+        h2Text: String? = nil,
+        h3Text: String? = nil,
+        h4Text: String? = nil,
         showSeparator: Bool = true,
-        sent: Bool = false
+        action: Action? = nil
     ) {
-        h1Label.text = title
+        avatarView.setupProfile(
+            title: h1Text,
+            image: image,
+            size: .medium
+        )
 
-        if let firstSubtitle = firstSubtitle {
-            h2Label.isHidden = false
-            h2Label.text = firstSubtitle
-        } else {
-            h2Label.isHidden = true
-        }
+        h1Label.text = h1Text
+        h2Label.text = h2Text
+        h3Label.text = h3Text
+        h4Label.text = h4Text
 
-        if let secondSubtitle = secondSubtitle {
-            h3Label.isHidden = false
-            h3Label.text = secondSubtitle
-        } else {
-            h3Label.isHidden = true
-        }
+        h2Label.isHidden = h2Text == nil
+        h3Label.isHidden = h3Text == nil
+        h4Label.isHidden = h4Text == nil
 
-        if let thirdSubtitle = thirdSubtitle {
-            h4Label.isHidden = false
-            h4Label.text = thirdSubtitle
-        } else {
-            h4Label.isHidden = true
-        }
+        separatorView.isHidden = !showSeparator
 
-        avatarView.setupProfile(title: title, image: image, size: .medium)
-        separatorView.alpha = showSeparator ? 1.0 : 0.0
+        if let action = action {
+            actionButton.set(
+                image: action.image,
+                title: action.title,
+                titleColor: action.color
+            )
 
-        cancellables.removeAll()
+            didTapAction = action.action
 
-        if sent {
-            stateButton.imageView.image = Asset.requestsResend.image
-            stateButton.titleLabel.text = Localized.Requests.Cell.requested
-            stateButton.titleLabel.textColor = Asset.brandPrimary.color
-
-            stateButton
+            actionButton
                 .publisher(for: .touchUpInside)
-                .sink { [unowned self] in didTapStateButton() }
+                .sink { [unowned self] in didTapAction?() }
                 .store(in: &cancellables)
         }
     }
 
-    public func updateToResent() {
-        stateButton.imageView.image = Asset.requestsResent.image
-        stateButton.titleLabel.text = Localized.Requests.Cell.resent
-        stateButton.titleLabel.textColor = Asset.neutralWeak.color
-
+    public func update(action: Action) {
         cancellables.forEach { $0.cancel() }
         cancellables.removeAll()
+
+        actionButton.set(
+            image: action.image,
+            title: action.title,
+            titleColor: action.color
+        )
+
+        didTapAction = action.action
+
+        actionButton
+            .publisher(for: .touchUpInside)
+            .sink { [unowned self] in didTapAction?() }
+            .store(in: &cancellables)
     }
 
     private func setupConstraints() {
@@ -179,7 +163,7 @@ public final class AvatarCell: UITableViewCell {
             $0.bottom.equalToSuperview()
         }
 
-        stateButton.snp.makeConstraints {
+        actionButton.snp.makeConstraints {
             $0.centerY.equalTo(stackView)
             $0.right.equalToSuperview().offset(-24)
         }

@@ -87,7 +87,7 @@ public final class CreateGroupController: UIViewController {
             let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: AvatarCell.self)
             let title = (contact.nickname ?? contact.username) ?? ""
 
-            cell.setup(title: title, image: contact.photo)
+            cell.set(image: contact.photo, h1Text: title)
 
             if let selectedElements = self?.selectedElements, selectedElements.contains(contact) {
                 tableView.selectRow(at: indexPath, animated: true, scrollPosition: .none)

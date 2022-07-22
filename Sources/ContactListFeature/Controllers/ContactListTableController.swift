@@ -49,7 +49,7 @@ final class ContactListTableController: UITableViewController {
         let contact = sections[indexPath.section][indexPath.row]
         let name = (contact.nickname ?? contact.username) ?? "Fetching username..."
 
-        cell.setup(title: name, image: contact.photo)
+        cell.set(image: contact.photo, h1Text: name)
         return cell
     }
 
