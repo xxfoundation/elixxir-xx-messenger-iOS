@@ -172,8 +172,6 @@
 
 "scan.status.reading"
 = "Place QR code inside frame to scan";
-"scan.status.processing"
-= "Processing...";
 "scan.status.success"
 = "Success";
 "scan.display.copied"
@@ -199,7 +197,7 @@
 = "Scan Code";
 "scan.segmentedControl.right"
 = "My Code";
-"scan.error.cameraPermissionNeeded"
+"scan.error.denied"
 = "Camera needs permission to be used";
 "scan.error.invalid"
 = "Invalid QR code";
@@ -207,7 +205,7 @@
 = "Something’s gone wrong. Please try again.";
 "scan.error.requested"
 = "You already have a request open with this contact.";
-"scan.error.alreadyFriends"
+"scan.error.friends"
 = "You've already added \n#%@#";
 "scan.error.pending"
 = "This user is already pending in your contact list";

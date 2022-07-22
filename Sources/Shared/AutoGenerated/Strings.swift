@@ -1010,13 +1010,13 @@ public enum Localized {
       }
     }
     public enum Error {
+      /// Camera needs permission to be used
+      public static let denied = Localized.tr("Localizable", "scan.error.denied")
       /// You've already added 
       /// #%@#
-      public static func alreadyFriends(_ p1: Any) -> String {
-        return Localized.tr("Localizable", "scan.error.alreadyFriends", String(describing: p1))
+      public static func friends(_ p1: Any) -> String {
+        return Localized.tr("Localizable", "scan.error.friends", String(describing: p1))
       }
-      /// Camera needs permission to be used
-      public static let cameraPermissionNeeded = Localized.tr("Localizable", "scan.error.cameraPermissionNeeded")
       /// Something’s gone wrong. Please try again.
       public static let general = Localized.tr("Localizable", "scan.error.general")
       /// Invalid QR code
@@ -1039,8 +1039,6 @@ public enum Localized {
       public static let `right` = Localized.tr("Localizable", "scan.segmentedControl.right")
     }
     public enum Status {
-      /// Processing...
-      public static let processing = Localized.tr("Localizable", "scan.status.processing")
       /// Place QR code inside frame to scan
       public static let reading = Localized.tr("Localizable", "scan.status.reading")
       /// Success

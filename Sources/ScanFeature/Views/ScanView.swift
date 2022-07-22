@@ -80,12 +80,12 @@ final class ScanView: UIView {
                 actionButton.isHidden = false
 
             case .alreadyFriends(let name):
-                text = Localized.Scan.Error.alreadyFriends(name)
+                text = Localized.Scan.Error.friends(name)
                 actionButton.setTitle(Localized.Scan.contact, for: .normal)
                 actionButton.isHidden = false
 
             case .cameraPermission:
-                text = Localized.Scan.Error.cameraPermissionNeeded
+                text = Localized.Scan.Error.denied
                 actionButton.setTitle(Localized.Scan.settings, for: .normal)
                 actionButton.isHidden = false
 

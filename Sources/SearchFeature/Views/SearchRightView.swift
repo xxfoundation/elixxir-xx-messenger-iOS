@@ -39,39 +39,51 @@ final class SearchRightView: UIView {
     required init?(coder: NSCoder) { nil }
 
     func update(status: ScanningStatus) {
-        setupTitle(for: status)
-        setupImageView(for: status)
-        setupActionButton(for: status)
-        setupCornerColors(for: status)
-        setupAnimationView(for: status)
-    }
-
-    private func setupTitle(for status: ScanningStatus) {
-        let title: String
+        var text: String
 
         switch status {
+        case .reading, .processing:
+            imageView.isHidden = true
+            actionButton.isHidden = true
+            text = Localized.Scan.Status.reading
+            overlayView.updateCornerColor(Asset.brandPrimary.color)
+
         case .success:
-            title = Localized.Scan.Status.success
-        case .reading:
-            title = Localized.Scan.Status.reading
-        case .processing:
-            title = Localized.Scan.Status.processing
+            animationView.isHidden = true
+            actionButton.isHidden = true
+            imageView.isHidden = false
+            imageView.image = Asset.sharedSuccess.image
+            text = Localized.Scan.Status.success
+            overlayView.updateCornerColor(Asset.accentSuccess.color)
 
-        case .failed(let scanningError):
-            switch scanningError {
-            case .unknown(let content):
-                title = content
+        case .failed(let error):
+            animationView.isHidden = true
+            imageView.image = Asset.scanError.image
+            imageView.isHidden = false
+            overlayView.updateCornerColor(Asset.accentDanger.color)
 
+            switch error {
             case .requestOpened:
-                title = Localized.Scan.Error.requested
+                text = Localized.Scan.Error.requested
+                actionButton.setTitle(Localized.Scan.requests, for: .normal)
+                actionButton.isHidden = false
+
             case .alreadyFriends(let name):
-                title = Localized.Scan.Error.alreadyFriends(name)
+                text = Localized.Scan.Error.friends(name)
+                actionButton.setTitle(Localized.Scan.contact, for: .normal)
+                actionButton.isHidden = false
+
             case .cameraPermission:
-                title = Localized.Scan.Error.cameraPermissionNeeded
+                text = Localized.Scan.Error.denied
+                actionButton.setTitle(Localized.Scan.settings, for: .normal)
+                actionButton.isHidden = false
+
+            case .unknown(let content):
+                text = content
             }
         }
 
-        let attString = NSMutableAttributedString(string: title)
+        let attString = NSMutableAttributedString(string: text)
         let paragraph = NSMutableParagraphStyle()
         paragraph.alignment = .center
         paragraph.lineHeightMultiple = 1.35
@@ -80,69 +92,11 @@ final class SearchRightView: UIView {
         attString.addAttribute(.foregroundColor, value: Asset.neutralWhite.color)
         attString.addAttribute(.font, value: Fonts.Mulish.regular.font(size: 14.0) as Any)
 
-        if title.contains("#") {
+        if text.contains("#") {
             attString.addAttribute(name: .foregroundColor, value: Asset.brandPrimary.color, betweenCharacters: "#")
         }
 
         statusLabel.attributedText = attString
-    }
-
-    private func setupImageView(for status: ScanningStatus) {
-        let image: UIImage?
-
-        switch status {
-        case .reading, .processing:
-            image = nil
-        case .success:
-            image = Asset.sharedSuccess.image
-        case .failed(_):
-            image = Asset.scanError.image
-        }
-
-        imageView.image = image
-        imageView.isHidden = image == nil
-    }
-
-    private func setupActionButton(for status: ScanningStatus) {
-        let buttonTitle: String?
-
-        switch status {
-        case .failed(.requestOpened):
-            buttonTitle = Localized.Scan.requests
-        case .failed(.alreadyFriends(_)):
-            buttonTitle = Localized.Scan.contact
-        case .failed(.cameraPermission):
-            buttonTitle = Localized.Scan.settings
-        case .reading, .processing, .success, .failed(.unknown(_)):
-            buttonTitle = nil
-        }
-
-        actionButton.setTitle(buttonTitle, for: .normal)
-        actionButton.isHidden = buttonTitle == nil
-    }
-
-    private func setupCornerColors(for status: ScanningStatus) {
-        let color: UIColor
-
-        switch status {
-        case .reading, .processing:
-            color = Asset.brandPrimary.color
-        case .success:
-            color = Asset.accentSuccess.color
-        case .failed(_):
-            color = Asset.accentDanger.color
-        }
-
-        overlayView.updateCornerColor(color)
-    }
-
-    private func setupAnimationView(for status: ScanningStatus) {
-        switch status {
-        case .reading, .processing:
-            animationView.isHidden = false
-        case .success, .failed(_):
-            animationView.isHidden = true
-        }
     }
 
     private func setupConstraints() {

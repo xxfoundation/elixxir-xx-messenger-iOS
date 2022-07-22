@@ -93,6 +93,8 @@ public class Client {
             fatalError("Trying to add json parameters to backup but no backup manager created yet")
         }
 
+        print("^^^ Set params: \(string) to backup")
+
         backupManager.addJson(string)
     }
 
