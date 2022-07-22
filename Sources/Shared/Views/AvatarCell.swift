@@ -1,7 +1,7 @@
 import UIKit
 import Combine
 
-public final class AvatarCell: UITableViewCell {
+public final class AvatarCell: UICollectionViewCell {
     public struct Action {
         public var title: String
         public var color: UIColor
@@ -32,8 +32,8 @@ public final class AvatarCell: UITableViewCell {
     private let actionButton = AvatarCellButton()
     private var cancellables = Set<AnyCancellable>()
 
-    public override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
+    public override init(frame: CGRect) {
+        super.init(frame: frame)
 
         backgroundColor = Asset.neutralWhite.color
         separatorView.backgroundColor = Asset.neutralLine.color

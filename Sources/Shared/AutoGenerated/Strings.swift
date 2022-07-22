@@ -1211,6 +1211,8 @@ public enum Localized {
   }
 
   public enum Ud {
+    /// LOCAL RESULTS
+    public static let localResults = Localized.tr("Localizable", "ud.localResults")
     /// There are no users with that %@.
     public static func noneFound(_ p1: Any) -> String {
       return Localized.tr("Localizable", "ud.noneFound", String(describing: p1))

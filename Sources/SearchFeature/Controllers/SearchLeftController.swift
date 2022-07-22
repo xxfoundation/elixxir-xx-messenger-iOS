@@ -19,10 +19,10 @@ final class SearchLeftController: UIViewController {
 
     lazy private var screenView = SearchLeftView()
 
-    private var dataSource: SearchDiffableDataSource!
     private(set) var viewModel = SearchLeftViewModel()
     private var drawerCancellables = Set<AnyCancellable>()
     private let adrpURLString = "https://links.xx.network/adrp"
+    private var dataSource: UICollectionViewDiffableDataSource<SearchSection, SearchItem>!
 
     private var cancellables = Set<AnyCancellable>()
     private var hudCancellables = Set<AnyCancellable>()
@@ -33,7 +33,7 @@ final class SearchLeftController: UIViewController {
 
     override func viewDidLoad() {
         super.viewDidLoad()
-        setupTableView()
+        setupCollectionView()
         setupBindings()
     }
 
@@ -41,18 +41,17 @@ final class SearchLeftController: UIViewController {
         screenView.inputField.endEditing(true)
     }
 
-    private func setupTableView() {
-        screenView.tableView.separatorStyle = .none
-        screenView.tableView.tableFooterView = UIView()
-        screenView.tableView.register(AvatarCell.self)
-        screenView.tableView.dataSource = dataSource
-        screenView.tableView.delegate = self
+    private func setupCollectionView() {
+        screenView.collectionView.delegate = self
+        screenView.collectionView.dataSource = dataSource
+        screenView.collectionView.register(AvatarCell.self)
+        screenView.collectionView.registerSectionHeader(SearchLeftSectionHeader.self)
 
-        dataSource = SearchDiffableDataSource(
-            tableView: screenView.tableView
-        ) { tableView, indexPath, item in
+        dataSource = UICollectionViewDiffableDataSource<SearchSection, SearchItem>(
+            collectionView: screenView.collectionView
+        ) { collectionView, indexPath, item in
             let contact: Contact
-            let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: AvatarCell.self)
+            let cell: AvatarCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
             let h1Text: String
             var h2Text: String?
@@ -110,6 +109,23 @@ final class SearchLeftController: UIViewController {
             )
 
             return cell
+        }
+
+        dataSource.supplementaryViewProvider = { [weak self] collectionView, kind, indexPath in
+            guard let self = self else { return nil }
+
+            let sectionIdentifier = self.dataSource.snapshot().sectionIdentifiers[indexPath.section]
+            let sectionView = collectionView.dequeueReusableSupplementaryView(
+                ofKind: kind,
+                withReuseIdentifier: String(describing: SearchLeftSectionHeader.self),
+                for: indexPath
+            )
+
+            if let sectionView = sectionView as? SearchLeftSectionHeader, case .connections = sectionIdentifier {
+                sectionView.set(title: Localized.Ud.localResults)
+            }
+
+            return sectionView
         }
     }
 
@@ -422,8 +438,8 @@ final class SearchLeftController: UIViewController {
 
 }
 
-extension SearchLeftController: UITableViewDelegate {
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+extension SearchLeftController: UICollectionViewDelegate {
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if let item = dataSource.itemIdentifier(for: indexPath) {
             switch item {
             case .stranger(let contact):
@@ -432,10 +448,6 @@ extension SearchLeftController: UITableViewDelegate {
                 didTap(contact: contact)
             }
         }
-    }
-
-    func tableView(_ tableView: UITableView, willDisplayHeaderView view: UIView, forSection section: Int) {
-        (view as! UITableViewHeaderFooterView).textLabel?.textColor = Asset.neutralWeak.color
     }
 
     private func didTap(contact: Contact) {

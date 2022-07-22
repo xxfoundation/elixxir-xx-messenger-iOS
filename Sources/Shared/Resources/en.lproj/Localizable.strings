@@ -988,6 +988,8 @@
 = "Edit your new contact’s nickname so you know who they are.";
 "ud.nicknameDrawer.save"
 = "Save";
+"ud.localResults"
+= "LOCAL RESULTS";
 
 "ud.search.input"
 = "Search by %@";

@@ -7,6 +7,16 @@ import Countries
 import Integration
 import DependencyInjection
 
+enum SearchSection {
+    case stranger
+    case connections
+}
+
+enum SearchItem: Equatable, Hashable {
+    case stranger(Contact)
+    case connection(Contact)
+}
+
 typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchItem>
 
 struct SearchLeftViewState {
