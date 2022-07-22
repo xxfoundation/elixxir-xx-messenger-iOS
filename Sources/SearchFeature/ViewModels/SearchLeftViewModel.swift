@@ -126,12 +126,20 @@ final class SearchLeftViewModel {
 
         let localsQuery = Contact.Query(text: stateSubject.value.input, authStatus: [.friend])
 
-        if let locals = try? session.dbManager.fetchContacts(localsQuery), locals.count > 0 {
-            let localsWithoutMe = locals.filter { $0.id != session.myId }
+        if let locals = try? session.dbManager.fetchContacts(localsQuery),
+           let localsWithoutMe = removeMyself(from: locals),
+           localsWithoutMe.isEmpty == false {
             snapshot.appendSections([.connections])
-            snapshot.appendItems(localsWithoutMe.map(SearchItem.connection), toSection: .connections)
+            snapshot.appendItems(
+                localsWithoutMe.map(SearchItem.connection),
+                toSection: .connections
+            )
         }
 
         stateSubject.value.snapshot = snapshot
+    }
+
+    private func removeMyself(from collection: [Contact]) -> [Contact]? {
+        collection.filter { $0.id != session.myId }
     }
 }
