@@ -140,6 +140,8 @@ public final class Session: SessionType {
             }
         }
 
+        print("^^^ \(report.parameters)")
+
         guard username!.isEmpty == false else {
             fatalError("Trying to restore an account that has no username")
         }
