@@ -54,20 +54,27 @@ final class SearchLeftController: UIViewController {
             let contact: Contact
             let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: AvatarCell.self)
 
-            switch item {
-            case .stranger(let stranger):
-                contact = stranger
-            case .connection(let connection):
-                contact = connection
-            }
-
             let h1Text: String
             var h2Text: String?
 
-            h1Text = (contact.nickname ?? contact.username) ?? ""
+            switch item {
+            case .stranger(let stranger):
+                contact = stranger
+                h1Text = stranger.username ?? ""
 
-            if let _ = contact.nickname, let username = contact.username {
-                h2Text = username
+                if stranger.authStatus == .requested {
+                    h2Text = "Request pending"
+                } else if stranger.authStatus == .requestFailed {
+                    h2Text = "Request failed"
+                }
+
+            case .connection(let connection):
+                contact = connection
+                h1Text = (connection.nickname ?? contact.username) ?? ""
+
+                if connection.nickname != nil {
+                    h2Text = contact.username ?? ""
+                }
             }
 
             cell.setup(

@@ -17,7 +17,7 @@ class SearchDiffableDataSource: UITableViewDiffableDataSource<SearchSection, Sea
         case .stranger:
             return ""
         case .connections:
-            return "CONNECTIONS"
+            return "LOCAL RESULTS"
         }
     }
 }

@@ -224,6 +224,7 @@ let package = Package(
                     "Shared",
                     "Keychain",
                     "InputField",
+                    "Presentation",
                     "DependencyInjection",
                     .product(
                         name: "Shout",
