@@ -66,4 +66,6 @@ public protocol SessionType {
         members: [Contact],
         _ completion: @escaping (Result<GroupInfo, Error>) -> Void
     )
+
+    func search(fact: String) -> AnyPublisher<Contact, Error>
 }

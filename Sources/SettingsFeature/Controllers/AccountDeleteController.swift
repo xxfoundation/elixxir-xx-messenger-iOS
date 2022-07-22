@@ -10,7 +10,7 @@ import DependencyInjection
 public final class AccountDeleteController: UIViewController {
     @KeyObject(.username, defaultValue: "") var username: String
 
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
     @Dependency private var coordinator: SettingsCoordinating
 
     lazy private var screenView = AccountDeleteView()

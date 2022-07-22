@@ -24,7 +24,7 @@ extension Message: Differentiable {
 }
 
 public final class SingleChatController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
     @Dependency private var logger: XXLogger
     @Dependency private var voxophone: Voxophone
     @Dependency private var coordinator: ChatCoordinating

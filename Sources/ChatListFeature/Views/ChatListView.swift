@@ -14,7 +14,7 @@ final class ChatListView: UIView {
         backgroundColor = Asset.neutralWhite.color
         listContainerView.backgroundColor = Asset.neutralWhite.color
         searchListContainerView.backgroundColor = Asset.neutralWhite.color
-        searchView.update(placeholder: "Search chats")
+        searchView.update(placeholder: Localized.ChatList.Search.title)
 
         addSubview(snackBar)
         addSubview(searchView)
@@ -22,6 +22,34 @@ final class ChatListView: UIView {
         containerView.addSubview(searchListContainerView)
         containerView.addSubview(listContainerView)
 
+        setupConstraints()
+    }
+
+    required init?(coder: NSCoder) { nil }
+
+    func showConnectingBanner(_ show: Bool) {
+        if show == true {
+            snackBar.alpha = 0.0
+            snackBar.snp.updateConstraints {
+                $0.bottom
+                    .equalTo(snp.top)
+                    .offset(snackBar.bounds.height)
+            }
+        } else {
+            snackBar.alpha = 1.0
+            snackBar.snp.updateConstraints {
+                $0.bottom.equalTo(snp.top)
+            }
+        }
+
+        UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
+            self.setNeedsLayout()
+            self.layoutIfNeeded()
+            self.snackBar.alpha = show ? 1.0 : 0.0
+        }
+    }
+
+    private func setupConstraints() {
         snackBar.snp.makeConstraints {
             $0.left.equalToSuperview()
             $0.right.equalToSuperview()
@@ -47,30 +75,6 @@ final class ChatListView: UIView {
 
         searchListContainerView.snp.makeConstraints {
             $0.edges.equalToSuperview()
-        }
-    }
-
-    required init?(coder: NSCoder) { nil }
-
-    func showConnectingBanner(_ show: Bool) {
-        if show == true {
-            snackBar.alpha = 0.0
-            snackBar.snp.updateConstraints {
-                $0.bottom
-                    .equalTo(snp.top)
-                    .offset(snackBar.bounds.height)
-            }
-        } else {
-            snackBar.alpha = 1.0
-            snackBar.snp.updateConstraints {
-                $0.bottom.equalTo(snp.top)
-            }
-        }
-
-        UIView.animate(withDuration: 0.3, delay: 0, options: .curveEaseInOut) {
-            self.setNeedsLayout()
-            self.layoutIfNeeded()
-            self.snackBar.alpha = show ? 1.0 : 0.0
         }
     }
 }

@@ -9,39 +9,42 @@ final class SearchSegmentedControl: UIView {
         case email
         case phone
         case qr
+
+        var written: String {
+            switch self {
+            case .qr: return "qr"
+            case .email: return "email"
+            case .phone: return "phone number"
+            case .username: return "username"
+            }
+        }
     }
 
     private let trackView = UIView()
     private let stackView = UIStackView()
+    private var leftConstraint: Constraint?
     private let trackIndicatorView = UIView()
-    private(set) var leftConstraint: Constraint?
-    private(set) var usernameButton = SearchSegmentedButton()
-    private(set) var emailButton = SearchSegmentedButton()
-    private(set) var phoneButton = SearchSegmentedButton()
-    private(set) var qrCodeButton = SearchSegmentedButton()
+    private let emailButton = SearchSegmentedButton()
+    private let phoneButton = SearchSegmentedButton()
+    private let qrCodeButton = SearchSegmentedButton()
+    private let usernameButton = SearchSegmentedButton()
 
     var actionPublisher: AnyPublisher<Item, Never> {
         actionSubject.eraseToAnyPublisher()
     }
 
     private var cancellables = Set<AnyCancellable>()
-    private let actionSubject = PassthroughSubject<Item, Never>()
+    private let actionSubject = CurrentValueSubject<Item, Never>(.username)
 
     init() {
         super.init(frame: .zero)
         trackView.backgroundColor = Asset.neutralLine.color
         trackIndicatorView.backgroundColor = Asset.brandPrimary.color
 
-        usernameButton.setup(
-            title: Localized.Ud.Tab.username,
-            icon: Asset.searchTabUsername.image,
-            iconColor: Asset.brandPrimary.color,
-            titleColor: Asset.brandPrimary.color
-        )
-
         qrCodeButton.setup(title: Localized.Ud.Tab.qr, icon: Asset.searchTabQr.image)
         emailButton.setup(title: Localized.Ud.Tab.email, icon: Asset.searchTabEmail.image)
         phoneButton.setup(title: Localized.Ud.Tab.phone, icon: Asset.searchTabPhone.image)
+        usernameButton.setup(title: Localized.Ud.Tab.username, icon: Asset.searchTabUsername.image)
 
         stackView.distribution = .fillEqually
         stackView.addArrangedSubview(usernameButton)
@@ -61,25 +64,38 @@ final class SearchSegmentedControl: UIView {
     required init?(coder: NSCoder) { nil }
 
     private func setupBindings() {
-        usernameButton
-            .publisher(for: .touchUpInside)
+        usernameButton.publisher(for: .touchUpInside)
             .sink { [unowned self] in actionSubject.send(.username) }
             .store(in: &cancellables)
 
-        emailButton
-            .publisher(for: .touchUpInside)
+        emailButton.publisher(for: .touchUpInside)
             .sink { [unowned self] in actionSubject.send(.email) }
             .store(in: &cancellables)
 
-        phoneButton
-            .publisher(for: .touchUpInside)
+        phoneButton.publisher(for: .touchUpInside)
             .sink { [unowned self] in actionSubject.send(.phone) }
             .store(in: &cancellables)
 
-        qrCodeButton
-            .publisher(for: .touchUpInside)
+        qrCodeButton.publisher(for: .touchUpInside)
             .sink { [unowned self] in actionSubject.send(.qr) }
             .store(in: &cancellables)
+
+        actionSubject
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                let tabWidth = bounds.width / 4
+                if let leftConstraint = leftConstraint {
+                    leftConstraint.update(offset: tabWidth * CGFloat($0.rawValue))
+                    setNeedsLayout()
+                    UIView.animate(withDuration: 0.25) { self.layoutIfNeeded() }
+                }
+
+                qrCodeButton.setSelected($0 == .qr)
+                emailButton.setSelected($0 == .email)
+                phoneButton.setSelected($0 == .phone)
+                usernameButton.setSelected($0 == .username)
+            }.store(in: &cancellables)
     }
 
     private func setupConstraints() {

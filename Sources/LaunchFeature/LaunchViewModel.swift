@@ -58,7 +58,7 @@ final class LaunchViewModel {
 
     func viewDidAppear() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-            self?.hudSubject.send(.on(nil))
+            self?.hudSubject.send(.on)
             self?.checkVersion()
         }
     }

@@ -7,7 +7,7 @@ import DependencyInjection
 
 
 public final class LaunchController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
     @Dependency private var coordinator: LaunchCoordinating
 
     lazy private var screenView = LaunchView()

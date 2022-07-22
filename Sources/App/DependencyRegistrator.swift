@@ -104,7 +104,7 @@ struct DependencyRegistrator {
 
         // MARK: Isolated
 
-        container.register(HUD() as HUDType)
+        container.register(HUD())
         container.register(ThemeController() as ThemeControlling)
         container.register(ToastController())
         container.register(StatusBarController() as StatusBarStyleControlling)
@@ -137,6 +137,8 @@ struct DependencyRegistrator {
 
         container.register(
             SearchCoordinator(
+                contactsFactory: ContactListController.init,
+                requestsFactory: RequestsContainerController.init,
                 contactFactory: ContactController.init(_:),
                 countriesFactory: CountryListController.init(_:)
             ) as SearchCoordinating)

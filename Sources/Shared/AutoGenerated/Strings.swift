@@ -218,7 +218,7 @@ public enum Localized {
       public static let login = Localized.tr("Localizable", "accountRestore.sftp.login")
       /// Password
       public static let password = Localized.tr("Localizable", "accountRestore.sftp.password")
-      /// Login to your server. Your credentials will be automatically and securley saved locally on your device.
+      /// Login to your server. Your credentials will be automatically and securely saved locally on your device.
       public static let subtitle = Localized.tr("Localizable", "accountRestore.sftp.subtitle")
       /// Login to your SFTP
       public static let title = Localized.tr("Localizable", "accountRestore.sftp.title")
@@ -429,6 +429,10 @@ public enum Localized {
     public enum NavigationBar {
       /// Cancel
       public static let cancel = Localized.tr("Localizable", "chatList.navigationBar.cancel")
+    }
+    public enum Search {
+      /// Search chats
+      public static let title = Localized.tr("Localizable", "chatList.search.title")
     }
     public enum Traffic {
       /// Not now
@@ -961,6 +965,14 @@ public enum Localized {
         public static func resent(_ p1: Any) -> String {
           return Localized.tr("Localizable", "requests.sent.toast.resent", String(describing: p1))
         }
+        /// Request couldn't be resent to %@
+        public static func resentFailed(_ p1: Any) -> String {
+          return Localized.tr("Localizable", "requests.sent.toast.resentFailed", String(describing: p1))
+        }
+        /// Request successfully sent to %@
+        public static func sent(_ p1: Any) -> String {
+          return Localized.tr("Localizable", "requests.sent.toast.sent", String(describing: p1))
+        }
       }
     }
   }
@@ -1201,8 +1213,6 @@ public enum Localized {
     public static func noneFound(_ p1: Any) -> String {
       return Localized.tr("Localizable", "ud.noneFound", String(describing: p1))
     }
-    /// User
-    public static let sectionTitle = Localized.tr("Localizable", "ud.sectionTitle")
     /// Search
     public static let title = Localized.tr("Localizable", "ud.title")
     public enum NicknameDrawer {
@@ -1214,8 +1224,6 @@ public enum Localized {
       public static let title = Localized.tr("Localizable", "ud.nicknameDrawer.title")
     }
     public enum Placeholder {
-      /// Searching is private by nature. The network cannot identify who a search request came from.
-      public static let title = Localized.tr("Localizable", "ud.placeholder.title")
       public enum Drawer {
         /// Got it
         public static let action = Localized.tr("Localizable", "ud.placeholder.drawer.action")
@@ -1236,6 +1244,24 @@ public enum Localized {
       public static let send = Localized.tr("Localizable", "ud.requestDrawer.send")
       /// Request Contact
       public static let title = Localized.tr("Localizable", "ud.requestDrawer.title")
+    }
+    public enum Search {
+      /// Cancel search
+      public static let cancel = Localized.tr("Localizable", "ud.search.cancel")
+      /// There are no users with that %@.
+      public static func empty(_ p1: Any) -> String {
+        return Localized.tr("Localizable", "ud.search.empty", String(describing: p1))
+      }
+      /// Search by %@
+      public static func input(_ p1: Any) -> String {
+        return Localized.tr("Localizable", "ud.search.input", String(describing: p1))
+      }
+      public enum Placeholder {
+        /// Your searches are anonymous. Search information is never linked to your account or personally identifiable.
+        public static let subtitle = Localized.tr("Localizable", "ud.search.placeholder.subtitle")
+        /// Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.
+        public static let title = Localized.tr("Localizable", "ud.search.placeholder.title")
+      }
     }
     public enum Tab {
       /// Email

@@ -130,8 +130,20 @@ public final class Session: SessionType {
             let params = try! JSONDecoder().decode(BackupParameters.self, from: Data(report.parameters.utf8))
 
             username = params.username
-            phone = params.phone
-            email = params.email
+
+            if let paramsPhone = params.phone, !paramsPhone.isEmpty {
+                phone = paramsPhone
+            }
+
+            if let paramsEmail = params.email, !paramsEmail.isEmpty {
+                email = paramsEmail
+            }
+        }
+
+        print("^^^ \(report.parameters)")
+
+        guard username!.isEmpty == false else {
+            fatalError("Trying to restore an account that has no username")
         }
 
         try continueInitialization()

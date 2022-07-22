@@ -17,7 +17,7 @@ final class AccountDeleteViewModel {
         deleting = true
 
         DispatchQueue.main.async { [weak self] in
-            self?.hudRelay.send(.on(nil))
+            self?.hudRelay.send(.on)
         }
 
         do {

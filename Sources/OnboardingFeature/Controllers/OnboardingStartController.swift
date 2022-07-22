@@ -6,7 +6,7 @@ import Combine
 import DependencyInjection
 
 public final class OnboardingStartController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
     @Dependency private var coordinator: OnboardingCoordinating
 
     lazy private var screenView = OnboardingStartView()

@@ -9,7 +9,7 @@ import ScrollViewController
 #warning("TODO: Merge ProfilePhoneController/ProfileEmailController")
 
 public final class ProfilePhoneController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
     @Dependency private var coordinator: ProfileCoordinating
     @Dependency private var statusBarController: StatusBarStyleControlling
 

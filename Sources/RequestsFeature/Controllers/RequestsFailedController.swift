@@ -5,7 +5,7 @@ import Combine
 import DependencyInjection
 
 final class RequestsFailedController: UIViewController {
-    @Dependency private var hud: HUDType
+    @Dependency private var hud: HUD
 
     lazy private var screenView = RequestsFailedView()
     private var cancellables = Set<AnyCancellable>()

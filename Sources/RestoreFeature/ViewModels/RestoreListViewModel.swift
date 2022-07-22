@@ -47,7 +47,7 @@ final class RestoreListViewModel {
             guard let self = self else { return }
             controller.navigationController?.popViewController(animated: true)
 
-            self.hudSubject.send(.on(nil))
+            self.hudSubject.send(.on)
 
             self.sftpService.fetchMetadata{ result in
                 switch result {
@@ -72,7 +72,7 @@ final class RestoreListViewModel {
         googleDriveService.authorize(presenting: controller) { authResult in
             switch authResult {
             case .success:
-                self.hudSubject.send(.on(nil))
+                self.hudSubject.send(.on)
                 self.googleDriveService.downloadMetadata { downloadResult in
                     switch downloadResult {
                     case .success(let metadata):
@@ -97,7 +97,7 @@ final class RestoreListViewModel {
 
     private func didRequestICloudAuthorization() {
         if icloudService.isAuthorized() {
-            self.hudSubject.send(.on(nil))
+            self.hudSubject.send(.on)
 
             icloudService.downloadMetadata { result in
                 switch result {
@@ -129,7 +129,7 @@ final class RestoreListViewModel {
                 case .success(let bool):
                     guard bool == true else { return }
 
-                    self.hudSubject.send(.on(nil))
+                    self.hudSubject.send(.on)
                     dropboxService.downloadMetadata { metadataResult in
                         switch metadataResult {
                         case .success(let metadata):
