@@ -15,12 +15,12 @@ public final class CreateGroupController: UIViewController {
     lazy private var screenView = CreateGroupView()
 
     private var selectedElements = [Contact]() {
-        didSet { screenView.tableView.reloadData() }
+        didSet { screenView.bottomCollectionView.reloadData() }
     }
     private let viewModel = CreateGroupViewModel()
     private var cancellables = Set<AnyCancellable>()
-    private var tableDataSource: UITableViewDiffableDataSource<SectionId, Contact>!
-    private var collectionDataSource: UICollectionViewDiffableDataSource<SectionId, Contact>!
+    private var topCollectionDataSource: UICollectionViewDiffableDataSource<SectionId, Contact>!
+    private var bottomCollectionDataSource: UICollectionViewDiffableDataSource<SectionId, Contact>!
 
     private var count = 0 {
         didSet {
@@ -43,7 +43,7 @@ public final class CreateGroupController: UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
-        setupTableAndCollection()
+        setupCollectionViews()
         setupBindings()
     }
 
@@ -64,13 +64,12 @@ public final class CreateGroupController: UIViewController {
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: createButton)
     }
 
-    private func setupTableAndCollection() {
-        screenView.tableView.rowHeight = 64.0
-        screenView.tableView.register(AvatarCell.self)
-        screenView.collectionView.register(CreateGroupCollectionCell.self)
+    private func setupCollectionViews() {
+        screenView.bottomCollectionView.register(AvatarCell.self)
+        screenView.topCollectionView.register(CreateGroupCollectionCell.self)
 
-        collectionDataSource = UICollectionViewDiffableDataSource<SectionId, Contact>(
-            collectionView: screenView.collectionView
+        topCollectionDataSource = UICollectionViewDiffableDataSource<SectionId, Contact>(
+            collectionView: screenView.topCollectionView
         ) { [weak viewModel] collectionView, indexPath, contact in
             let cell: CreateGroupCollectionCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
@@ -81,26 +80,28 @@ public final class CreateGroupController: UIViewController {
             return cell
         }
 
-        tableDataSource = DiffEditableDataSource<SectionId, Contact>(
-            tableView: screenView.tableView
-        ) { [weak self] tableView, indexPath, contact in
-            let cell = tableView.dequeueReusableCell(forIndexPath: indexPath, ofType: AvatarCell.self)
+        bottomCollectionDataSource = UICollectionViewDiffableDataSource<SectionId, Contact>(
+            collectionView: screenView.bottomCollectionView
+        ) { [weak self] collectionView, indexPath, contact in
+            let cell: AvatarCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
             let title = (contact.nickname ?? contact.username) ?? ""
 
             cell.set(image: contact.photo, h1Text: title)
 
             if let selectedElements = self?.selectedElements, selectedElements.contains(contact) {
-                tableView.selectRow(at: indexPath, animated: true, scrollPosition: .none)
+                collectionView.selectItem(at: indexPath, animated: true, scrollPosition: [])
             } else {
-                tableView.deselectRow(at: indexPath, animated: true)
+                collectionView.deselectItem(at: indexPath, animated: true)
             }
 
             return cell
         }
 
-        screenView.tableView.delegate = self
-        screenView.tableView.dataSource = tableDataSource
-        screenView.collectionView.dataSource = collectionDataSource
+        screenView.bottomCollectionView.delegate = self
+        screenView.topCollectionView.dataSource = topCollectionDataSource
+        screenView.bottomCollectionView.tintColor = Asset.brandPrimary.color
+        screenView.bottomCollectionView.dataSource = bottomCollectionDataSource
+        screenView.bottomCollectionView.allowsMultipleSelectionDuringEditing = true
     }
 
     private func setupBindings() {
@@ -114,7 +115,7 @@ public final class CreateGroupController: UIViewController {
         selected
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
-                screenView.collectionView.isHidden = $0.count < 1
+                screenView.topCollectionView.isHidden = $0.count < 1
 
                 count = $0.count
                 selectedElements = $0
@@ -128,11 +129,11 @@ public final class CreateGroupController: UIViewController {
             return snapshot
         }
         .receive(on: DispatchQueue.main)
-        .sink { [unowned self] in collectionDataSource.apply($0) }
+        .sink { [unowned self] in topCollectionDataSource.apply($0) }
         .store(in: &cancellables)
 
         viewModel.contacts
-            .map { contacts in
+            .map { contacts -> NSDiffableDataSourceSnapshot<SectionId, Contact> in
                 var snapshot = NSDiffableDataSourceSnapshot<SectionId, Contact>()
                 let sections = [SectionId()]
                 snapshot.appendSections(sections)
@@ -141,7 +142,8 @@ public final class CreateGroupController: UIViewController {
             }
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
-                tableDataSource.apply($0, animatingDifferences: tableDataSource.snapshot().numberOfItems > 0)
+                let animating = bottomCollectionDataSource.snapshot().numberOfItems > 0
+                bottomCollectionDataSource.apply($0, animatingDifferences: animating)
             }.store(in: &cancellables)
 
         screenView.searchComponent.textPublisher
@@ -161,7 +163,7 @@ public final class CreateGroupController: UIViewController {
                 coordinator.toGroupDrawer(
                     with: count + 1,
                     from: self, { (name, welcome) in
-                        viewModel.create(name: name, welcome: welcome, members: selectedElements)
+                        self.viewModel.create(name: name, welcome: welcome, members: self.selectedElements)
                     }
                 )
             }.store(in: &cancellables)
@@ -172,15 +174,15 @@ public final class CreateGroupController: UIViewController {
     }
 }
 
-extension CreateGroupController: UITableViewDelegate {
-    public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        if let contact = tableDataSource.itemIdentifier(for: indexPath) {
+extension CreateGroupController: UICollectionViewDelegate {
+    public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        if let contact = bottomCollectionDataSource.itemIdentifier(for: indexPath) {
             viewModel.didSelect(contact: contact)
         }
     }
 
-    public func tableView(_ tableView: UITableView, didDeselectRowAt indexPath: IndexPath) {
-        if let contact = tableDataSource.itemIdentifier(for: indexPath) {
+    public func collectionView(_ collectionView: UICollectionView, didDeselectItemAt indexPath: IndexPath) {
+        if let contact = bottomCollectionDataSource.itemIdentifier(for: indexPath) {
             viewModel.didSelect(contact: contact)
         }
     }

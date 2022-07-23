@@ -4,9 +4,20 @@ import SnapKit
 
 final class CreateGroupView: UIView {
     let stackView = UIStackView()
-    let tableView = UITableView()
     let searchComponent = SearchComponent()
-    lazy var collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+    lazy var topCollectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
+
+    lazy var bottomCollectionView: UICollectionView = {
+        var config = UICollectionLayoutListConfiguration(appearance: .plain)
+        config.backgroundColor = Asset.neutralWhite.color
+        config.showsSeparators = false
+        let layout = UICollectionViewCompositionalLayout.list(using: config)
+        let collectionView = UICollectionView(frame: bounds, collectionViewLayout: layout)
+        collectionView.contentInset = .init(top: 15, left: 0, bottom: 0, right: 0)
+        return collectionView
+
+        //tableView.setEditing(true, animated: true)
+    }()
 
     let layout: UICollectionViewFlowLayout = {
         let layout = UICollectionViewFlowLayout()
@@ -20,24 +31,18 @@ final class CreateGroupView: UIView {
         super.init(frame: .zero)
         backgroundColor = Asset.neutralWhite.color
 
-        tableView.separatorStyle = .none
-        tableView.tintColor = Asset.brandPrimary.color
-        tableView.backgroundColor = Asset.neutralWhite.color
-        tableView.allowsMultipleSelectionDuringEditing = true
-        tableView.setEditing(true, animated: true)
-
         searchComponent.set(
             placeholder: "Search connections",
             imageAtRight: UIImage.color(.clear)
         )
 
-        collectionView.backgroundColor = Asset.neutralWhite.color
-        collectionView.contentInset = UIEdgeInsets(top: 0, left: 30, bottom: 0, right: 30)
+        topCollectionView.backgroundColor = Asset.neutralWhite.color
+        topCollectionView.contentInset = UIEdgeInsets(top: 0, left: 30, bottom: 0, right: 30)
 
         stackView.spacing = 31
         stackView.axis = .vertical
-        stackView.addArrangedSubview(collectionView)
-        stackView.addArrangedSubview(tableView)
+        stackView.addArrangedSubview(topCollectionView)
+        stackView.addArrangedSubview(bottomCollectionView)
 
         addSubview(stackView)
         addSubview(searchComponent)
@@ -55,7 +60,7 @@ final class CreateGroupView: UIView {
             make.bottom.equalToSuperview()
         }
 
-        collectionView.snp.makeConstraints { $0.height.equalTo(100) }
+        topCollectionView.snp.makeConstraints { $0.height.equalTo(100) }
     }
 
     required init?(coder: NSCoder) { nil }
