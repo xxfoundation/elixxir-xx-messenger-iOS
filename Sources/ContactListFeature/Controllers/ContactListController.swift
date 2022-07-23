@@ -11,9 +11,9 @@ public final class ContactListController: UIViewController {
 
     lazy private var screenView = ContactListView()
 
+    private var dataSource: IndexedContactList!
     private let viewModel = ContactListViewModel()
     private var cancellables = Set<AnyCancellable>()
-    private var dataSource: UICollectionViewDiffableDataSource<Int, Contact>!
 
     public override func loadView() {
         view = screenView
@@ -38,8 +38,9 @@ public final class ContactListController: UIViewController {
         screenView.collectionView.delegate = self
         screenView.collectionView.register(AvatarCell.self)
         screenView.collectionView.dataSource = dataSource
+        screenView.collectionView.tintColor = Asset.neutralDark.color
 
-        dataSource = UICollectionViewDiffableDataSource<Int, Contact>(
+        dataSource = IndexedContactList(
             collectionView: screenView.collectionView
         ) { collectionView, indexPath, contact in
             let cell: AvatarCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
@@ -125,15 +126,25 @@ public final class ContactListController: UIViewController {
 
         viewModel.snapshotPublisher
             .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in
-                screenView.emptyView.isHidden = $0.numberOfItems > 0
+            .sink { [unowned self] snapshot in
+                screenView.emptyView.isHidden = snapshot.numberOfItems > 0
 
-                if $0.numberOfItems == 0 {
+                if snapshot.numberOfItems == 0 {
                     screenView.bringSubviewToFront(screenView.emptyView)
                 }
 
                 let animatingDifferences = dataSource.snapshot().numberOfItems > 0
-                dataSource.apply($0, animatingDifferences: animatingDifferences)
+                dataSource.apply(snapshot, animatingDifferences: animatingDifferences) { [weak self] in
+                    guard let self = self else { return }
+
+                    self.dataSource.set(indexTitles: snapshot.itemIdentifiers.map { contact -> String in
+                        let name = (contact.nickname ?? contact.username) ?? ""
+                        return "\(name.first!)"
+                    })
+
+                    self.screenView.collectionView.reloadData()
+                }
+
             }.store(in: &cancellables)
     }
 
@@ -157,19 +168,3 @@ extension ContactListController: UICollectionViewDelegate {
         }
     }
 }
-
-
-//final class ContactListTableController: UITableViewController {
-//    private var collation = UILocalizedIndexedCollation.current()
-//
-//    override func sectionIndexTitles(for: UITableView) -> [String]? {
-//        collation.sectionIndexTitles
-//    }
-//
-//    override func tableView(_: UITableView, titleForHeaderInSection section: Int) -> String? {
-//        collation.sectionTitles[section]
-//    }
-//
-//    override func tableView(_: UITableView, sectionForSectionIndexTitle: String, at index: Int) -> Int {
-//        collation.section(forSectionIndexTitle: index)
-//    }
