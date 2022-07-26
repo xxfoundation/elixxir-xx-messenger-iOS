@@ -59,7 +59,6 @@ final class SearchLeftViewModel {
     }
 
     func didTapCancelSearch() {
-        searchCancellables.forEach { $0.cancel() }
         searchCancellables.removeAll()
         hudSubject.send(.none)
     }

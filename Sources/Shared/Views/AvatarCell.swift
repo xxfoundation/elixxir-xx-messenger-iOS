@@ -76,7 +76,6 @@ public final class AvatarCell: UICollectionViewCell {
         avatarView.prepareForReuse()
         actionButton.prepareForReuse()
 
-        cancellables.forEach { $0.cancel() }
         cancellables.removeAll()
     }
 
@@ -107,23 +106,11 @@ public final class AvatarCell: UICollectionViewCell {
         separatorView.isHidden = !showSeparator
 
         if let action = action {
-            actionButton.set(
-                image: action.image,
-                title: action.title,
-                titleColor: action.color
-            )
-
-            didTapAction = action.action
-
-            actionButton
-                .publisher(for: .touchUpInside)
-                .sink { [unowned self] in didTapAction?() }
-                .store(in: &cancellables)
+            update(action: action)
         }
     }
 
     public func update(action: Action) {
-        cancellables.forEach { $0.cancel() }
         cancellables.removeAll()
 
         actionButton.set(

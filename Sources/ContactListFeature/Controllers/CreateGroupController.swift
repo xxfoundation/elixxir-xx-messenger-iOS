@@ -19,8 +19,8 @@ public final class CreateGroupController: UIViewController {
     }
     private let viewModel = CreateGroupViewModel()
     private var cancellables = Set<AnyCancellable>()
-    private var topCollectionDataSource: UICollectionViewDiffableDataSource<SectionId, Contact>!
-    private var bottomCollectionDataSource: UICollectionViewDiffableDataSource<SectionId, Contact>!
+    private var topCollectionDataSource: UICollectionViewDiffableDataSource<Int, Contact>!
+    private var bottomCollectionDataSource: UICollectionViewDiffableDataSource<Int, Contact>!
 
     private var count = 0 {
         didSet {
@@ -68,7 +68,7 @@ public final class CreateGroupController: UIViewController {
         screenView.bottomCollectionView.register(AvatarCell.self)
         screenView.topCollectionView.register(CreateGroupCollectionCell.self)
 
-        topCollectionDataSource = UICollectionViewDiffableDataSource<SectionId, Contact>(
+        topCollectionDataSource = UICollectionViewDiffableDataSource<Int, Contact>(
             collectionView: screenView.topCollectionView
         ) { [weak viewModel] collectionView, indexPath, contact in
             let cell: CreateGroupCollectionCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
@@ -80,7 +80,7 @@ public final class CreateGroupController: UIViewController {
             return cell
         }
 
-        bottomCollectionDataSource = UICollectionViewDiffableDataSource<SectionId, Contact>(
+        bottomCollectionDataSource = UICollectionViewDiffableDataSource<Int, Contact>(
             collectionView: screenView.bottomCollectionView
         ) { [weak self] collectionView, indexPath, contact in
             let cell: AvatarCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
@@ -122,8 +122,8 @@ public final class CreateGroupController: UIViewController {
             }.store(in: &cancellables)
 
         selected.map { selectedContacts in
-            var snapshot = NSDiffableDataSourceSnapshot<SectionId, Contact>()
-            let sections = [SectionId()]
+            var snapshot = NSDiffableDataSourceSnapshot<Int, Contact>()
+            let sections = [0]
             snapshot.appendSections(sections)
             sections.forEach { section in snapshot.appendItems(selectedContacts, toSection: section) }
             return snapshot
@@ -133,9 +133,9 @@ public final class CreateGroupController: UIViewController {
         .store(in: &cancellables)
 
         viewModel.contacts
-            .map { contacts -> NSDiffableDataSourceSnapshot<SectionId, Contact> in
-                var snapshot = NSDiffableDataSourceSnapshot<SectionId, Contact>()
-                let sections = [SectionId()]
+            .map { contacts -> NSDiffableDataSourceSnapshot<Int, Contact> in
+                var snapshot = NSDiffableDataSourceSnapshot<Int, Contact>()
+                let sections = [0]
                 snapshot.appendSections(sections)
                 sections.forEach { section in snapshot.appendItems(contacts, toSection: section) }
                 return snapshot

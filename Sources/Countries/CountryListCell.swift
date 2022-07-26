@@ -1,16 +1,15 @@
 import UIKit
 import Shared
 
-final class CountryListCell: UITableViewCell {
-    let nameLabel = UILabel()
-    let flagLabel = UILabel()
-    let prefixLabel = UILabel()
-    let separatorView = UIView()
+final class CountryListCell: UICollectionViewCell {
+    private let nameLabel = UILabel()
+    private let flagLabel = UILabel()
+    private let prefixLabel = UILabel()
+    private let separatorView = UIView()
 
-    override init(style: UITableViewCell.CellStyle, reuseIdentifier: String?) {
-        super.init(style: style, reuseIdentifier: reuseIdentifier)
+    override init(frame: CGRect) {
+        super.init(frame: frame)
 
-        selectionStyle = .none
         backgroundColor = Asset.neutralWhite.color
 
         nameLabel.textColor = Asset.neutralDark.color
@@ -26,6 +25,29 @@ final class CountryListCell: UITableViewCell {
         contentView.addSubview(prefixLabel)
         contentView.addSubview(separatorView)
 
+        setupConstraints()
+    }
+
+    required init?(coder: NSCoder) { nil }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        nameLabel.text = nil
+        flagLabel.text = nil
+        prefixLabel.text = nil
+    }
+
+    func set(
+        flag: String,
+        name: String,
+        prefix: String
+    ) {
+        flagLabel.text = flag
+        nameLabel.text = name
+        prefixLabel.text = prefix
+    }
+
+    private func setupConstraints() {
         flagLabel.snp.makeConstraints {
             $0.left.top.equalToSuperview().inset(18)
             $0.bottom.equalToSuperview().offset(-16)
@@ -48,15 +70,5 @@ final class CountryListCell: UITableViewCell {
             $0.right.equalToSuperview().offset(-20)
             $0.height.equalTo(1)
         }
-    }
-
-    required init?(coder: NSCoder) { nil }
-
-    override func prepareForReuse() {
-        super.prepareForReuse()
-
-        nameLabel.text = nil
-        flagLabel.text = nil
-        prefixLabel.text = nil
     }
 }

@@ -165,7 +165,7 @@ final class RequestsReceivedViewModel {
 
     func fetchMembers(
         _ group: Group,
-        _ completion: @escaping (Result<[DrawerTableCellModel], Error>) -> Void
+        _ completion: @escaping (Result<[DrawerListCellModel], Error>) -> Void
     ) {
         if let info = try? session.dbManager.fetchGroupInfos(.init(groupId: group.id)).first {
             session.dbManager.fetchContactsPublisher(.init(id: Set(info.members.map(\.id))))
@@ -174,7 +174,7 @@ final class RequestsReceivedViewModel {
                     let withUsername = members
                         .filter { $0.username != nil }
                         .map {
-                            DrawerTableCellModel(
+                            DrawerListCellModel(
                                 id: $0.id,
                                 title: $0.nickname ?? $0.username!,
                                 image: $0.photo,
@@ -186,7 +186,7 @@ final class RequestsReceivedViewModel {
                     let withoutUsername = members
                         .filter { $0.username == nil }
                         .map {
-                            DrawerTableCellModel(
+                            DrawerListCellModel(
                                 id: $0.id,
                                 title: "Fetching username...",
                                 image: $0.photo,

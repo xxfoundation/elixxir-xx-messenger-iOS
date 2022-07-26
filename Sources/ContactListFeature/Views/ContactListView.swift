@@ -3,9 +3,9 @@ import Shared
 
 final class ContactListView: UIView {
     private let separatorView = UIView()
-    private(set) var emptyView = ContactListEmptyView()
-    private(set) var newGroupButton = ContactListActionButton()
-    private(set) var requestsButton = ContactListActionButton()
+    let emptyView = ContactListEmptyView()
+    let newGroupButton = ContactListActionButton()
+    let requestsButton = ContactListActionButton()
 
     lazy var collectionView: UICollectionView = {
         var config = UICollectionLayoutListConfiguration(appearance: .plain)

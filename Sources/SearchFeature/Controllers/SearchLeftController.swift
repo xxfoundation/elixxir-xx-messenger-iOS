@@ -142,7 +142,6 @@ final class SearchLeftController: UIViewController {
                         .sink { [unowned self] in viewModel.didTapCancelSearch() }
                         .store(in: &self.hudCancellables)
                 } else {
-                    hudCancellables.forEach { $0.cancel() }
                     hudCancellables.removeAll()
                 }
             }

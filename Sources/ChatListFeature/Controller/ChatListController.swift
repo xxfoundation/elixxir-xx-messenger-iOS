@@ -16,7 +16,7 @@ public final class ChatListController: UIViewController {
     lazy private var topRightView = ChatListTopRightNavView()
     lazy private var tableController = ChatListTableController(viewModel)
     lazy private var searchTableController = ChatSearchTableController(viewModel)
-    private var collectionDataSource: UICollectionViewDiffableDataSource<SectionId, Contact>!
+    private var collectionDataSource: UICollectionViewDiffableDataSource<Int, Contact>!
 
     private let viewModel = ChatListViewModel()
     private var cancellables = Set<AnyCancellable>()
@@ -112,7 +112,7 @@ public final class ChatListController: UIViewController {
             .collectionView
             .register(ChatListRecentContactCell.self)
 
-        collectionDataSource = UICollectionViewDiffableDataSource<SectionId, Contact>(
+        collectionDataSource = UICollectionViewDiffableDataSource<Int, Contact>(
             collectionView: screenView.listContainerView.collectionView
         ) { collectionView, indexPath, contact in
             let cell: ChatListRecentContactCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)

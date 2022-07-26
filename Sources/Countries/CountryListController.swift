@@ -1,4 +1,3 @@
-import os
 import Theme
 import UIKit
 import Shared
@@ -6,14 +5,14 @@ import Combine
 import DependencyInjection
 
 public final class CountryListController: UIViewController {
-    @Dependency private var statusBarController: StatusBarStyleControlling
+    @Dependency var statusBarController: StatusBarStyleControlling
     
     lazy private var screenView = CountryListView()
 
     private var didChoose: ((Country) -> Void)!
     private let viewModel = CountryListViewModel()
     private var cancellables = Set<AnyCancellable>()
-    private var dataSource: UITableViewDiffableDataSource<SectionId, Country>!
+    private var dataSource: UICollectionViewDiffableDataSource<Int, Country>!
 
     public init(_ didChoose: @escaping (Country) -> Void) {
         self.didChoose = didChoose
@@ -25,7 +24,6 @@ public final class CountryListController: UIViewController {
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         statusBarController.style.send(.darkContent)
-
         navigationController?.navigationBar.customize(
             backgroundColor: Asset.neutralWhite.color,
             shadowColor: Asset.neutralDisabled.color
@@ -38,65 +36,70 @@ public final class CountryListController: UIViewController {
 
     public override func viewDidLoad() {
         super.viewDidLoad()
-        screenView.tableView.register(CountryListCell.self)
         setupNavigationBar()
+        setupCollectionView()
         setupBindings()
-
-        viewModel.fetchCountryList()
     }
     
     private func setupNavigationBar() {
         navigationItem.backButtonTitle = " "
 
-        let title = UILabel()
-        title.text = Localized.Countries.title
-        title.textColor = Asset.neutralActive.color
-        title.font = Fonts.Mulish.semiBold.font(size: 18.0)
+        let titleLabel = UILabel()
+        titleLabel.text = Localized.Countries.title
+        titleLabel.textColor = Asset.neutralActive.color
+        titleLabel.font = Fonts.Mulish.semiBold.font(size: 18.0)
 
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
+        let backButton = UIButton.back()
+        backButton.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
 
         navigationItem.leftBarButtonItem = UIBarButtonItem(
-            customView: UIStackView(arrangedSubviews: [back, title])
+            customView: UIStackView(arrangedSubviews: [backButton, titleLabel])
         )
     }
 
     private func setupBindings() {
-        viewModel.countries
+        viewModel.countriesPublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in dataSource.apply($0, animatingDifferences: false) }
             .store(in: &cancellables)
-
-        dataSource = UITableViewDiffableDataSource<SectionId, Country>(
-            tableView: screenView.tableView
-        ) { tableView, indexPath, country in
-            let cell: CountryListCell = tableView.dequeueReusableCell(forIndexPath: indexPath)
-            cell.flagLabel.text = country.flag
-            cell.nameLabel.text = country.name
-            cell.prefixLabel.text = country.prefix
-            return cell
-        }
 
         screenView.searchComponent
             .textPublisher
             .removeDuplicates()
             .sink { [unowned self] in viewModel.didSearchFor($0) }
             .store(in: &cancellables)
+    }
 
-        screenView.tableView.delegate = self
-        screenView.tableView.dataSource = dataSource
+    private func setupCollectionView() {
+        screenView.collectionView.register(CountryListCell.self)
+
+        dataSource = UICollectionViewDiffableDataSource<Int, Country>(
+            collectionView: screenView.collectionView
+        ) { collectionView, indexPath, country in
+            let cell: CountryListCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
+
+            cell.set(
+                flag: country.flag,
+                name: country.name,
+                prefix: country.prefix
+            )
+            return cell
+        }
+
+        screenView.collectionView.delegate = self
+        screenView.collectionView.dataSource = dataSource
     }
     
     @objc private func didTapBack() {
         navigationController?.popViewController(animated: true)
     }
+}
 
-    public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+extension CountryListController: UICollectionViewDelegate {
+    public func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
         if let country = dataSource.itemIdentifier(for: indexPath) {
             didChoose(country)
             navigationController?.popViewController(animated: true)
         }
     }
 }
-
-extension CountryListController: UITableViewDelegate {}

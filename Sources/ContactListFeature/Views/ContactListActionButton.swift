@@ -6,6 +6,7 @@ final class ContactListActionButton: UIControl {
     private let imageView = UIImageView()
     private let stackView = UIStackView()
     private let notificationLabel = UILabel()
+    private let notificationContainerView = UIView()
 
     init() {
         super.init(frame: .zero)
@@ -13,18 +14,21 @@ final class ContactListActionButton: UIControl {
         titleLabel.textColor = Asset.brandPrimary.color
         titleLabel.font = Fonts.Mulish.semiBold.font(size: 14.0)
 
-        notificationLabel.layer.cornerRadius = 5
-        notificationLabel.layer.masksToBounds = true
         notificationLabel.textColor = Asset.neutralWhite.color
-        notificationLabel.backgroundColor = Asset.brandPrimary.color
-        notificationLabel.font = Fonts.Mulish.black.font(size: 12.0)
+        notificationLabel.font = Fonts.Mulish.bold.font(size: 12.0)
+
+        notificationContainerView.isHidden = true
+        notificationContainerView.layer.cornerRadius = 10
+        notificationContainerView.layer.masksToBounds = true
+        notificationContainerView.addSubview(notificationLabel)
+        notificationContainerView.backgroundColor = Asset.brandPrimary.color
 
         stackView.spacing = 16
         stackView.addArrangedSubview(imageView)
         stackView.addArrangedSubview(titleLabel)
-        stackView.addArrangedSubview(notificationLabel)
+        stackView.addArrangedSubview(notificationContainerView)
         stackView.addArrangedSubview(FlexibleSpace())
-        stackView.setCustomSpacing(6, after: titleLabel)
+        stackView.setCustomSpacing(8, after: titleLabel)
         stackView.isUserInteractionEnabled = false
 
         addSubview(stackView)
@@ -40,8 +44,8 @@ final class ContactListActionButton: UIControl {
     }
 
     func updateNotification(_ count: Int) {
-        notificationLabel.isHidden = count < 1
-        notificationLabel.text = "  \(count)  " // TODO: Use insets (?) for padding
+        notificationLabel.text = "\(count)"
+        notificationContainerView.isHidden = count == 0
     }
 
     private func setupConstraints() {
@@ -52,6 +56,12 @@ final class ContactListActionButton: UIControl {
 
         stackView.snp.makeConstraints {
             $0.edges.equalToSuperview()
+        }
+
+        notificationLabel.snp.makeConstraints {
+            $0.centerY.equalToSuperview()
+            $0.left.equalToSuperview().offset(8)
+            $0.right.equalToSuperview().offset(-8)
         }
     }
 }

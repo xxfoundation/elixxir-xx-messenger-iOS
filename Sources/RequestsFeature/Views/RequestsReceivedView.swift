@@ -36,7 +36,6 @@ final class RequestsReceivedView: UIView {
         let layout = UICollectionViewCompositionalLayout(section: section)
 
         let collectionView = UICollectionView(frame: bounds, collectionViewLayout: layout)
-        collectionView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         collectionView.backgroundColor = Asset.neutralWhite.color
         collectionView.contentInset = .init(top: 15, left: 0, bottom: 0, right: 0)
         return collectionView

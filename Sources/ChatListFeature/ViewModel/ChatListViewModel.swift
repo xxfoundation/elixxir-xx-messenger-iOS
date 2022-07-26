@@ -18,7 +18,7 @@ enum SearchItem: Equatable, Hashable {
     case connection(Contact)
 }
 
-typealias RecentsSnapshot = NSDiffableDataSourceSnapshot<SectionId, Contact>
+typealias RecentsSnapshot = NSDiffableDataSourceSnapshot<Int, Contact>
 typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchItem>
 
 final class ChatListViewModel {
@@ -40,10 +40,9 @@ final class ChatListViewModel {
         session.dbManager.fetchContactsPublisher(.init(isRecent: true))
             .assertNoFailure()
             .map {
-            let section = SectionId()
             var snapshot = RecentsSnapshot()
-            snapshot.appendSections([section])
-            snapshot.appendItems($0, toSection: section)
+            snapshot.appendSections([0])
+            snapshot.appendItems($0, toSection: 0)
             return snapshot
         }.eraseToAnyPublisher()
     }

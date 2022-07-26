@@ -299,7 +299,7 @@ extension RequestsReceivedController {
 
         items.append(drawerLoading)
 
-        let drawerTable = DrawerTable(spacingAfter: 23)
+        let drawerTable = DrawerList(spacingAfter: 23)
 
         drawerLoading.retryPublisher
             .receive(on: DispatchQueue.main)

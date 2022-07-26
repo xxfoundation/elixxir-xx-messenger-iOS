@@ -15,8 +15,6 @@ final class CreateGroupView: UIView {
         let collectionView = UICollectionView(frame: bounds, collectionViewLayout: layout)
         collectionView.contentInset = .init(top: 15, left: 0, bottom: 0, right: 0)
         return collectionView
-
-        //tableView.setEditing(true, animated: true)
     }()
 
     let layout: UICollectionViewFlowLayout = {

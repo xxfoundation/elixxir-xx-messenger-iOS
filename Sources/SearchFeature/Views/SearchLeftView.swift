@@ -50,7 +50,6 @@ final class SearchLeftView: UIView {
 
         let layout = UICollectionViewCompositionalLayout(section: section)
         let collectionView = UICollectionView(frame: bounds, collectionViewLayout: layout)
-        collectionView.autoresizingMask = [.flexibleWidth, .flexibleHeight]
         collectionView.backgroundColor = Asset.neutralWhite.color
         return collectionView
     }()
