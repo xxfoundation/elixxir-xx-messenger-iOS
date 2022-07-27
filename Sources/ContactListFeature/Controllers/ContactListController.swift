@@ -3,6 +3,7 @@ import Theme
 import Shared
 import Combine
 import XXModels
+import CollectionView
 import DependencyInjection
 
 public final class ContactListController: UIViewController {
@@ -36,23 +37,18 @@ public final class ContactListController: UIViewController {
 
     private func setupCollectionView() {
         screenView.collectionView.delegate = self
-        screenView.collectionView.register(AvatarCell.self)
         screenView.collectionView.dataSource = dataSource
         screenView.collectionView.tintColor = Asset.neutralDark.color
+        CellFactory.contactListCellFactory.register(in: screenView.collectionView)
 
         dataSource = IndexedContactList(
             collectionView: screenView.collectionView
         ) { collectionView, indexPath, contact in
-            let cell: AvatarCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
-            let name = (contact.nickname ?? contact.username) ?? "Fetching username..."
-
-            cell.set(
-                image: contact.photo,
-                h1Text: name,
-                showSeparator: false
+            CellFactory.contactListCellFactory.build(
+                for: contact,
+                in: collectionView,
+                at: indexPath
             )
-
-            return cell
         }
     }
 

@@ -4,6 +4,7 @@ import Models
 import Shared
 import Combine
 import XXModels
+import CollectionView
 import DependencyInjection
 
 public final class CreateGroupController: UIViewController {
@@ -65,36 +66,29 @@ public final class CreateGroupController: UIViewController {
     }
 
     private func setupCollectionViews() {
-        screenView.bottomCollectionView.register(AvatarCell.self)
-        screenView.topCollectionView.register(CreateGroupCollectionCell.self)
+        CellFactory.createGroupHeroCellFactory
+            .register(in: screenView.topCollectionView)
+        CellFactory.createGroupListCellFactory
+            .register(in: screenView.bottomCollectionView)
 
         topCollectionDataSource = UICollectionViewDiffableDataSource<Int, Contact>(
             collectionView: screenView.topCollectionView
-        ) { [weak viewModel] collectionView, indexPath, contact in
-            let cell: CreateGroupCollectionCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
-
-            let title = (contact.nickname ?? contact.username) ?? ""
-            cell.setup(title: title, image: contact.photo)
-            cell.didTapRemove = { viewModel?.didSelect(contact: contact) }
-
-            return cell
+        ) { collectionView, indexPath, contact in
+            CellFactory.createGroupHeroCellFactory.build(
+                for: contact,
+                in: collectionView,
+                at: indexPath
+            )
         }
 
         bottomCollectionDataSource = UICollectionViewDiffableDataSource<Int, Contact>(
             collectionView: screenView.bottomCollectionView
-        ) { [weak self] collectionView, indexPath, contact in
-            let cell: AvatarCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
-            let title = (contact.nickname ?? contact.username) ?? ""
-
-            cell.set(image: contact.photo, h1Text: title)
-
-            if let selectedElements = self?.selectedElements, selectedElements.contains(contact) {
-                collectionView.selectItem(at: indexPath, animated: true, scrollPosition: [])
-            } else {
-                collectionView.deselectItem(at: indexPath, animated: true)
-            }
-
-            return cell
+        ) { collectionView, indexPath, contact in
+            CellFactory.createGroupListCellFactory.build(
+                for: contact,
+                in: collectionView,
+                at: indexPath
+            )
         }
 
         screenView.bottomCollectionView.delegate = self

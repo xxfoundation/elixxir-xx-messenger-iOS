@@ -2,14 +2,13 @@ import UIKit
 import Shared
 import Combine
 
-final class CreateGroupCollectionCell: UICollectionViewCell {
-    let titleLabel = UILabel()
-    let removeButton = UIButton()
-    let upperView = UIView()
-    let avatarView = AvatarView()
-
-    var didTapRemove: (() -> Void)?
-    var cancellables = Set<AnyCancellable>()
+final class CreateGroupHeroCollectionCell: UICollectionViewCell {
+    private let upperView = UIView()
+    private let titleLabel = UILabel()
+    private let avatarView = AvatarView()
+    private let removeButton = UIButton()
+    private var didTapAction: (() -> Void)?
+    private var cancellables = Set<AnyCancellable>()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -29,6 +28,43 @@ final class CreateGroupCollectionCell: UICollectionViewCell {
         contentView.addSubview(upperView)
         contentView.addSubview(removeButton)
 
+        setupConstraints()
+    }
+
+    required init?(coder: NSCoder) { nil }
+
+    override func prepareForReuse() {
+        super.prepareForReuse()
+
+        didTapAction = nil
+        titleLabel.text = nil
+        avatarView.prepareForReuse()
+        cancellables.removeAll()
+    }
+
+    func setup(
+        title: String,
+        image: Data?,
+        action: @escaping () -> Void
+    ) {
+        avatarView.setupProfile(
+            title: title,
+            image: image,
+            size: .large
+        )
+
+        titleLabel.text = title
+        didTapAction = action
+
+        cancellables.removeAll()
+
+        removeButton
+            .publisher(for: .touchUpInside)
+            .sink { [unowned self] in didTapAction?() }
+            .store(in: &cancellables)
+    }
+
+    private func setupConstraints() {
         upperView.snp.makeConstraints {
             $0.top.equalToSuperview()
             $0.left.equalToSuperview()
@@ -57,24 +93,5 @@ final class CreateGroupCollectionCell: UICollectionViewCell {
             $0.right.equalToSuperview()
             $0.bottom.equalToSuperview()
         }
-    }
-
-    required init?(coder: NSCoder) { nil }
-
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        titleLabel.text = nil
-        avatarView.prepareForReuse()
-        cancellables.removeAll()
-    }
-
-    func setup(title: String, image: Data?) {
-        titleLabel.text = title
-        avatarView.setupProfile(title: title, image: image, size: .large)
-        cancellables.removeAll()
-
-        removeButton.publisher(for: .touchUpInside)
-            .sink { [unowned self] in didTapRemove?() }
-            .store(in: &cancellables)
     }
 }

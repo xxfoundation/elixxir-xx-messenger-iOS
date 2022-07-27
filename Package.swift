@@ -678,6 +678,7 @@ let package = Package(
                     "Integration",
                     "Presentation",
                     "ContactFeature",
+                    "CollectionView",
                     "DependencyInjection",
                     .product(
                         name: "DifferenceKit",
