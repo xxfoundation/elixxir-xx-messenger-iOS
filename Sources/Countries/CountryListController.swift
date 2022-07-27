@@ -2,6 +2,7 @@ import Theme
 import UIKit
 import Shared
 import Combine
+import CollectionView
 import DependencyInjection
 
 public final class CountryListController: UIViewController {
@@ -71,19 +72,13 @@ public final class CountryListController: UIViewController {
     }
 
     private func setupCollectionView() {
-        screenView.collectionView.register(CountryListCell.self)
+        CellFactory.countryListCellFactory
+            .register(in: screenView.collectionView)
 
         dataSource = UICollectionViewDiffableDataSource<Int, Country>(
             collectionView: screenView.collectionView
         ) { collectionView, indexPath, country in
-            let cell: CountryListCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
-
-            cell.set(
-                flag: country.flag,
-                name: country.name,
-                prefix: country.prefix
-            )
-            return cell
+            CellFactory.countryListCellFactory.build(for: country, in: collectionView, at: indexPath)
         }
 
         screenView.collectionView.delegate = self
@@ -102,4 +97,21 @@ extension CountryListController: UICollectionViewDelegate {
             navigationController?.popViewController(animated: true)
         }
     }
+}
+
+extension CellFactory where Model == Country {
+    static let countryListCellFactory = Self.init(
+        register: .init { $0.register(CountryListCell.self) },
+        build: .init { country, collectionView, indexPath in
+            let cell: CountryListCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
+
+            cell.set(
+                flag: country.flag,
+                name: country.name,
+                prefix: country.prefix
+            )
+
+            return cell
+        }
+    )
 }

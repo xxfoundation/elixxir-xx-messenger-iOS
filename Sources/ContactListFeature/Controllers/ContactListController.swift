@@ -39,16 +39,14 @@ public final class ContactListController: UIViewController {
         screenView.collectionView.delegate = self
         screenView.collectionView.dataSource = dataSource
         screenView.collectionView.tintColor = Asset.neutralDark.color
-        CellFactory.contactListCellFactory.register(in: screenView.collectionView)
+
+        CellFactory.avatarCellFactory()
+            .register(in: screenView.collectionView)
 
         dataSource = IndexedContactList(
             collectionView: screenView.collectionView
         ) { collectionView, indexPath, contact in
-            CellFactory.contactListCellFactory.build(
-                for: contact,
-                in: collectionView,
-                at: indexPath
-            )
+            CellFactory.avatarCellFactory().build(for: contact, in: collectionView, at: indexPath)
         }
     }
 

@@ -6,6 +6,7 @@ import XXModels
 import Defaults
 import Countries
 import DrawerFeature
+import CollectionView
 import DependencyInjection
 
 final class SearchLeftController: UIViewController {
@@ -44,71 +45,20 @@ final class SearchLeftController: UIViewController {
     private func setupCollectionView() {
         screenView.collectionView.delegate = self
         screenView.collectionView.dataSource = dataSource
-        screenView.collectionView.register(AvatarCell.self)
-        screenView.collectionView.registerSectionHeader(SearchLeftSectionHeader.self)
+
+        CellFactory.avatarCellFactory(resend: { _ in })
+            .register(in: screenView.collectionView)
+
+        screenView.collectionView
+            .registerSectionHeader(SearchLeftSectionHeader.self)
 
         dataSource = UICollectionViewDiffableDataSource<SearchSection, SearchItem>(
             collectionView: screenView.collectionView
-        ) { collectionView, indexPath, item in
-            let contact: Contact
-            let cell: AvatarCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
-
-            let h1Text: String
-            var h2Text: String?
-
-            switch item {
-            case .stranger(let stranger):
-                contact = stranger
-                h1Text = stranger.username ?? ""
-
-                if stranger.authStatus == .requested {
-                    h2Text = "Request pending"
-                } else if stranger.authStatus == .requestFailed {
-                    h2Text = "Request failed"
-                }
-
-            case .connection(let connection):
-                contact = connection
-                h1Text = (connection.nickname ?? contact.username) ?? ""
-
-                if connection.nickname != nil {
-                    h2Text = contact.username ?? ""
-                }
-            }
-
-            var action: AvatarCell.Action?
-
-            if contact.authStatus == .requested {
-                action = .init(
-                    title: Localized.Requests.Cell.requested,
-                    color: Asset.brandPrimary.color,
-                    image: Asset.requestsResend.image,
-                    action: { [weak self] in
-                        guard let self = self else { return }
-
-                        self.viewModel.didTapResend(contact: contact)
-
-                        cell.update(action: .init(
-                            title: Localized.Requests.Cell.resent,
-                            color: Asset.neutralWeak.color,
-                            image: Asset.requestsResent.image,
-                            action: {}
-                        ))
-                    }
-                )
-            }
-
-            cell.set(
-                image: contact.photo,
-                h1Text: h1Text,
-                h2Text: h2Text,
-                h3Text: contact.email,
-                h4Text: contact.phone,
-                showSeparator: false,
-                action: action
-            )
-
-            return cell
+        ) { collectionView, indexPath, searchItem in
+            CellFactory.avatarCellFactory { [weak self] in
+                guard let self = self else { return }
+                self.viewModel.didTapResend(contact: $0)
+            }.build(for: searchItem, in: collectionView, at: indexPath)
         }
 
         dataSource.supplementaryViewProvider = { [weak self] collectionView, kind, indexPath in
@@ -456,5 +406,72 @@ extension SearchLeftController: UICollectionViewDelegate {
         }
 
         presentRequestDrawer(forContact: contact)
+    }
+}
+
+extension CellFactory where Model == SearchItem {
+    static func avatarCellFactory(resend: @escaping (Contact) -> Void) -> Self {
+        .init(
+            register: .init { $0.register(AvatarCell.self) },
+            build: .init { searchItem, collectionView, indexPath in
+                let contact: Contact
+                let cell: AvatarCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
+
+                let h1Text: String
+                var h2Text: String?
+
+                switch searchItem {
+                case .stranger(let stranger):
+                    contact = stranger
+                    h1Text = stranger.username ?? ""
+
+                    if stranger.authStatus == .requested {
+                        h2Text = "Request pending"
+                    } else if stranger.authStatus == .requestFailed {
+                        h2Text = "Request failed"
+                    }
+
+                case .connection(let connection):
+                    contact = connection
+                    h1Text = (connection.nickname ?? contact.username) ?? ""
+
+                    if connection.nickname != nil {
+                        h2Text = contact.username ?? ""
+                    }
+                }
+
+                var action: AvatarCell.Action?
+
+                if contact.authStatus == .requested {
+                    action = .init(
+                        title: Localized.Requests.Cell.requested,
+                        color: Asset.brandPrimary.color,
+                        image: Asset.requestsResend.image,
+                        action: {
+                            resend(contact)
+
+                            cell.update(action: .init(
+                                title: Localized.Requests.Cell.resent,
+                                color: Asset.neutralWeak.color,
+                                image: Asset.requestsResent.image,
+                                action: {}
+                            ))
+                        }
+                    )
+                }
+
+                cell.set(
+                    image: contact.photo,
+                    h1Text: h1Text,
+                    h2Text: h2Text,
+                    h3Text: contact.email,
+                    h4Text: contact.phone,
+                    showSeparator: false,
+                    action: action
+                )
+
+                return cell
+            }
+        )
     }
 }

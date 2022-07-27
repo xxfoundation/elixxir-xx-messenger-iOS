@@ -66,29 +66,26 @@ public final class CreateGroupController: UIViewController {
     }
 
     private func setupCollectionViews() {
-        CellFactory.createGroupHeroCellFactory
-            .register(in: screenView.topCollectionView)
-        CellFactory.createGroupListCellFactory
+        CellFactory.avatarCellFactory()
             .register(in: screenView.bottomCollectionView)
+        CellFactory.createGroupHeroCellFactory(action: { _ in })
+            .register(in: screenView.topCollectionView)
 
         topCollectionDataSource = UICollectionViewDiffableDataSource<Int, Contact>(
             collectionView: screenView.topCollectionView
-        ) { collectionView, indexPath, contact in
-            CellFactory.createGroupHeroCellFactory.build(
-                for: contact,
-                in: collectionView,
-                at: indexPath
-            )
+        ) { [weak self] collectionView, indexPath, contact in
+            CellFactory.createGroupHeroCellFactory(
+                action: {
+                    guard let self = self else { return }
+                    self.viewModel.didSelect(contact: $0)
+                }
+            ).build(for: contact, in: collectionView, at: indexPath)
         }
 
         bottomCollectionDataSource = UICollectionViewDiffableDataSource<Int, Contact>(
             collectionView: screenView.bottomCollectionView
         ) { collectionView, indexPath, contact in
-            CellFactory.createGroupListCellFactory.build(
-                for: contact,
-                in: collectionView,
-                at: indexPath
-            )
+            CellFactory.avatarCellFactory().build(for: contact, in: collectionView, at: indexPath)
         }
 
         screenView.bottomCollectionView.delegate = self
