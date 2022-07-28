@@ -5,7 +5,6 @@ import Combine
 import PushFeature
 import DependencyInjection
 
-
 public final class LaunchController: UIViewController {
     @Dependency private var hud: HUD
     @Dependency private var coordinator: LaunchCoordinating

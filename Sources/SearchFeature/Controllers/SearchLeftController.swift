@@ -403,7 +403,6 @@ final class SearchLeftController: UIViewController {
 
         coordinator.toDrawer(drawer, from: self)
     }
-
 }
 
 extension SearchLeftController: UITableViewDelegate {

@@ -24,6 +24,7 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     @KeyObject(.recordingLogs, defaultValue: true) var recordingLogs: Bool
     @KeyObject(.crashReporting, defaultValue: true) var isCrashReportingEnabled: Bool
 
+    var invitation: String?
     var calledStopNetwork = false
     var forceFailedPendingMessages = false
 
@@ -133,6 +134,12 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     public func applicationDidBecomeActive(_ application: UIApplication) {
+        // TODO:
+        /// If an invitation is set -> navigate to
+        /// search screen and perform a search
+        ///
+        invitation = nil
+
         application.applicationIconBadgeNumber = 0
         coverView?.removeFromSuperview()
     }
@@ -142,7 +149,12 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
         open url: URL,
         options: [UIApplication.OpenURLOptionsKey : Any] = [:]
     ) -> Bool {
-        dropboxService.handleOpenUrl(url)
+        if let host = url.host, host.starts(with: "invitation-") {
+            invitation = host.replacingOccurrences(of: "invitation-", with: "")
+            return true
+        }
+
+        return dropboxService.handleOpenUrl(url)
     }
 }
 
