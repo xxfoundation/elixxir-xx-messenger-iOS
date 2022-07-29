@@ -5,6 +5,7 @@ import Presentation
 
 public protocol LaunchCoordinating {
     func toChats(from: UIViewController)
+    func toSearch(from: UIViewController)
     func toRequests(from: UIViewController)
     func toOnboarding(with: String, from: UIViewController)
     func toSingleChat(with: Contact, from: UIViewController)
@@ -14,6 +15,7 @@ public protocol LaunchCoordinating {
 public struct LaunchCoordinator: LaunchCoordinating {
     var replacePresenter: Presenting = ReplacePresenter()
 
+    var searchFactory: () -> UIViewController
     var requestsFactory: () -> UIViewController
     var chatListFactory: () -> UIViewController
     var onboardingFactory: (String) -> UIViewController
@@ -21,12 +23,14 @@ public struct LaunchCoordinator: LaunchCoordinating {
     var groupChatFactory: (GroupInfo) -> UIViewController
 
     public init(
+        searchFactory: @escaping () -> UIViewController,
         requestsFactory: @escaping () -> UIViewController,
         chatListFactory: @escaping () -> UIViewController,
         onboardingFactory: @escaping (String) -> UIViewController,
         singleChatFactory: @escaping (Contact) -> UIViewController,
         groupChatFactory: @escaping (GroupInfo) -> UIViewController
     ) {
+        self.searchFactory = searchFactory
         self.requestsFactory = requestsFactory
         self.chatListFactory = chatListFactory
         self.groupChatFactory = groupChatFactory
@@ -36,6 +40,12 @@ public struct LaunchCoordinator: LaunchCoordinating {
 }
 
 public extension LaunchCoordinator {
+    func toSearch(from parent: UIViewController) {
+        let screen = searchFactory()
+        let chatListScreen = chatListFactory()
+        replacePresenter.present(chatListScreen, screen, from: parent)
+    }
+
     func toChats(from parent: UIViewController) {
         let screen = chatListFactory()
         replacePresenter.present(screen, from: parent)

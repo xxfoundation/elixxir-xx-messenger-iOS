@@ -72,7 +72,7 @@ final class MenuView: UIView {
             requestsButton.set(color: Asset.brandPrimary.color)
         case .settings:
             settingsButton.set(color: Asset.brandPrimary.color)
-        default:
+        case .share, .join, .profile, .dashboard:
             break
         }
     }

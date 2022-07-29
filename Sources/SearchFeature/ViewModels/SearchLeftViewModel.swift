@@ -3,8 +3,10 @@ import UIKit
 import Shared
 import Combine
 import XXModels
+import Defaults
 import Countries
 import Integration
+import NetworkMonitor
 import DependencyInjection
 
 typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchItem>
@@ -18,6 +20,9 @@ struct SearchLeftViewState {
 
 final class SearchLeftViewModel {
     @Dependency var session: SessionType
+    @Dependency var networkMonitor: NetworkMonitoring
+
+    @KeyObject(.invitation, defaultValue: nil) var invitation: String?
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
@@ -35,6 +40,31 @@ final class SearchLeftViewModel {
     private let successSubject = PassthroughSubject<Contact, Never>()
     private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
     private let stateSubject = CurrentValueSubject<SearchLeftViewState, Never>(.init())
+    private var networkCancellable = Set<AnyCancellable>()
+
+    func viewDidAppear() {
+        if let pendingInvitation = invitation {
+            invitation = nil
+            stateSubject.value.input = pendingInvitation
+            hudSubject.send(.onAction(Localized.Ud.Search.cancel))
+
+            networkMonitor.statusPublisher
+                .first { $0 == .available }
+                .map { [unowned self] _ in
+                    session.waitForNodes(timeout: 5).first()
+                        .sink {
+                            if case .failure(let error) = $0 {
+                                self.hudSubject.send(.error(.init(with: error)))
+                            }
+                            networkCancellable.removeAll()
+                        } receiveValue: { _ in
+                            self.didStartSearching()
+                            networkCancellable.removeAll()
+                        }.store(in: &networkCancellable)
+                }.sink(receiveValue: { _ in })
+                .store(in: &networkCancellable)
+        }
+    }
 
     func didEnterInput(_ string: String) {
         stateSubject.value.input = string

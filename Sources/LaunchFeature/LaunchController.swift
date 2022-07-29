@@ -49,6 +49,8 @@ public final class LaunchController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
                 switch $0 {
+                case .search:
+                    coordinator.toSearch(from: self)
                 case .chats:
                     if let pushRoute = pendingPushRoute {
                         switch pushRoute {

@@ -115,6 +115,10 @@ public final class SearchComponent: UIView {
         }
     }
 
+    public func update(content: String) {
+        inputField.text = content
+    }
+
     public func update(placeholder: String) {
         inputField.attributedPlaceholder = NSAttributedString(
             string: placeholder,

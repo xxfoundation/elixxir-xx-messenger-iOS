@@ -21,6 +21,7 @@ public enum Key: String {
     // MARK: General
 
     case theme
+    case invitation
 
     // MARK: Requests
 

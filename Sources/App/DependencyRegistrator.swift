@@ -113,6 +113,7 @@ struct DependencyRegistrator {
 
         container.register(
             LaunchCoordinator(
+                searchFactory: SearchContainerController.init,
                 requestsFactory: RequestsContainerController.init,
                 chatListFactory: ChatListController.init,
                 onboardingFactory: OnboardingStartController.init(_:),

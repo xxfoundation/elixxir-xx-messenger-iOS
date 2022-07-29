@@ -20,11 +20,11 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     @Dependency private var crashReporter: CrashReporter
     @Dependency private var dropboxService: DropboxInterface
 
+    @KeyObject(.invitation, defaultValue: nil) var invitation: String?
     @KeyObject(.hideAppList, defaultValue: false) var hideAppList: Bool
     @KeyObject(.recordingLogs, defaultValue: true) var recordingLogs: Bool
     @KeyObject(.crashReporting, defaultValue: true) var isCrashReportingEnabled: Bool
 
-    var invitation: String?
     var calledStopNetwork = false
     var forceFailedPendingMessages = false
 
@@ -134,12 +134,6 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     public func applicationDidBecomeActive(_ application: UIApplication) {
-        // TODO:
-        /// If an invitation is set -> navigate to
-        /// search screen and perform a search
-        ///
-        invitation = nil
-
         application.applicationIconBadgeNumber = 0
         coverView?.removeFromSuperview()
     }
@@ -149,12 +143,14 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
         open url: URL,
         options: [UIApplication.OpenURLOptionsKey : Any] = [:]
     ) -> Bool {
-        if let host = url.host, host.starts(with: "invitation-") {
-            invitation = host.replacingOccurrences(of: "invitation-", with: "")
+        if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+           let invitation = components.queryItems?.first(where: { $0.name == "invitation" }),
+            let username = invitation.value {
+            self.invitation = username
             return true
+        } else {
+            return dropboxService.handleOpenUrl(url)
         }
-
-        return dropboxService.handleOpenUrl(url)
     }
 }
 

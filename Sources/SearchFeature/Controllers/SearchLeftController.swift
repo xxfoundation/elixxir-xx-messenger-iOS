@@ -37,6 +37,11 @@ final class SearchLeftController: UIViewController {
         setupBindings()
     }
 
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        viewModel.viewDidAppear()
+    }
+
     func endEditing() {
         screenView.inputField.endEditing(true)
     }
@@ -129,6 +134,13 @@ final class SearchLeftController: UIViewController {
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in screenView.countryButton.setFlag($0.flag, prefix: $0.prefix) }
+            .store(in: &cancellables)
+
+        viewModel.statePublisher
+            .map(\.input)
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in screenView.inputField.update(content: $0) }
             .store(in: &cancellables)
 
         viewModel.statePublisher
