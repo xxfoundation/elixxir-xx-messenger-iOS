@@ -259,6 +259,11 @@ extension PushRouter {
                 launchController.pendingPushRoute = route
             } else {
                 switch route {
+                case .search:
+                    if (navigationController.viewControllers.last as? SearchContainerController) == nil {
+                        navigationController.setViewControllers([SearchContainerController()], animated: true)
+                    }
+
                 case .requests:
                     if (navigationController.viewControllers.last as? RequestsContainerController) == nil {
                         navigationController.setViewControllers([RequestsContainerController()], animated: true)

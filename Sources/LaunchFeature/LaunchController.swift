@@ -54,6 +54,9 @@ public final class LaunchController: UIViewController {
                 case .chats:
                     if let pushRoute = pendingPushRoute {
                         switch pushRoute {
+                        case .search:
+                            coordinator.toSearch(from: self)
+
                         case .requests:
                             coordinator.toRequests(from: self)
 

@@ -143,8 +143,12 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
         open url: URL,
         options: [UIApplication.OpenURLOptionsKey : Any] = [:]
     ) -> Bool {
-        if let invitationUsername = getUsernameFromInvitationDeepLink(url) {
-            self.invitation = invitationUsername
+        if let username = getUsernameFromInvitationDeepLink(url),
+           let _ = try? DependencyInjection.Container.shared.resolve() as SessionType,
+           let router = try? DependencyInjection.Container.shared.resolve() as PushRouter {
+            invitation = username
+            router.navigateTo(.search, {})
+
             return true
         } else {
             return dropboxService.handleOpenUrl(url)
