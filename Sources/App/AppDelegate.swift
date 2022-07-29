@@ -143,15 +143,25 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
         open url: URL,
         options: [UIApplication.OpenURLOptionsKey : Any] = [:]
     ) -> Bool {
-        if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-           let invitation = components.queryItems?.first(where: { $0.name == "invitation" }),
-            let username = invitation.value {
-            self.invitation = username
+        if let invitationUsername = getUsernameFromInvitationDeepLink(url) {
+            self.invitation = invitationUsername
             return true
         } else {
             return dropboxService.handleOpenUrl(url)
         }
     }
+}
+
+func getUsernameFromInvitationDeepLink(_ url: URL) -> String? {
+    if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+       components.scheme == "xxnetwork",
+       components.host == "messenger",
+       let queryItem = components.queryItems?.first(where: { $0.name == "invitation" }),
+       let username = queryItem.value {
+        return username
+    }
+
+    return nil
 }
 
 // MARK: Notifications

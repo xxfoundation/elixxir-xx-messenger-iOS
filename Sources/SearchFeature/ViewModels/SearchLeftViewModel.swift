@@ -50,19 +50,15 @@ final class SearchLeftViewModel {
 
             networkMonitor.statusPublisher
                 .first { $0 == .available }
-                .map { [unowned self] _ in
-                    session.waitForNodes(timeout: 5).first()
-                        .sink {
-                            if case .failure(let error) = $0 {
-                                self.hudSubject.send(.error(.init(with: error)))
-                            }
-                            networkCancellable.removeAll()
-                        } receiveValue: { _ in
-                            self.didStartSearching()
-                            networkCancellable.removeAll()
-                        }.store(in: &networkCancellable)
-                }.sink(receiveValue: { _ in })
-                .store(in: &networkCancellable)
+                .eraseToAnyPublisher()
+                .flatMap { _ in self.session.waitForNodes(timeout: 5) }
+                .sink {
+                    if case .failure(let error) = $0 {
+                        self.hudSubject.send(.error(.init(with: error)))
+                    }
+                } receiveValue: {
+                    self.didStartSearching()
+                }.store(in: &networkCancellable)
         }
     }
 
