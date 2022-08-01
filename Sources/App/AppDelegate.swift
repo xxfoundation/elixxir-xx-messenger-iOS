@@ -20,6 +20,7 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     @Dependency private var crashReporter: CrashReporter
     @Dependency private var dropboxService: DropboxInterface
 
+    @KeyObject(.invitation, defaultValue: nil) var invitation: String?
     @KeyObject(.hideAppList, defaultValue: false) var hideAppList: Bool
     @KeyObject(.recordingLogs, defaultValue: true) var recordingLogs: Bool
     @KeyObject(.crashReporting, defaultValue: true) var isCrashReportingEnabled: Bool
@@ -142,8 +143,28 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
         open url: URL,
         options: [UIApplication.OpenURLOptionsKey : Any] = [:]
     ) -> Bool {
-        dropboxService.handleOpenUrl(url)
+        if let username = getUsernameFromInvitationDeepLink(url) {
+            let router = try! DependencyInjection.Container.shared.resolve() as PushRouter
+            invitation = username
+            router.navigateTo(.search, {})
+
+            return true
+        } else {
+            return dropboxService.handleOpenUrl(url)
+        }
     }
+}
+
+func getUsernameFromInvitationDeepLink(_ url: URL) -> String? {
+    if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+       components.scheme == "xxnetwork",
+       components.host == "messenger",
+       let queryItem = components.queryItems?.first(where: { $0.name == "invitation" }),
+       let username = queryItem.value {
+        return username
+    }
+
+    return nil
 }
 
 // MARK: Notifications

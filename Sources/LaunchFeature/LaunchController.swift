@@ -5,7 +5,6 @@ import Combine
 import PushFeature
 import DependencyInjection
 
-
 public final class LaunchController: UIViewController {
     @Dependency private var hud: HUD
     @Dependency private var coordinator: LaunchCoordinating
@@ -50,9 +49,14 @@ public final class LaunchController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
                 switch $0 {
+                case .search:
+                    coordinator.toSearch(from: self)
                 case .chats:
                     if let pushRoute = pendingPushRoute {
                         switch pushRoute {
+                        case .search:
+                            coordinator.toSearch(from: self)
+
                         case .requests:
                             coordinator.toRequests(from: self)
 

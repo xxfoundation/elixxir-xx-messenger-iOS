@@ -34,10 +34,10 @@
 		</dict>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>xxmessenger</string>
+			<string>xxnetwork</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>xxmessenger</string>
+				<string>xxnetwork</string>
 			</array>
 		</dict>
 		<dict>

@@ -2,31 +2,33 @@ import UIKit
 import Shared
 
 final class MenuView: UIView {
-    let headerView = MenuHeaderView()
+    let buildLabel = UILabel()
+    let versionLabel = UILabel()
     let stackView = UIStackView()
+    let xxdkVersionLabel = UILabel()
+    let infoStackView = UIStackView()
+    let headerView = MenuHeaderView()
+    let joinButton = MenuSectionButton()
     let scanButton = MenuSectionButton()
+    let shareButton = MenuSectionButton()
     let chatsButton = MenuSectionButton()
     let contactsButton = MenuSectionButton()
     let requestsButton = MenuSectionButton()
     let settingsButton = MenuSectionButton()
     let dashboardButton = MenuSectionButton()
-    let joinButton = MenuSectionButton()
-    let infoStackView = UIStackView()
-    let buildLabel = UILabel()
-    let versionLabel = UILabel()
-    let xxdkVersionLabel = UILabel()
 
     init() {
         super.init(frame: .zero)
         backgroundColor = Asset.neutralDark.color
 
-        chatsButton.set(title: Localized.Menu.chats, image: Asset.menuChats.image)
         scanButton.set(title: Localized.Menu.scan, image: Asset.menuScan.image)
+        shareButton.set(title: Localized.Menu.share, image: Asset.menuShare.image)
+        chatsButton.set(title: Localized.Menu.chats, image: Asset.menuChats.image)
+        joinButton.set(title: Localized.Menu.join, image: Asset.permissionLogo.image)
         requestsButton.set(title: Localized.Menu.requests, image: Asset.menuRequests.image)
         contactsButton.set(title: Localized.Menu.contacts, image: Asset.menuContacts.image)
         settingsButton.set(title: Localized.Menu.settings, image: Asset.menuSettings.image)
         dashboardButton.set(title: Localized.Menu.dashboard, image: Asset.menuDashboard.image)
-        joinButton.set(title: "Join xx network", image: Asset.permissionLogo.image)
 
         stackView.addArrangedSubview(chatsButton)
         stackView.addArrangedSubview(contactsButton)
@@ -35,6 +37,7 @@ final class MenuView: UIView {
         stackView.addArrangedSubview(settingsButton)
         stackView.addArrangedSubview(dashboardButton)
         stackView.addArrangedSubview(joinButton)
+        stackView.addArrangedSubview(shareButton)
 
         infoStackView.spacing = 10
         infoStackView.axis = .vertical
@@ -59,17 +62,17 @@ final class MenuView: UIView {
 
     func select(item: MenuItem) {
         switch item {
+        case .scan:
+            scanButton.set(color: Asset.brandPrimary.color)
         case .chats:
             chatsButton.set(color: Asset.brandPrimary.color)
         case .contacts:
             contactsButton.set(color: Asset.brandPrimary.color)
         case .requests:
             requestsButton.set(color: Asset.brandPrimary.color)
-        case .scan:
-            scanButton.set(color: Asset.brandPrimary.color)
         case .settings:
             settingsButton.set(color: Asset.brandPrimary.color)
-        case .profile, .dashboard, .join:
+        case .share, .join, .profile, .dashboard:
             break
         }
     }

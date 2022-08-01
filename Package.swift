@@ -722,6 +722,13 @@ let package = Package(
                 dependencies: ["DependencyInjection"]
             ),
 
+        // MARK: - AppTests
+
+            .testTarget(
+                name: "AppTests",
+                dependencies: ["App"]
+            ),
+
         // MARK: - ProfileFeatureTests
 
             .testTarget(

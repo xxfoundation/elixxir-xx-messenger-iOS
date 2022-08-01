@@ -40,4 +40,8 @@ final class MenuViewModel {
     var version: String {
         Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
     }
+
+    var referralDeeplink: String {
+        "xxnetwork://messenger?invitation=\(username)"
+    }
 }

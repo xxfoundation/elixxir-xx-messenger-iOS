@@ -68,4 +68,6 @@ public protocol SessionType {
     )
 
     func search(fact: String) -> AnyPublisher<Contact, Error>
+
+    func waitForNodes(timeout: Int) -> AnyPublisher<Void, Error>
 }

@@ -633,6 +633,8 @@ public enum Localized {
     public static let contacts = Localized.tr("Localizable", "menu.contacts")
     /// Dashboard
     public static let dashboard = Localized.tr("Localizable", "menu.dashboard")
+    /// Join xx network
+    public static let join = Localized.tr("Localizable", "menu.join")
     /// Profile
     public static let profile = Localized.tr("Localizable", "menu.profile")
     /// Requests
@@ -641,6 +643,16 @@ public enum Localized {
     public static let scan = Localized.tr("Localizable", "menu.scan")
     /// Settings
     public static let settings = Localized.tr("Localizable", "menu.settings")
+    /// Share my profile
+    public static let share = Localized.tr("Localizable", "menu.share")
+    /// Hi, I'm using xx messenger, you can download it here:
+    /// https://invite.xx.network
+    /// 
+    /// And you can add me using this link:
+    /// %@
+    public static func shareContent(_ p1: Any) -> String {
+      return Localized.tr("Localizable", "menu.shareContent", String(describing: p1))
+    }
     /// Hello
     public static let title = Localized.tr("Localizable", "menu.title")
     /// Version %@

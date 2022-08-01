@@ -4,9 +4,11 @@ import Presentation
 public protocol MenuCoordinating {
     func toFlow(_ item: MenuItem, from: UIViewController)
     func toDrawer(_: UIViewController, from: UIViewController)
+    func toActivityController(with: [Any], from: UIViewController)
 }
 
 public struct MenuCoordinator: MenuCoordinating {
+    var modalPresenter: Presenting = ModalPresenter()
     var bottomPresenter: Presenting = BottomPresenter()
     var replacePresenter: Presenting = ReplacePresenter()
 
@@ -16,6 +18,8 @@ public struct MenuCoordinator: MenuCoordinating {
     var settingsFactory: () -> UIViewController
     var contactsFactory: () -> UIViewController
     var requestsFactory: () -> UIViewController
+    var activityControllerFactory: ([Any]) -> UIViewController
+    = { UIActivityViewController(activityItems: $0, applicationActivities: nil) }
 
     public init(
         scanFactory: @escaping () -> UIViewController,
@@ -60,5 +64,10 @@ public extension MenuCoordinator {
         }
 
         replacePresenter.present(controller, from: parent)
+    }
+
+    func toActivityController(with items: [Any], from parent: UIViewController) {
+        let screen = activityControllerFactory(items)
+        modalPresenter.present(screen, from: parent)
     }
 }

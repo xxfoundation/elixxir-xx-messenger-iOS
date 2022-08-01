@@ -113,6 +113,7 @@ struct DependencyRegistrator {
 
         container.register(
             LaunchCoordinator(
+                searchFactory: SearchContainerController.init,
                 requestsFactory: RequestsContainerController.init,
                 chatListFactory: ChatListController.init,
                 onboardingFactory: OnboardingStartController.init(_:),
@@ -248,40 +249,5 @@ struct DependencyRegistrator {
                 groupChatFactory: GroupChatController.init(_:),
                 sideMenuFactory: MenuController.init(_:_:)
             ) as ChatListCoordinating)
-    }
-}
-
-extension PushRouter {
-    static func live(navigationController: UINavigationController) -> PushRouter {
-        PushRouter { route, completion in
-            if let launchController = navigationController.viewControllers.last as? LaunchController {
-                launchController.pendingPushRoute = route
-            } else {
-                switch route {
-                case .requests:
-                    if (navigationController.viewControllers.last as? RequestsContainerController) == nil {
-                        navigationController.setViewControllers([RequestsContainerController()], animated: true)
-                    }
-                case .contactChat(id: let id):
-                    if let session = try? DependencyInjection.Container.shared.resolve() as SessionType,
-                       let contact = try? session.dbManager.fetchContacts(.init(id: [id])).first {
-                        navigationController.setViewControllers([
-                            ChatListController(),
-                            SingleChatController(contact)
-                        ], animated: true)
-                    }
-                case .groupChat(id: let id):
-                    if let session = try? DependencyInjection.Container.shared.resolve() as SessionType,
-                       let info = try? session.dbManager.fetchGroupInfos(.init(groupId: id)).first {
-                        navigationController.setViewControllers([
-                            ChatListController(),
-                            GroupChatController(info)
-                        ], animated: true)
-                    }
-                }
-            }
-
-            completion()
-        }
     }
 }

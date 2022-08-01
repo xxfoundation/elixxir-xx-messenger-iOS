@@ -4,6 +4,7 @@ public struct PushRouter {
     public typealias NavigateTo = (Route, @escaping () -> Void) -> Void
 
     public enum Route {
+        case search
         case requests
         case groupChat(id: Data)
         case contactChat(id: Data)

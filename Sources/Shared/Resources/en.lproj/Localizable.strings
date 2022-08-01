@@ -8,6 +8,10 @@
 = "Connections";
 "menu.requests"
 = "Requests";
+"menu.join"
+= "Join xx network";
+"menu.share"
+= "Share my profile";
 "menu.viewProfile"
 = "View Profile";
 "menu.profile"
@@ -22,6 +26,8 @@
 = "Build %@";
 "menu.version"
 = "Version %@";
+"menu.shareContent"
+= "Hi, I'm using xx messenger, you can download it here:\nhttps://invite.xx.network\n\nAnd you can add me using this link:\n%@";
 
 // ChatListFeature
 

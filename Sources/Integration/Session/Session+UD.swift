@@ -1,9 +1,24 @@
+import Retry
 import Models
+import Combine
 import XXModels
 import Foundation
-import Combine
 
 extension Session {
+    public func waitForNodes(timeout: Int) -> AnyPublisher<Void, Error> {
+        Deferred {
+            Future { promise in
+                retry(max: timeout, retryStrategy: .delay(seconds: 1)) { [weak self] in
+                    guard let self = self else { return }
+                    try self.client.bindings.nodeRegistrationStatus()
+                    promise(.success(()))
+                }.finalCatch {
+                    promise(.failure($0))
+                }
+            }
+        }.eraseToAnyPublisher()
+    }
+
     public func search(fact: String) -> AnyPublisher<Contact, Error> {
         Deferred {
             Future { promise in
