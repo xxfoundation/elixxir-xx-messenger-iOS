@@ -143,8 +143,8 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
         open url: URL,
         options: [UIApplication.OpenURLOptionsKey : Any] = [:]
     ) -> Bool {
-        if let username = getUsernameFromInvitationDeepLink(url),
-           let router = try? DependencyInjection.Container.shared.resolve() as PushRouter {
+        if let username = getUsernameFromInvitationDeepLink(url) {
+            let router = try! DependencyInjection.Container.shared.resolve() as PushRouter
             invitation = username
             router.navigateTo(.search, {})
 

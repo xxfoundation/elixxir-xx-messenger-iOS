@@ -48,6 +48,8 @@ final class SearchLeftViewModel {
             stateSubject.value.input = pendingInvitation
             hudSubject.send(.onAction(Localized.Ud.Search.cancel))
 
+            networkCancellable.removeAll()
+
             networkMonitor.statusPublisher
                 .first { $0 == .available }
                 .eraseToAnyPublisher()
