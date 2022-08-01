@@ -261,7 +261,10 @@ extension PushRouter {
                 switch route {
                 case .search:
                     if (navigationController.viewControllers.last as? SearchContainerController) == nil {
-                        navigationController.setViewControllers([SearchContainerController()], animated: true)
+                        navigationController.setViewControllers([
+                            ChatListController(),
+                            SearchContainerController()
+                        ], animated: true)
                     }
 
                 case .requests:
