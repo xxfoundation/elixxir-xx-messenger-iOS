@@ -24,7 +24,6 @@ struct Update {
 
 enum LaunchRoute {
     case chats
-    case search
     case update(Update)
     case onboarding(String)
 }
@@ -37,7 +36,6 @@ final class LaunchViewModel {
     @Dependency private var permissionHandler: PermissionHandling
 
     @KeyObject(.username, defaultValue: nil) var username: String?
-    @KeyObject(.invitation, defaultValue: nil) var invitation: String?
     @KeyObject(.biometrics, defaultValue: false) var isBiometricsOn: Bool
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
@@ -187,23 +185,14 @@ final class LaunchViewModel {
                 switch $0 {
                 case .success(let granted):
                     guard granted else { return }
-
-                    if self.invitation != nil {
-                        self.routeSubject.send(.search)
-                    } else {
-                        self.routeSubject.send(.chats)
-                    }
+                    self.routeSubject.send(.chats)
 
                 case .failure(let error):
                     self.hudSubject.send(.error(HUDError(with: error)))
                 }
             }
         } else {
-            if self.invitation != nil {
-                self.routeSubject.send(.search)
-            } else {
-                self.routeSubject.send(.chats)
-            }
+            self.routeSubject.send(.chats)
         }
     }
 }

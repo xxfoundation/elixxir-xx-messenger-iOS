@@ -41,7 +41,7 @@ public struct OnboardingCoordinator: OnboardingCoordinating {
 
     var emailFactory: () -> UIViewController
     var phoneFactory: () -> UIViewController
-    var searchFactory: () -> UIViewController
+    var searchFactory: (String?) -> UIViewController
     var welcomeFactory: () -> UIViewController
     var chatListFactory: () -> UIViewController
     var usernameFactory: (String) -> UIViewController
@@ -54,7 +54,7 @@ public struct OnboardingCoordinator: OnboardingCoordinating {
     public init(
         emailFactory: @escaping () -> UIViewController,
         phoneFactory: @escaping () -> UIViewController,
-        searchFactory: @escaping () -> UIViewController,
+        searchFactory: @escaping (String?) -> UIViewController,
         welcomeFactory: @escaping () -> UIViewController,
         chatListFactory: @escaping () -> UIViewController,
         usernameFactory: @escaping (String) -> UIViewController,
@@ -114,7 +114,7 @@ public extension OnboardingCoordinator {
     }
 
     func toChats(from parent: UIViewController) {
-        let searchScreen = searchFactory()
+        let searchScreen = searchFactory(nil)
         let chatListScreen = chatListFactory()
         replacePresenter.present(chatListScreen, searchScreen, from: parent)
     }

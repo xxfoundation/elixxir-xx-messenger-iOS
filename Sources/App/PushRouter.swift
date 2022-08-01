@@ -15,16 +15,17 @@ extension PushRouter {
                 launchController.pendingPushRoute = route
             } else {
                 switch route {
-                case .search:
-                    if !(navigationController.viewControllers.last is SearchContainerController) {
-                        navigationController.setViewControllers([
-                            ChatListController(),
-                            SearchContainerController()
-                        ], animated: true)
-                    }
                 case .requests:
                     if !(navigationController.viewControllers.last is RequestsContainerController) {
                         navigationController.setViewControllers([RequestsContainerController()], animated: true)
+                    }
+                case .search(username: let username):
+                    if let _ = try? DependencyInjection.Container.shared.resolve() as SessionType,
+                       !(navigationController.viewControllers.last is SearchContainerController) {
+                        navigationController.setViewControllers([
+                            ChatListController(),
+                            SearchContainerController(username)
+                        ], animated: true)
                     }
                 case .contactChat(id: let id):
                     if let session = try? DependencyInjection.Container.shared.resolve() as SessionType,

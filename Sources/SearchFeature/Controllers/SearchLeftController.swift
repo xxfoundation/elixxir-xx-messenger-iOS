@@ -19,13 +19,20 @@ final class SearchLeftController: UIViewController {
 
     lazy private var screenView = SearchLeftView()
 
+    let viewModel: SearchLeftViewModel
     private var dataSource: SearchDiffableDataSource!
-    private(set) var viewModel = SearchLeftViewModel()
     private var drawerCancellables = Set<AnyCancellable>()
     private let adrpURLString = "https://links.xx.network/adrp"
 
     private var cancellables = Set<AnyCancellable>()
     private var hudCancellables = Set<AnyCancellable>()
+
+    init(_ invitation: String? = nil) {
+        self.viewModel = .init(invitation)
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) { nil }
 
     override func loadView() {
         view = screenView

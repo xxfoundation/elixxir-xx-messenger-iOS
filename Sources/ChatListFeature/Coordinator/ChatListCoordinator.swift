@@ -27,7 +27,7 @@ public struct ChatListCoordinator: ChatListCoordinating {
     var bottomPresenter: Presenting = BottomPresenter()
 
     var scanFactory: () -> UIViewController
-    var searchFactory: () -> UIViewController
+    var searchFactory: (String?) -> UIViewController
     var newGroupFactory: () -> UIViewController
     var contactsFactory: () -> UIViewController
     var contactFactory: (Contact) -> UIViewController
@@ -37,7 +37,7 @@ public struct ChatListCoordinator: ChatListCoordinating {
 
     public init(
         scanFactory: @escaping () -> UIViewController,
-        searchFactory: @escaping () -> UIViewController,
+        searchFactory: @escaping (String?) -> UIViewController,
         newGroupFactory: @escaping () -> UIViewController,
         contactsFactory: @escaping () -> UIViewController,
         contactFactory: @escaping (Contact) -> UIViewController,
@@ -58,7 +58,7 @@ public struct ChatListCoordinator: ChatListCoordinating {
 
 public extension ChatListCoordinator {
     func toSearch(from parent: UIViewController) {
-        let screen = searchFactory()
+        let screen = searchFactory(nil)
         pushPresenter.present(screen, from: parent)
     }
 
