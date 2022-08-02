@@ -42,6 +42,6 @@ final class MenuViewModel {
     }
 
     var referralDeeplink: String {
-        "xxnetwork://messenger?invitation=\(username)"
+        "https://xx.network/messenger/invitation?username=\(username)"
     }
 }
