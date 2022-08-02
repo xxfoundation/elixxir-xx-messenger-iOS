@@ -5,8 +5,8 @@ import Presentation
 
 public protocol LaunchCoordinating {
     func toChats(from: UIViewController)
-    func toSearch(from: UIViewController)
     func toRequests(from: UIViewController)
+    func toSearch(searching: String, from: UIViewController)
     func toOnboarding(with: String, from: UIViewController)
     func toSingleChat(with: Contact, from: UIViewController)
     func toGroupChat(with: GroupInfo, from: UIViewController)
@@ -15,7 +15,7 @@ public protocol LaunchCoordinating {
 public struct LaunchCoordinator: LaunchCoordinating {
     var replacePresenter: Presenting = ReplacePresenter()
 
-    var searchFactory: () -> UIViewController
+    var searchFactory: (String) -> UIViewController
     var requestsFactory: () -> UIViewController
     var chatListFactory: () -> UIViewController
     var onboardingFactory: (String) -> UIViewController
@@ -23,7 +23,7 @@ public struct LaunchCoordinator: LaunchCoordinating {
     var groupChatFactory: (GroupInfo) -> UIViewController
 
     public init(
-        searchFactory: @escaping () -> UIViewController,
+        searchFactory: @escaping (String) -> UIViewController,
         requestsFactory: @escaping () -> UIViewController,
         chatListFactory: @escaping () -> UIViewController,
         onboardingFactory: @escaping (String) -> UIViewController,
@@ -40,8 +40,8 @@ public struct LaunchCoordinator: LaunchCoordinating {
 }
 
 public extension LaunchCoordinator {
-    func toSearch(from parent: UIViewController) {
-        let screen = searchFactory()
+    func toSearch(searching: String, from parent: UIViewController) {
+        let screen = searchFactory(searching)
         let chatListScreen = chatListFactory()
         replacePresenter.present(chatListScreen, screen, from: parent)
     }

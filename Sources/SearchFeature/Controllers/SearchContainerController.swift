@@ -14,10 +14,17 @@ public final class SearchContainerController: UIViewController {
 
     private var contentOffset: CGPoint?
     private var cancellables = Set<AnyCancellable>()
+    private let leftController: SearchLeftController
     private let viewModel = SearchContainerViewModel()
-    private let leftController = SearchLeftController()
     private let rightController = SearchRightController()
     private var drawerCancellables = Set<AnyCancellable>()
+
+    public init(_ invitation: String? = nil) {
+        self.leftController = .init(invitation)
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) { nil }
 
     public override func loadView() {
         view = screenView

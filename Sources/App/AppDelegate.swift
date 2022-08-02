@@ -20,7 +20,6 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     @Dependency private var crashReporter: CrashReporter
     @Dependency private var dropboxService: DropboxInterface
 
-    @KeyObject(.invitation, defaultValue: nil) var invitation: String?
     @KeyObject(.hideAppList, defaultValue: false) var hideAppList: Bool
     @KeyObject(.recordingLogs, defaultValue: true) var recordingLogs: Bool
     @KeyObject(.crashReporting, defaultValue: true) var isCrashReportingEnabled: Bool
@@ -145,9 +144,7 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     ) -> Bool {
         if let username = getUsernameFromInvitationDeepLink(url) {
             let router = try! DependencyInjection.Container.shared.resolve() as PushRouter
-            invitation = username
-            router.navigateTo(.search, {})
-
+            router.navigateTo(.search(username: username), {})
             return true
         } else {
             return dropboxService.handleOpenUrl(url)

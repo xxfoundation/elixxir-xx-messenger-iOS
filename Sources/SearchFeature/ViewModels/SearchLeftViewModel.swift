@@ -3,7 +3,6 @@ import UIKit
 import Shared
 import Combine
 import XXModels
-import Defaults
 import Countries
 import Integration
 import NetworkMonitor
@@ -22,8 +21,6 @@ final class SearchLeftViewModel {
     @Dependency var session: SessionType
     @Dependency var networkMonitor: NetworkMonitoring
 
-    @KeyObject(.invitation, defaultValue: nil) var invitation: String?
-
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
     }
@@ -36,11 +33,16 @@ final class SearchLeftViewModel {
         stateSubject.eraseToAnyPublisher()
     }
 
+    private var invitation: String?
     private var searchCancellables = Set<AnyCancellable>()
     private let successSubject = PassthroughSubject<Contact, Never>()
     private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
     private let stateSubject = CurrentValueSubject<SearchLeftViewState, Never>(.init())
     private var networkCancellable = Set<AnyCancellable>()
+
+    init(_ invitation: String? = nil) {
+        self.invitation = invitation
+    }
 
     func viewDidAppear() {
         if let pendingInvitation = invitation {
