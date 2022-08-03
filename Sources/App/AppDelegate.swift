@@ -165,8 +165,8 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
 func getUsernameFromInvitationDeepLink(_ url: URL) -> String? {
     if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
        components.scheme == "https",
-       components.host == "xx.network",
-       components.path == "/messenger/invitation",
+       components.host == "elixxir.io",
+       components.path == "/connect",
        let queryItem = components.queryItems?.first(where: { $0.name == "username" }),
        let username = queryItem.value {
         return username

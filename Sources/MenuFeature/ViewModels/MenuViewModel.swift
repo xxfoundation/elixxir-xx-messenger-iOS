@@ -42,6 +42,6 @@ final class MenuViewModel {
     }
 
     var referralDeeplink: String {
-        "https://xx.network/messenger/invitation?username=\(username)"
+        "https://elixxir.io/connect?username=\(username)"
     }
 }
