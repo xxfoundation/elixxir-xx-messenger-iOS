@@ -857,7 +857,7 @@
 "accountRestore.sftp.title"
 = "Login to your SFTP";
 "accountRestore.sftp.subtitle"
-= "Login to your server. Your credentials will be automatically and securely saved locally on your device.";
+= "Login to your server. Your credentials will be automatically and securely saved locally on your device. Your backups are encrypted and protected by your backup password which is stored separately from these credentials.\n\n*Please Note: at this time, host key fingerprint checking is not implemented. If the server's fingerprint changes you will not be notified.*";
 "accountRestore.sftp.host"
 = "Host";
 "accountRestore.sftp.username"

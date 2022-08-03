@@ -23,13 +23,20 @@ final class SFTPView: UIView {
         paragraph.alignment = .left
         paragraph.lineHeightMultiple = 1.15
 
-        let attString = NSAttributedString(
+        let attString = NSMutableAttributedString(
             string: Localized.AccountRestore.Sftp.subtitle,
             attributes: [
                 .foregroundColor: Asset.neutralBody.color,
                 .font: Fonts.Mulish.regular.font(size: 16.0) as Any,
                 .paragraphStyle: paragraph
             ])
+
+        attString.setAttributes(
+            attributes: [
+                .foregroundColor: Asset.neutralDark.color,
+                .font: Fonts.Mulish.bold.font(size: 12.0) as Any,
+                .paragraphStyle: paragraph
+        ], betweenCharacters: "*")
 
         subtitleLabel.numberOfLines = 0
         subtitleLabel.attributedText = attString

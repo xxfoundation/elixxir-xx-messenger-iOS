@@ -218,7 +218,9 @@ public enum Localized {
       public static let login = Localized.tr("Localizable", "accountRestore.sftp.login")
       /// Password
       public static let password = Localized.tr("Localizable", "accountRestore.sftp.password")
-      /// Login to your server. Your credentials will be automatically and securely saved locally on your device.
+      /// Login to your server. Your credentials will be automatically and securely saved locally on your device. Your backups are encrypted and protected by your backup password which is stored separately from these credentials.
+      /// 
+      /// *Please Note: at this time, host key fingerprint checking is not implemented. If the server's fingerprint changes you will not be notified.*
       public static let subtitle = Localized.tr("Localizable", "accountRestore.sftp.subtitle")
       /// Login to your SFTP
       public static let title = Localized.tr("Localizable", "accountRestore.sftp.title")
