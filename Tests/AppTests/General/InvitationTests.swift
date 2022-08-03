@@ -5,31 +5,31 @@ import XCTest
 final class AppDelegateTests: XCTestCase {
     func test_invitationUniversalLink() {
         XCTAssertNil(getUsernameFromInvitationDeepLink(
-            URL(string: "https://xx.network/messenger/invite?username=some")!
+            URL(string: "https://elixxir.io/connecting?username=some")!
         ))
 
         XCTAssertNil(getUsernameFromInvitationDeepLink(
-            URL(string: "http://xx.network/messenger/invitation?username=some")!
+            URL(string: "http://elixxir.io/connect?username=some")!
         ))
 
         XCTAssertNil(getUsernameFromInvitationDeepLink(
-            URL(string: "https://network.xx/messenger/invitation?username=some")!
+            URL(string: "https://io.elixxir/connect?username=some")!
         ))
 
         XCTAssertEqual(getUsernameFromInvitationDeepLink(
-            URL(string: "https://xx.network/messenger/invitation?username=brad")!
+            URL(string: "https://elixxir.io/connect?username=brad")!
         ), "brad")
 
         XCTAssertNil(getUsernameFromInvitationDeepLink(
-            URL(string: "https://xx.network/messenger/invitation?password=value")!
+            URL(string: "https://elixxir.io/connect?password=value")!
         ))
 
         XCTAssertNil(getUsernameFromInvitationDeepLink(
-            URL(string: "https://xx.network/xxmessenger/invitation?username=some")!
+            URL(string: "https://elixxir.io/connect?usernamer=some")!
         ))
 
         XCTAssertNotEqual(getUsernameFromInvitationDeepLink(
-            URL(string: "https://xx.network/messenger/invitation?username=anderson")!
+            URL(string: "https://elixxir.io/connect?username=anderson")!
         ), "silva")
     }
 }
