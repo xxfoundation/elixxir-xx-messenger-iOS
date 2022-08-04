@@ -30,6 +30,7 @@ let package = Package(
         .library(name: "SFTPFeature", targets: ["SFTPFeature"]),
         .library(name: "CrashService", targets: ["CrashService"]),
         .library(name: "Presentation", targets: ["Presentation"]),
+        .library(name: "ToastFeature", targets: ["ToastFeature"]),
         .library(name: "BackupFeature", targets: ["BackupFeature"]),
         .library(name: "LaunchFeature", targets: ["LaunchFeature"]),
         .library(name: "iCloudFeature", targets: ["iCloudFeature"]),
