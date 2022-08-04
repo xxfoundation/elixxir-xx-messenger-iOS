@@ -15,7 +15,6 @@ let package = Package(
         .library(name: "Models", targets: ["Models"]),
         .library(name: "XXLogger", targets: ["XXLogger"]),
         .library(name: "Defaults", targets: ["Defaults"]),
-        .library(name: "Bindings", targets: ["Bindings"]),
         .library(name: "Keychain", targets: ["Keychain"]),
         .library(name: "Voxophone", targets: ["Voxophone"]),
         .library(name: "Countries", targets: ["Countries"]),
