@@ -140,7 +140,7 @@ public final class Session: SessionType {
             }
         }
 
-        guard username!.isEmpty == false else {
+        guard let username = username, username.isEmpty == false else {
             fatalError("Trying to restore an account that has no username")
         }
 
