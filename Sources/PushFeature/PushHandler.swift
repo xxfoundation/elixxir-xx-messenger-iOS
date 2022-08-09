@@ -2,7 +2,7 @@ import UIKit
 import Models
 import Defaults
 import XXModels
-import Integration
+import XXDatabase
 import ReportingFeature
 import DependencyInjection
 
@@ -38,8 +38,7 @@ public final class PushHandler: PushHandling {
 
     public func registerToken(_ token: Data) {
         do {
-            let session = try DependencyInjection.Container.shared.resolve() as SessionType
-            try session.registerNotifications(token)
+            fatalError(">>> Missing API for notifications")
         } catch {
             isPushEnabled = false
         }

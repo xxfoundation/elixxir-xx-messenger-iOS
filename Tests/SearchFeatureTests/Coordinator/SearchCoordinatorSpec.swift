@@ -1,7 +1,6 @@
 import UIKit
 import Quick
 import Nimble
-import Integration
 import TestHelpers
 
 @testable import SearchFeature

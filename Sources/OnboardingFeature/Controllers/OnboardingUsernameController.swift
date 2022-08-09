@@ -15,9 +15,8 @@ public final class OnboardingUsernameController: UIViewController {
     lazy private var screenView = OnboardingUsernameView()
     lazy private var scrollViewController = ScrollViewController()
 
-    private let ndf: String
     private var cancellables = Set<AnyCancellable>()
-    private let viewModel: OnboardingUsernameViewModel!
+    private let viewModel = OnboardingUsernameViewModel()
     private var drawerCancellables = Set<AnyCancellable>()
 
     public override func viewWillAppear(_ animated: Bool) {
@@ -26,14 +25,6 @@ public final class OnboardingUsernameController: UIViewController {
         statusBarController.style.send(.darkContent)
         navigationController?.navigationBar.customize(translucent: true)
     }
-
-    public init(_ ndf: String) {
-        self.ndf = ndf
-        self.viewModel = OnboardingUsernameViewModel(ndf: ndf)
-        super.init(nibName: nil, bundle: nil)
-    }
-
-    required init?(coder: NSCoder) { nil }
 
     public override func viewDidLoad() {
         super.viewDidLoad()
@@ -74,7 +65,7 @@ public final class OnboardingUsernameController: UIViewController {
         screenView.restoreView.restoreButton
             .publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in coordinator.toRestoreList(with: ndf, from: self) }
+            .sink { [unowned self] in coordinator.toRestoreList(from: self) }
             .store(in: &cancellables)
 
         screenView.inputField.returnPublisher

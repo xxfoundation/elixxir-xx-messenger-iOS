@@ -1,12 +1,13 @@
 import HUD
 import UIKit
 import Shared
+import Models
 import Combine
 import Defaults
 import Countries
 import Foundation
 import Permissions
-import Integration
+import XXClient
 import CombineSchedulers
 import DependencyInjection
 
@@ -30,7 +31,7 @@ final class ProfileViewModel {
     @KeyObject(.sharingEmail, defaultValue: false) var isEmailSharing: Bool
     @KeyObject(.sharingPhone, defaultValue: false) var isPhoneSharing: Bool
 
-    @Dependency private var session: SessionType
+    @Dependency var userDiscovery: UserDiscovery
     @Dependency private var permissions: PermissionHandling
 
     var name: String { username! }
@@ -89,7 +90,20 @@ final class ProfileViewModel {
             guard let self = self else { return }
 
             do {
-                try self.session.unregister(fact: isEmail ? .email : .phone)
+                try self.userDiscovery.removeFact(
+                    .init(
+                        fact: isEmail ? "E\(self.emailStored!)" : "P\(self.phoneStored!)",
+                        type: isEmail ? FactType.email.rawValue : FactType.phone.rawValue
+                    )
+                )
+
+                if isEmail {
+                    self.emailStored = nil
+                    self.isEmailSharing = false
+                } else {
+                    self.phoneStored = nil
+                    self.isPhoneSharing = false
+                }
 
                 self.hudRelay.send(.none)
                 self.refresh()

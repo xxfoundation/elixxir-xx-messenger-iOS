@@ -5,14 +5,16 @@ import Shared
 import Combine
 import XXLogger
 import XXModels
+import XXClient
 import Foundation
-import Integration
-import Defaults
 import Permissions
 import ToastFeature
 import DifferenceKit
 import ReportingFeature
 import DependencyInjection
+
+import struct XXModels.Message
+import struct XXModels.FileTransfer
 
 enum SingleChatNavigationRoutes: Equatable {
     case none
@@ -26,11 +28,15 @@ enum SingleChatNavigationRoutes: Equatable {
 }
 
 final class SingleChatViewModel: NSObject {
-    @Dependency private var logger: XXLogger
-    @Dependency private var session: SessionType
-    @Dependency private var permissions: PermissionHandling
-    @Dependency private var toastController: ToastController
-    @Dependency private var sendReport: SendReport
+    @Dependency var e2e: E2E
+    @Dependency var cMix: CMix
+    @Dependency var logger: XXLogger
+    @Dependency var database: Database
+    @Dependency var sendReport: SendReport
+    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var permissions: PermissionHandling
+    @Dependency var toastController: ToastController
+    @Dependency var transferManager: XXClient.FileTransfer
 
     @KeyObject(.username, defaultValue: nil) var username: String?
 
@@ -46,7 +52,15 @@ final class SingleChatViewModel: NSObject {
     var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
     private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
 
-    var isOnline: AnyPublisher<Bool, Never> { session.isOnline }
+    var isOnline: AnyPublisher<Bool, Never> {
+        // TO REFACTOR:
+        Just(.init(true)).eraseToAnyPublisher()
+    }
+
+    var myId: Data {
+        try! GetIdFromContact.live(userDiscovery.getContact())
+    }
+
     var contactPublisher: AnyPublisher<Contact, Never> { contactSubject.eraseToAnyPublisher() }
     var replyPublisher: AnyPublisher<(String, String), Never> { replySubject.eraseToAnyPublisher() }
     var navigation: AnyPublisher<SingleChatNavigationRoutes, Never> { navigationRoutes.eraseToAnyPublisher() }
@@ -68,7 +82,7 @@ final class SingleChatViewModel: NSObject {
         if contact.isRecent == true {
             var contact = contact
             contact.isRecent = false
-            _ = try? session.dbManager.saveContact(contact)
+            _ = try? database.saveContact(contact)
         }
     }
 
@@ -82,13 +96,13 @@ final class SingleChatViewModel: NSObject {
 
         updateRecentState(contact)
 
-        session.dbManager.fetchContactsPublisher(Contact.Query(id: [contact.id]))
+        database.fetchContactsPublisher(Contact.Query(id: [contact.id]))
             .assertNoFailure()
             .compactMap { $0.first }
             .sink { [unowned self] in contactSubject.send($0) }
             .store(in: &cancellables)
 
-        session.dbManager.fetchMessagesPublisher(.init(chat: .direct(session.myId, contact.id)))
+        database.fetchMessagesPublisher(.init(chat: .direct(myId, contact.id)))
             .assertNoFailure()
             .map {
                 let groupedByDate = Dictionary(grouping: $0) { domainModel -> Date in
@@ -107,7 +121,7 @@ final class SingleChatViewModel: NSObject {
     // MARK: Public
 
     func getFileTransferWith(id: Data) -> FileTransfer {
-        guard let transfer = try? session.dbManager.fetchFileTransfers(.init(id: [id])).first else {
+        guard let transfer = try? database.fetchFileTransfers(.init(id: [id])).first else {
             fatalError()
         }
 
@@ -115,36 +129,133 @@ final class SingleChatViewModel: NSObject {
     }
 
     func didSendAudio(url: URL) {
-        session.sendFile(url: url, to: contact)
+        do {
+            let transferId = try transferManager.send(
+                params: .init(
+                    payload: .init(
+                        name: "",
+                        type: "",
+                        preview: Data(),
+                        contents: Data()
+                    ),
+                    recipientId: contact.id,
+                    paramsJSON: Data(),
+                    retry: 1,
+                    period: ""
+                ),
+                callback: .init(handle: {
+                    switch $0 {
+                    case .success(let progressCallback):
+                        print(progressCallback.progress.total)
+                    case .failure(let error):
+                        print(error.localizedDescription)
+                    }
+                })
+            )
+
+            // transferId
+        } catch {
+
+        }
     }
 
     func didSend(image: UIImage) {
         guard let imageData = image.orientedUp().jpegData(compressionQuality: 1.0) else { return }
         hudRelay.send(.on)
 
-        session.send(imageData: imageData, to: contact) { [weak self] in
-            switch $0 {
-            case .success:
-                self?.hudRelay.send(.none)
-            case .failure(let error):
-                self?.hudRelay.send(.error(.init(with: error)))
-            }
+        do {
+            let transferId = try transferManager.send(
+                params: .init(
+                    payload: .init(
+                        name: "",
+                        type: "",
+                        preview: Data(),
+                        contents: Data()
+                    ),
+                    recipientId: Data(),
+                    paramsJSON: Data(),
+                    retry: 1,
+                    period: ""
+                ),
+                callback: .init(handle: {
+                    switch $0 {
+                    case .success(let progressCallback):
+                        print(progressCallback.progress.total)
+                    case .failure(let error):
+                        print(error.localizedDescription)
+                    }
+                })
+            )
+        } catch {
+             // self?.hudRelay.send(.error(.init(with: error)))
         }
     }
 
     func readAll() {
         let assignment = Message.Assignments(isUnread: false)
-        let query = Message.Query(chat: .direct(session.myId, contact.id))
-        _ = try? session.dbManager.bulkUpdateMessages(query, assignment)
+        let query = Message.Query(chat: .direct(myId, contact.id))
+        _ = try? database.bulkUpdateMessages(query, assignment)
     }
 
     func didRequestDeleteAll() {
-        _ = try? session.dbManager.deleteMessages(.init(chat: .direct(session.myId, contact.id)))
+        _ = try? database.deleteMessages(.init(chat: .direct(myId, contact.id)))
     }
 
     func didRequestRetry(_ message: Message) {
-        guard let id = message.id else { return }
-        session.retryMessage(id)
+        var message = message
+
+        do {
+            message.status = .sending
+            message = try database.saveMessage(message)
+
+            var reply: Reply?
+
+            if let replyId = message.replyMessageId {
+                reply = Reply(messageId: replyId, senderId: myId)
+            }
+
+            let report = try e2e.send(
+                messageType: 2,
+                recipientId: contact.id,
+                payload: Payload(
+                    text: message.text,
+                    reply: reply
+                ).asData(),
+                e2eParams: GetE2EParams.liveDefault()
+            )
+
+            try cMix.waitForRoundResult(
+                roundList: try report.encode(),
+                timeoutMS: 5_000,
+                callback: .init(handle: {
+                    switch $0 {
+                    case .delivered:
+                        message.status = .sent
+                        _ = try? self.database.saveMessage(message)
+
+                    case .notDelivered(timedOut: let timedOut):
+                        if timedOut {
+                            message.status = .sendingTimedOut
+                        } else {
+                            message.status = .sendingFailed
+                        }
+
+                        _ = try? self.database.saveMessage(message)
+                    }
+                })
+            )
+
+            message.networkId = report.messageId
+            if let timestamp = report.timestamp {
+                message.date = Date.fromTimestamp(Int(timestamp))
+            }
+
+            message = try database.saveMessage(message)
+        } catch {
+            print(error.localizedDescription)
+            message.status = .sendingFailed
+            _ = try? database.saveMessage(message)
+        }
     }
 
     func didNavigateSomewhere() {
@@ -194,9 +305,60 @@ final class SingleChatViewModel: NSObject {
     }
 
     func send(_ string: String) {
-        let text = string.trimmingCharacters(in: .whitespacesAndNewlines)
-        let payload = Payload(text: text, reply: stagedReply)
-        session.send(payload, toContact: contact)
+        var message: Message = .init(
+            senderId: myId,
+            recipientId: contact.id,
+            groupId: nil,
+            date: Date(),
+            status: .sending,
+            isUnread: false,
+            text: string.trimmingCharacters(in: .whitespacesAndNewlines),
+            replyMessageId: stagedReply?.messageId
+        )
+
+        do {
+            message = try database.saveMessage(message)
+
+            let report = try e2e.send(
+                messageType: 2,
+                recipientId: contact.id,
+                payload: Payload(text: message.text, reply: stagedReply).asData(),
+                e2eParams: GetE2EParams.liveDefault()
+            )
+
+            try cMix.waitForRoundResult(
+                roundList: try report.encode(),
+                timeoutMS: 5_000,
+                callback: .init(handle: {
+                    switch $0 {
+                    case .delivered:
+                        message.status = .sent
+                        _ = try? self.database.saveMessage(message)
+
+                    case .notDelivered(timedOut: let timedOut):
+                        if timedOut {
+                            message.status = .sendingTimedOut
+                        } else {
+                            message.status = .sendingFailed
+                        }
+
+                        _ = try? self.database.saveMessage(message)
+                    }
+                })
+            )
+
+            message.networkId = report.messageId
+            if let timestamp = report.timestamp {
+                message.date = Date.fromTimestamp(Int(timestamp))
+            }
+
+            message = try database.saveMessage(message)
+        } catch {
+            print(error.localizedDescription)
+            message.status = .sendingFailed
+            _ = try? database.saveMessage(message)
+        }
+
         stagedReply = nil
     }
 
@@ -204,7 +366,7 @@ final class SingleChatViewModel: NSObject {
         guard let networkId = message.networkId else { return }
 
         let senderTitle: String = {
-            if message.senderId == session.myId {
+            if message.senderId == myId {
                 return "You"
             } else {
                 return (contact.nickname ?? contact.username) ?? "Fetching username..."
@@ -216,11 +378,11 @@ final class SingleChatViewModel: NSObject {
     }
 
     func getReplyContent(for messageId: Data) -> (String, String) {
-        guard let message = try? session.dbManager.fetchMessages(.init(networkId: messageId)).first else {
+        guard let message = try? database.fetchMessages(.init(networkId: messageId)).first else {
             return ("[DELETED]", "[DELETED]")
         }
 
-        guard let contact = try? session.dbManager.fetchContacts(.init(id: [message.senderId])).first else {
+        guard let contact = try? database.fetchContacts(.init(id: [message.senderId])).first else {
             fatalError()
         }
 
@@ -237,7 +399,7 @@ final class SingleChatViewModel: NSObject {
     }
 
     func didRequestDelete(_ items: [Message]) {
-        _ = try? session.dbManager.deleteMessages(.init(id: Set(items.compactMap(\.id))))
+        _ = try? database.deleteMessages(.init(id: Set(items.compactMap(\.id))))
     }
 
     func itemWith(id: Int64) -> Message? {

@@ -8,7 +8,7 @@ public protocol LaunchCoordinating {
     func toTerms(from: UIViewController)
     func toRequests(from: UIViewController)
     func toSearch(searching: String, from: UIViewController)
-    func toOnboarding(with: String, from: UIViewController)
+    func toOnboarding(from: UIViewController)
     func toSingleChat(with: Contact, from: UIViewController)
     func toGroupChat(with: GroupInfo, from: UIViewController)
 }
@@ -20,7 +20,7 @@ public struct LaunchCoordinator: LaunchCoordinating {
     var searchFactory: (String) -> UIViewController
     var requestsFactory: () -> UIViewController
     var chatListFactory: () -> UIViewController
-    var onboardingFactory: (String) -> UIViewController
+    var onboardingFactory: () -> UIViewController
     var singleChatFactory: (Contact) -> UIViewController
     var groupChatFactory: (GroupInfo) -> UIViewController
 
@@ -29,7 +29,7 @@ public struct LaunchCoordinator: LaunchCoordinating {
         searchFactory: @escaping (String) -> UIViewController,
         requestsFactory: @escaping () -> UIViewController,
         chatListFactory: @escaping () -> UIViewController,
-        onboardingFactory: @escaping (String) -> UIViewController,
+        onboardingFactory: @escaping () -> UIViewController,
         singleChatFactory: @escaping (Contact) -> UIViewController,
         groupChatFactory: @escaping (GroupInfo) -> UIViewController
     ) {
@@ -65,8 +65,8 @@ public extension LaunchCoordinator {
         replacePresenter.present(screen, from: parent)
     }
 
-    func toOnboarding(with ndf: String, from parent: UIViewController) {
-        let screen = onboardingFactory(ndf)
+    func toOnboarding(from parent: UIViewController) {
+        let screen = onboardingFactory()
         replacePresenter.present(screen, from: parent)
     }
 

@@ -4,8 +4,9 @@ import Models
 import Combine
 import XXModels
 import Defaults
-import Integration
+import XXClient
 import ReportingFeature
+import CombineSchedulers
 import DependencyInjection
 
 final class CreateGroupViewModel {
@@ -13,10 +14,16 @@ final class CreateGroupViewModel {
 
     // MARK: Injected
 
-    @Dependency private var session: SessionType
-    @Dependency private var reportingStatus: ReportingStatus
+    @Dependency var database: Database
+    @Dependency var groupManager: GroupChat
+    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var reportingStatus: ReportingStatus
 
     // MARK: Properties
+
+    var myId: Data {
+        try! GetIdFromContact.live(userDiscovery.getContact())
+    }
 
     var selected: AnyPublisher<[Contact], Never> {
         selectedContactsRelay.eraseToAnyPublisher()
@@ -34,6 +41,9 @@ final class CreateGroupViewModel {
         infoRelay.eraseToAnyPublisher()
     }
 
+    var backgroundScheduler: AnySchedulerOf<DispatchQueue>
+    = DispatchQueue.global().eraseToAnyScheduler()
+
     private var allContacts = [Contact]()
     private var cancellables = Set<AnyCancellable>()
     private let infoRelay = PassthroughSubject<GroupInfo, Never>()
@@ -50,9 +60,9 @@ final class CreateGroupViewModel {
             isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
-        session.dbManager.fetchContactsPublisher(query)
+        database.fetchContactsPublisher(query)
             .assertNoFailure()
-            .map { $0.filter { $0.id != self.session.myId }}
+            .map { $0.filter { $0.id != self.myId }}
             .map { $0.sorted(by: { $0.username! < $1.username! })}
             .sink { [unowned self] in
                 allContacts = $0
@@ -86,15 +96,54 @@ final class CreateGroupViewModel {
     func create(name: String, welcome: String?, members: [Contact]) {
         hudRelay.send(.on)
 
-        session.createGroup(name: name, welcome: welcome, members: members) { [weak self] in
+        backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }
 
-            self.hudRelay.send(.none)
+            do {
+                let report = try self.groupManager.makeGroup(
+                    membership: members.map(\.id),
+                    message: welcome?.data(using: .utf8),
+                    name: name.data(using: .utf8)
+                )
 
-            switch $0 {
-            case .success(let info):
-                self.infoRelay.send(info)
-            case .failure(let error):
+                let group = Group(
+                    id: report.id,
+                    name: name,
+                    leaderId: self.myId,
+                    createdAt: Date(),
+                    authStatus: .participating,
+                    serialized: try report.encode() // ?
+                )
+
+                _ = try self.database.saveGroup(group)
+
+                if let welcomeMessage = welcome {
+                    try self.database.saveMessage(
+                        Message(
+                            senderId: self.myId,
+                            recipientId: nil,
+                            groupId: group.id,
+                            date: group.createdAt,
+                            status: .sent,
+                            isUnread: false,
+                            text: welcomeMessage,
+                            replyMessageId: nil,
+                            roundURL: nil,
+                            fileTransferId: nil
+                        )
+                    )
+                }
+
+                try members
+                    .map { GroupMember(groupId: group.id, contactId: $0.id) }
+                    .forEach { try self.database.saveGroupMember($0) }
+
+                let query = GroupInfo.Query(groupId: group.id)
+                let info = try self.database.fetchGroupInfos(query).first
+
+                self.infoRelay.send(info!)
+                self.hudRelay.send(.none)
+            } catch {
                 self.hudRelay.send(.error(.init(with: error)))
             }
         }

@@ -1,10 +1,11 @@
 import Shared
+import Models
 import Combine
 import XXModels
 import Defaults
+import XXClient
 import Foundation
 import Permissions
-import Integration
 import ReportingFeature
 import DependencyInjection
 
@@ -23,9 +24,10 @@ enum ScanningError: Equatable {
 }
 
 final class SearchRightViewModel {
-    @Dependency var session: SessionType
+    @Dependency var database: Database
     @Dependency var permissions: PermissionHandling
     @Dependency var reportingStatus: ReportingStatus
+    @Dependency var getFactsFromContact: GetFactsFromContact
 
     var foundPublisher: AnyPublisher<Contact, Never> {
         foundSubject.eraseToAnyPublisher()
@@ -70,8 +72,11 @@ final class SearchRightViewModel {
         /// Whatever got scanned, needs to have id and username
         /// otherwise is just noise or an unknown qr code
         ///
-        guard let userId = session.getId(from: data),
-              let username = try? session.extract(fact: .username, from: data) else {
+        let userId = try? GetIdFromContact.live(data)
+        let facts = try? getFactsFromContact(contact: data)
+        let username = facts?.first(where: { $0.type == FactType.username.rawValue })?.fact
+
+        guard let userId = userId, let username = username else {
             let errorTitle = Localized.Scan.Error.invalid
             statusSubject.send(.failed(.unknown(errorTitle)))
             return
@@ -80,7 +85,7 @@ final class SearchRightViewModel {
         /// Make sure we are not processing a contact
         /// that we already have
         ///
-        if let alreadyContact = try? session.dbManager.fetchContacts(.init(id: [userId])).first {
+        if let alreadyContact = try? database.fetchContacts(.init(id: [userId])).first {
             if alreadyContact.isBlocked, reportingStatus.isEnabled() {
                 statusSubject.send(.failed(.unknown("You previously blocked this user.")))
                 return
@@ -108,12 +113,20 @@ final class SearchRightViewModel {
         statusSubject.send(.success)
         cameraSemaphoreSubject.send(false)
 
+        let email = try? GetFactsFromContact.live(contact: data)
+            .first(where: { $0.type == FactType.email.rawValue })
+            .map(\.fact)
+
+        let phone = try? GetFactsFromContact.live(contact: data)
+            .first(where: { $0.type == FactType.phone.rawValue })
+            .map(\.fact)
+
         foundSubject.send(.init(
             id: userId,
             marshaled: data,
             username: username,
-            email: try? session.extract(fact: .email, from: data),
-            phone: try? session.extract(fact: .phone, from: data),
+            email: email,
+            phone: phone,
             nickname: nil,
             photo: nil,
             authStatus: .stranger,

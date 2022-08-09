@@ -3,7 +3,7 @@ import Models
 import Combine
 import XXModels
 import Foundation
-import Integration
+import XXClient
 import CombineSchedulers
 import DependencyInjection
 
@@ -26,7 +26,8 @@ struct ScanViewState: Equatable {
 }
 
 final class ScanViewModel {
-    @Dependency private var session: SessionType
+    @Dependency var database: Database
+    @Dependency var getFactsFromContact: GetFactsFromContact
 
     var backgroundScheduler: AnySchedulerOf<DispatchQueue>
         = DispatchQueue.global().eraseToAnyScheduler()
@@ -56,7 +57,7 @@ final class ScanViewModel {
 
 
 
-                if let previouslyAdded = try? self.session.dbManager.fetchContacts(.init(id: [usernameAndId.1])).first {
+                if let previouslyAdded = try? self.database.fetchContacts(.init(id: [usernameAndId.1])).first {
                     var error = ScanError.unknown(Localized.Scan.Error.general)
 
                     switch previouslyAdded.authStatus {
@@ -72,12 +73,16 @@ final class ScanViewModel {
                     return
                 }
 
+                let facts = try? self.getFactsFromContact(contact: data)
+                let contactEmail = facts?.first(where: { $0.type == FactType.email.rawValue })?.fact
+                let contactPhone = facts?.first(where: { $0.type == FactType.phone.rawValue })?.fact
+
                 let contact = Contact(
                     id: usernameAndId.1,
                     marshaled: data,
                     username: usernameAndId.0,
-                    email: try? self.session.extract(fact: .email, from: data),
-                    phone: try? self.session.extract(fact: .phone, from: data),
+                    email: contactEmail,
+                    phone: contactPhone,
                     nickname: nil,
                     photo: nil,
                     authStatus: .stranger,
@@ -93,9 +98,11 @@ final class ScanViewModel {
     }
 
     private func verifyScanned(_ data: Data) throws -> (String, Data)? {
-        guard let username = try session.extract(fact: .username, from: data),
-                let id = session.getId(from: data) else { return nil }
+        let id = try? GetIdFromContact.live(data)
+        let facts = try? getFactsFromContact(contact: data)
+        let username = facts?.first(where: { $0.type == FactType.username.rawValue })?.fact
 
+        guard let id = id, let username = username else { return nil }
         return (username, id)
     }
 

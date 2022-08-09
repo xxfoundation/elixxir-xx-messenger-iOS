@@ -3,7 +3,7 @@ import Models
 import Shared
 import Combine
 import InputField
-import Integration
+import XXClient
 import CombineSchedulers
 import DependencyInjection
 
@@ -16,7 +16,7 @@ struct ProfileEmailViewState: Equatable {
 final class ProfileEmailViewModel {
     // MARK: Injected
 
-    @Dependency private var session: SessionType
+    @Dependency var userDiscovery: UserDiscovery
 
     // MARK: Properties
 
@@ -45,20 +45,19 @@ final class ProfileEmailViewModel {
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }
 
-            self.session.register(.email, value: self.stateRelay.value.input) { [weak self] in
-                guard let self = self else { return }
+            do {
+                let confirmationId = try self.userDiscovery.sendRegisterFact(
+                    .init(fact: self.stateRelay.value.input, type: FactType.email.rawValue)
+                )
 
-                switch $0 {
-                case .success(let confirmationId):
-                    self.hudRelay.send(.none)
-                    self.stateRelay.value.confirmation = .init(
-                        content: self.stateRelay.value.input,
-                        isEmail: true,
-                        confirmationId: confirmationId
-                    )
-                case .failure(let error):
-                    self.hudRelay.send(.error(.init(with: error)))
-                }
+                self.hudRelay.send(.none)
+                self.stateRelay.value.confirmation = .init(
+                    content: self.stateRelay.value.input,
+                    isEmail: true,
+                    confirmationId: confirmationId
+                )
+            } catch {
+                self.hudRelay.send(.error(.init(with: error)))
             }
         }
     }

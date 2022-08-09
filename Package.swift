@@ -23,7 +23,6 @@ let package = Package(
         .library(name: "ScanFeature", targets: ["ScanFeature"]),
         .library(name: "Permissions", targets: ["Permissions"]),
         .library(name: "MenuFeature", targets: ["MenuFeature"]),
-        .library(name: "Integration", targets: ["Integration"]),
         .library(name: "ChatFeature", targets: ["ChatFeature"]),
         .library(name: "PushFeature", targets: ["PushFeature"]),
         .library(name: "SFTPFeature", targets: ["SFTPFeature"]),
@@ -114,6 +113,10 @@ let package = Package(
         .package(
             url: "https://github.com/google/google-api-objectivec-client-for-rest",
             .upToNextMajor(from: "1.6.0")
+        ),
+        .package(
+            url: "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
+            branch: "development"
         ),
         .package(
             url: "https://git.xx.network/elixxir/client-ios-db.git",
@@ -207,10 +210,6 @@ let package = Package(
                 .target(name: "Shared"),
             ]
         ),
-        .binaryTarget(
-            name: "Bindings",
-            path: "XCFrameworks/Bindings.xcframework"
-        ),
         .target(
             name: "Permissions",
             dependencies: [
@@ -224,8 +223,8 @@ let package = Package(
             dependencies: [
                 .target(name: "Models"),
                 .target(name: "Defaults"),
-                .target(name: "Integration"),
                 .target(name: "DependencyInjection"),
+                .product(name: "XXDatabase", package: "client-ios-db"),
             ]
         ),
         .target(
@@ -374,26 +373,6 @@ let package = Package(
             ]
         ),
         .target(
-            name: "Integration",
-            dependencies: [
-                .target(name: "Shared"),
-                .target(name: "Bindings"),
-                .target(name: "XXLogger"),
-                .target(name: "Keychain"),
-                .target(name: "ToastFeature"),
-                .target(name: "BackupFeature"),
-                .target(name: "CrashReporting"),
-                .target(name: "NetworkMonitor"),
-                .target(name: "DependencyInjection"),
-                .product(name: "Retry", package: "Retry"),
-                .product(name: "XXDatabase", package: "client-ios-db"),
-                .product(name: "XXLegacyDatabaseMigrator", package: "client-ios-db"),
-            ],
-            resources: [
-                .process("Resources"),
-            ]
-        ),
-        .target(
             name: "Presentation",
             dependencies: [
                 .target(name: "Theme"),
@@ -422,12 +401,16 @@ let package = Package(
                 .target(name: "HUD"),
                 .target(name: "Shared"),
                 .target(name: "SFTPFeature"),
-                .target(name: "Integration"),
                 .target(name: "Presentation"),
                 .target(name: "iCloudFeature"),
+                .target(name: "BackupFeature"),
                 .target(name: "DropboxFeature"),
                 .target(name: "GoogleDriveFeature"),
                 .target(name: "DependencyInjection"),
+                .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
+            ],
+            resources: [
+                .process("Resources"),
             ]
         ),
         .target(
@@ -459,7 +442,6 @@ let package = Package(
                 .target(name: "Defaults"),
                 .target(name: "Keychain"),
                 .target(name: "Voxophone"),
-                .target(name: "Integration"),
                 .target(name: "Permissions"),
                 .target(name: "Presentation"),
                 .target(name: "DrawerFeature"),
@@ -486,10 +468,11 @@ let package = Package(
                 .target(name: "HUD"),
                 .target(name: "Shared"),
                 .target(name: "Countries"),
-                .target(name: "Integration"),
                 .target(name: "Presentation"),
                 .target(name: "ContactFeature"),
+                .target(name: "NetworkMonitor"),
                 .target(name: "DependencyInjection"),
+                .product(name: "XXDatabase", package: "client-ios-db"),
             ]
         ),
         .testTarget(
@@ -509,12 +492,17 @@ let package = Package(
                 .target(name: "Shared"),
                 .target(name: "Defaults"),
                 .target(name: "PushFeature"),
-                .target(name: "Integration"),
                 .target(name: "Permissions"),
                 .target(name: "DropboxFeature"),
                 .target(name: "VersionChecking"),
                 .target(name: "ReportingFeature"),
                 .target(name: "DependencyInjection"),
+                .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
+                .product(name: "CombineSchedulers", package: "combine-schedulers"),
+                .product(name: "XXLegacyDatabaseMigrator", package: "client-ios-db"),
+            ],
+            resources: [
+                .process("Resources"),
             ]
         ),
         .target(
@@ -531,7 +519,6 @@ let package = Package(
             dependencies: [
                 .target(name: "Theme"),
                 .target(name: "Shared"),
-                .target(name: "Integration"),
                 .target(name: "ToastFeature"),
                 .target(name: "ContactFeature"),
                 .target(name: "DependencyInjection"),
@@ -559,7 +546,6 @@ let package = Package(
                 .target(name: "InputField"),
                 .target(name: "MenuFeature"),
                 .target(name: "Permissions"),
-                .target(name: "Integration"),
                 .target(name: "Presentation"),
                 .target(name: "DrawerFeature"),
                 .target(name: "DependencyInjection"),
@@ -611,13 +597,15 @@ let package = Package(
                 .target(name: "InputField"),
                 .target(name: "Permissions"),
                 .target(name: "PushFeature"),
-                .target(name: "Integration"),
                 .target(name: "Presentation"),
                 .target(name: "DrawerFeature"),
                 .target(name: "VersionChecking"),
                 .target(name: "DependencyInjection"),
                 .product(name: "CombineSchedulers", package: "combine-schedulers"),
                 .product(name: "ScrollViewController", package: "ScrollViewController"),
+            ],
+            resources: [
+                .process("Resources"),
             ]
         ),
         .testTarget(
@@ -635,8 +623,8 @@ let package = Package(
                 .target(name: "Theme"),
                 .target(name: "Shared"),
                 .target(name: "Defaults"),
-                .target(name: "Integration"),
                 .target(name: "Presentation"),
+                .target(name: "DrawerFeature"),
                 .target(name: "DependencyInjection"),
             ]
         ),
@@ -663,9 +651,9 @@ let package = Package(
                 .target(name: "Shared"),
                 .target(name: "Countries"),
                 .target(name: "Permissions"),
-                .target(name: "Integration"),
                 .target(name: "Presentation"),
                 .target(name: "ContactFeature"),
+                .target(name: "NetworkMonitor"),
                 .target(name: "DependencyInjection"),
                 .product(name: "SnapKit", package: "SnapKit"),
             ]
@@ -684,7 +672,6 @@ let package = Package(
             dependencies: [
                 .target(name: "Theme"),
                 .target(name: "Shared"),
-                .target(name: "Integration"),
                 .target(name: "Presentation"),
                 .target(name: "ContactFeature"),
                 .target(name: "DependencyInjection"),
@@ -708,11 +695,11 @@ let package = Package(
                 .target(name: "Shared"),
                 .target(name: "Defaults"),
                 .target(name: "Keychain"),
+                .target(name: "XXLogger"),
                 .target(name: "InputField"),
                 .target(name: "PushFeature"),
                 .target(name: "Permissions"),
                 .target(name: "MenuFeature"),
-                .target(name: "Integration"),
                 .target(name: "Presentation"),
                 .target(name: "DrawerFeature"),
                 .target(name: "DependencyInjection"),

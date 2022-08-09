@@ -5,11 +5,13 @@ import Shared
 import Combine
 import Defaults
 import XXModels
-import Integration
+import XXClient
 import DrawerFeature
 import ReportingFeature
 import CombineSchedulers
 import DependencyInjection
+
+import struct XXModels.Group
 
 struct RequestReceived: Hashable, Equatable {
     var request: Request?
@@ -18,8 +20,11 @@ struct RequestReceived: Hashable, Equatable {
 }
 
 final class RequestsReceivedViewModel {
-    @Dependency private var session: SessionType
-    @Dependency private var reportingStatus: ReportingStatus
+    @Dependency var e2e: E2E
+    @Dependency var database: Database
+    @Dependency var groupManager: GroupChat
+    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var reportingStatus: ReportingStatus
 
     @KeyObject(.isShowingHiddenRequests, defaultValue: false) var isShowingHiddenRequests: Bool
 
@@ -75,8 +80,8 @@ final class RequestsReceivedViewModel {
             isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
-        let groupStream = session.dbManager.fetchGroupsPublisher(groupsQuery).assertNoFailure()
-        let contactsStream = session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure()
+        let groupStream = database.fetchGroupsPublisher(groupsQuery).assertNoFailure()
+        let contactsStream = database.fetchContactsPublisher(contactsQuery).assertNoFailure()
 
         Publishers.CombineLatest3(
             groupStream,
@@ -139,11 +144,49 @@ final class RequestsReceivedViewModel {
     }
 
     func didTapStateButtonFor(request: Request) {
-        guard case let .contact(contact) = request else { return }
+        guard case var .contact(contact) = request else { return }
 
         if request.status == .failedToVerify {
             backgroundScheduler.schedule { [weak self] in
-                self?.session.verify(contact: contact)
+                guard let self = self else { return }
+
+                do {
+                    contact.authStatus = .verificationInProgress
+                    try self.database.saveContact(contact)
+
+                    if contact.email == nil && contact.phone == nil {
+                        let _ = try LookupUD.live(
+                            e2eId: self.e2e.getId(),
+                            udContact: self.userDiscovery.getContact(),
+                            lookupId: contact.id,
+                            callback: .init(handle: {
+                                switch $0 {
+                                case .success(let data):
+                                    let ownershipResult = try! self.e2e.verifyOwnership(
+                                        receivedContact: contact.marshaled!,
+                                        verifiedContact: data,
+                                        e2eId: self.e2e.getId()
+                                    )
+
+                                    if ownershipResult == true {
+                                        contact.authStatus = .verified
+                                        _ = try? self.database.saveContact(contact)
+                                    } else {
+                                        _ = try? self.database.deleteContact(contact)
+                                    }
+                                case .failure(let error):
+                                    print("^^^ \(#file):\(#line)  \(error.localizedDescription)")
+                                    contact.authStatus = .verificationFailed
+                                    _ = try? self.database.saveContact(contact)
+                                }
+                            })
+                        )
+                    }
+                } catch {
+                    print("^^^ \(#file):\(#line)  \(error.localizedDescription)")
+                    contact.authStatus = .verificationFailed
+                    _ = try? self.database.saveContact(contact)
+                }
             }
         } else if request.status == .verifying {
             verifyingSubject.send()
@@ -151,9 +194,9 @@ final class RequestsReceivedViewModel {
     }
 
     func didRequestHide(group: Group) {
-        if var group = try? session.dbManager.fetchGroups(.init(id: [group.id])).first {
+        if var group = try? database.fetchGroups(.init(id: [group.id])).first {
             group.authStatus = .hidden
-            _ = try? session.dbManager.saveGroup(group)
+            _ = try? database.saveGroup(group)
         }
     }
 
@@ -161,12 +204,23 @@ final class RequestsReceivedViewModel {
         hudSubject.send(.on)
 
         backgroundScheduler.schedule { [weak self] in
+            guard let self = self else { return }
+
             do {
-                try self?.session.join(group: group)
-                self?.hudSubject.send(.none)
-                self?.groupConfirmationSubject.send(group)
+                let trackedId = try self.groupManager
+                    .getGroup(groupId: group.id)
+                    .getTrackedID()
+
+                try self.groupManager.joinGroup(trackedGroupId: trackedId)
+
+                var group = group
+                group.authStatus = .participating
+                try self.database.saveGroup(group)
+
+                self.hudSubject.send(.none)
+                self.groupConfirmationSubject.send(group)
             } catch {
-                self?.hudSubject.send(.error(.init(with: error)))
+                self.hudSubject.send(.error(.init(with: error)))
             }
         }
     }
@@ -175,8 +229,8 @@ final class RequestsReceivedViewModel {
         _ group: Group,
         _ completion: @escaping (Result<[DrawerTableCellModel], Error>) -> Void
     ) {
-        if let info = try? session.dbManager.fetchGroupInfos(.init(groupId: group.id)).first {
-            session.dbManager.fetchContactsPublisher(.init(id: Set(info.members.map(\.id))))
+        if let info = try? database.fetchGroupInfos(.init(groupId: group.id)).first {
+            database.fetchContactsPublisher(.init(id: Set(info.members.map(\.id))))
                 .assertNoFailure()
                 .sink { members in
                     let withUsername = members
@@ -209,9 +263,9 @@ final class RequestsReceivedViewModel {
     }
 
     func didRequestHide(contact: Contact) {
-        if var contact = try? session.dbManager.fetchContacts(.init(id: [contact.id])).first {
+        if var contact = try? database.fetchContacts(.init(id: [contact.id])).first {
             contact.authStatus = .hidden
-            _ = try? session.dbManager.saveContact(contact)
+            _ = try? database.saveContact(contact)
         }
     }
 
@@ -219,21 +273,31 @@ final class RequestsReceivedViewModel {
         hudSubject.send(.on)
 
         var contact = contact
+        contact.authStatus = .confirming
         contact.nickname = nickname ?? contact.username
 
         backgroundScheduler.schedule { [weak self] in
+            guard let self = self else { return }
+
             do {
-                try self?.session.confirm(contact)
-                self?.hudSubject.send(.none)
-                self?.contactConfirmationSubject.send(contact)
+                try self.database.saveContact(contact)
+
+                let _ = try self.e2e.confirmReceivedRequest(partnerContact: contact.id)
+                contact.authStatus = .friend
+                try self.database.saveContact(contact)
+
+                self.hudSubject.send(.none)
+                self.contactConfirmationSubject.send(contact)
             } catch {
-                self?.hudSubject.send(.error(.init(with: error)))
+                contact.authStatus = .confirmationFailed
+                _ = try? self.database.saveContact(contact)
+                self.hudSubject.send(.error(.init(with: error)))
             }
         }
     }
 
     func groupChatWith(group: Group) -> GroupInfo {
-        guard let info = try? session.dbManager.fetchGroupInfos(.init(groupId: group.id)).first else {
+        guard let info = try? database.fetchGroupInfos(.init(groupId: group.id)).first else {
             fatalError()
         }
 

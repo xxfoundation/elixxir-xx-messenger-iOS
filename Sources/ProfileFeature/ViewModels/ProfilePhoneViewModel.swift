@@ -4,7 +4,7 @@ import Models
 import Combine
 import Countries
 import InputField
-import Integration
+import XXClient
 import CombineSchedulers
 import DependencyInjection
 
@@ -18,7 +18,7 @@ struct ProfilePhoneViewState: Equatable {
 final class ProfilePhoneViewModel {
     // MARK: Injected
 
-    @Dependency private var session: SessionType
+    @Dependency var userDiscovery: UserDiscovery
 
     // MARK: Properties
 
@@ -54,19 +54,19 @@ final class ProfilePhoneViewModel {
 
             let content = "\(self.stateRelay.value.input)\(self.stateRelay.value.country.code)"
 
-            self.session.register(.phone, value: content) { [weak self] in
-                guard let self = self else { return }
+            do {
+                let confirmationId = try self.userDiscovery.sendRegisterFact(
+                    .init(fact: content, type: FactType.phone.rawValue)
+                )
 
-                switch $0 {
-                case .success(let confirmationId):
-                    self.hudRelay.send(.none)
-                    self.stateRelay.value.confirmation = .init(
-                        content: content,
-                        confirmationId: confirmationId
-                    )
-                case .failure(let error):
-                    self.hudRelay.send(.error(.init(with: error)))
-                }
+                self.hudRelay.send(.none)
+                self.stateRelay.value.confirmation = .init(
+                    content: content,
+                    confirmationId: confirmationId
+                )
+
+            } catch {
+                self.hudRelay.send(.error(.init(with: error)))
             }
         }
     }

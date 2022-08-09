@@ -5,9 +5,11 @@ import Models
 import Combine
 import XXModels
 import Defaults
-import Integration
 import ReportingFeature
 import DependencyInjection
+
+import struct XXModels.Group
+import XXClient
 
 enum SearchSection {
     case chats
@@ -23,11 +25,18 @@ typealias RecentsSnapshot = NSDiffableDataSourceSnapshot<SectionId, Contact>
 typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchItem>
 
 final class ChatListViewModel {
-    @Dependency private var session: SessionType
-    @Dependency private var reportingStatus: ReportingStatus
+    @Dependency var database: Database
+    @Dependency var groupManager: GroupChat
+    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var reportingStatus: ReportingStatus
 
+    // TO REFACTOR:
     var isOnline: AnyPublisher<Bool, Never> {
-        session.isOnline
+        Just(.init(true)).eraseToAnyPublisher()
+    }
+
+    var myId: Data {
+        try! GetIdFromContact.live(userDiscovery.getContact())
     }
 
     var chatsPublisher: AnyPublisher<[ChatInfo], Never> {
@@ -45,7 +54,7 @@ final class ChatListViewModel {
             isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
-        return session.dbManager.fetchContactsPublisher(query)
+        return database.fetchContactsPublisher(query)
             .assertNoFailure()
             .map {
             let section = SectionId()
@@ -62,13 +71,10 @@ final class ChatListViewModel {
             isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
-        let contactsStream = session.dbManager
-            .fetchContactsPublisher(contactsQuery)
-            .assertNoFailure()
-            .map { $0.filter { $0.id != self.session.myId }}
-
-        return Publishers.CombineLatest3(
-            contactsStream,
+        Publishers.CombineLatest3(
+            database.fetchContactsPublisher(contactsQuery)
+                .assertNoFailure()
+                .map { $0.filter { $0.id != self.session.myId }},
             chatsPublisher,
             searchSubject
                 .removeDuplicates()
@@ -132,8 +138,8 @@ final class ChatListViewModel {
         )
 
         return Publishers.CombineLatest(
-            session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure(),
-            session.dbManager.fetchGroupsPublisher(groupQuery).assertNoFailure()
+            database.fetchContactsPublisher(contactsQuery).assertNoFailure(),
+            database.fetchGroupsPublisher(groupQuery).assertNoFailure()
         )
         .map { $0.0.count + $0.1.count }
         .eraseToAnyPublisher()
@@ -145,10 +151,10 @@ final class ChatListViewModel {
     private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
 
     init() {
-        session.dbManager.fetchChatInfosPublisher(
+        database.fetchChatInfosPublisher(
             ChatInfo.Query(
                 contactChatInfoQuery: .init(
-                    userId: session.myId,
+                    userId: myId,
                     authStatus: [.friend],
                     isBlocked: reportingStatus.isEnabled() ? false : nil,
                     isBanned: reportingStatus.isEnabled() ? false : nil
@@ -175,8 +181,8 @@ final class ChatListViewModel {
         hudSubject.send(.on)
 
         do {
-            try session.leave(group: group)
-            try session.dbManager.deleteMessages(.init(chat: .group(group.id)))
+            try groupManager.leaveGroup(groupId: group.id)
+            try database.deleteMessages(.init(chat: .group(group.id)))
             hudSubject.send(.none)
         } catch {
             hudSubject.send(.error(.init(with: error)))
@@ -184,12 +190,12 @@ final class ChatListViewModel {
     }
 
     func clear(_ contact: Contact) {
-        _ = try? session.dbManager.deleteMessages(.init(chat: .direct(session.myId, contact.id)))
+        _ = try? database.deleteMessages(.init(chat: .direct(myId, contact.id)))
     }
 
     func groupInfo(from group: Group) -> GroupInfo? {
         let query = GroupInfo.Query(groupId: group.id)
-        guard let info = try? session.dbManager.fetchGroupInfos(query).first else {
+        guard let info = try? database.fetchGroupInfos(query).first else {
             return nil
         }
 

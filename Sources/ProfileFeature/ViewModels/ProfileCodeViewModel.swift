@@ -2,8 +2,9 @@ import HUD
 import Shared
 import Models
 import Combine
+import Defaults
 import InputField
-import Integration
+import XXClient
 import CombineSchedulers
 import DependencyInjection
 
@@ -14,7 +15,10 @@ struct ProfileCodeViewState: Equatable {
 }
 
 final class ProfileCodeViewModel {
-    @Dependency private var session: SessionType
+    @Dependency var userDiscovery: UserDiscovery
+
+    @KeyObject(.email, defaultValue: nil) var email: String?
+    @KeyObject(.phone, defaultValue: nil) var phone: String?
 
     let confirmation: AttributeConfirmation
 
@@ -63,10 +67,16 @@ final class ProfileCodeViewModel {
             guard let self = self else { return }
 
             do {
-                try self.session.confirm(
-                    code: self.stateRelay.value.input,
-                    confirmation: self.confirmation
+                try self.userDiscovery.confirmFact(
+                    confirmationId: self.confirmation.confirmationId!,
+                    code: self.stateRelay.value.input
                 )
+
+                if self.confirmation.isEmail {
+                    self.email = self.confirmation.content
+                } else {
+                    self.phone = self.confirmation.content
+                }
 
                 self.timer?.invalidate()
                 self.hudRelay.send(.none)

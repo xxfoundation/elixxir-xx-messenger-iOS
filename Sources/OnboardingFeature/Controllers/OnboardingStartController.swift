@@ -11,19 +11,11 @@ public final class OnboardingStartController: UIViewController {
 
     lazy private var screenView = OnboardingStartView()
 
-    private let ndf: String
     private var cancellables = Set<AnyCancellable>()
 
     public override func loadView() {
         view = screenView
     }
-
-    public init(_ ndf: String) {
-        self.ndf = ndf
-        super.init(nibName: nil, bundle: nil)
-    }
-
-    required init?(coder: NSCoder) { nil }
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -53,7 +45,7 @@ public final class OnboardingStartController: UIViewController {
         super.viewDidLoad()
 
         screenView.startButton.publisher(for: .touchUpInside)
-            .sink { [unowned self] in coordinator.toTerms(ndf: ndf, from: self) }
+            .sink { [unowned self] in coordinator.toTerms(from: self) }
             .store(in: &cancellables)
     }
 }

@@ -4,7 +4,7 @@ import Models
 import Combine
 import Countries
 import InputField
-import Integration
+import XXClient
 import CombineSchedulers
 import DependencyInjection
 
@@ -16,7 +16,7 @@ struct OnboardingPhoneViewState: Equatable {
 }
 
 final class OnboardingPhoneViewModel {
-    @Dependency private var session: SessionType
+    @Dependency var userDiscovery: UserDiscovery
 
     var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
     private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
@@ -53,19 +53,19 @@ final class OnboardingPhoneViewModel {
             guard let self = self else { return }
 
             let content = "\(self.stateRelay.value.input)\(self.stateRelay.value.country.code)"
-            self.session.register(.phone, value: content) { [weak self] in
-                guard let self = self else { return }
 
-                switch $0 {
-                case .success(let confirmationId):
-                    self.hudRelay.send(.none)
-                    self.stateRelay.value.confirmation = .init(
-                        content: content,
-                        confirmationId: confirmationId
-                    )
-                case .failure(let error):
-                    self.hudRelay.send(.error(.init(with: error)))
-                }
+            do {
+                let confirmationId = try self.userDiscovery.sendRegisterFact(
+                    .init(fact: content, type: FactType.phone.rawValue)
+                )
+
+                self.hudRelay.send(.none)
+                self.stateRelay.value.confirmation = .init(
+                    content: content,
+                    confirmationId: confirmationId
+                )
+            } catch {
+                self.hudRelay.send(.error(.init(with: error)))
             }
         }
     }

@@ -4,7 +4,6 @@ import Shared
 import Combine
 import Defaults
 import Foundation
-import Integration
 import BackupFeature
 import DependencyInjection
 
@@ -12,6 +11,9 @@ import SFTPFeature
 import iCloudFeature
 import DropboxFeature
 import GoogleDriveFeature
+
+import XXClient
+import struct Models.Backup
 
 enum RestorationStep {
     case idle(CloudService, Backup?)
@@ -39,12 +41,16 @@ extension RestorationStep: Equatable {
 }
 
 final class RestoreViewModel {
+    @Dependency var cMixManager: CMixManager
+
     @Dependency private var sftpService: SFTPService
     @Dependency private var iCloudService: iCloudInterface
     @Dependency private var dropboxService: DropboxInterface
     @Dependency private var googleService: GoogleDriveInterface
 
     @KeyObject(.username, defaultValue: nil) var username: String?
+    @KeyObject(.phone, defaultValue: nil) var phone: String?
+    @KeyObject(.email, defaultValue: nil) var email: String?
 
     var step: AnyPublisher<RestorationStep, Never> {
         stepRelay.eraseToAnyPublisher()
@@ -54,13 +60,11 @@ final class RestoreViewModel {
     //
     private var pendingData: Data?
 
-    private let ndf: String
     private var passphrase: String!
     private let settings: RestoreSettings
     private let stepRelay: CurrentValueSubject<RestorationStep, Never>
 
-    init(ndf: String, settings: RestoreSettings) {
-        self.ndf = ndf
+    init(settings: RestoreSettings) {
         self.settings = settings
         self.stepRelay = .init(.idle(settings.cloudService, settings.backup))
     }
@@ -155,13 +159,120 @@ final class RestoreViewModel {
             guard let self = self else { return }
 
             do {
-                let session = try Session(
-                    passphrase: self.passphrase,
-                    backupFile: data,
-                    ndf: self.ndf
+                let report = try self.cMixManager.restore(
+                    backup: data,
+                    passphrase: self.passphrase
                 )
 
-                DependencyInjection.Container.shared.register(session as SessionType)
+                struct BackupParameters: Codable {
+                    var email: String?
+                    var phone: String?
+                    var username: String
+                }
+
+                guard let paramsData = report.params.data(using: .utf8) else {
+                    fatalError("Couldn't parse parameters from backup to byte array")
+                }
+
+                let facts = try JSONDecoder().decode(
+                    BackupParameters.self,
+                    from: paramsData
+                )
+
+                var phoneFact: Fact?
+
+                self.phone = facts.phone
+                self.email = facts.email
+
+                let cMix = try self.cMixManager.load()
+
+                DependencyInjection.Container.shared.register(cMix)
+
+                let e2e = try Login.live(
+                    cMixId: cMix.getId(),
+                    authCallbacks: .init(
+                        handle: { callbacks in
+                            switch callbacks {
+                            case .reset(
+                                contact: _,
+                                receptionId: _,
+                                ephemeralId: _,
+                                roundId: _
+                            ):
+                                break
+                            case .confirm(
+                                contact: _,
+                                receptionId: _,
+                                ephemeralId: _,
+                                roundId: _
+                            ):
+                                break
+                            case .request(
+                                contact: _,
+                                receptionId: _,
+                                ephemeralId: _,
+                                roundId: _
+                            ):
+                                break
+                            }
+                        }
+                    ),
+                    identity: try cMix.makeLegacyReceptionIdentity()
+                )
+
+                guard let certPath = Bundle.module.path(forResource: "cmix.rip", ofType: "crt"),
+                      let contactFilePath = Bundle.module.path(forResource: "udContact", ofType: "bin") else {
+                    fatalError("Couldn't retrieve alternative UD credentials")
+                }
+
+                let userDiscovery = try NewUdManagerFromBackup.live(.init(
+                    e2eId: e2e.getId(),
+                    follower: .init(handle: { cMix.networkFollowerStatus().rawValue }),
+                    email: nil,
+                    phone: nil,
+                    cert: Data(contentsOf: URL(fileURLWithPath: certPath)),
+                    contactFile: Data(contentsOf: URL(fileURLWithPath: contactFilePath)),
+                    address: "46.101.98.49:18001"
+                ))
+
+                DependencyInjection.Container.shared.register(userDiscovery)
+
+                try e2e.registerListener(
+                    senderId: nil,
+                    messageType: 2,
+                    callback: .init(handle: { message in
+                        print(message.timestamp)
+                    })
+                )
+
+                DependencyInjection.Container.shared.register(e2e)
+
+                let groupManager = try NewGroupChat.live(
+                    e2eId: e2e.getId(),
+                    groupRequest: .init(handle: {
+                        print($0)
+                    }),
+                    groupChatProcessor: .init(handle: {
+                        print($0)
+                    })
+                )
+
+                DependencyInjection.Container.shared.register(groupManager)
+
+                let transferManager = try InitFileTransfer.live(
+                    e2eId: e2e.getId(),
+                    callback: .init(handle: {
+                        switch $0 {
+                        case .success(let receivedFile):
+                            print(receivedFile.name)
+                        case .failure(let error):
+                            print(error.localizedDescription)
+                        }
+                    })
+                )
+
+                DependencyInjection.Container.shared.register(transferManager)
+
                 self.stepRelay.send(.done)
             } catch {
                 self.pendingData = data

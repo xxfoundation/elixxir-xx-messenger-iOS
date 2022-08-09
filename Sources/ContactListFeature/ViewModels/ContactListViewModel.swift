@@ -2,13 +2,20 @@ import Models
 import Combine
 import XXModels
 import Defaults
-import Integration
 import ReportingFeature
 import DependencyInjection
 
+import Foundation
+import XXClient
+
 final class ContactListViewModel {
-    @Dependency private var session: SessionType
+    @Dependency var database: Database
+    @Dependency var userDiscovery: UserDiscovery
     @Dependency private var reportingStatus: ReportingStatus
+
+    var myId: Data {
+        try! GetIdFromContact.live(userDiscovery.getContact())
+    }
 
     var contacts: AnyPublisher<[Contact], Never> {
         let query = Contact.Query(
@@ -17,9 +24,9 @@ final class ContactListViewModel {
             isBanned: reportingStatus.isEnabled() ? false: nil
         )
 
-        return session.dbManager.fetchContactsPublisher(query)
+        return database.fetchContactsPublisher(query)
             .assertNoFailure()
-            .map { $0.filter { $0.id != self.session.myId }}
+            .map { $0.filter { $0.id != self.myId }}
             .eraseToAnyPublisher()
     }
 
@@ -43,8 +50,8 @@ final class ContactListViewModel {
         )
 
         return Publishers.CombineLatest(
-            session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure(),
-            session.dbManager.fetchGroupsPublisher(groupQuery).assertNoFailure()
+            database.fetchContactsPublisher(contactsQuery).assertNoFailure(),
+            database.fetchGroupsPublisher(groupQuery).assertNoFailure()
         )
         .map { $0.0.count + $0.1.count }
         .eraseToAnyPublisher()

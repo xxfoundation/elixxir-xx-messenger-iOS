@@ -14,8 +14,8 @@ public final class RestoreController: UIViewController {
     private var cancellables = Set<AnyCancellable>()
     private var drawerCancellables = Set<AnyCancellable>()
 
-    public init(_ ndf: String, _ settings: RestoreSettings) {
-        viewModel = .init(ndf: ndf, settings: settings)
+    public init(_ settings: RestoreSettings) {
+        viewModel = .init(settings: settings)
         super.init(nibName: nil, bundle: nil)
     }
 

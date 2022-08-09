@@ -11,7 +11,6 @@ public final class RestoreListController: UIViewController {
 
     lazy private var screenView = RestoreListView()
 
-    private let ndf: String
     private let viewModel = RestoreListViewModel()
     private var cancellables = Set<AnyCancellable>()
     private var drawerCancellables = Set<AnyCancellable>()
@@ -20,13 +19,6 @@ public final class RestoreListController: UIViewController {
         view = screenView
         presentWarning()
     }
-
-    public init(_ ndf: String) {
-        self.ndf = ndf
-        super.init(nibName: nil, bundle: nil)
-    }
-
-    public required init?(coder: NSCoder) { nil }
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
@@ -45,7 +37,7 @@ public final class RestoreListController: UIViewController {
         viewModel.backupPublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
-                coordinator.toRestore(using: ndf, with: $0, from: self)
+                coordinator.toRestore(with: $0, from: self)
             }.store(in: &cancellables)
 
         screenView.cancelButton

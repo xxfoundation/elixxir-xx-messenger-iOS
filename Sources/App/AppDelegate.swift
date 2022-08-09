@@ -5,7 +5,6 @@ import Theme
 import XXModels
 import XXLogger
 import Defaults
-import Integration
 import PushFeature
 import ToastFeature
 import SwiftyDropbox
@@ -13,6 +12,8 @@ import LaunchFeature
 import DropboxFeature
 import CrashReporting
 import DependencyInjection
+
+import XXClient
 
 public class AppDelegate: UIResponder, UIApplicationDelegate {
     @Dependency private var pushRouter: PushRouter
@@ -69,7 +70,8 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     public func applicationDidEnterBackground(_ application: UIApplication) {
-        if let session = try? DependencyInjection.Container.shared.resolve() as SessionType {
+        if let cMix: CMix = try? DependencyInjection.Container.shared.resolve(),
+           let database: Database = try? DependencyInjection.Container.shared.resolve() {
             let backgroundTask = application.beginBackgroundTask(withName: "xx.stop.network") {}
 
             // An option here would be: create async completion closure
@@ -78,9 +80,9 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
                 guard UIApplication.shared.backgroundTimeRemaining > 8 else {
                     if !self.calledStopNetwork {
                         self.calledStopNetwork = true
-                        session.stop()
+                        try! cMix.stopNetworkFollower()
                     } else {
-                        if session.hasRunningTasks == false {
+                        if cMix.hasRunningProcesses() == false {
                             application.endBackgroundTask(backgroundTask)
                             timer.invalidate()
                         }
@@ -95,7 +97,7 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
 
                         let query = Message.Query(status: [.sending])
                         let assignment = Message.Assignments(status: .sendingFailed)
-                        _ = try? session.dbManager.bulkUpdateMessages(query, assignment)
+                        _ = try? database.bulkUpdateMessages(query, assignment)
                     }
 
                     return
@@ -114,8 +116,8 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     
     public func applicationWillTerminate(_ application: UIApplication) {
-        if let session = try? DependencyInjection.Container.shared.resolve() as SessionType {
-            session.stop()
+        if let cMix: CMix = try? DependencyInjection.Container.shared.resolve() {
+            try? cMix.stopNetworkFollower()
         }
     }
 
@@ -125,9 +127,9 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
             backgroundTimer = nil
         }
 
-        if let session = try? DependencyInjection.Container.shared.resolve() as SessionType {
+        if let cMix: CMix = try? DependencyInjection.Container.shared.resolve() {
             guard self.calledStopNetwork == true else { return }
-            session.start()
+            try? cMix.startNetworkFollower(timeoutMS: 10_000)
             self.calledStopNetwork = false
         }
     }

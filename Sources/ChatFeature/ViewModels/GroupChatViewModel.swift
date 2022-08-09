@@ -6,11 +6,13 @@ import Combine
 import XXModels
 import Defaults
 import Foundation
-import Integration
 import ToastFeature
 import DifferenceKit
 import ReportingFeature
 import DependencyInjection
+
+import struct XXModels.Message
+import XXClient
 
 enum GroupChatNavigationRoutes: Equatable {
     case waitingRound
@@ -18,12 +20,19 @@ enum GroupChatNavigationRoutes: Equatable {
 }
 
 final class GroupChatViewModel {
-    @Dependency private var session: SessionType
-    @Dependency private var sendReport: SendReport
-    @Dependency private var reportingStatus: ReportingStatus
-    @Dependency private var toastController: ToastController
+    @Dependency var cMix: CMix
+    @Dependency var database: Database
+    @Dependency var sendReport: SendReport
+    @Dependency var groupManager: GroupChat
+    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var reportingStatus: ReportingStatus
+    @Dependency var toastController: ToastController
 
     @KeyObject(.username, defaultValue: nil) var username: String?
+
+    var myId: Data {
+        try! GetIdFromContact.live(userDiscovery.getContact())
+    }
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
@@ -50,7 +59,7 @@ final class GroupChatViewModel {
     private let routesSubject = PassthroughSubject<GroupChatNavigationRoutes, Never>()
 
     var messages: AnyPublisher<[ArraySection<ChatSection, Message>], Never> {
-        session.dbManager.fetchMessagesPublisher(.init(chat: .group(info.group.id)))
+        database.fetchMessagesPublisher(.init(chat: .group(info.group.id)))
             .assertNoFailure()
             .map { messages -> [ArraySection<ChatSection, Message>] in
                 let groupedByDate = Dictionary(grouping: messages) { domainModel -> Date in
@@ -76,11 +85,11 @@ final class GroupChatViewModel {
     func readAll() {
         let assignment = Message.Assignments(isUnread: false)
         let query = Message.Query(chat: .group(info.group.id))
-        _ = try? session.dbManager.bulkUpdateMessages(query, assignment)
+        _ = try? database.bulkUpdateMessages(query, assignment)
     }
 
     func didRequestDelete(_ messages: [Message]) {
-        _ = try? session.dbManager.deleteMessages(.init(id: Set(messages.map(\.id))))
+        _ = try? database.deleteMessages(.init(id: Set(messages.map(\.id))))
     }
 
     func didRequestReport(_ message: Message) {
@@ -90,16 +99,109 @@ final class GroupChatViewModel {
     }
 
     func send(_ text: String) {
-        session.send(.init(
+        var message = Message(
+            senderId: myId,
+            recipientId: nil,
+            groupId: info.group.id,
+            date: Date(),
+            status: .sending,
+            isUnread: false,
             text: text.trimmingCharacters(in: .whitespacesAndNewlines),
-            reply: stagedReply
-        ), toGroup: info.group)
+            replyMessageId: stagedReply?.messageId
+        )
+
+        do {
+            try database.saveMessage(message)
+
+            let report = try groupManager.send(
+                groupId: info.group.id,
+                message: Payload(
+                    text: text.trimmingCharacters(in: .whitespacesAndNewlines),
+                    reply: stagedReply
+                ).asData()
+            )
+
+            try cMix.waitForRoundResult(
+                roundList: try report.encode(),
+                timeoutMS: 5_000,
+                callback: .init(handle: {
+                    switch $0 {
+                    case .delivered:
+                        message.status = .sent
+                        _ = try? self.database.saveMessage(message)
+
+                    case .notDelivered(timedOut: let timedOut):
+                        if timedOut {
+                            message.status = .sendingTimedOut
+                        } else {
+                            message.status = .sendingFailed
+                        }
+
+                        _ = try? self.database.saveMessage(message)
+                    }
+                })
+            )
+
+            message.networkId = report.messageId
+            message.date = Date.fromTimestamp(Int(report.timestamp))
+            try database.saveMessage(message)
+        } catch {
+            message.status = .sendingFailed
+            _ = try? database.saveMessage(message)
+        }
+
         stagedReply = nil
     }
 
     func retry(_ message: Message) {
-        guard let id = message.id else { return }
-        session.retryMessage(id)
+        var message = message
+
+        do {
+            message.status = .sending
+            message = try database.saveMessage(message)
+
+            var reply: Reply?
+
+            if let replyId = message.replyMessageId {
+                reply = Reply(messageId: replyId, senderId: myId)
+            }
+
+            let report = try groupManager.send(
+                groupId: message.groupId!,
+                message: Payload(
+                    text: message.text,
+                    reply: reply
+                ).asData()
+            )
+
+            try cMix.waitForRoundResult(
+                roundList: try report.encode(),
+                timeoutMS: 5_000,
+                callback: .init(handle: {
+                    switch $0 {
+                    case .delivered:
+                        message.status = .sent
+                        _ = try? self.database.saveMessage(message)
+
+                    case .notDelivered(timedOut: let timedOut):
+                        if timedOut {
+                            message.status = .sendingTimedOut
+                        } else {
+                            message.status = .sendingFailed
+                        }
+
+                        _ = try? self.database.saveMessage(message)
+                    }
+                })
+            )
+
+            message.networkId = report.messageId
+            message.date = Date.fromTimestamp(Int(report.timestamp))
+            message = try database.saveMessage(message)
+        } catch {
+            message.status = .sendingFailed
+            _ = try? database.saveMessage(message)
+        }
     }
 
     func showRoundFrom(_ roundURL: String?) {
@@ -115,7 +217,7 @@ final class GroupChatViewModel {
     }
 
     func getReplyContent(for messageId: Data) -> (String, String) {
-        guard let message = try? session.dbManager.fetchMessages(.init(networkId: messageId)).first else {
+        guard let message = try? database.fetchMessages(.init(networkId: messageId)).first else {
             return ("[DELETED]", "[DELETED]")
         }
 
@@ -123,9 +225,9 @@ final class GroupChatViewModel {
     }
 
     func getName(from senderId: Data) -> String {
-        guard senderId != session.myId else { return "You" }
+        guard senderId != myId else { return "You" }
 
-        guard let contact = try? session.dbManager.fetchContacts(.init(id: [senderId])).first else {
+        guard let contact = try? database.fetchContacts(.init(id: [senderId])).first else {
             return "[DELETED]"
         }
 

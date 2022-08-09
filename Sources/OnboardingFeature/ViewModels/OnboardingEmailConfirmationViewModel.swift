@@ -5,7 +5,7 @@ import Shared
 import Combine
 import Defaults
 import InputField
-import Integration
+import XXClient
 import CombineSchedulers
 import DependencyInjection
 
@@ -16,7 +16,9 @@ struct OnboardingEmailConfirmationViewState: Equatable {
 }
 
 final class OnboardingEmailConfirmationViewModel {
-    @Dependency private var session: SessionType
+    @Dependency var userDiscovery: UserDiscovery
+
+    @KeyObject(.email, defaultValue: nil) var email: String?
 
     var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
     private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
@@ -64,10 +66,12 @@ final class OnboardingEmailConfirmationViewModel {
             guard let self = self else { return }
 
             do {
-                try self.session.confirm(
-                    code: self.stateRelay.value.input,
-                    confirmation: self.confirmation
+                try self.userDiscovery.confirmFact(
+                    confirmationId: self.confirmation.confirmationId!,
+                    code: self.stateRelay.value.input
                 )
+
+                self.email = self.confirmation.content
 
                 self.timer?.invalidate()
                 self.hudRelay.send(.none)

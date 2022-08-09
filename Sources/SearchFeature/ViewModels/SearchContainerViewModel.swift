@@ -1,15 +1,14 @@
 import UIKit
 import Combine
 import Defaults
-import Integration
 import PushFeature
+import XXClient
 import DependencyInjection
 
 final class SearchContainerViewModel {
-    @Dependency var session: SessionType
     @Dependency var pushHandler: PushHandling
+    @Dependency var dummyTrafficManager: DummyTraffic
 
-    @KeyObject(.dummyTrafficOn, defaultValue: false) var isCoverTrafficEnabled
     @KeyObject(.pushNotifications, defaultValue: false) var pushNotifications
     @KeyObject(.askedDummyTrafficOnce, defaultValue: false) var offeredCoverTraffic
 
@@ -25,8 +24,7 @@ final class SearchContainerViewModel {
     }
 
     func didEnableCoverTraffic() {
-        isCoverTrafficEnabled = true
-        session.setDummyTraffic(status: true)
+        try! dummyTrafficManager.setStatus(true)
     }
 
     private func verifyCoverTraffic() {

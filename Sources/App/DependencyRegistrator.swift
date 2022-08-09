@@ -15,7 +15,6 @@ import Keychain
 import Defaults
 import Countries
 import Voxophone
-import Integration
 import Permissions
 import PushFeature
 import SFTPFeature
@@ -48,6 +47,9 @@ import RequestsFeature
 import OnboardingFeature
 import ContactListFeature
 
+import KeychainAccess
+import XXClient
+
 struct DependencyRegistrator {
     static private let container = DependencyInjection.Container.shared
 
@@ -59,7 +61,6 @@ struct DependencyRegistrator {
         container.register(VersionChecker.mock)
         container.register(ReportingStatus.mock())
         container.register(SendReport.mock())
-        container.register(XXNetwork<BindingsMock>() as XXNetworking)
         container.register(MockNetworkMonitor() as NetworkMonitoring)
         container.register(KeyObjectStore.userDefaults)
         container.register(MockPushHandler() as PushHandling)
@@ -79,6 +80,12 @@ struct DependencyRegistrator {
     // MARK: LIVE
 
     static func registerForLive() {
+        let cMixManager = CMixManager.live(passwordStorage: .keychain)
+        container.register(cMixManager)
+
+        container.register(GetIdFromContact.live)
+        container.register(GetFactsFromContact.live)
+
         container.register(KeyObjectStore.userDefaults)
         container.register(XXLogger.live())
         container.register(CrashReporter.live)
@@ -86,7 +93,6 @@ struct DependencyRegistrator {
         container.register(ReportingStatus.live())
         container.register(SendReport.live)
 
-        container.register(XXNetwork<BindingsClient>() as XXNetworking)
         container.register(NetworkMonitor() as NetworkMonitoring)
         container.register(PushHandler() as PushHandling)
         container.register(KeychainHandler() as KeychainHandling)
@@ -134,7 +140,7 @@ struct DependencyRegistrator {
                 searchFactory: SearchContainerController.init,
                 requestsFactory: RequestsContainerController.init,
                 chatListFactory: ChatListController.init,
-                onboardingFactory: OnboardingStartController.init(_:),
+                onboardingFactory: OnboardingStartController.init,
                 singleChatFactory: SingleChatController.init(_:),
                 groupChatFactory: GroupChatController.init(_:)
             ) as LaunchCoordinating)
@@ -185,7 +191,7 @@ struct DependencyRegistrator {
             RestoreCoordinator(
                 successFactory: RestoreSuccessController.init,
                 chatListFactory: ChatListController.init,
-                restoreFactory: RestoreController.init(_:_:),
+                restoreFactory: RestoreController.init(_:),
                 passphraseFactory: RestorePassphraseController.init(_:)
             ) as RestoreCoordinating)
 
@@ -224,9 +230,9 @@ struct DependencyRegistrator {
                 searchFactory: SearchContainerController.init,
                 welcomeFactory: OnboardingWelcomeController.init,
                 chatListFactory: ChatListController.init,
-                termsFactory: TermsConditionsController.init(_:),
-                usernameFactory: OnboardingUsernameController.init(_:),
-                restoreListFactory: RestoreListController.init(_:),
+                termsFactory: TermsConditionsController.init,
+                usernameFactory: OnboardingUsernameController.init,
+                restoreListFactory: RestoreListController.init,
                 successFactory: OnboardingSuccessController.init(_:),
                 countriesFactory: CountryListController.init(_:),
                 phoneConfirmationFactory: OnboardingPhoneConfirmationController.init(_:_:),
@@ -269,4 +275,16 @@ struct DependencyRegistrator {
                 sideMenuFactory: MenuController.init(_:_:)
             ) as ChatListCoordinating)
     }
+}
+
+extension PasswordStorage {
+    static let keychain: PasswordStorage = {
+        let keychain = KeychainAccess.Keychain(
+            service: "XXM"
+        )
+        return PasswordStorage(
+            save: { password in keychain[data: "password"] = password},
+            load: { try keychain[data: "password"] ?? { throw MissingPasswordError() }() }
+        )
+    }()
 }

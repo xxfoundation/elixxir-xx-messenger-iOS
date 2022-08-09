@@ -5,7 +5,8 @@ import Shared
 import Combine
 import Defaults
 import XXModels
-import Integration
+import Defaults
+import XXClient
 import ToastFeature
 import ReportingFeature
 import CombineSchedulers
@@ -17,9 +18,13 @@ struct RequestSent: Hashable, Equatable {
 }
 
 final class RequestsSentViewModel {
-    @Dependency private var session: SessionType
-    @Dependency private var reportingStatus: ReportingStatus
-    @Dependency private var toastController: ToastController
+    @Dependency var e2e: E2E
+    @Dependency var database: Database
+    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var reportingStatus: ReportingStatus
+    @Dependency var toastController: ToastController
+
+    @KeyObject(.username, defaultValue: nil) var username: String?
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
@@ -45,7 +50,7 @@ final class RequestsSentViewModel {
             isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
-        session.dbManager.fetchContactsPublisher(query)
+        database.fetchContactsPublisher(query)
             .assertNoFailure()
             .removeDuplicates()
             .map { data -> NSDiffableDataSourceSnapshot<Section, RequestSent> in
@@ -65,7 +70,14 @@ final class RequestsSentViewModel {
             guard let self = self else { return }
 
             do {
-                try self.session.retryRequest(contact)
+                var myFacts = try self.userDiscovery.getFacts()
+                myFacts.append(Fact(fact: self.username!, type: FactType.username.rawValue))
+
+                let _ = try self.e2e.requestAuthenticatedChannel(
+                    partnerContact: contact.id,
+                    myFacts: myFacts
+                )
+
                 self.hudSubject.send(.none)
 
                 var item = item

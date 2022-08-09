@@ -3,11 +3,15 @@ import UIKit
 import Shared
 import Combine
 import XXModels
+import XXClient
 import Defaults
 import Countries
-import Integration
+import Models
+import Defaults
+import CustomDump
 import NetworkMonitor
 import ReportingFeature
+import CombineSchedulers
 import DependencyInjection
 
 typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchItem>
@@ -20,9 +24,17 @@ struct SearchLeftViewState {
 }
 
 final class SearchLeftViewModel {
-    @Dependency var session: SessionType
+    @Dependency var e2e: E2E
+    @Dependency var database: Database
+    @Dependency var userDiscovery: UserDiscovery
     @Dependency var reportingStatus: ReportingStatus
     @Dependency var networkMonitor: NetworkMonitoring
+
+    @KeyObject(.username, defaultValue: nil) var username: String?
+
+    var myId: Data {
+        try! GetIdFromContact.live(userDiscovery.getContact())
+    }
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
@@ -35,6 +47,8 @@ final class SearchLeftViewModel {
     var statePublisher: AnyPublisher<SearchLeftViewState, Never> {
         stateSubject.eraseToAnyPublisher()
     }
+
+    var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
     private var invitation: String?
     private var searchCancellables = Set<AnyCancellable>()
@@ -99,47 +113,107 @@ final class SearchLeftViewModel {
             content += stateSubject.value.country.code
         }
 
-        session.search(fact: "\(prefix)\(content)")
-            .sink { [unowned self] in
-                if case .failure(let error) = $0 {
-                    self.appendToLocalSearch(nil)
-                    self.hudSubject.send(.error(.init(with: error)))
-                }
-            } receiveValue: { contact in
-                self.hudSubject.send(.none)
-                self.appendToLocalSearch(contact)
-            }.store(in: &searchCancellables)
+//        backgroundScheduler.schedule { [weak self] in
+//            guard let self = self else { return }
+
+            do {
+                let report = try SearchUD.live(
+                    e2eId: self.e2e.getId(),
+                    udContact: self.userDiscovery.getContact(),
+                    facts: [Fact(fact: "teste", type: 0)],
+                    callback: .init(handle: {
+                        switch $0 {
+                        case .success(let dataArray):
+                            print("^^^ \(#file):\(#line) \(dataArray.map { $0.base64EncodedString() })")
+
+                            // self.hudSubject.send(.none)
+                            // self.appendToLocalSearch(contact)
+
+                        case .failure(let error):
+                            print("^^^ \(#file):\(#line) error: \(error.localizedDescription)")
+                            self.appendToLocalSearch(nil)
+                            self.hudSubject.send(.error(.init(with: error)))
+                        }
+                    })
+                )
+
+                print(report)
+            } catch {
+                print("^^^ \(#file):\(#line) error: \(error.localizedDescription)")
+            }
+//        }
     }
 
     func didTapResend(contact: Contact) {
         hudSubject.send(.on)
 
-        do {
-            try self.session.retryRequest(contact)
-            hudSubject.send(.none)
-        } catch {
-            hudSubject.send(.error(.init(with: error)))
+        var contact = contact
+        contact.authStatus = .requesting
+
+        backgroundScheduler.schedule { [weak self] in
+            guard let self = self else { return }
+
+            do {
+                try self.database.saveContact(contact)
+
+                var myFacts = try self.userDiscovery.getFacts()
+                myFacts.append(Fact(fact: self.username!, type: FactType.username.rawValue))
+
+                let _ = try self.e2e.requestAuthenticatedChannel(
+                    partnerContact: contact.id,
+                    myFacts: myFacts
+                )
+
+                contact.authStatus = .requested
+                contact = try self.database.saveContact(contact)
+
+                self.hudSubject.send(.none)
+            } catch {
+                contact.authStatus = .requestFailed
+                _ = try? self.database.saveContact(contact)
+                self.hudSubject.send(.error(.init(with: error)))
+            }
         }
     }
 
     func didTapRequest(contact: Contact) {
         hudSubject.send(.on)
+
         var contact = contact
         contact.nickname = contact.username
+        contact.authStatus = .requesting
 
-        do {
-            try self.session.add(contact)
-            hudSubject.send(.none)
-            successSubject.send(contact)
-        } catch {
-            hudSubject.send(.error(.init(with: error)))
+        backgroundScheduler.schedule { [weak self] in
+            guard let self = self else { return }
+
+            do {
+                try self.database.saveContact(contact)
+
+                var myFacts = try self.userDiscovery.getFacts()
+                myFacts.append(Fact(fact: self.username!, type: FactType.username.rawValue))
+
+                let _ = try self.e2e.requestAuthenticatedChannel(
+                    partnerContact: contact.marshaled!,
+                    myFacts: myFacts
+                )
+
+                contact.authStatus = .requested
+                contact = try self.database.saveContact(contact)
+
+                self.hudSubject.send(.none)
+                self.successSubject.send(contact)
+            } catch {
+                contact.authStatus = .requestFailed
+                _ = try? self.database.saveContact(contact)
+                self.hudSubject.send(.error(.init(with: error)))
+            }
         }
     }
 
     func didSet(nickname: String, for contact: Contact) {
-        if var contact = try? session.dbManager.fetchContacts(.init(id: [contact.id])).first {
+        if var contact = try? database.fetchContacts(.init(id: [contact.id])).first {
             contact.nickname = nickname
-            _ = try? session.dbManager.saveContact(contact)
+            _ = try? database.saveContact(contact)
         }
     }
 
@@ -147,7 +221,7 @@ final class SearchLeftViewModel {
         var snapshot = SearchSnapshot()
 
         if var user = user {
-            if let contact = try! session.dbManager.fetchContacts(.init(id: [user.id])).first {
+            if let contact = try? database.fetchContacts(.init(id: [user.id])).first {
                 user.isBanned = contact.isBanned
                 user.isBlocked = contact.isBlocked
                 user.authStatus = contact.authStatus
@@ -169,7 +243,7 @@ final class SearchLeftViewModel {
             isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
-        if let locals = try? session.dbManager.fetchContacts(localsQuery),
+        if let locals = try? database.fetchContacts(localsQuery),
            let localsWithoutMe = removeMyself(from: locals),
            localsWithoutMe.isEmpty == false {
             snapshot.appendSections([.connections])
@@ -183,6 +257,6 @@ final class SearchLeftViewModel {
     }
 
     private func removeMyself(from collection: [Contact]) -> [Contact]? {
-        collection.filter { $0.id != session.myId }
+        collection.filter { $0.id != myId }
     }
 }

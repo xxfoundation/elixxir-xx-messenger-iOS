@@ -10,10 +10,10 @@ public protocol OnboardingCoordinating {
     func toChats(from: UIViewController)
     func toEmail(from: UIViewController)
     func toPhone(from: UIViewController)
+    func toTerms(from: UIViewController)
     func toWelcome(from: UIViewController)
-    func toTerms(ndf: String, from: UIViewController)
-    func toUsername(with: String, from: UIViewController)
-    func toRestoreList(with: String, from: UIViewController)
+    func toUsername(from: UIViewController)
+    func toRestoreList(from: UIViewController)
     func toDrawer(_: UIViewController, from: UIViewController)
     func toSuccess(with: OnboardingSuccessModel, from: UIViewController)
 
@@ -45,9 +45,9 @@ public struct OnboardingCoordinator: OnboardingCoordinating {
     var searchFactory: (String?) -> UIViewController
     var welcomeFactory: () -> UIViewController
     var chatListFactory: () -> UIViewController
-    var usernameFactory: (String) -> UIViewController
-    var restoreListFactory: (String) -> UIViewController
-    var termsFactory: (String?) -> UIViewController
+    var termsFactory: () -> UIViewController
+    var usernameFactory: () -> UIViewController
+    var restoreListFactory: () -> UIViewController
     var successFactory: (OnboardingSuccessModel) -> UIViewController
     var countriesFactory: (@escaping (Country) -> Void) -> UIViewController
     var phoneConfirmationFactory: (AttributeConfirmation, @escaping AttributeControllerClosure) -> UIViewController
@@ -59,9 +59,9 @@ public struct OnboardingCoordinator: OnboardingCoordinating {
         searchFactory: @escaping (String?) -> UIViewController,
         welcomeFactory: @escaping () -> UIViewController,
         chatListFactory: @escaping () -> UIViewController,
-        termsFactory: @escaping (String?) -> UIViewController,
-        usernameFactory: @escaping (String) -> UIViewController,
-        restoreListFactory: @escaping (String) -> UIViewController,
+        termsFactory: @escaping () -> UIViewController,
+        usernameFactory: @escaping () -> UIViewController,
+        restoreListFactory: @escaping () -> UIViewController,
         successFactory: @escaping (OnboardingSuccessModel) -> UIViewController,
         countriesFactory: @escaping (@escaping (Country) -> Void) -> UIViewController,
         phoneConfirmationFactory: @escaping (AttributeConfirmation, @escaping AttributeControllerClosure) -> UIViewController,
@@ -83,11 +83,8 @@ public struct OnboardingCoordinator: OnboardingCoordinating {
 }
 
 public extension OnboardingCoordinator {
-    func toTerms(
-        ndf: String,
-        from parent: UIViewController
-    ) {
-        let screen = termsFactory(ndf)
+    func toTerms(from parent: UIViewController) {
+        let screen = termsFactory()
         pushPresenter.present(screen, from: parent)
     }
 
@@ -106,8 +103,8 @@ public extension OnboardingCoordinator {
         replacePresenter.present(screen, from: parent)
     }
 
-    func toRestoreList(with ndf: String, from parent: UIViewController) {
-        let screen = restoreListFactory(ndf)
+    func toRestoreList(from parent: UIViewController) {
+        let screen = restoreListFactory()
         pushPresenter.present(screen, from: parent)
     }
 
@@ -116,8 +113,8 @@ public extension OnboardingCoordinator {
         replacePresenter.present(screen, from: parent)
     }
 
-    func toUsername(with ndf: String, from parent: UIViewController) {
-        let screen = usernameFactory(ndf)
+    func toUsername(from parent: UIViewController) {
+        let screen = usernameFactory()
         replacePresenter.present(screen, from: parent)
     }
 

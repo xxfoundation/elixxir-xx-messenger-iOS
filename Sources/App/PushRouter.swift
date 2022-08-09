@@ -1,12 +1,12 @@
 import UIKit
 import PushFeature
-import Integration
 import ChatFeature
 import SearchFeature
 import LaunchFeature
 import ChatListFeature
 import RequestsFeature
 import DependencyInjection
+import XXModels
 
 extension PushRouter {
     static func live(navigationController: UINavigationController) -> PushRouter {
@@ -20,24 +20,23 @@ extension PushRouter {
                         navigationController.setViewControllers([RequestsContainerController()], animated: true)
                     }
                 case .search(username: let username):
-                    if let _ = try? DependencyInjection.Container.shared.resolve() as SessionType,
-                       !(navigationController.viewControllers.last is SearchContainerController) {
+                    if !(navigationController.viewControllers.last is SearchContainerController) {
                         navigationController.setViewControllers([
                             ChatListController(),
                             SearchContainerController(username)
                         ], animated: true)
                     }
                 case .contactChat(id: let id):
-                    if let session = try? DependencyInjection.Container.shared.resolve() as SessionType,
-                       let contact = try? session.dbManager.fetchContacts(.init(id: [id])).first {
+                    if let database: Database = try? DependencyInjection.Container.shared.resolve(),
+                       let contact = try? database.fetchContacts(.init(id: [id])).first {
                         navigationController.setViewControllers([
                             ChatListController(),
                             SingleChatController(contact)
                         ], animated: true)
                     }
                 case .groupChat(id: let id):
-                    if let session = try? DependencyInjection.Container.shared.resolve() as SessionType,
-                       let info = try? session.dbManager.fetchGroupInfos(.init(groupId: id)).first {
+                    if let database: Database = try? DependencyInjection.Container.shared.resolve(),
+                       let info = try? database.fetchGroupInfos(.init(groupId: id)).first {
                         navigationController.setViewControllers([
                             ChatListController(),
                             GroupChatController(info)

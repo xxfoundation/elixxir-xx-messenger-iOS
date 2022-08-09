@@ -8,7 +8,7 @@ public protocol RestoreCoordinating {
     func toSuccess(from: UIViewController)
     func toDrawer(_: UIViewController, from: UIViewController)
     func toPassphrase(from: UIViewController, _: @escaping StringClosure)
-    func toRestore(using: String, with: RestoreSettings, from: UIViewController)
+    func toRestore(with: RestoreSettings, from: UIViewController)
 }
 
 public struct RestoreCoordinator: RestoreCoordinating {
@@ -18,13 +18,13 @@ public struct RestoreCoordinator: RestoreCoordinating {
 
     var successFactory: () -> UIViewController
     var chatListFactory: () -> UIViewController
-    var restoreFactory: (String, RestoreSettings) -> UIViewController
+    var restoreFactory: (RestoreSettings) -> UIViewController
     var passphraseFactory: (@escaping StringClosure) -> UIViewController
 
     public init(
         successFactory: @escaping () -> UIViewController,
         chatListFactory: @escaping () -> UIViewController,
-        restoreFactory: @escaping (String, RestoreSettings) -> UIViewController,
+        restoreFactory: @escaping (RestoreSettings) -> UIViewController,
         passphraseFactory: @escaping (@escaping StringClosure) -> UIViewController
     ) {
         self.successFactory = successFactory
@@ -36,11 +36,10 @@ public struct RestoreCoordinator: RestoreCoordinating {
 
 public extension RestoreCoordinator {
     func toRestore(
-        using ndf: String,
         with settings: RestoreSettings,
         from parent: UIViewController
     ) {
-        let screen = restoreFactory(ndf, settings)
+        let screen = restoreFactory(settings)
         pushPresenter.present(screen, from: parent)
     }
 

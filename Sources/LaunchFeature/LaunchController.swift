@@ -86,8 +86,8 @@ public final class LaunchController: UIViewController {
 
                     coordinator.toChats(from: self)
 
-                case .onboarding(let ndf):
-                    coordinator.toOnboarding(with: ndf, from: self)
+                case .onboarding:
+                    coordinator.toOnboarding(from: self)
 
                 case .update(let model):
                     offerUpdate(model: model)

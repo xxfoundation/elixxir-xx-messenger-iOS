@@ -1,8 +1,9 @@
 import UIKit
+import Models
 import Combine
 import Defaults
 import Countries
-import Integration
+import XXClient
 import DependencyInjection
 
 struct ScanDisplayViewState: Equatable {
@@ -14,7 +15,7 @@ struct ScanDisplayViewState: Equatable {
 }
 
 final class ScanDisplayViewModel {
-    @Dependency private var session: SessionType
+    @Dependency var userDiscovery: UserDiscovery
 
     @KeyObject(.email, defaultValue: nil) private var email: String?
     @KeyObject(.phone, defaultValue: nil) private var phone: String?
@@ -58,7 +59,23 @@ final class ScanDisplayViewModel {
     func generateQR() {
         guard let filter = CIFilter(name: "CIQRCodeGenerator") else { return }
 
-        filter.setValue(session.myQR, forKey: "inputMessage")
+        var facts: [Fact] = []
+        let myContact = try! userDiscovery.getContact()
+
+        if sharingPhone {
+            facts.append(Fact(fact: phone!, type: FactType.phone.rawValue))
+        }
+
+        if sharingEmail {
+            facts.append(Fact(fact: email!, type: FactType.email.rawValue))
+        }
+
+        let myContactWithFacts = try! SetFactsOnContact.live(
+            contact: myContact,
+            facts: facts
+        )
+
+        filter.setValue(myContactWithFacts, forKey: "inputMessage")
         let transform = CGAffineTransform(scaleX: 5, y: 5)
 
         if let output = filter.outputImage?.transformed(by: transform) {

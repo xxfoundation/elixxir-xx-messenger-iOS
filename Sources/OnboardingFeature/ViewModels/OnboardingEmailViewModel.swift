@@ -5,7 +5,7 @@ import Shared
 import Combine
 import Defaults
 import InputField
-import Integration
+import XXClient
 import CombineSchedulers
 import DependencyInjection
 
@@ -16,9 +16,9 @@ struct OnboardingEmailViewState: Equatable {
 }
 
 final class OnboardingEmailViewModel {
-    @KeyObject(.pushNotifications, defaultValue: false) private var pushNotifications
+    @Dependency var userDiscovery: UserDiscovery
 
-    @Dependency private var session: SessionType
+    @KeyObject(.pushNotifications, defaultValue: false) private var pushNotifications
 
     var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
     private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
@@ -43,17 +43,19 @@ final class OnboardingEmailViewModel {
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }
 
-            self.session.register(.email, value: self.stateRelay.value.input) { [weak self] in
-                guard let self = self else { return }
+            do {
+                let confirmationId = try self.userDiscovery.sendRegisterFact(
+                    .init(fact: self.stateRelay.value.input, type: FactType.email.rawValue)
+                )
 
-                switch $0 {
-                case .success(let confirmationId):
-                    self.hudRelay.send(.none)
-                    self.stateRelay.value.confirmation =
-                        .init(content: self.stateRelay.value.input, isEmail: true, confirmationId: confirmationId)
-                case .failure(let error):
-                    self.hudRelay.send(.error(.init(with: error)))
-                }
+                self.hudRelay.send(.none)
+                self.stateRelay.value.confirmation = .init(
+                    content: self.stateRelay.value.input,
+                    isEmail: true,
+                    confirmationId: confirmationId
+                )
+            } catch {
+                self.hudRelay.send(.error(.init(with: error)))
             }
         }
     }

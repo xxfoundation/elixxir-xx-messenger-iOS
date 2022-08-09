@@ -4,8 +4,8 @@ import Shared
 import Combine
 import Defaults
 import Permissions
-import Integration
 import PushFeature
+import XXClient
 import UserNotifications
 import CombineSchedulers
 import DependencyInjection
@@ -21,11 +21,10 @@ struct SettingsViewState: Equatable {
 }
 
 final class SettingsViewModel {
-    @Dependency private var session: SessionType
+    @Dependency var dummyTrafficManager: DummyTraffic
     @Dependency private var pushHandler: PushHandling
     @Dependency private var permissions: PermissionHandling
 
-    @KeyObject(.dummyTrafficOn, defaultValue: false) var isDummyTrafficOn: Bool
     @KeyObject(.biometrics, defaultValue: false) private var biometrics
     @KeyObject(.hideAppList, defaultValue: false) private var hideAppList
     @KeyObject(.icognitoKeyboard, defaultValue: false) private var icognitoKeyboard
@@ -47,7 +46,7 @@ final class SettingsViewModel {
         stateRelay.value.isPushNotification = pushNotifications
         stateRelay.value.isInAppNotification = inAppNotifications
         stateRelay.value.isBiometricsPossible = permissions.isBiometricsAvailable
-        stateRelay.value.isDummyTrafficOn = isDummyTrafficOn
+        stateRelay.value.isDummyTrafficOn = dummyTrafficManager.getStatus()
     }
 
     func didToggleBiometrics() {
@@ -64,9 +63,9 @@ final class SettingsViewModel {
     }
 
     func didToggleDummyTraffic() {
-        isDummyTrafficOn.toggle()
-        stateRelay.value.isDummyTrafficOn = isDummyTrafficOn
-        session.setDummyTraffic(status: isDummyTrafficOn)
+        let currently = dummyTrafficManager.getStatus()
+        try! dummyTrafficManager.setStatus(!currently)
+        stateRelay.value.isDummyTrafficOn = !currently
     }
 
     func didToggleHideActiveApps() {
@@ -134,7 +133,7 @@ final class SettingsViewModel {
                 guard let self = self else { return }
 
                 do {
-                    try self.session.unregisterNotifications()
+                    fatalError(">>> Missing API for notifications")
                     self.hudRelay.send(.none)
                 } catch {
                     self.hudRelay.send(.error(.init(with: error)))

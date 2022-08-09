@@ -1,14 +1,14 @@
 import Combine
 import XXModels
+import XXClient
 import Defaults
 import Foundation
-import Integration
 import ReportingFeature
 import DependencyInjection
 
 final class MenuViewModel {
-    @Dependency private var session: SessionType
-    @Dependency private var reportingStatus: ReportingStatus
+    @Dependency var database: Database
+    @Dependency var reportingStatus: ReportingStatus
 
     @KeyObject(.avatar, defaultValue: nil) var avatar: Data?
     @KeyObject(.username, defaultValue: "") var username: String
@@ -33,15 +33,15 @@ final class MenuViewModel {
         )
 
         return Publishers.CombineLatest(
-            session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure(),
-            session.dbManager.fetchGroupsPublisher(groupQuery).assertNoFailure()
+            database.fetchContactsPublisher(contactsQuery).assertNoFailure(),
+            database.fetchGroupsPublisher(groupQuery).assertNoFailure()
         )
         .map { $0.0.count + $0.1.count }
         .eraseToAnyPublisher()
     }
 
     var xxdk: String {
-        session.version
+        GetVersion.live()
     }
 
     var build: String {

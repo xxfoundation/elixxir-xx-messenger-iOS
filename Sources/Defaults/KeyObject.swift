@@ -39,7 +39,6 @@ public enum Key: String {
     case crashReporting
     case icognitoKeyboard
 
-    case dummyTrafficOn
     case askedDummyTrafficOnce
 }
 
