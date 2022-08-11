@@ -21,10 +21,15 @@ public final class SFTPController: UIViewController {
 
     required init?(coder: NSCoder) { nil }
 
+    public override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationItem.backButtonTitle = ""
+        navigationController?.navigationBar.customize(translucent: true)
+    }
+
     public override func viewDidLoad() {
         super.viewDidLoad()
         setupScrollView()
-        setupNavigationBar()
         setupBindings()
     }
 
@@ -36,17 +41,6 @@ public final class SFTPController: UIViewController {
         scrollViewController.view.snp.makeConstraints { $0.edges.equalToSuperview() }
         scrollViewController.didMove(toParent: self)
         scrollViewController.contentView = screenView
-    }
-
-    private func setupNavigationBar() {
-        navigationItem.backButtonTitle = ""
-
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            customView: UIStackView(arrangedSubviews: [back])
-        )
     }
 
     private func setupBindings() {
@@ -88,9 +82,5 @@ public final class SFTPController: UIViewController {
             .publisher(for: .touchUpInside)
             .sink { [unowned self] in viewModel.didTapLogin() }
             .store(in: &cancellables)
-    }
-
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
     }
 }

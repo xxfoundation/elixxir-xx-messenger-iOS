@@ -33,6 +33,7 @@ public final class SearchContainerController: UIViewController {
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationItem.backButtonTitle = ""
         statusBarController.style.send(.darkContent)
         navigationController?.navigationBar.customize(
             backgroundColor: Asset.neutralWhite.color
@@ -61,19 +62,13 @@ public final class SearchContainerController: UIViewController {
     }
 
     private func setupNavigationBar() {
-        navigationItem.backButtonTitle = " "
+        let title = UILabel()
+        title.text = Localized.Ud.title
+        title.textColor = Asset.neutralActive.color
+        title.font = Fonts.Mulish.semiBold.font(size: 18.0)
 
-        let titleLabel = UILabel()
-        titleLabel.text = Localized.Ud.title
-        titleLabel.textColor = Asset.neutralActive.color
-        titleLabel.font = Fonts.Mulish.semiBold.font(size: 18.0)
-
-        let backButton = UIButton.back()
-        backButton.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            customView: UIStackView(arrangedSubviews: [backButton, titleLabel])
-        )
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: title)
+        navigationItem.leftItemsSupplementBackButton = true
     }
 
     private func setupBindings() {
@@ -96,10 +91,6 @@ public final class SearchContainerController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in presentCoverTrafficDrawer() }
             .store(in: &cancellables)
-    }
-
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
     }
 
     private func embedControllers() {

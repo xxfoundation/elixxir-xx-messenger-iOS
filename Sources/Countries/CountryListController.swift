@@ -24,6 +24,7 @@ public final class CountryListController: UIViewController {
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationItem.backButtonTitle = ""
         statusBarController.style.send(.darkContent)
 
         navigationController?.navigationBar.customize(
@@ -46,19 +47,13 @@ public final class CountryListController: UIViewController {
     }
     
     private func setupNavigationBar() {
-        navigationItem.backButtonTitle = " "
-
         let title = UILabel()
         title.text = Localized.Countries.title
         title.textColor = Asset.neutralActive.color
         title.font = Fonts.Mulish.semiBold.font(size: 18.0)
 
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            customView: UIStackView(arrangedSubviews: [back, title])
-        )
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: title)
+        navigationItem.leftItemsSupplementBackButton = true
     }
 
     private func setupBindings() {
@@ -85,10 +80,6 @@ public final class CountryListController: UIViewController {
 
         screenView.tableView.delegate = self
         screenView.tableView.dataSource = dataSource
-    }
-    
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
     }
 
     public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {

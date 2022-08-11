@@ -22,8 +22,8 @@ public final class OnboardingUsernameController: UIViewController {
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
-        statusBarController.style.send(.darkContent)
         navigationItem.backButtonTitle = ""
+        statusBarController.style.send(.darkContent)
         navigationController?.navigationBar.customize(translucent: true)
     }
 
@@ -37,7 +37,6 @@ public final class OnboardingUsernameController: UIViewController {
 
     public override func viewDidLoad() {
         super.viewDidLoad()
-        setupNavigationBar()
         setupScrollView()
         setupBindings()
 
