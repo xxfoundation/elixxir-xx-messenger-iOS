@@ -35,7 +35,6 @@ public final class SingleChatController: UIViewController {
     lazy private var avatarView = AvatarView()
 
     lazy private var moreButton = UIButton()
-    lazy private var backButton = UIButton.back()
     lazy private var screenView = ChatView()
     lazy private var sheet = SheetController()
 
@@ -168,8 +167,6 @@ public final class SingleChatController: UIViewController {
         nameLabel.textColor = Asset.neutralActive.color
         nameLabel.font = Fonts.Mulish.semiBold.font(size: 18.0)
 
-        backButton.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-
         moreButton.setImage(Asset.chatMore.image, for: .normal)
         moreButton.addTarget(self, action: #selector(didTapDots), for: .touchUpInside)
 
@@ -188,12 +185,8 @@ public final class SingleChatController: UIViewController {
             $0.right.lessThanOrEqualToSuperview()
         }
 
-        let stackView = UIStackView()
-        stackView.addArrangedSubview(backButton)
-        stackView.addArrangedSubview(infoView)
-
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: moreButton)
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: stackView)
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: infoView)
     }
 
     private func setupInputController() {
@@ -461,10 +454,6 @@ public final class SingleChatController: UIViewController {
 
     @objc private func didTapInfo() {
         coordinator.toContact(viewModel.contact, from: self)
-    }
-
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
     }
 }
 

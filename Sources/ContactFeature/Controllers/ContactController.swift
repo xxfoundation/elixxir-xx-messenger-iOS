@@ -30,6 +30,7 @@ public final class ContactController: UIViewController {
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationItem.backButtonTitle = ""
         statusBarController.style.send(.lightContent)
         navigationController?.navigationBar
             .customize(backgroundColor: Asset.neutralBody.color)
@@ -43,7 +44,6 @@ public final class ContactController: UIViewController {
     
     public override func viewDidLoad() {
         super.viewDidLoad()
-        setupNavigationBar()
         setupScrollView()
         setupBindings()
 
@@ -60,14 +60,6 @@ public final class ContactController: UIViewController {
         }
 
         screenView.set(status: viewModel.contact.authStatus)
-    }
-
-    private func setupNavigationBar() {
-        navigationItem.backButtonTitle = ""
-
-        let back = UIButton.back(color: Asset.neutralWhite.color)
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: back)
     }
 
     private func setupScrollView() {
@@ -332,10 +324,6 @@ public final class ContactController: UIViewController {
             }.store(in: &drawerCancellables)
 
         coordinator.toDrawer(drawer, from: self)
-    }
-
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
     }
 }
 

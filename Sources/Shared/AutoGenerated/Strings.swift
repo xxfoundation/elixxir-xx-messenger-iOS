@@ -1224,6 +1224,17 @@ public enum Localized {
     }
   }
 
+  public enum Terms {
+    /// Accept and proceed
+    public static let accept = Localized.tr("Localizable", "terms.accept")
+    /// By enabling the checkbox on the left, you agree with the terms and conditions.
+    public static let radio = Localized.tr("Localizable", "terms.radio")
+    /// Show terms and conditions
+    public static let show = Localized.tr("Localizable", "terms.show")
+    /// Terms #&# Conditions
+    public static let title = Localized.tr("Localizable", "terms.title")
+  }
+
   public enum Ud {
     /// There are no users with that %@.
     public static func noneFound(_ p1: Any) -> String {

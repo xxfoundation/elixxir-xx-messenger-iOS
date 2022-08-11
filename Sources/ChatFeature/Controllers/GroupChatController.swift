@@ -122,14 +122,10 @@ public final class GroupChatController: UIViewController {
     }
 
     private func setupNavigationBar() {
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-
         let more = UIButton()
         more.setImage(Asset.chatMore.image, for: .normal)
         more.addTarget(self, action: #selector(didTapDots), for: .touchUpInside)
 
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: back)
         navigationItem.titleView = header
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: more)
     }
@@ -227,10 +223,6 @@ public final class GroupChatController: UIViewController {
                 process()
             }
             .store(in: &cancellables)
-    }
-
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
     }
 
     @objc private func didTapDots() {

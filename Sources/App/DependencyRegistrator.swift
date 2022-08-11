@@ -34,6 +34,7 @@ import DependencyInjection
 import ScanFeature
 import ChatFeature
 import MenuFeature
+import TermsFeature
 import BackupFeature
 import SearchFeature
 import LaunchFeature
@@ -112,7 +113,15 @@ struct DependencyRegistrator {
         // MARK: Coordinators
 
         container.register(
+            TermsCoordinator.live(
+                usernameFactory: OnboardingUsernameController.init(_:),
+                chatListFactory: ChatListController.init
+            )
+        )
+
+        container.register(
             LaunchCoordinator(
+                termsFactory: TermsConditionsController.init(_:),
                 searchFactory: SearchContainerController.init,
                 requestsFactory: RequestsContainerController.init,
                 chatListFactory: ChatListController.init,
@@ -206,6 +215,7 @@ struct DependencyRegistrator {
                 searchFactory: SearchContainerController.init,
                 welcomeFactory: OnboardingWelcomeController.init,
                 chatListFactory: ChatListController.init,
+                termsFactory: TermsConditionsController.init(_:),
                 usernameFactory: OnboardingUsernameController.init(_:),
                 restoreListFactory: RestoreListController.init(_:),
                 successFactory: OnboardingSuccessController.init(_:),

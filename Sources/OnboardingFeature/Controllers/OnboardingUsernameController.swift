@@ -22,6 +22,7 @@ public final class OnboardingUsernameController: UIViewController {
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationItem.backButtonTitle = ""
         statusBarController.style.send(.darkContent)
         navigationController?.navigationBar.customize(translucent: true)
     }

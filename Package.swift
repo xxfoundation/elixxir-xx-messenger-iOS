@@ -28,6 +28,7 @@ let package = Package(
         .library(name: "PushFeature", targets: ["PushFeature"]),
         .library(name: "SFTPFeature", targets: ["SFTPFeature"]),
         .library(name: "CrashService", targets: ["CrashService"]),
+        .library(name: "TermsFeature", targets: ["TermsFeature"]),
         .library(name: "Presentation", targets: ["Presentation"]),
         .library(name: "ToastFeature", targets: ["ToastFeature"]),
         .library(name: "BackupFeature", targets: ["BackupFeature"]),
@@ -115,7 +116,7 @@ let package = Package(
         ),
         .package(
             url: "https://git.xx.network/elixxir/client-ios-db.git",
-            .upToNextMajor(from: "1.0.8")
+            .upToNextMajor(from: "1.1.0")
         ),
         .package(
             url: "https://github.com/firebase/firebase-ios-sdk.git",
@@ -134,6 +135,10 @@ let package = Package(
             .upToNextMajor(from: "0.5.0")
         ),
         .package(
+            url: "https://github.com/swiftcsv/SwiftCSV.git",
+            from: "0.8.0"
+        ),
+        .package(
             url: "https://github.com/pointfreeco/xctest-dynamic-overlay.git",
             .upToNextMajor(from: "0.3.3")
         ),
@@ -150,6 +155,7 @@ let package = Package(
                 .target(name: "MenuFeature"),
                 .target(name: "PushFeature"),
                 .target(name: "SFTPFeature"),
+                .target(name: "TermsFeature"),
                 .target(name: "ToastFeature"),
                 .target(name: "CrashService"),
                 .target(name: "BackupFeature"),
@@ -505,6 +511,15 @@ let package = Package(
                 .target(name: "DropboxFeature"),
                 .target(name: "VersionChecking"),
                 .target(name: "DependencyInjection"),
+                .product(name: "SwiftCSV", package: "SwiftCSV"),
+            ]
+        ),
+        .target(
+            name: "TermsFeature",
+            dependencies: [
+                .target(name: "Theme"),
+                .target(name: "Shared"),
+                .target(name: "Defaults")
             ]
         ),
         .target(

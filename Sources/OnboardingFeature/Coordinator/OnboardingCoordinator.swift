@@ -11,6 +11,7 @@ public protocol OnboardingCoordinating {
     func toEmail(from: UIViewController)
     func toPhone(from: UIViewController)
     func toWelcome(from: UIViewController)
+    func toTerms(ndf: String, from: UIViewController)
     func toUsername(with: String, from: UIViewController)
     func toRestoreList(with: String, from: UIViewController)
     func toDrawer(_: UIViewController, from: UIViewController)
@@ -46,6 +47,7 @@ public struct OnboardingCoordinator: OnboardingCoordinating {
     var chatListFactory: () -> UIViewController
     var usernameFactory: (String) -> UIViewController
     var restoreListFactory: (String) -> UIViewController
+    var termsFactory: (String?) -> UIViewController
     var successFactory: (OnboardingSuccessModel) -> UIViewController
     var countriesFactory: (@escaping (Country) -> Void) -> UIViewController
     var phoneConfirmationFactory: (AttributeConfirmation, @escaping AttributeControllerClosure) -> UIViewController
@@ -57,6 +59,7 @@ public struct OnboardingCoordinator: OnboardingCoordinating {
         searchFactory: @escaping (String?) -> UIViewController,
         welcomeFactory: @escaping () -> UIViewController,
         chatListFactory: @escaping () -> UIViewController,
+        termsFactory: @escaping (String?) -> UIViewController,
         usernameFactory: @escaping (String) -> UIViewController,
         restoreListFactory: @escaping (String) -> UIViewController,
         successFactory: @escaping (OnboardingSuccessModel) -> UIViewController,
@@ -65,6 +68,7 @@ public struct OnboardingCoordinator: OnboardingCoordinating {
         emailConfirmationFactory: @escaping (AttributeConfirmation, @escaping AttributeControllerClosure) -> UIViewController
     ) {
         self.emailFactory = emailFactory
+        self.termsFactory = termsFactory
         self.phoneFactory = phoneFactory
         self.searchFactory = searchFactory
         self.welcomeFactory = welcomeFactory
@@ -79,6 +83,14 @@ public struct OnboardingCoordinator: OnboardingCoordinating {
 }
 
 public extension OnboardingCoordinator {
+    func toTerms(
+        ndf: String,
+        from parent: UIViewController
+    ) {
+        let screen = termsFactory(ndf)
+        pushPresenter.present(screen, from: parent)
+    }
+
     func toEmail(from parent: UIViewController) {
         let screen = emailFactory()
         replacePresenter.present(screen, from: parent)

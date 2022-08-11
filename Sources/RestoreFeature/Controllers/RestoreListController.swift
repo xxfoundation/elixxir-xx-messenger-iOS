@@ -30,27 +30,13 @@ public final class RestoreListController: UIViewController {
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationItem.backButtonTitle = ""
         navigationController?.navigationBar.customize(translucent: true)
     }
 
     public override func viewDidLoad() {
         super.viewDidLoad()
-        setupNavigationBar()
-        setupBindings()
-    }
 
-    private func setupNavigationBar() {
-        navigationItem.backButtonTitle = ""
-
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            customView: UIStackView(arrangedSubviews: [back])
-        )
-    }
-
-    private func setupBindings() {
         viewModel.hudPublisher
             .receive(on: DispatchQueue.main)
             .sink { [hud] in hud.update(with: $0) }

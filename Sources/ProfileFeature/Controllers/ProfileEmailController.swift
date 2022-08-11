@@ -19,6 +19,7 @@ public final class ProfileEmailController: UIViewController {
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationItem.backButtonTitle = ""
         statusBarController.style.send(.darkContent)
         navigationController?.navigationBar
             .customize(backgroundColor: Asset.neutralWhite.color)
@@ -26,17 +27,8 @@ public final class ProfileEmailController: UIViewController {
 
     public override func viewDidLoad() {
         super.viewDidLoad()
-        setupNavigationBar()
         setupScrollView()
         setupBindings()
-    }
-
-    private func setupNavigationBar() {
-        navigationItem.backButtonTitle = " "
-
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: back)
     }
 
     private func setupScrollView() {
@@ -88,9 +80,5 @@ public final class ProfileEmailController: UIViewController {
         screenView.saveButton.publisher(for: .touchUpInside)
             .sink { [unowned self] in viewModel.didTapNext() }
             .store(in: &cancellables)
-    }
-
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
     }
 }

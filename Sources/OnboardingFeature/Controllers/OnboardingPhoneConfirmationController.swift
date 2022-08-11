@@ -34,15 +34,13 @@ public final class OnboardingPhoneConfirmationController: UIViewController {
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationItem.backButtonTitle = ""
         statusBarController.style.send(.darkContent)
         navigationController?.navigationBar.customize(translucent: true)
     }
 
     public override func viewDidLoad() {
         super.viewDidLoad()
-        navigationItem.backButtonTitle = " "
-
-        setupNavigationBar()
         setupScrollView()
         setupBindings()
 
@@ -56,12 +54,6 @@ public final class OnboardingPhoneConfirmationController: UIViewController {
                 subtitle: Localized.Onboarding.PhoneConfirmation.Info.subtitle
             )
         }
-    }
-
-    private func setupNavigationBar() {
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: back)
     }
 
     private func setupScrollView() {
@@ -156,9 +148,5 @@ public final class OnboardingPhoneConfirmationController: UIViewController {
             }.store(in: &drawerCancellables)
 
         coordinator.toDrawer(drawer, from: self)
-    }
-
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
     }
 }

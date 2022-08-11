@@ -26,6 +26,12 @@ public final class RestoreController: UIViewController {
         presentWarning()
     }
 
+    public override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationItem.backButtonTitle = ""
+        navigationController?.navigationBar.customize()
+    }
+
     public override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
@@ -33,19 +39,13 @@ public final class RestoreController: UIViewController {
     }
 
     private func setupNavigationBar() {
-        navigationItem.backButtonTitle = ""
-
         let title = UILabel()
         title.text = Localized.AccountRestore.header
         title.textColor = Asset.neutralActive.color
         title.font = Fonts.Mulish.semiBold.font(size: 18.0)
 
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            customView: UIStackView(arrangedSubviews: [back, title])
-        )
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: title)
+        navigationItem.leftItemsSupplementBackButton = true
     }
 
     private func setupBindings() {
