@@ -5,6 +5,7 @@ import Presentation
 
 public protocol LaunchCoordinating {
     func toChats(from: UIViewController)
+    func toTerms(from: UIViewController)
     func toRequests(from: UIViewController)
     func toSearch(searching: String, from: UIViewController)
     func toOnboarding(with: String, from: UIViewController)
@@ -15,6 +16,7 @@ public protocol LaunchCoordinating {
 public struct LaunchCoordinator: LaunchCoordinating {
     var replacePresenter: Presenting = ReplacePresenter()
 
+    var termsFactory: (String?) -> UIViewController
     var searchFactory: (String) -> UIViewController
     var requestsFactory: () -> UIViewController
     var chatListFactory: () -> UIViewController
@@ -23,6 +25,7 @@ public struct LaunchCoordinator: LaunchCoordinating {
     var groupChatFactory: (GroupInfo) -> UIViewController
 
     public init(
+        termsFactory: @escaping (String?) -> UIViewController,
         searchFactory: @escaping (String) -> UIViewController,
         requestsFactory: @escaping () -> UIViewController,
         chatListFactory: @escaping () -> UIViewController,
@@ -30,6 +33,7 @@ public struct LaunchCoordinator: LaunchCoordinating {
         singleChatFactory: @escaping (Contact) -> UIViewController,
         groupChatFactory: @escaping (GroupInfo) -> UIViewController
     ) {
+        self.termsFactory = termsFactory
         self.searchFactory = searchFactory
         self.requestsFactory = requestsFactory
         self.chatListFactory = chatListFactory
@@ -44,6 +48,11 @@ public extension LaunchCoordinator {
         let screen = searchFactory(searching)
         let chatListScreen = chatListFactory()
         replacePresenter.present(chatListScreen, screen, from: parent)
+    }
+
+    func toTerms(from parent: UIViewController) {
+        let screen = termsFactory(nil)
+        replacePresenter.present(screen, from: parent)
     }
 
     func toChats(from parent: UIViewController) {

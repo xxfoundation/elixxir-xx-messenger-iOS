@@ -28,6 +28,7 @@ let package = Package(
         .library(name: "PushFeature", targets: ["PushFeature"]),
         .library(name: "SFTPFeature", targets: ["SFTPFeature"]),
         .library(name: "CrashService", targets: ["CrashService"]),
+        .library(name: "TermsFeature", targets: ["TermsFeature"]),
         .library(name: "Presentation", targets: ["Presentation"]),
         .library(name: "ToastFeature", targets: ["ToastFeature"]),
         .library(name: "BackupFeature", targets: ["BackupFeature"]),
@@ -150,6 +151,7 @@ let package = Package(
                 .target(name: "MenuFeature"),
                 .target(name: "PushFeature"),
                 .target(name: "SFTPFeature"),
+                .target(name: "TermsFeature"),
                 .target(name: "ToastFeature"),
                 .target(name: "CrashService"),
                 .target(name: "BackupFeature"),
@@ -505,6 +507,14 @@ let package = Package(
                 .target(name: "DropboxFeature"),
                 .target(name: "VersionChecking"),
                 .target(name: "DependencyInjection"),
+            ]
+        ),
+        .target(
+            name: "TermsFeature",
+            dependencies: [
+                .target(name: "Theme"),
+                .target(name: "Shared"),
+                .target(name: "Defaults")
             ]
         ),
         .target(

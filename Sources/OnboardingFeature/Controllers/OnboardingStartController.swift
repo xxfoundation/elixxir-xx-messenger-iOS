@@ -52,7 +52,7 @@ public final class OnboardingStartController: UIViewController {
         super.viewDidLoad()
 
         screenView.startButton.publisher(for: .touchUpInside)
-            .sink { [unowned self] in coordinator.toUsername(with: ndf, from: self) }
+            .sink { [unowned self] in coordinator.toTerms(ndf: ndf, from: self) }
             .store(in: &cancellables)
     }
 }

@@ -646,6 +646,17 @@
 "backup.SFTP"
 = "SFTP";
 
+// Terms & Conditions
+
+"terms.title"
+= "Terms #&# Conditions";
+"terms.radio"
+= "By enabling the checkbox on the left, you agree with the terms and conditions.";
+"terms.accept"
+= "Accept and proceed";
+"terms.show"
+= "Show terms and conditions";
+
 // Settings - Delete Account
 
 "settings.delete.title"
