@@ -36,27 +36,9 @@ public final class TermsConditionsController: UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
 
-        navigationItem.backButtonTitle = ""
-
-        let backButton = UIButton()
-        backButton.setImage(Asset.navigationBarBack.image, for: .normal)
-        backButton.tintColor = Asset.neutralActive.color
-        backButton.imageView?.contentMode = .center
-        backButton.snp.makeConstraints { $0.width.equalTo(50) }
-        backButton
-            .publisher(for: .touchUpInside)
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in
-                navigationController?.popViewController(animated: true)
-            }.store(in: &cancellables)
-
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            customView: UIStackView(arrangedSubviews: [backButton])
-        )
-
         screenView.radioComponent
-            .radioButton.publisher(for: .touchUpInside)
-            .receive(on: DispatchQueue.main)
+            .radioButton
+            .publisher(for: .touchUpInside)
             .sink { [unowned self] in
                 screenView.radioComponent.isEnabled.toggle()
                 screenView.nextButton.isEnabled = screenView.radioComponent.isEnabled
@@ -64,7 +46,6 @@ public final class TermsConditionsController: UIViewController {
 
         screenView.nextButton
             .publisher(for: .touchUpInside)
-            .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
                 didAcceptTerms = true
 
@@ -77,7 +58,6 @@ public final class TermsConditionsController: UIViewController {
 
         screenView.showTermsButton
             .publisher(for: .touchUpInside)
-            .receive(on: DispatchQueue.main)
             .sink { _ in
                 // TODO
             }.store(in: &cancellables)

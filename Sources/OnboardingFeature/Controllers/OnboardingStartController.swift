@@ -27,6 +27,7 @@ public final class OnboardingStartController: UIViewController {
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationItem.backButtonTitle = ""
         navigationController?.navigationBar.customize(translucent: true)
     }
 

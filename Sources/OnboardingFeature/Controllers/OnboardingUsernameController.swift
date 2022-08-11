@@ -23,6 +23,7 @@ public final class OnboardingUsernameController: UIViewController {
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         statusBarController.style.send(.darkContent)
+        navigationItem.backButtonTitle = ""
         navigationController?.navigationBar.customize(translucent: true)
     }
 
@@ -47,26 +48,6 @@ public final class OnboardingUsernameController: UIViewController {
                 urlString: "https://links.xx.network/ud"
             )
         }
-    }
-
-    private func setupNavigationBar() {
-        navigationItem.backButtonTitle = ""
-
-        let backButton = UIButton()
-        backButton.setImage(Asset.navigationBarBack.image, for: .normal)
-        backButton.tintColor = Asset.neutralActive.color
-        backButton.imageView?.contentMode = .center
-        backButton.snp.makeConstraints { $0.width.equalTo(50) }
-        backButton
-            .publisher(for: .touchUpInside)
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in
-                navigationController?.popViewController(animated: true)
-            }.store(in: &cancellables)
-
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            customView: UIStackView(arrangedSubviews: [backButton])
-        )
     }
 
     private func setupScrollView() {

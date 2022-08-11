@@ -86,8 +86,7 @@ final class LaunchViewModel {
         Task {
             do {
                 network.writeLogs()
-                let bannedList = try await fetchBannedList()
-                process(bannedList: bannedList)
+                let _ = try await fetchBannedList()
 
                 network.updateNDF { [weak self] in
                     guard let self = self else { return }
@@ -209,14 +208,9 @@ final class LaunchViewModel {
     }
 
     private func fetchBannedList() async throws -> Data {
-        let request = URLRequest(
-            url: URL(string: "https://elixxir-bins.s3.us-west-1.amazonaws.com/client/bannedUsers/banned.csv")!,
-            cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
-            timeoutInterval: 5
-        )
-
+        let url = URL(string: "https://elixxir-bins.s3.us-west-1.amazonaws.com/client/bannedUsers/banned.csv")
         return try await withCheckedThrowingContinuation { continuation in
-            URLSession.shared.dataTask(with: request) { data, _, error in
+            URLSession.shared.dataTask(with: url!) { data, _, error in
                 if let error = error {
                     return continuation.resume(throwing: error)
                 }
@@ -224,17 +218,6 @@ final class LaunchViewModel {
                 guard let data = data else { fatalError("?") }
                 return continuation.resume(returning: data)
             }.resume()
-        }
-    }
-
-    private func process(bannedList: Data) {
-        if let csv: CSV = try? CSV<Enumerated>(
-            string: String(data: bannedList, encoding: .utf8)!,
-            loadColumns: false
-        ) {
-            /// csv.rows[0][0] == userId
-            /// csv.rows[0][1] == username
-            csv.rows.forEach { print("^^^ Banned row: \($0)") }
         }
     }
 }

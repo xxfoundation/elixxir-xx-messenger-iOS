@@ -116,7 +116,7 @@ let package = Package(
         ),
         .package(
             url: "https://git.xx.network/elixxir/client-ios-db.git",
-            branch: "feature/blocked-and-banned-contacts"
+            .upToNextMajor(from: "1.1.0")
         ),
         .package(
             url: "https://github.com/firebase/firebase-ios-sdk.git",
