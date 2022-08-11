@@ -116,7 +116,7 @@ let package = Package(
         ),
         .package(
             url: "https://git.xx.network/elixxir/client-ios-db.git",
-            .upToNextMajor(from: "1.0.8")
+            branch: "feature/blocked-and-banned-contacts"
         ),
         .package(
             url: "https://github.com/firebase/firebase-ios-sdk.git",
@@ -133,6 +133,10 @@ let package = Package(
         .package(
             url: "https://github.com/pointfreeco/swift-custom-dump.git",
             .upToNextMajor(from: "0.5.0")
+        ),
+        .package(
+            url: "https://github.com/swiftcsv/SwiftCSV.git",
+            from: "0.8.0"
         ),
         .package(
             url: "https://github.com/pointfreeco/xctest-dynamic-overlay.git",
@@ -507,6 +511,7 @@ let package = Package(
                 .target(name: "DropboxFeature"),
                 .target(name: "VersionChecking"),
                 .target(name: "DependencyInjection"),
+                .product(name: "SwiftCSV", package: "SwiftCSV"),
             ]
         ),
         .target(

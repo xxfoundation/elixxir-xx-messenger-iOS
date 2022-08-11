@@ -59,8 +59,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://git.xx.network/elixxir/client-ios-db.git",
       "state" : {
-        "revision" : "785e1f653ee5eaaaf58a82c8abbcda2174fbc27a",
-        "version" : "1.0.8"
+        "branch" : "feature/blocked-and-banned-contacts",
+        "revision" : "b35a3779c276471aa6e79f047e1c843e49b0dea8"
       }
     },
     {
@@ -348,6 +348,15 @@
       "state" : {
         "revision" : "7e2c5f3cbbeea68e004915e3a8961e20bd11d824",
         "version" : "1.18.0"
+      }
+    },
+    {
+      "identity" : "swiftcsv",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftcsv/SwiftCSV.git",
+      "state" : {
+        "revision" : "048a1d3c2950b9c151ef9364b36f91baadc2c28c",
+        "version" : "0.8.0"
       }
     },
     {

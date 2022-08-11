@@ -1,6 +1,7 @@
 import HUD
 import Shared
 import Models
+import SwiftCSV
 
 import Combine
 import Defaults
@@ -46,6 +47,10 @@ final class LaunchViewModel {
         routeSubject.eraseToAnyPublisher()
     }
 
+    var mainScheduler: AnySchedulerOf<DispatchQueue> = {
+        DispatchQueue.main.eraseToAnyScheduler()
+    }()
+
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = {
         DispatchQueue.global().eraseToAnyScheduler()
     }()
@@ -57,67 +62,74 @@ final class LaunchViewModel {
     private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
 
     func viewDidAppear() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-            self?.hudSubject.send(.on)
-            self?.checkVersion()
+        mainScheduler.schedule(after: .init(.now() + 1)) { [weak self] in
+            guard let self = self else { return }
+
+            self.hudSubject.send(.on)
+
+            self.versionChecker().sink { [unowned self] in
+                switch $0 {
+                case .upToDate:
+                    self.versionApproved()
+                case .failure(let error):
+                    self.versionFailed(error: error)
+                case .updateRequired(let info):
+                    self.versionUpdateRequired(info)
+                case .updateRecommended(let info):
+                    self.versionUpdateRecommended(info)
+                }
+            }.store(in: &self.cancellables)
         }
     }
 
-    private func checkVersion() {
-        versionChecker().sink { [unowned self] in
-            switch $0 {
-            case .upToDate:
-                versionApproved()
-            case .failure(let error):
-                versionFailed(error: error)
-            case .updateRequired(let info):
-                versionUpdateRequired(info)
-            case .updateRecommended(let info):
-                versionUpdateRecommended(info)
-            }
-        }.store(in: &cancellables)
-    }
-
     func versionApproved() {
-        network.writeLogs()
+        Task {
+            do {
+                network.writeLogs()
+                let bannedList = try await fetchBannedList()
+                process(bannedList: bannedList)
 
-        network.updateNDF { [weak self] in
-            guard let self = self else { return }
-
-            switch $0 {
-            case .success(let ndf):
-                self.network.updateErrors()
-
-                guard self.network.hasClient else {
-                    self.hudSubject.send(.none)
-                    self.routeSubject.send(.onboarding(ndf))
-                    self.dropboxService.unlink()
-                    try? self.keychainHandler.clear()
-                    return
-                }
-
-                guard self.username != nil else {
-                    self.network.purgeFiles()
-                    self.hudSubject.send(.none)
-                    self.routeSubject.send(.onboarding(ndf))
-                    self.dropboxService.unlink()
-                    try? self.keychainHandler.clear()
-                    return
-                }
-
-                self.backgroundScheduler.schedule { [weak self] in
+                network.updateNDF { [weak self] in
                     guard let self = self else { return }
 
-                    do {
-                        let session = try self.getSession(ndf)
-                        DependencyInjection.Container.shared.register(session as SessionType)
-                        self.hudSubject.send(.none)
-                        self.checkBiometrics()
-                    } catch {
+                    switch $0 {
+                    case .success(let ndf):
+                        self.network.updateErrors()
+
+                        guard self.network.hasClient else {
+                            self.hudSubject.send(.none)
+                            self.routeSubject.send(.onboarding(ndf))
+                            self.dropboxService.unlink()
+                            try? self.keychainHandler.clear()
+                            return
+                        }
+
+                        guard self.username != nil else {
+                            self.network.purgeFiles()
+                            self.hudSubject.send(.none)
+                            self.routeSubject.send(.onboarding(ndf))
+                            self.dropboxService.unlink()
+                            try? self.keychainHandler.clear()
+                            return
+                        }
+
+                        self.backgroundScheduler.schedule { [weak self] in
+                            guard let self = self else { return }
+
+                            do {
+                                let session = try self.getSession(ndf)
+                                DependencyInjection.Container.shared.register(session as SessionType)
+                                self.hudSubject.send(.none)
+                                self.checkBiometrics()
+                            } catch {
+                                self.hudSubject.send(.error(HUDError(with: error)))
+                            }
+                        }
+                    case .failure(let error):
                         self.hudSubject.send(.error(HUDError(with: error)))
                     }
                 }
-            case .failure(let error):
+            } catch {
                 self.hudSubject.send(.error(HUDError(with: error)))
             }
         }
@@ -193,6 +205,36 @@ final class LaunchViewModel {
             }
         } else {
             self.routeSubject.send(.chats)
+        }
+    }
+
+    private func fetchBannedList() async throws -> Data {
+        let request = URLRequest(
+            url: URL(string: "https://elixxir-bins.s3.us-west-1.amazonaws.com/client/bannedUsers/banned.csv")!,
+            cachePolicy: .reloadIgnoringLocalAndRemoteCacheData,
+            timeoutInterval: 5
+        )
+
+        return try await withCheckedThrowingContinuation { continuation in
+            URLSession.shared.dataTask(with: request) { data, _, error in
+                if let error = error {
+                    return continuation.resume(throwing: error)
+                }
+
+                guard let data = data else { fatalError("?") }
+                return continuation.resume(returning: data)
+            }.resume()
+        }
+    }
+
+    private func process(bannedList: Data) {
+        if let csv: CSV = try? CSV<Enumerated>(
+            string: String(data: bannedList, encoding: .utf8)!,
+            loadColumns: false
+        ) {
+            /// csv.rows[0][0] == userId
+            /// csv.rows[0][1] == username
+            csv.rows.forEach { print("^^^ Banned row: \($0)") }
         }
     }
 }
