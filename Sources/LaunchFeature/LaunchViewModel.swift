@@ -86,6 +86,8 @@ final class LaunchViewModel {
         Task {
             do {
                 network.writeLogs()
+
+                // TODO: Retry inifitely if fails
                 let _ = try await fetchBannedList()
 
                 network.updateNDF { [weak self] in
