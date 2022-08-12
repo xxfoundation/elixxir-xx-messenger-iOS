@@ -183,7 +183,7 @@
 "chat.report.title"
 = "Report user";
 "chat.report.subtitle"
-= "Reporting this user will block them, delete them from your connections and you won’t see direct messages from them again. In case this user is marked as banned user by us you won’t also see any new group chat msgs from this user";
+= "Reporting this user will block them, delete them from your connections and you won’t see direct messages from them again. In case this user is marked as banned user by us you also won’t see any new group chat messages from this user";
 "chat.report.action"
 = "Confirm and Report";
 "chat.report.cancel"
@@ -258,9 +258,9 @@
 // ContactFeature - Delete
 
 "contact.delete.info.title"
-= "Delete Connection";
+= "Delete and block connection";
 "contact.delete.drawer.title"
-= "Delete Connection?";
+= "Delete and block connection?";
 "contact.delete.drawer.description"
 = "This is a silent deletion, %@ will not know you deleted them. This action will remove all information on your phone about this user, including your communications. You #cannot undo this step, and cannot re-add them unless they delete you as a connection as well.#";
 

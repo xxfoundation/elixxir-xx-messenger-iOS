@@ -44,6 +44,7 @@ public final class TermsConditionsController: UIViewController {
             .sink { [unowned self] in
                 screenView.radioComponent.isEnabled.toggle()
                 screenView.nextButton.isEnabled = screenView.radioComponent.isEnabled
+                UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
             }.store(in: &cancellables)
 
         screenView.nextButton

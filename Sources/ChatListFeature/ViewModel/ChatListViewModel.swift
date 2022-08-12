@@ -37,7 +37,8 @@ final class ChatListViewModel {
     }
 
     var recentsPublisher: AnyPublisher<RecentsSnapshot, Never> {
-        session.dbManager.fetchContactsPublisher(.init(isRecent: true))
+        let query = Contact.Query(isRecent: true, isBlocked: false, isBanned: false)
+        return session.dbManager.fetchContactsPublisher(query)
             .assertNoFailure()
             .map {
             let section = SectionId()
@@ -49,8 +50,10 @@ final class ChatListViewModel {
     }
 
     var searchPublisher: AnyPublisher<SearchSnapshot, Never> {
-        Publishers.CombineLatest3(
-            session.dbManager.fetchContactsPublisher(.init()).assertNoFailure(),
+        let contactsQuery = Contact.Query(isBlocked: false, isBanned: false)
+
+        return Publishers.CombineLatest3(
+            session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure(),
             chatsPublisher,
             searchSubject
                 .removeDuplicates()

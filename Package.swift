@@ -519,7 +519,8 @@ let package = Package(
             dependencies: [
                 .target(name: "Theme"),
                 .target(name: "Shared"),
-                .target(name: "Defaults")
+                .target(name: "Defaults"),
+                .target(name: "Presentation"),
             ]
         ),
         .target(

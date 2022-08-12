@@ -358,7 +358,7 @@ public enum Localized {
       public static let action = Localized.tr("Localizable", "chat.report.action")
       /// Cancel
       public static let cancel = Localized.tr("Localizable", "chat.report.cancel")
-      /// Reporting this user will block them, delete them from your connections and you won’t see direct messages from them again. In case this user is marked as banned user by us you won’t also see any new group chat msgs from this user
+      /// Reporting this user will block them, delete them from your connections and you won’t see direct messages from them again. In case this user is marked as banned user by us you also won’t see any new group chat messages from this user
       public static let subtitle = Localized.tr("Localizable", "chat.report.subtitle")
       /// Report user
       public static let title = Localized.tr("Localizable", "chat.report.title")
@@ -497,11 +497,11 @@ public enum Localized {
         public static func description(_ p1: Any) -> String {
           return Localized.tr("Localizable", "contact.delete.drawer.description", String(describing: p1))
         }
-        /// Delete Connection?
+        /// Delete and block connection?
         public static let title = Localized.tr("Localizable", "contact.delete.drawer.title")
       }
       public enum Info {
-        /// Delete Connection
+        /// Delete and block connection
         public static let title = Localized.tr("Localizable", "contact.delete.info.title")
       }
     }
