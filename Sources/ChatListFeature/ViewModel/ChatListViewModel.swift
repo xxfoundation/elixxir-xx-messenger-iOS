@@ -107,7 +107,7 @@ final class ChatListViewModel {
             .confirmationFailed,
             .verificationFailed,
             .verificationInProgress
-        ])
+        ], isBlocked: false, isBanned: false)
 
         return Publishers.CombineLatest(
             session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure(),
@@ -127,7 +127,9 @@ final class ChatListViewModel {
             ChatInfo.Query(
                 contactChatInfoQuery: .init(
                     userId: session.myId,
-                    authStatus: [.friend]
+                    authStatus: [.friend],
+                    isBlocked: false,
+                    isBanned: false
                 ),
                 groupChatInfoQuery: GroupChatInfo.Query(
                     authStatus: [.participating]

@@ -65,7 +65,7 @@ final class RequestsReceivedViewModel {
                 .verified,
                 .verificationFailed,
                 .verificationInProgress
-            ])
+            ], isBlocked: false, isBanned: false)
 
         let groupStream = session.dbManager.fetchGroupsPublisher(groupsQuery).assertNoFailure()
         let contactsStream = session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure()

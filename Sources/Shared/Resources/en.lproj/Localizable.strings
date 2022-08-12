@@ -114,6 +114,8 @@
 = "Select";
 "chat.bubbleMenu.retry"
 = "Retry";
+"chat.bubbleMenu.report"
+= "Report";
 
 "chat.e2e.placeholder"
 = "You and %@ now have a #quantum-secure#, completely private channel for messaging.\n#Say hello#!";
@@ -125,6 +127,8 @@
 = "Clear chat";
 "chat.sheetMenu.details"
 = "View contact profile";
+"chat.sheetMenu.report"
+= "Report user";
 "chat.retrySheet.retry"
 = "Try again";
 "chat.retrySheet.delete"
@@ -172,6 +176,17 @@
 "chat.clear.action"
 = "Clear";
 "chat.clear.cancel"
+= "Cancel";
+
+// ChatFeature - Report
+
+"chat.report.title"
+= "Report user";
+"chat.report.subtitle"
+= "Reporting this user will block them, delete them from your connections and you won’t see direct messages from them again. In case this user is marked as banned user by us you won’t also see any new group chat msgs from this user";
+"chat.report.action"
+= "Confirm and Report";
+"chat.report.cancel"
 = "Cancel";
 
 // ScanFeature

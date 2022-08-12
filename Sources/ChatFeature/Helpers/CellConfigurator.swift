@@ -399,6 +399,7 @@ struct ActionFactory {
         case retry
         case reply
         case delete
+        case report
 
         var title: String {
             switch self {
@@ -411,6 +412,8 @@ struct ActionFactory {
                 return Localized.Chat.BubbleMenu.reply
             case .delete:
                 return Localized.Chat.BubbleMenu.delete
+            case .report:
+                return Localized.Chat.BubbleMenu.report
             }
         }
     }
@@ -422,6 +425,8 @@ struct ActionFactory {
     ) -> UIAction? {
 
         switch action {
+        case .report:
+            guard item.status == .received else { return nil }
         case .reply:
             guard item.status == .received || item.status == .sent else { return nil }
         case .retry:

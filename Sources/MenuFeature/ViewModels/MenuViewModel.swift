@@ -19,7 +19,7 @@ final class MenuViewModel {
             .confirmationFailed,
             .verificationFailed,
             .verificationInProgress
-        ])
+        ], isBlocked: false, isBanned: false)
 
         return Publishers.CombineLatest(
             session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure(),

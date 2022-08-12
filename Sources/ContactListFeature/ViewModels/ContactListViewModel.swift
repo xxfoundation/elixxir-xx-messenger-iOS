@@ -8,7 +8,9 @@ final class ContactListViewModel {
     @Dependency private var session: SessionType
 
     var contacts: AnyPublisher<[Contact], Never> {
-        session.dbManager.fetchContactsPublisher(.init(authStatus: [.friend]))
+        let query = Contact.Query(authStatus: [.friend], isBlocked: false, isBanned: false)
+
+        return session.dbManager.fetchContactsPublisher(query)
             .assertNoFailure()
             .map { $0.filter { $0.id != self.session.myId }}
             .eraseToAnyPublisher()
@@ -22,7 +24,7 @@ final class ContactListViewModel {
             .confirmationFailed,
             .verificationFailed,
             .verificationInProgress
-        ])
+        ], isBlocked: false, isBanned: false)
 
         return Publishers.CombineLatest(
             session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure(),

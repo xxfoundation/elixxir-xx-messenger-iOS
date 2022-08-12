@@ -187,6 +187,7 @@ public final class SingleChatController: UIViewController {
 
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: moreButton)
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: infoView)
+        navigationItem.leftItemsSupplementBackButton = true
     }
 
     private func setupInputController() {
@@ -249,6 +250,8 @@ public final class SingleChatController: UIViewController {
                     presentDeleteAllDrawer()
                 case .details:
                     coordinator.toContact(viewModel.contact, from: self)
+                case .report:
+                    presentReportDrawer()
                 }
             }.store(in: &cancellables)
 
@@ -261,6 +264,12 @@ public final class SingleChatController: UIViewController {
                 if $0 == true {
                     screenView.bringSubviewToFront(screenView.titleLabel)
                 }
+            }.store(in: &cancellables)
+
+        viewModel.reportPopupPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                presentReportDrawer()
             }.store(in: &cancellables)
 
         viewModel.isOnline
@@ -381,6 +390,77 @@ public final class SingleChatController: UIViewController {
             }.store(in: &drawerCancellables)
 
         return drawer
+    }
+
+    private func presentReportDrawer() {
+        let cancelButton = CapsuleButton()
+        cancelButton.setStyle(.seeThrough)
+        cancelButton.setTitle(Localized.Chat.Report.cancel, for: .normal)
+
+        let reportButton = CapsuleButton()
+        reportButton.setStyle(.red)
+        reportButton.setTitle(Localized.Chat.Report.action, for: .normal)
+
+        let drawer = DrawerController(with: [
+            DrawerImage(
+                image: Asset.drawerNegative.image
+            ),
+            DrawerText(
+                font: Fonts.Mulish.semiBold.font(size: 18.0),
+                text: Localized.Chat.Report.title,
+                color: Asset.neutralActive.color
+            ),
+            DrawerText(
+                font: Fonts.Mulish.semiBold.font(size: 14.0),
+                text: Localized.Chat.Report.subtitle,
+                color: Asset.neutralWeak.color,
+                lineHeightMultiple: 1.35,
+                spacingAfter: 25
+            ),
+            DrawerStack(
+                axis: .vertical,
+                spacing: 20.0,
+                views: [reportButton, cancelButton]
+            )
+        ])
+
+        reportButton.publisher(for: .touchUpInside)
+            .receive(on: DispatchQueue.main)
+            .sink {
+                drawer.dismiss(animated: true) { [weak self] in
+                    guard let self = self else { return }
+                    self.drawerCancellables.removeAll()
+                    self.didProceedWithReport()
+                }
+            }.store(in: &drawerCancellables)
+
+        cancelButton.publisher(for: .touchUpInside)
+            .receive(on: DispatchQueue.main)
+            .sink {
+                drawer.dismiss(animated: true) { [weak self] in
+                    self?.drawerCancellables.removeAll()
+                }
+            }.store(in: &drawerCancellables)
+
+        coordinator.toDrawer(drawer, from: self)
+    }
+
+    private func didProceedWithReport() {
+        var screenshotImage: UIImage?
+
+        let layer = UIApplication.shared.keyWindow!.layer
+
+        let scale = UIScreen.main.scale
+        UIGraphicsBeginImageContextWithOptions(layer.frame.size, false, scale);
+        guard let context = UIGraphicsGetCurrentContext() else { return }
+        layer.render(in: context)
+
+        if let image = UIGraphicsGetImageFromCurrentImageContext() {
+            UIGraphicsEndImageContext()
+            UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
+            viewModel.uploadReport(screenshot: image)
+            navigationController?.popViewController(animated: true)
+        }
     }
 
     private func presentDeleteAllDrawer() {
@@ -632,7 +712,8 @@ extension SingleChatController: UICollectionViewDelegate {
                 ActionFactory.build(from: item, action: .copy, closure: self.viewModel.didRequestCopy(_:)),
                 ActionFactory.build(from: item, action: .retry, closure: self.viewModel.didRequestRetry(_:)),
                 ActionFactory.build(from: item, action: .reply, closure: self.viewModel.didRequestReply(_:)),
-                ActionFactory.build(from: item, action: .delete, closure: self.viewModel.didRequestDeleteSingle(_:))
+                ActionFactory.build(from: item, action: .delete, closure: self.viewModel.didRequestDeleteSingle(_:)),
+                ActionFactory.build(from: item, action: .report, closure: self.viewModel.didRequestReport(_:))
             ].compactMap { $0 })
         }
     }

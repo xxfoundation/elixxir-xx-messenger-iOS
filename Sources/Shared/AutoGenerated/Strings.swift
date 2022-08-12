@@ -324,6 +324,8 @@ public enum Localized {
       public static let delete = Localized.tr("Localizable", "chat.bubbleMenu.delete")
       /// Reply
       public static let reply = Localized.tr("Localizable", "chat.bubbleMenu.reply")
+      /// Report
+      public static let report = Localized.tr("Localizable", "chat.bubbleMenu.report")
       /// Retry
       public static let retry = Localized.tr("Localizable", "chat.bubbleMenu.retry")
       /// Select
@@ -351,6 +353,16 @@ public enum Localized {
       /// All
       public static let deleteAll = Localized.tr("Localizable", "chat.menu.deleteAll")
     }
+    public enum Report {
+      /// Confirm and Report
+      public static let action = Localized.tr("Localizable", "chat.report.action")
+      /// Cancel
+      public static let cancel = Localized.tr("Localizable", "chat.report.cancel")
+      /// Reporting this user will block them, delete them from your connections and you won’t see direct messages from them again. In case this user is marked as banned user by us you won’t also see any new group chat msgs from this user
+      public static let subtitle = Localized.tr("Localizable", "chat.report.subtitle")
+      /// Report user
+      public static let title = Localized.tr("Localizable", "chat.report.title")
+    }
     public enum RetrySheet {
       /// Cancel
       public static let cancel = Localized.tr("Localizable", "chat.retrySheet.cancel")
@@ -370,6 +382,8 @@ public enum Localized {
       public static let clear = Localized.tr("Localizable", "chat.sheetMenu.clear")
       /// View contact profile
       public static let details = Localized.tr("Localizable", "chat.sheetMenu.details")
+      /// Report user
+      public static let report = Localized.tr("Localizable", "chat.sheetMenu.report")
     }
   }
 

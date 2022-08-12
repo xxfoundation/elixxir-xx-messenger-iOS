@@ -34,6 +34,7 @@ final class SingleChatViewModel {
     private let replySubject = PassthroughSubject<(String, String), Never>()
     private let navigationRoutes = PassthroughSubject<SingleChatNavigationRoutes, Never>()
     private let sectionsRelay = CurrentValueSubject<[ArraySection<ChatSection, Message>], Never>([])
+    private let reportPopupSubject = PassthroughSubject<Void, Never>()
 
     var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
     private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
@@ -43,6 +44,10 @@ final class SingleChatViewModel {
     var replyPublisher: AnyPublisher<(String, String), Never> { replySubject.eraseToAnyPublisher() }
     var navigation: AnyPublisher<SingleChatNavigationRoutes, Never> { navigationRoutes.eraseToAnyPublisher() }
     var shouldDisplayEmptyView: AnyPublisher<Bool, Never> { sectionsRelay.map { $0.isEmpty }.eraseToAnyPublisher() }
+
+    var reportPopupPublisher: AnyPublisher<Void, Never> {
+        reportPopupSubject.eraseToAnyPublisher()
+    }
 
     var messages: AnyPublisher<[ArraySection<ChatSection, Message>], Never> {
         sectionsRelay.map { sections -> [ArraySection<ChatSection, Message>] in
@@ -172,6 +177,10 @@ final class SingleChatViewModel {
         didRequestDelete([model])
     }
 
+    func didRequestReport(_: Message) {
+        reportPopupSubject.send()
+    }
+
     func abortReply() {
         stagedReply = nil
     }
@@ -209,6 +218,14 @@ final class SingleChatViewModel {
 
         let contactTitle = (contact.nickname ?? contact.username) ?? "You"
         return (contactTitle, message.text)
+    }
+
+    func uploadReport(screenshot: UIImage) {
+        UIImageWriteToSavedPhotosAlbum(screenshot, nil, nil, nil)
+
+        var contact = contact
+        contact.isBlocked = true
+        _ = try? session.dbManager.saveContact(contact)
     }
 
     func showRoundFrom(_ roundURL: String?) {
