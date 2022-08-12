@@ -1,5 +1,6 @@
 import UIKit
 import Theme
+import WebKit
 import Shared
 import Combine
 import Defaults
@@ -59,8 +60,13 @@ public final class TermsConditionsController: UIViewController {
 
         screenView.showTermsButton
             .publisher(for: .touchUpInside)
-            .sink { _ in
-                // TODO
+            .sink { [unowned self] _ in
+                let webView = WKWebView()
+                let webController = UIViewController()
+                webController.view.addSubview(webView)
+                webView.snp.makeConstraints { $0.edges.equalToSuperview() }
+                webView.load(URLRequest(url: URL(string: "https://xx.network")!))
+                present(webController, animated: true)
             }.store(in: &cancellables)
     }
 }
