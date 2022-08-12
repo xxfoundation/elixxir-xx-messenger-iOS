@@ -103,7 +103,13 @@ final class GroupChatViewModel {
             return "[DELETED]"
         }
 
-        return (contact.nickname ?? contact.username) ?? "Fetching username..."
+        var name = (contact.nickname ?? contact.username) ?? "Fetching username..."
+
+        if contact.isBlocked {
+            name = "\(name) (Blocked)"
+        }
+
+        return name
     }
 
     func didRequestReply(_ message: Message) {

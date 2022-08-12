@@ -78,6 +78,16 @@ final class SearchRightViewModel {
         /// that we already have
         ///
         if let alreadyContact = try? session.dbManager.fetchContacts(.init(id: [userId])).first {
+            if alreadyContact.isBlocked {
+                statusSubject.send(.failed(.unknown("You previously blocked this user.")))
+                return
+            }
+
+            if alreadyContact.isBanned {
+                statusSubject.send(.failed(.unknown("This user was banned.")))
+                return
+            }
+
             /// Show error accordingly to the auth status
             ///
             if alreadyContact.authStatus == .friend {

@@ -115,6 +115,10 @@ public final class PushHandler: PushHandling {
                 return ($0.type.unknownSenderContent!, $0)
             }
 
+            if contact.isBlocked || contact.isBanned {
+                return nil
+            }
+
             let name = (contact.nickname ?? contact.username) ?? ""
             return ($0.type.knownSenderContent(name)!, $0)
         }

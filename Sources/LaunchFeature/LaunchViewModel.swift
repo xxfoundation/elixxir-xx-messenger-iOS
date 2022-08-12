@@ -137,8 +137,10 @@ final class LaunchViewModel {
     }
 
     func getContactWith(userId: Data) -> Contact? {
+        let query = Contact.Query(id: [userId], isBlocked: false, isBanned: false)
+
         guard let session = try? DependencyInjection.Container.shared.resolve() as SessionType,
-              let contact = try? session.dbManager.fetchContacts(.init(id: [userId])).first else {
+              let contact = try? session.dbManager.fetchContacts(query).first else {
             return nil
         }
 
