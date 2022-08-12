@@ -8,6 +8,7 @@ import XXModels
 import Foundation
 import Integration
 import Permissions
+import ToastFeature
 import DifferenceKit
 import DependencyInjection
 
@@ -26,6 +27,7 @@ final class SingleChatViewModel {
     @Dependency private var logger: XXLogger
     @Dependency private var session: SessionType
     @Dependency private var permissions: PermissionHandling
+    @Dependency private var toastController: ToastController
 
     var contact: Contact { contactSubject.value }
     private var stagedReply: Reply?
@@ -226,6 +228,12 @@ final class SingleChatViewModel {
         var contact = contact
         contact.isBlocked = true
         _ = try? session.dbManager.saveContact(contact)
+
+        let name = (contact.nickname ?? contact.username) ?? ""
+        toastController.enqueueToast(model: .init(
+            title: "Your report has been sent and \(name) is now blocked.",
+            leftImage: Asset.requestSentToaster.image
+        ))
     }
 
     func showRoundFrom(_ roundURL: String?) {
