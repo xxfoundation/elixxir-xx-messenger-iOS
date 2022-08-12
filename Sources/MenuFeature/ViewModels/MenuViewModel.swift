@@ -12,7 +12,7 @@ final class MenuViewModel {
     @KeyObject(.username, defaultValue: "") var username: String
 
     var requestCount: AnyPublisher<Int, Never> {
-        let groupQuery = Group.Query(authStatus: [.pending])
+        let groupQuery = Group.Query(authStatus: [.pending], isLeaderBlocked: false, isLeaderBanned: false)
         let contactsQuery = Contact.Query(authStatus: [
             .verified,
             .confirming,

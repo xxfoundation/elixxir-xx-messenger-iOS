@@ -56,7 +56,7 @@ final class RequestsReceivedViewModel {
             authStatus: [
                 .hidden,
                 .pending
-            ])
+            ], isLeaderBlocked: false, isLeaderBanned: false)
 
         let contactsQuery = Contact.Query(
             authStatus: [
