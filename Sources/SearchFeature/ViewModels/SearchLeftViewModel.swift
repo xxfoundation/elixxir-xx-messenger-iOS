@@ -144,17 +144,22 @@ final class SearchLeftViewModel {
         var snapshot = SearchSnapshot()
 
         if var user = user {
-            if let contact = try? session.dbManager.fetchContacts(.init(id: [user.id], isBlocked: false, isBanned: false)).first {
+            if let contact = try? session.dbManager.fetchContacts(.init(id: [user.id])).first {
                 user.authStatus = contact.authStatus
             }
 
-            if user.authStatus != .friend {
+            if user.authStatus != .friend, !user.isBanned, !user.isBlocked {
                 snapshot.appendSections([.stranger])
                 snapshot.appendItems([.stranger(user)], toSection: .stranger)
             }
         }
 
-        let localsQuery = Contact.Query(text: stateSubject.value.input, authStatus: [.friend])
+        let localsQuery = Contact.Query(
+            text: stateSubject.value.input,
+            authStatus: [.friend],
+            isBlocked: false,
+            isBanned: false
+        )
 
         if let locals = try? session.dbManager.fetchContacts(localsQuery),
            let localsWithoutMe = removeMyself(from: locals),

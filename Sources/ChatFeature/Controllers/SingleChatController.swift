@@ -430,7 +430,8 @@ public final class SingleChatController: UIViewController {
                 drawer.dismiss(animated: true) { [weak self] in
                     guard let self = self else { return }
                     self.drawerCancellables.removeAll()
-                    self.didProceedWithReport()
+                    self.viewModel.proceeedWithReport(screenshot: self.takeAppScreenshot())
+                    self.navigationController?.popViewController(animated: true)
                 }
             }.store(in: &drawerCancellables)
 
@@ -445,21 +446,38 @@ public final class SingleChatController: UIViewController {
         coordinator.toDrawer(drawer, from: self)
     }
 
-    private func didProceedWithReport() {
-        var screenshotImage: UIImage?
+    func takeAppScreenshot() -> UIImage {
+        let foregroundWindowScene: UIWindowScene? = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .compactMap { $0 as? UIWindowScene }
+            .first
 
-        let layer = UIApplication.shared.keyWindow!.layer
+        guard let foregroundWindowScene = foregroundWindowScene else {
+            fatalError("[takeAppScreenshot]: Unable to get foreground window scene")
+        }
 
-        let scale = UIScreen.main.scale
-        UIGraphicsBeginImageContextWithOptions(layer.frame.size, false, scale);
-        guard let context = UIGraphicsGetCurrentContext() else { return }
-        layer.render(in: context)
+        let keyWindow: UIWindow?
 
-        if let image = UIGraphicsGetImageFromCurrentImageContext() {
-            UIGraphicsEndImageContext()
-            UIImageWriteToSavedPhotosAlbum(image, nil, nil, nil)
-            viewModel.uploadReport(screenshot: image)
-            navigationController?.popViewController(animated: true)
+        if #available(iOS 15.0, *) {
+            keyWindow = foregroundWindowScene.keyWindow
+        } else {
+            keyWindow = UIApplication.shared.keyWindow
+        }
+
+        guard let keyWindow = keyWindow else {
+            fatalError("[takeAppScreenshot]: Unable to get key window")
+        }
+
+        let rendererFormat = UIGraphicsImageRendererFormat()
+        rendererFormat.scale = foregroundWindowScene.screen.scale
+
+        let renderer = UIGraphicsImageRenderer(
+            bounds: keyWindow.bounds,
+            format: rendererFormat
+        )
+
+        return renderer.image { ctx in
+            keyWindow.layer.render(in: ctx.cgContext)
         }
     }
 

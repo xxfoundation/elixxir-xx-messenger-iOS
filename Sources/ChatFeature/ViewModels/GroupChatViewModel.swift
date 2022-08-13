@@ -30,7 +30,7 @@ final class GroupChatViewModel {
     private let routesSubject = PassthroughSubject<GroupChatNavigationRoutes, Never>()
 
     var messages: AnyPublisher<[ArraySection<ChatSection, Message>], Never> {
-        session.dbManager.fetchMessagesPublisher(.init(chat: .group(info.group.id)))
+        session.dbManager.fetchMessagesPublisher(.init(chat: .group(info.group.id), isSenderBanned: false))
             .assertNoFailure()
             .map { messages -> [ArraySection<ChatSection, Message>] in
                 let groupedByDate = Dictionary(grouping: messages) { domainModel -> Date in

@@ -50,10 +50,13 @@ final class ChatListViewModel {
     }
 
     var searchPublisher: AnyPublisher<SearchSnapshot, Never> {
-        let contactsQuery = Contact.Query(isBlocked: false, isBanned: false)
+        let contactsStream = session.dbManager
+            .fetchContactsPublisher(.init(isBlocked: false, isBanned: false))
+            .assertNoFailure()
+            .map { $0.filter { $0.id != self.session.myId }}
 
         return Publishers.CombineLatest3(
-            session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure(),
+            contactsStream,
             chatsPublisher,
             searchSubject
                 .removeDuplicates()
@@ -137,7 +140,8 @@ final class ChatListViewModel {
                 groupChatInfoQuery: GroupChatInfo.Query(
                     authStatus: [.participating],
                     isLeaderBlocked: false,
-                    isLeaderBanned: false
+                    isLeaderBanned: false,
+                    excludeBannedContactsMessages: true
                 ),
                 groupQuery: Group.Query(
                     withMessages: false,

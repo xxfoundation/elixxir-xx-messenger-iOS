@@ -222,9 +222,7 @@ final class SingleChatViewModel {
         return (contactTitle, message.text)
     }
 
-    func uploadReport(screenshot: UIImage) {
-        UIImageWriteToSavedPhotosAlbum(screenshot, nil, nil, nil)
-
+    func proceeedWithReport(screenshot: UIImage) {
         var contact = contact
         contact.isBlocked = true
         _ = try? session.dbManager.saveContact(contact)
