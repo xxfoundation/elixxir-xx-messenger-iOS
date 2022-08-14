@@ -456,15 +456,7 @@ public final class SingleChatController: UIViewController {
             fatalError("[takeAppScreenshot]: Unable to get foreground window scene")
         }
 
-        let keyWindow: UIWindow?
-
-        if #available(iOS 15.0, *) {
-            keyWindow = foregroundWindowScene.keyWindow
-        } else {
-            keyWindow = UIApplication.shared.keyWindow
-        }
-
-        guard let keyWindow = keyWindow else {
+        guard let keyWindow = foregroundWindowScene.windows.first(where: \.isKeyWindow) else {
             fatalError("[takeAppScreenshot]: Unable to get key window")
         }
 

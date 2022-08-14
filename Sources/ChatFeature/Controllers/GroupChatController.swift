@@ -317,7 +317,7 @@ extension GroupChatController: UICollectionViewDataSource {
         cellForItemAt indexPath: IndexPath
     ) -> UICollectionViewCell {
 
-        let item = sections[indexPath.section].elements[indexPath.item]
+        var item = sections[indexPath.section].elements[indexPath.item]
         let canReply: () -> Bool = {
             (item.status == .sent || item.status == .received) && item.networkId != nil
         }
@@ -330,7 +330,31 @@ extension GroupChatController: UICollectionViewDataSource {
         let showRound: (String?) -> Void = viewModel.showRoundFrom(_:)
         let replyContent: (Data) -> (String, String) = viewModel.getReplyContent(for:)
 
+        var isSenderBanned = false
+
+        if let database = try? DependencyInjection.Container.shared.resolve() as Database,
+           let sender = try? database.fetchContacts(.init(id: [item.senderId])).first {
+            isSenderBanned = sender.isBanned
+        }
+
         if item.status == .received {
+            guard isSenderBanned == false else {
+                item.text = "This user has been banned"
+
+                let cell: IncomingGroupTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
+                Bubbler.buildGroup(
+                    bubble: cell.leftView,
+                    with: item,
+                    with: "Banned user"
+                )
+
+                cell.canReply = false
+                cell.performReply = {}
+                cell.leftView.didTapShowRound = {}
+
+                return cell
+            }
+
             if let replyMessageId = item.replyMessageId {
                 let cell: IncomingGroupReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 

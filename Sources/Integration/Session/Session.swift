@@ -442,6 +442,7 @@ public final class Session: SessionType {
         client.messages
             .sink { [unowned self] in
                 if var contact = try? dbManager.fetchContacts(.init(id: [$0.senderId])).first {
+                    guard contact.isBanned == false else { return }
                     contact.isRecent = false
                     _ = try? dbManager.saveContact(contact)
                 }

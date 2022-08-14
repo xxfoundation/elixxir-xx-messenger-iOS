@@ -87,8 +87,17 @@ final class LaunchViewModel {
             do {
                 network.writeLogs()
 
-                // TODO: Retry inifitely if fails
-                let _ = try await fetchBannedList()
+                let bannedUids = try await fetchBannedList() // TODO: Retry inifitely if fails
+
+                if let database = try? DependencyInjection.Container.shared.resolve() as Database {
+                    if let bannedContacts = try? database.fetchContacts(Contact.Query(id: bannedUids, isBanned: false)) {
+                        bannedContacts.forEach {
+                            var contact = $0
+                            contact.isBanned = true
+                            _ = try? database.saveContact(contact)
+                        }
+                    }
+                }
 
                 network.updateNDF { [weak self] in
                     guard let self = self else { return }
@@ -211,16 +220,30 @@ final class LaunchViewModel {
         }
     }
 
-    private func fetchBannedList() async throws -> Data {
-        let url = URL(string: "https://elixxir-bins.s3.us-west-1.amazonaws.com/client/bannedUsers/banned.csv")
+    private func fetchBannedList() async throws -> Set<Data> {
+        let url = URL(string: "https://elixxir-bins.s3.us-west-1.amazonaws.com/client/bannedUsers/bannedTesting.csv")
         return try await withCheckedThrowingContinuation { continuation in
             URLSession.shared.dataTask(with: url!) { data, _, error in
                 if let error = error {
                     return continuation.resume(throwing: error)
                 }
 
-                guard let data = data else { fatalError("?") }
-                return continuation.resume(returning: data)
+                guard let data = data else {
+                    fatalError("No data was downloaded as banned users csv")
+                }
+
+                guard let csvRaw = String(data: data, encoding: .utf8),
+                      let csv = try? CSV<Enumerated>(string: csvRaw) else {
+                    fatalError("CSV content couldn't be parsed correctly")
+                }
+
+                guard let bannedUids = csv.columns?[0].rows else {
+                    fatalError("It wasn't possible to get CSV uid array")
+                }
+
+                return continuation.resume(returning: Set<Data>(
+                    bannedUids.compactMap { $0.data(using: .utf8) }
+                ))
             }.resume()
         }
     }
