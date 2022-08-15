@@ -45,6 +45,36 @@ extension SendReport {
     )
 }
 
-private class SessionDelegate: NSObject, URLSessionDelegate {
-    // TODO: handle TLS
+private final class SessionDelegate: NSObject, URLSessionDelegate {
+    func urlSession(
+        _ session: URLSession,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        let authenticationMethod = challenge.protectionSpace.authenticationMethod
+        if authenticationMethod == NSURLAuthenticationMethodServerTrust,
+           let serverTrust = challenge.protectionSpace.serverTrust,
+           handleServerTrustChallenge(serverTrust) {
+            completionHandler(.useCredential, URLCredential(trust: serverTrust))
+            return
+        }
+        completionHandler(.cancelAuthenticationChallenge, nil)
+    }
+}
+
+private func handleServerTrustChallenge(_ serverTrust: SecTrust) -> Bool {
+    guard let serverCert = SecTrustGetCertificateAtIndex(serverTrust, 0) else {
+        return false
+    }
+
+    let serverCertCFData = SecCertificateCopyData(serverCert)
+    let serverCertNSData = NSData(
+        bytes: CFDataGetBytePtr(serverCertCFData),
+        length: CFDataGetLength(serverCertCFData)
+    )
+
+    let localCertPath = Bundle.module.path(forResource: "report_cert", ofType: "crt")!
+    let localCertNSData = NSData(contentsOfFile: localCertPath)!
+
+    return serverCertNSData.isEqual(to: localCertNSData as Data)
 }
