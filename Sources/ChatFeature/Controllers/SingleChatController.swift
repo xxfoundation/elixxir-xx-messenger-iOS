@@ -432,7 +432,8 @@ public final class SingleChatController: UIViewController {
                 drawer.dismiss(animated: true) { [weak self] in
                     guard let self = self else { return }
                     self.drawerCancellables.removeAll()
-                    self.viewModel.proceeedWithReport(screenshot: try! self.makeAppScreenshot()) {
+                    let screenshot = try! self.makeAppScreenshot()
+                    self.viewModel.report(screenshot: screenshot) {
                         self.navigationController?.popViewController(animated: true)
                     }
                 }
