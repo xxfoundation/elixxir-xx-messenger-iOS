@@ -105,6 +105,7 @@ struct DependencyRegistrator {
         container.register(BackupService())
         container.register(MakeAppScreenshot.live)
         container.register(SendReport.live)
+        container.register(FetchBannedList.live)
 
         // MARK: Isolated
 
