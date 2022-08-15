@@ -430,8 +430,9 @@ public final class SingleChatController: UIViewController {
                 drawer.dismiss(animated: true) { [weak self] in
                     guard let self = self else { return }
                     self.drawerCancellables.removeAll()
-                    self.viewModel.proceeedWithReport(screenshot: self.takeAppScreenshot())
-                    self.navigationController?.popViewController(animated: true)
+                    self.viewModel.proceeedWithReport(screenshot: self.takeAppScreenshot()) {
+                        self.navigationController?.popViewController(animated: true)
+                    }
                 }
             }.store(in: &drawerCancellables)
 
@@ -447,18 +448,11 @@ public final class SingleChatController: UIViewController {
     }
 
     func takeAppScreenshot() -> UIImage {
-        let foregroundWindowScene: UIWindowScene? = UIApplication.shared.connectedScenes
-            .filter { $0.activationState == .foregroundActive }
-            .compactMap { $0 as? UIWindowScene }
-            .first
-
         guard let foregroundWindowScene = foregroundWindowScene else {
             fatalError("[takeAppScreenshot]: Unable to get foreground window scene")
         }
 
-        guard let keyWindow = foregroundWindowScene.windows.first(where: \.isKeyWindow) else {
-            fatalError("[takeAppScreenshot]: Unable to get key window")
-        }
+        let keyWindow = getKeyWindow(foregroundWindowScene)
 
         let rendererFormat = UIGraphicsImageRendererFormat()
         rendererFormat.scale = foregroundWindowScene.screen.scale
@@ -602,11 +596,15 @@ extension SingleChatController: KeyboardListenerDelegate {
     }
 
     func keyboardWillChangeFrame(info: KeyboardInfo) {
-        let keyWindow = UIApplication.shared.windows.filter { $0.isKeyWindow }.first
+        guard let scene = foregroundWindowScene else {
+            fatalError("[keyboardWillChangeFrame]: Couldn't get foregroundWindowScene")
+        }
+
+        let keyWindow = getKeyWindow(scene)
+        let keyboardFrame = keyWindow.convert(info.frameEnd, to: view)
 
         guard !currentInterfaceActions.options.contains(.changingFrameSize),
               collectionView.contentInsetAdjustmentBehavior != .never,
-              let keyboardFrame = keyWindow?.convert(info.frameEnd, to: view),
               collectionView.convert(collectionView.bounds, to: keyWindow).maxY > info.frameEnd.minY else { return }
 
         currentInterfaceActions.options.insert(.changingKeyboardFrame)
@@ -765,4 +763,17 @@ extension SingleChatController: QLPreviewControllerDelegate {
     public func previewControllerDidDismiss(_ controller: QLPreviewController) {
         fileURL = nil
     }
+}
+
+let foregroundWindowScene: UIWindowScene? = UIApplication.shared.connectedScenes
+    .filter { $0.activationState == .foregroundActive }
+    .compactMap { $0 as? UIWindowScene }
+    .first
+
+func getKeyWindow(_ scene: UIWindowScene) -> UIWindow {
+    guard let keyWindow = scene.windows.first(where: \.isKeyWindow) else {
+        fatalError("Unable to get key window")
+    }
+
+    return keyWindow
 }

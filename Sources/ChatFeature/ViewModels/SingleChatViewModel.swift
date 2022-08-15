@@ -7,6 +7,7 @@ import XXLogger
 import XXModels
 import Foundation
 import Integration
+import Defaults
 import Permissions
 import ToastFeature
 import DifferenceKit
@@ -23,11 +24,13 @@ enum SingleChatNavigationRoutes: Equatable {
     case webview(String)
 }
 
-final class SingleChatViewModel {
+final class SingleChatViewModel: NSObject {
     @Dependency private var logger: XXLogger
     @Dependency private var session: SessionType
     @Dependency private var permissions: PermissionHandling
     @Dependency private var toastController: ToastController
+
+    @KeyObject(.username, defaultValue: nil) var username: String?
 
     var contact: Contact { contactSubject.value }
     private var stagedReply: Reply?
@@ -73,6 +76,7 @@ final class SingleChatViewModel {
 
     init(_ contact: Contact) {
         self.contactSubject = .init(contact)
+        super.init()
 
         updateRecentState(contact)
 
@@ -140,11 +144,11 @@ final class SingleChatViewModel {
         guard let id = message.id else { return }
         session.retryMessage(id)
     }
-   
+
     func didNavigateSomewhere() {
         navigationRoutes.send(.none)
     }
-    
+
     @discardableResult
     func didTest(permission: PermissionType) -> Bool {
         switch permission {
@@ -222,18 +226,6 @@ final class SingleChatViewModel {
         return (contactTitle, message.text)
     }
 
-    func proceeedWithReport(screenshot: UIImage) {
-        var contact = contact
-        contact.isBlocked = true
-        _ = try? session.dbManager.saveContact(contact)
-
-        let name = (contact.nickname ?? contact.username) ?? ""
-        toastController.enqueueToast(model: .init(
-            title: "Your report has been sent and \(name) is now blocked.",
-            leftImage: Asset.requestSentToaster.image
-        ))
-    }
-
     func showRoundFrom(_ roundURL: String?) {
         if let urlString = roundURL, !urlString.isEmpty {
             navigationRoutes.send(.webview(urlString))
@@ -259,5 +251,119 @@ final class SingleChatViewModel {
 
     func section(at index: Int) -> ChatSection? {
         sectionsRelay.value.count > 0 ? sectionsRelay.value[index].model : nil
+    }
+}
+
+extension SingleChatViewModel {
+    struct Report: Encodable {
+        struct ReportUser: Encodable {
+            var userId: String
+            var username: String
+        }
+
+        var sender: ReportUser
+        var recipient: ReportUser
+        var type: String
+        var screenshot: String
+    }
+
+    private func blockContact() {
+        var contact = contact
+        contact.isBlocked = true
+        _ = try? session.dbManager.saveContact(contact)
+    }
+
+    private func makeReportRequest(with screenshot: UIImage) -> URLRequest {
+        let url = URL(string: "https://3.74.237.181:11420/report")
+
+        let report = Report(
+            sender: .init(
+                userId: contact.id.base64EncodedString(),
+                username: contact.username!
+            ),
+            recipient: .init(
+                userId: session.myId.base64EncodedString(),
+                username: username!
+            ), type: "dm",
+            screenshot: screenshot.jpegData(compressionQuality: 0.1)!.base64EncodedString())
+
+        var request = try! URLRequest(url: url!, method: .post)
+        request.httpBody = try! JSONEncoder().encode(report)
+        return request
+    }
+
+    private func enqueueBlockedToast() {
+        let name = (contact.nickname ?? contact.username) ?? ""
+        toastController.enqueueToast(model: .init(
+            title: "Your report has been sent and \(name) is now blocked.",
+            leftImage: Asset.requestSentToaster.image
+        ))
+    }
+
+    private func uploadReport(
+        _ request: URLRequest,
+        completion: @escaping (Result<Void, Error>) -> Void
+    ) {
+        URLSession(configuration: .default, delegate: self, delegateQueue: nil)
+            .dataTask(with: request) { data, response, error in
+            if let error = error as? NSError {
+                completion(.failure(error))
+                return
+            }
+
+            if let data = data {
+                completion(.success(()))
+            }
+        }.resume()
+    }
+
+    func proceeedWithReport(screenshot: UIImage, completion: @escaping () -> Void) {
+        hudRelay.send(.on)
+
+        uploadReport(makeReportRequest(with: screenshot)) { [weak self] in
+            guard let self = self else { return }
+
+            switch $0 {
+            case .success:
+                DispatchQueue.main.async {
+                    self.blockContact()
+                    self.enqueueBlockedToast()
+                    self.hudRelay.send(.none)
+                    completion()
+                }
+
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    self.hudRelay.send(.error(.init(with: error)))
+                    completion()
+                }
+            }
+        }
+    }
+}
+
+extension SingleChatViewModel: URLSessionDelegate {
+    func urlSession(
+        _ session: URLSession,
+        didReceive challenge: URLAuthenticationChallenge,
+        completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
+    ) {
+        let serverTrust = challenge.protectionSpace.serverTrust
+        let certificate = SecTrustGetCertificateAtIndex(serverTrust!, 0)
+
+        let policies = NSMutableArray()
+        policies.add(SecPolicyCreateSSL(true, challenge.protectionSpace.host as CFString))
+        SecTrustSetPolicies(serverTrust!, policies)
+
+        let remoteCertificateData: NSData = SecCertificateCopyData(certificate!)
+        let pathToCert = Bundle.module.path(forResource: "report_cert", ofType: "crt")
+        let localCertificate: NSData = NSData(contentsOfFile: pathToCert!)!
+
+        if (remoteCertificateData.isEqual(to: localCertificate as Data)) {
+            let credential: URLCredential = URLCredential(trust: serverTrust!)
+            completionHandler(.useCredential, credential)
+        } else {
+            completionHandler(.cancelAuthenticationChallenge, nil)
+        }
     }
 }

@@ -466,6 +466,9 @@ let package = Package(
                 .product(name: "ChatLayout", package: "ChatLayout"),
                 .product(name: "DifferenceKit", package: "DifferenceKit"),
                 .product(name: "ScrollViewController", package: "ScrollViewController"),
+            ],
+            resources: [
+                .process("Resources"),
             ]
         ),
         .testTarget(
