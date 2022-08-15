@@ -746,7 +746,9 @@ let package = Package(
         ),
         .target(
             name: "ReportingFeature",
-            dependencies: []
+            dependencies: [
+                .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
+            ]
         ),
     ]
 )
