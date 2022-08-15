@@ -29,6 +29,7 @@ public final class SingleChatController: UIViewController {
     @Dependency private var logger: XXLogger
     @Dependency private var voxophone: Voxophone
     @Dependency private var coordinator: ChatCoordinating
+    @Dependency private var makeReportDrawer: MakeReportDrawer
     @Dependency private var makeAppScreenshot: MakeAppScreenshot
     @Dependency private var statusBarController: StatusBarStyleControlling
 
@@ -395,59 +396,16 @@ public final class SingleChatController: UIViewController {
     }
 
     private func presentReportDrawer() {
-        let cancelButton = CapsuleButton()
-        cancelButton.setStyle(.seeThrough)
-        cancelButton.setTitle(Localized.Chat.Report.cancel, for: .normal)
-
-        let reportButton = CapsuleButton()
-        reportButton.setStyle(.red)
-        reportButton.setTitle(Localized.Chat.Report.action, for: .normal)
-
-        let drawer = DrawerController(with: [
-            DrawerImage(
-                image: Asset.drawerNegative.image
-            ),
-            DrawerText(
-                font: Fonts.Mulish.semiBold.font(size: 18.0),
-                text: Localized.Chat.Report.title,
-                color: Asset.neutralActive.color
-            ),
-            DrawerText(
-                font: Fonts.Mulish.semiBold.font(size: 14.0),
-                text: Localized.Chat.Report.subtitle,
-                color: Asset.neutralWeak.color,
-                lineHeightMultiple: 1.35,
-                spacingAfter: 25
-            ),
-            DrawerStack(
-                axis: .vertical,
-                spacing: 20.0,
-                views: [reportButton, cancelButton]
-            )
-        ])
-
-        reportButton.publisher(for: .touchUpInside)
-            .receive(on: DispatchQueue.main)
-            .sink {
-                drawer.dismiss(animated: true) { [weak self] in
-                    guard let self = self else { return }
-                    self.drawerCancellables.removeAll()
-                    let screenshot = try! self.makeAppScreenshot()
-                    self.viewModel.report(screenshot: screenshot) { success in
-                        guard success else { return }
-                        self.navigationController?.popViewController(animated: true)
-                    }
-                }
-            }.store(in: &drawerCancellables)
-
-        cancelButton.publisher(for: .touchUpInside)
-            .receive(on: DispatchQueue.main)
-            .sink {
-                drawer.dismiss(animated: true) { [weak self] in
-                    self?.drawerCancellables.removeAll()
-                }
-            }.store(in: &drawerCancellables)
-
+        var config = MakeReportDrawer.Config()
+        config.onReport = { [weak self] in
+            guard let self = self else { return }
+            let screenshot = try! self.makeAppScreenshot()
+            self.viewModel.report(screenshot: screenshot) { success in
+                guard success else { return }
+                self.navigationController?.popViewController(animated: true)
+            }
+        }
+        let drawer = makeReportDrawer(config)
         coordinator.toDrawer(drawer, from: self)
     }
 
