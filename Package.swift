@@ -749,6 +749,8 @@ let package = Package(
         .target(
             name: "ReportingFeature",
             dependencies: [
+                .target(name: "DrawerFeature"),
+                .target(name: "Shared"),
                 .product(name: "SwiftCSV", package: "SwiftCSV"),
                 .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
             ],
