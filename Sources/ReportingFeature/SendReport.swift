@@ -51,30 +51,32 @@ private final class SessionDelegate: NSObject, URLSessionDelegate {
         didReceive challenge: URLAuthenticationChallenge,
         completionHandler: @escaping (URLSession.AuthChallengeDisposition, URLCredential?) -> Void
     ) {
-        let authenticationMethod = challenge.protectionSpace.authenticationMethod
-        if authenticationMethod == NSURLAuthenticationMethodServerTrust,
-           let serverTrust = challenge.protectionSpace.serverTrust,
-           handleServerTrustChallenge(serverTrust) {
-            completionHandler(.useCredential, URLCredential(trust: serverTrust))
-            return
+        let authMethod = challenge.protectionSpace.authenticationMethod
+        guard authMethod == NSURLAuthenticationMethodServerTrust else {
+            return completionHandler(.cancelAuthenticationChallenge, nil)
         }
-        completionHandler(.cancelAuthenticationChallenge, nil)
+
+        guard let serverTrust = challenge.protectionSpace.serverTrust else {
+            return completionHandler(.cancelAuthenticationChallenge, nil)
+        }
+
+        guard let serverCert = SecTrustGetCertificateAtIndex(serverTrust, 0) else {
+            return completionHandler(.cancelAuthenticationChallenge, nil)
+        }
+
+        let serverCertCFData = SecCertificateCopyData(serverCert)
+        let serverCertData = Data(
+            bytes: CFDataGetBytePtr(serverCertCFData),
+            count: CFDataGetLength(serverCertCFData)
+        )
+
+        let localCertURL = Bundle.module.url(forResource: "report_cert", withExtension: "der")!
+        let localCertData = try! Data(contentsOf: localCertURL)
+
+        guard serverCertData == localCertData else {
+            return completionHandler(.cancelAuthenticationChallenge, nil)
+        }
+
+        completionHandler(.useCredential, URLCredential(trust: serverTrust))
     }
-}
-
-private func handleServerTrustChallenge(_ serverTrust: SecTrust) -> Bool {
-    guard let serverCert = SecTrustGetCertificateAtIndex(serverTrust, 0) else {
-        return false
-    }
-
-    let serverCertCFData = SecCertificateCopyData(serverCert)
-    let serverCertNSData = NSData(
-        bytes: CFDataGetBytePtr(serverCertCFData),
-        length: CFDataGetLength(serverCertCFData)
-    )
-
-    let localCertPath = Bundle.module.path(forResource: "report_cert", ofType: "crt")!
-    let localCertNSData = NSData(contentsOfFile: localCertPath)!
-
-    return serverCertNSData.isEqual(to: localCertNSData as Data)
 }
