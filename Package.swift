@@ -171,6 +171,7 @@ let package = Package(
                 .target(name: "ChatListFeature"),
                 .target(name: "SettingsFeature"),
                 .target(name: "RequestsFeature"),
+                .target(name: "ReportingFeature"),
                 .target(name: "OnboardingFeature"),
                 .target(name: "GoogleDriveFeature"),
                 .target(name: "ContactListFeature"),

@@ -26,6 +26,7 @@ import CrashReporting
 import NetworkMonitor
 import DropboxFeature
 import VersionChecking
+import ReportingFeature
 import GoogleDriveFeature
 import DependencyInjection
 
@@ -102,6 +103,7 @@ struct DependencyRegistrator {
     static private func registerCommonDependencies() {
         container.register(Voxophone())
         container.register(BackupService())
+        container.register(MakeAppScreenshot.live)
 
         // MARK: Isolated
 
