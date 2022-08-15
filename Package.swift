@@ -52,6 +52,7 @@ let package = Package(
         .library(name: "GoogleDriveFeature", targets: ["GoogleDriveFeature"]),
         .library(name: "ContactListFeature", targets: ["ContactListFeature"]),
         .library(name: "DependencyInjection", targets: ["DependencyInjection"]),
+        .library(name: "ReportingFeature", targets: ["ReportingFeature"]),
     ],
     dependencies: [
         .package(
@@ -742,6 +743,10 @@ let package = Package(
                 .target(name: "CollectionView"),
                 .product(name: "CustomDump", package: "swift-custom-dump"),
             ]
+        ),
+        .target(
+            name: "ReportingFeature",
+            dependencies: []
         ),
     ]
 )
