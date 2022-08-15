@@ -516,8 +516,8 @@ let package = Package(
                 .target(name: "Permissions"),
                 .target(name: "DropboxFeature"),
                 .target(name: "VersionChecking"),
+                .target(name: "ReportingFeature"),
                 .target(name: "DependencyInjection"),
-                .product(name: "SwiftCSV", package: "SwiftCSV"),
             ]
         ),
         .target(

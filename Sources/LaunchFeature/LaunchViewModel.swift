@@ -1,8 +1,6 @@
 import HUD
 import Shared
 import Models
-import SwiftCSV
-
 import Combine
 import Defaults
 import XXModels
@@ -12,6 +10,7 @@ import Integration
 import Permissions
 import DropboxFeature
 import VersionChecking
+import ReportingFeature
 import CombineSchedulers
 import DependencyInjection
 
@@ -35,6 +34,9 @@ final class LaunchViewModel {
     @Dependency private var dropboxService: DropboxInterface
     @Dependency private var keychainHandler: KeychainHandling
     @Dependency private var permissionHandler: PermissionHandling
+    @Dependency private var fetchBannedList: FetchBannedList
+    @Dependency private var processBannedList: ProcessBannedList
+    @Dependency private var session: SessionType
 
     @KeyObject(.username, defaultValue: nil) var username: String?
     @KeyObject(.biometrics, defaultValue: false) var isBiometricsOn: Bool
@@ -54,8 +56,6 @@ final class LaunchViewModel {
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = {
         DispatchQueue.global().eraseToAnyScheduler()
     }()
-
-    var getSession: (String) throws -> SessionType = Session.init
 
     private var cancellables = Set<AnyCancellable>()
     private let routeSubject = PassthroughSubject<LaunchRoute, Never>()
@@ -83,63 +83,53 @@ final class LaunchViewModel {
     }
 
     func versionApproved() {
-        Task {
-            do {
-                network.writeLogs()
+        network.writeLogs()
 
-                let bannedUids = try await fetchBannedList() // TODO: Retry inifitely if fails
+        network.updateNDF { [weak self] in
+            guard let self = self else { return }
 
-                if let database = try? DependencyInjection.Container.shared.resolve() as Database {
-                    if let bannedContacts = try? database.fetchContacts(Contact.Query(id: bannedUids, isBanned: false)) {
-                        bannedContacts.forEach {
-                            var contact = $0
-                            contact.isBanned = true
-                            _ = try? database.saveContact(contact)
-                        }
-                    }
+            switch $0 {
+            case .success(let ndf):
+                self.network.updateErrors()
+
+                guard self.network.hasClient else {
+                    self.hudSubject.send(.none)
+                    self.routeSubject.send(.onboarding(ndf))
+                    self.dropboxService.unlink()
+                    try? self.keychainHandler.clear()
+                    return
                 }
 
-                network.updateNDF { [weak self] in
+                guard self.username != nil else {
+                    self.network.purgeFiles()
+                    self.hudSubject.send(.none)
+                    self.routeSubject.send(.onboarding(ndf))
+                    self.dropboxService.unlink()
+                    try? self.keychainHandler.clear()
+                    return
+                }
+
+                self.backgroundScheduler.schedule { [weak self] in
                     guard let self = self else { return }
 
-                    switch $0 {
-                    case .success(let ndf):
-                        self.network.updateErrors()
+                    do {
+                        let session = try Session(ndf: ndf)
+                        DependencyInjection.Container.shared.register(session as SessionType)
 
-                        guard self.network.hasClient else {
-                            self.hudSubject.send(.none)
-                            self.routeSubject.send(.onboarding(ndf))
-                            self.dropboxService.unlink()
-                            try? self.keychainHandler.clear()
-                            return
-                        }
-
-                        guard self.username != nil else {
-                            self.network.purgeFiles()
-                            self.hudSubject.send(.none)
-                            self.routeSubject.send(.onboarding(ndf))
-                            self.dropboxService.unlink()
-                            try? self.keychainHandler.clear()
-                            return
-                        }
-
-                        self.backgroundScheduler.schedule { [weak self] in
-                            guard let self = self else { return }
-
-                            do {
-                                let session = try self.getSession(ndf)
-                                DependencyInjection.Container.shared.register(session as SessionType)
+                        self.updateBannedList {
+                            DispatchQueue.main.async {
                                 self.hudSubject.send(.none)
                                 self.checkBiometrics()
-                            } catch {
-                                self.hudSubject.send(.error(HUDError(with: error)))
                             }
                         }
-                    case .failure(let error):
-                        self.hudSubject.send(.error(HUDError(with: error)))
+                    } catch {
+                        DispatchQueue.main.async {
+                            self.hudSubject.send(.error(HUDError(with: error)))
+                        }
                     }
                 }
-            } catch {
+
+            case .failure(let error):
                 self.hudSubject.send(.error(HUDError(with: error)))
             }
         }
@@ -147,22 +137,12 @@ final class LaunchViewModel {
 
     func getContactWith(userId: Data) -> Contact? {
         let query = Contact.Query(id: [userId], isBlocked: false, isBanned: false)
-
-        guard let session = try? DependencyInjection.Container.shared.resolve() as SessionType,
-              let contact = try? session.dbManager.fetchContacts(query).first else {
-            return nil
-        }
-
-        return contact
+        return try! session.dbManager.fetchContacts(query).first
     }
 
     func getGroupInfoWith(groupId: Data) -> GroupInfo? {
-        guard let session: SessionType = try? DependencyInjection.Container.shared.resolve(),
-              let info = try? session.dbManager.fetchGroupInfos(.init(groupId: groupId)).first else {
-            return nil
-        }
-
-        return info
+        let query = GroupInfo.Query(groupId: groupId)
+        return try! session.dbManager.fetchGroupInfos(query).first
     }
 
     private func versionFailed(error: Error) {
@@ -220,31 +200,50 @@ final class LaunchViewModel {
         }
     }
 
-    private func fetchBannedList() async throws -> Set<Data> {
-        let url = URL(string: "https://elixxir-bins.s3.us-west-1.amazonaws.com/client/bannedUsers/bannedTesting.csv")
-        return try await withCheckedThrowingContinuation { continuation in
-            URLSession.shared.dataTask(with: url!) { data, _, error in
-                if let error = error {
-                    return continuation.resume(throwing: error)
+    private func updateBannedList(completion: @escaping () -> Void) {
+        fetchBannedList { result in
+            switch result {
+            case .failure(_):
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    self.updateBannedList(completion: completion)
                 }
-
-                guard let data = data else {
-                    fatalError("No data was downloaded as banned users csv")
-                }
-
-                guard let csvRaw = String(data: data, encoding: .utf8),
-                      let csv = try? CSV<Enumerated>(string: csvRaw) else {
-                    fatalError("CSV content couldn't be parsed correctly")
-                }
-
-                guard let bannedUids = csv.columns?[0].rows else {
-                    fatalError("It wasn't possible to get CSV uid array")
-                }
-
-                return continuation.resume(returning: Set<Data>(
-                    bannedUids.compactMap { $0.data(using: .utf8) }
-                ))
-            }.resume()
+            case .success(let data):
+                self.processBannedList(data, completion: completion)
+            }
         }
+    }
+
+    private func processBannedList(_ data: Data, completion: @escaping () -> Void) {
+        processBannedList(
+            data: data,
+            forEach: { result in
+                switch result {
+                case .success(let userId):
+                    let query = Contact.Query(id: [userId])
+                    if var contact = try! self.session.dbManager.fetchContacts(query).first {
+                        if contact.isBanned == false {
+                            contact.isBanned = true
+                            try! self.session.dbManager.saveContact(contact)
+                        }
+                    } else {
+                        try! self.session.dbManager.saveContact(.init(id: userId, isBanned: true))
+                    }
+
+                case .failure(_):
+                    break
+                }
+            },
+            completion: { result in
+                switch result {
+                case .failure(_):
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        self.updateBannedList(completion: completion)
+                    }
+
+                case .success(_):
+                    completion()
+                }
+            }
+        )
     }
 }
