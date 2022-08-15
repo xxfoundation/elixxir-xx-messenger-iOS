@@ -12,6 +12,7 @@ import ChatLayout
 import DrawerFeature
 import DifferenceKit
 import ChatInputFeature
+import ReportingFeature
 import DependencyInjection
 import ScrollViewController
 
@@ -28,6 +29,7 @@ public final class SingleChatController: UIViewController {
     @Dependency private var logger: XXLogger
     @Dependency private var voxophone: Voxophone
     @Dependency private var coordinator: ChatCoordinating
+    @Dependency private var makeAppScreenshot: MakeAppScreenshot
     @Dependency private var statusBarController: StatusBarStyleControlling
 
     lazy private var infoView = UIControl()
@@ -430,7 +432,7 @@ public final class SingleChatController: UIViewController {
                 drawer.dismiss(animated: true) { [weak self] in
                     guard let self = self else { return }
                     self.drawerCancellables.removeAll()
-                    self.viewModel.proceeedWithReport(screenshot: self.takeAppScreenshot()) {
+                    self.viewModel.proceeedWithReport(screenshot: try! self.makeAppScreenshot()) {
                         self.navigationController?.popViewController(animated: true)
                     }
                 }
@@ -445,26 +447,6 @@ public final class SingleChatController: UIViewController {
             }.store(in: &drawerCancellables)
 
         coordinator.toDrawer(drawer, from: self)
-    }
-
-    func takeAppScreenshot() -> UIImage {
-        guard let foregroundWindowScene = foregroundWindowScene else {
-            fatalError("[takeAppScreenshot]: Unable to get foreground window scene")
-        }
-
-        let keyWindow = getKeyWindow(foregroundWindowScene)
-
-        let rendererFormat = UIGraphicsImageRendererFormat()
-        rendererFormat.scale = foregroundWindowScene.screen.scale
-
-        let renderer = UIGraphicsImageRenderer(
-            bounds: keyWindow.bounds,
-            format: rendererFormat
-        )
-
-        return renderer.image { ctx in
-            keyWindow.layer.render(in: ctx.cgContext)
-        }
     }
 
     private func presentDeleteAllDrawer() {
@@ -596,11 +578,17 @@ extension SingleChatController: KeyboardListenerDelegate {
     }
 
     func keyboardWillChangeFrame(info: KeyboardInfo) {
-        guard let scene = foregroundWindowScene else {
-            fatalError("[keyboardWillChangeFrame]: Couldn't get foregroundWindowScene")
+        let keyWindow: UIWindow? = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .compactMap { $0 as? UIWindowScene }
+            .first?
+            .windows
+            .first(where: \.isKeyWindow)
+
+        guard let keyWindow = keyWindow else {
+            fatalError("[keyboardWillChangeFrame]: Couldn't get key window")
         }
 
-        let keyWindow = getKeyWindow(scene)
         let keyboardFrame = keyWindow.convert(info.frameEnd, to: view)
 
         guard !currentInterfaceActions.options.contains(.changingFrameSize),
@@ -763,17 +751,4 @@ extension SingleChatController: QLPreviewControllerDelegate {
     public func previewControllerDidDismiss(_ controller: QLPreviewController) {
         fileURL = nil
     }
-}
-
-let foregroundWindowScene: UIWindowScene? = UIApplication.shared.connectedScenes
-    .filter { $0.activationState == .foregroundActive }
-    .compactMap { $0 as? UIWindowScene }
-    .first
-
-func getKeyWindow(_ scene: UIWindowScene) -> UIWindow {
-    guard let keyWindow = scene.windows.first(where: \.isKeyWindow) else {
-        fatalError("Unable to get key window")
-    }
-
-    return keyWindow
 }

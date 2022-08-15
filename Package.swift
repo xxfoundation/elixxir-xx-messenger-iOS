@@ -464,6 +464,7 @@ let package = Package(
                 .target(name: "Presentation"),
                 .target(name: "DrawerFeature"),
                 .target(name: "ChatInputFeature"),
+                .target(name: "ReportingFeature"),
                 .target(name: "DependencyInjection"),
                 .product(name: "ChatLayout", package: "ChatLayout"),
                 .product(name: "DifferenceKit", package: "DifferenceKit"),
