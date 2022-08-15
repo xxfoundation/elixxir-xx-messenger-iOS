@@ -255,7 +255,7 @@ final class SingleChatViewModel: NSObject {
         sectionsRelay.value.count > 0 ? sectionsRelay.value[index].model : nil
     }
 
-    func report(screenshot: UIImage, completion: @escaping () -> Void) {
+    func report(screenshot: UIImage, completion: @escaping (Bool) -> Void) {
         let report = Report(
             sender: .init(
                 userId: contact.id.base64EncodedString(),
@@ -275,7 +275,7 @@ final class SingleChatViewModel: NSObject {
             case .failure(let error):
                 DispatchQueue.main.async {
                     self.hudRelay.send(.error(.init(with: error)))
-                    completion()
+                    completion(false)
                 }
 
             case .success(_):
@@ -283,7 +283,7 @@ final class SingleChatViewModel: NSObject {
                 DispatchQueue.main.async {
                     self.hudRelay.send(.none)
                     self.presentReportConfirmation()
-                    completion()
+                    completion(true)
                 }
             }
         }
