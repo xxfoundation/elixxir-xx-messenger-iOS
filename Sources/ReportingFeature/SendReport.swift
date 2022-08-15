@@ -22,8 +22,13 @@ extension SendReport {
             completion(.failure(error))
             return
         }
-        let session = URLSession(configuration: .default)
-        let task = session.dataTask(with: request) { data, response, error in
+        let session = URLSession(
+            configuration: .default,
+            delegate: SessionDelegate(),
+            delegateQueue: nil
+        )
+        let task = session.dataTask(with: request) { _, _, error in
+            defer { session.invalidateAndCancel() }
             if let error = error {
                 completion(.failure(error))
                 return
@@ -38,4 +43,8 @@ extension SendReport {
     public static let unimplemented = SendReport(
         run: XCTUnimplemented("\(Self.self)")
     )
+}
+
+private class SessionDelegate: NSObject, URLSessionDelegate {
+    // TODO: handle TLS
 }

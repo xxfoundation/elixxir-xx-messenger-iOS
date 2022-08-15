@@ -750,6 +750,9 @@ let package = Package(
             name: "ReportingFeature",
             dependencies: [
                 .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
+            ],
+            resources: [
+                .process("Resources"),
             ]
         ),
     ]
