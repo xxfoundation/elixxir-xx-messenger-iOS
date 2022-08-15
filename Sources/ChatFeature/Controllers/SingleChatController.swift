@@ -49,7 +49,6 @@ public final class SingleChatController: UIViewController {
     private let viewModel: SingleChatViewModel
     private let layoutDelegate = LayoutDelegate()
     private var cancellables = Set<AnyCancellable>()
-    private var drawerCancellables = Set<AnyCancellable>()
     private var sections = [ArraySection<ChatSection, Message>]()
     private var currentInterfaceActions: SetActor<Set<InterfaceActions>, ReactionTypes> = SetActor()
 
@@ -385,12 +384,8 @@ public final class SingleChatController: UIViewController {
 
         button.action
             .receive(on: DispatchQueue.main)
-            .sink { [weak drawer] in
-                drawer?.dismiss(animated: true) { [weak self] in
-                    guard let self = self else { return }
-                    self.drawerCancellables.removeAll()
-                }
-            }.store(in: &drawerCancellables)
+            .sink { [unowned drawer] in drawer.dismiss(animated: true) }
+            .store(in: &drawer.cancellables)
 
         return drawer
     }
@@ -442,21 +437,17 @@ public final class SingleChatController: UIViewController {
 
         clearButton.publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
-            .sink {
-                drawer.dismiss(animated: true) { [weak self] in
-                    guard let self = self else { return }
-                    self.drawerCancellables.removeAll()
-                    self.viewModel.didRequestDeleteAll()
+            .sink { [unowned drawer, weak self] in
+                drawer.dismiss(animated: true) {
+                    self?.viewModel.didRequestDeleteAll()
                 }
-            }.store(in: &drawerCancellables)
+            }
+            .store(in: &drawer.cancellables)
 
         cancelButton.publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
-            .sink {
-                drawer.dismiss(animated: true) { [weak self] in
-                    self?.drawerCancellables.removeAll()
-                }
-            }.store(in: &drawerCancellables)
+            .sink { [unowned drawer] in drawer.dismiss(animated: true) }
+            .store(in: &drawer.cancellables)
 
         coordinator.toDrawer(drawer, from: self)
     }
