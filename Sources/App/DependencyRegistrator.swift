@@ -107,6 +107,7 @@ struct DependencyRegistrator {
         container.register(SendReport.live)
         container.register(FetchBannedList.live)
         container.register(ProcessBannedList.live)
+        container.register(MakeReportDrawer.live)
 
         // MARK: Isolated
 
