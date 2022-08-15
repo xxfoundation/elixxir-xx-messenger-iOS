@@ -104,6 +104,7 @@ struct DependencyRegistrator {
         container.register(Voxophone())
         container.register(BackupService())
         container.register(MakeAppScreenshot.live)
+        container.register(SendReport.live)
 
         // MARK: Isolated
 
