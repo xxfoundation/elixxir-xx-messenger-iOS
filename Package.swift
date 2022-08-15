@@ -749,6 +749,7 @@ let package = Package(
         .target(
             name: "ReportingFeature",
             dependencies: [
+                .product(name: "SwiftCSV", package: "SwiftCSV"),
                 .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
             ],
             resources: [
