@@ -1,3 +1,4 @@
+import HUD
 import UIKit
 import Theme
 import Models
@@ -6,8 +7,10 @@ import Combine
 import XXModels
 import Voxophone
 import ChatLayout
+import Integration
 import DrawerFeature
 import DifferenceKit
+import ReportingFeature
 import ChatInputFeature
 import DependencyInjection
 
@@ -19,7 +22,11 @@ typealias OutgoingFailedGroupTextCell = CollectionCell<FlexibleSpace, StackMessa
 typealias OutgoingFailedGroupReplyCell = CollectionCell<FlexibleSpace, ReplyStackMessageView>
 
 public final class GroupChatController: UIViewController {
+    @Dependency private var hud: HUD
+    @Dependency private var session: SessionType
     @Dependency private var coordinator: ChatCoordinating
+    @Dependency private var makeReportDrawer: MakeReportDrawer
+    @Dependency private var makeAppScreenshot: MakeAppScreenshot
     @Dependency private var statusBarController: StatusBarStyleControlling
 
     private let members: MembersController
@@ -176,6 +183,17 @@ public final class GroupChatController: UIViewController {
                 }
             }.store(in: &cancellables)
 
+        viewModel.hudPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [hud] in hud.update(with: $0) }
+            .store(in: &cancellables)
+
+        viewModel.reportPopupPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] contact in
+                presentReportDrawer(contact)
+            }.store(in: &cancellables)
+
         viewModel.messages
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] sections in
@@ -227,6 +245,19 @@ public final class GroupChatController: UIViewController {
 
     @objc private func didTapDots() {
         coordinator.toMembersList(members, from: self)
+    }
+
+    private func presentReportDrawer(_ contact: Contact) {
+        var config = MakeReportDrawer.Config()
+        config.onReport = { [weak self] in
+            guard let self = self else { return }
+            let screenshot = try! self.makeAppScreenshot()
+            self.viewModel.report(contact: contact, screenshot: screenshot) {
+                self.collectionView.reloadData()
+            }
+        }
+        let drawer = makeReportDrawer(config)
+        coordinator.toDrawer(drawer, from: self)
     }
 
     private func makeWaitingRoundDrawer() -> UIViewController {
@@ -332,8 +363,7 @@ extension GroupChatController: UICollectionViewDataSource {
 
         var isSenderBanned = false
 
-        if let database = try? DependencyInjection.Container.shared.resolve() as Database,
-           let sender = try? database.fetchContacts(.init(id: [item.senderId])).first {
+        if let sender = try? session.dbManager.fetchContacts(.init(id: [item.senderId])).first {
             isSenderBanned = sender.isBanned
         }
 
@@ -568,6 +598,10 @@ extension GroupChatController: UICollectionViewDelegate {
                 self?.viewModel.didRequestDelete([item])
             }
 
+            let report = UIAction(title: Localized.Chat.BubbleMenu.report, state: .off) { [weak self] _ in
+                self?.viewModel.didRequestReport(item)
+            }
+
             let retry = UIAction(title: Localized.Chat.BubbleMenu.retry, state: .off) { [weak self] _ in
                 self?.viewModel.retry(item)
             }
@@ -579,7 +613,7 @@ extension GroupChatController: UICollectionViewDelegate {
             } else if item.status == .sending {
                 menu = UIMenu(title: "", children: [copy])
             } else {
-                menu = UIMenu(title: "", children: [copy, reply, delete])
+                menu = UIMenu(title: "", children: [copy, reply, delete, report])
             }
 
             return menu

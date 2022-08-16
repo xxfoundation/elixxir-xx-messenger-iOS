@@ -139,15 +139,11 @@ final class ChatListViewModel {
                 ),
                 groupChatInfoQuery: GroupChatInfo.Query(
                     authStatus: [.participating],
-                    isLeaderBlocked: false,
-                    isLeaderBanned: false,
                     excludeBannedContactsMessages: true
                 ),
                 groupQuery: Group.Query(
                     withMessages: false,
-                    authStatus: [.participating],
-                    isLeaderBlocked: false,
-                    isLeaderBanned: false
+                    authStatus: [.participating]
                 )
             ))
             .assertNoFailure()

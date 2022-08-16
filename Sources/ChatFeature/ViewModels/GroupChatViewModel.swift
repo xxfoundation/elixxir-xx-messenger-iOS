@@ -1,10 +1,15 @@
+import HUD
 import UIKit
 import Models
+import Shared
 import Combine
 import XXModels
+import Defaults
 import Foundation
 import Integration
+import ToastFeature
 import DifferenceKit
+import ReportingFeature
 import DependencyInjection
 
 enum GroupChatNavigationRoutes: Equatable {
@@ -14,6 +19,18 @@ enum GroupChatNavigationRoutes: Equatable {
 
 final class GroupChatViewModel {
     @Dependency private var session: SessionType
+    @Dependency private var sendReport: SendReport
+    @Dependency private var toastController: ToastController
+
+    @KeyObject(.username, defaultValue: nil) var username: String?
+
+    var hudPublisher: AnyPublisher<HUDStatus, Never> {
+        hudSubject.eraseToAnyPublisher()
+    }
+
+    var reportPopupPublisher: AnyPublisher<Contact, Never> {
+        reportPopupSubject.eraseToAnyPublisher()
+    }
 
     var replyPublisher: AnyPublisher<(String, String), Never> {
         replySubject.eraseToAnyPublisher()
@@ -26,11 +43,13 @@ final class GroupChatViewModel {
     let info: GroupInfo
     private var stagedReply: Reply?
     private var cancellables = Set<AnyCancellable>()
+    private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
+    private let reportPopupSubject = PassthroughSubject<Contact, Never>()
     private let replySubject = PassthroughSubject<(String, String), Never>()
     private let routesSubject = PassthroughSubject<GroupChatNavigationRoutes, Never>()
 
     var messages: AnyPublisher<[ArraySection<ChatSection, Message>], Never> {
-        session.dbManager.fetchMessagesPublisher(.init(chat: .group(info.group.id), isSenderBanned: false))
+        session.dbManager.fetchMessagesPublisher(.init(chat: .group(info.group.id)))
             .assertNoFailure()
             .map { messages -> [ArraySection<ChatSection, Message>] in
                 let groupedByDate = Dictionary(grouping: messages) { domainModel -> Date in
@@ -61,6 +80,12 @@ final class GroupChatViewModel {
 
     func didRequestDelete(_ messages: [Message]) {
         _ = try? session.dbManager.deleteMessages(.init(id: Set(messages.map(\.id))))
+    }
+
+    func didRequestReport(_ message: Message) {
+        if let contact = try? session.dbManager.fetchContacts(.init(id: [message.senderId])).first {
+            reportPopupSubject.send(contact)
+        }
     }
 
     func send(_ text: String) {
@@ -116,5 +141,58 @@ final class GroupChatViewModel {
         guard let networkId = message.networkId else { return }
         stagedReply = Reply(messageId: networkId, senderId: message.senderId)
         replySubject.send(getReplyContent(for: networkId))
+    }
+
+    func report(contact: Contact, screenshot: UIImage, completion: @escaping () -> Void) {
+        let report = Report(
+            sender: .init(
+                userId: contact.id.base64EncodedString(),
+                username: contact.username!
+            ),
+            recipient: .init(
+                userId: session.myId.base64EncodedString(),
+                username: username!
+            ),
+            type: .group,
+            screenshot: screenshot.pngData()!,
+            partyName: info.group.name,
+            partyBlob: info.group.id.base64EncodedString(),
+            partyMembers: info.members.map { Report.ReportUser(
+                userId: $0.id.base64EncodedString(),
+                username: $0.username ?? "")
+            }
+        )
+
+        hudSubject.send(.on)
+        sendReport(report) { result in
+            switch result {
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    self.hudSubject.send(.error(.init(with: error)))
+                }
+
+            case .success(_):
+                self.blockContact(contact)
+                DispatchQueue.main.async {
+                    self.hudSubject.send(.none)
+                    self.presentReportConfirmation(contact: contact)
+                    completion()
+                }
+            }
+        }
+    }
+
+    private func blockContact(_ contact: Contact) {
+        var contact = contact
+        contact.isBlocked = true
+        _ = try? session.dbManager.saveContact(contact)
+    }
+
+    private func presentReportConfirmation(contact: Contact) {
+        let name = (contact.nickname ?? contact.username) ?? "the contact"
+        toastController.enqueueToast(model: .init(
+            title: "Your report has been sent and \(name) is now blocked.",
+            leftImage: Asset.requestSentToaster.image
+        ))
     }
 }

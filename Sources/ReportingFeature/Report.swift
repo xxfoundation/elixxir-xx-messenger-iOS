@@ -5,18 +5,27 @@ public struct Report: Encodable {
         sender: ReportUser,
         recipient: ReportUser,
         type: ReportType,
-        screenshot: Data
+        screenshot: Data,
+        partyName: String? = nil,
+        partyBlob: String? = nil,
+        partyMembers: [ReportUser]? = nil
     ) {
         self.sender = sender
         self.recipient = recipient
         self.type = type
         self.screenshot = screenshot
+        self.partyName = partyName
+        self.partyBlob = partyBlob
+        self.partyMembers = partyMembers
     }
 
     public var sender: ReportUser
     public var recipient: ReportUser
     public var type: ReportType
     public var screenshot: Data
+    public var partyName: String?
+    public var partyBlob: String?
+    public var partyMembers: [ReportUser]?
 }
 
 extension Report {
