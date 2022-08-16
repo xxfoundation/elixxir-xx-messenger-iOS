@@ -8,6 +8,7 @@ import Keychain
 import Foundation
 import Integration
 import Permissions
+import ToastFeature
 import DropboxFeature
 import VersionChecking
 import ReportingFeature
@@ -36,6 +37,7 @@ final class LaunchViewModel {
     @Dependency private var permissionHandler: PermissionHandling
     @Dependency private var fetchBannedList: FetchBannedList
     @Dependency private var processBannedList: ProcessBannedList
+    @Dependency private var toastController: ToastController
     @Dependency private var session: SessionType
 
     @KeyObject(.username, defaultValue: nil) var username: String?
@@ -224,6 +226,7 @@ final class LaunchViewModel {
                         if contact.isBanned == false {
                             contact.isBanned = true
                             try! self.session.dbManager.saveContact(contact)
+                            self.enqueueBanWarning(contact: contact)
                         }
                     } else {
                         try! self.session.dbManager.saveContact(.init(id: userId, isBanned: true))
@@ -245,5 +248,13 @@ final class LaunchViewModel {
                 }
             }
         )
+    }
+
+    private func enqueueBanWarning(contact: Contact) {
+        let name = (contact.nickname ?? contact.username) ?? "One of your contacts"
+        toastController.enqueueToast(model: .init(
+            title: "\(name) has been banned for offensive content.",
+            leftImage: Asset.requestSentToaster.image
+        ))
     }
 }
