@@ -20,7 +20,8 @@ extension FetchBannedList {
     public static let live = FetchBannedList { completion in
         let url = URL(string: "https://elixxir-bins.s3.us-west-1.amazonaws.com/client/bannedUsers/bannedTesting.csv")!
         let session = URLSession.shared
-        let task = session.dataTask(with: url) { data, response, error in
+        let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData)
+        let task = session.dataTask(with: request) { data, response, error in
             if let error = error {
                 completion(.failure(.network(error as! URLError)))
                 return

@@ -144,7 +144,9 @@ final class SearchLeftViewModel {
         var snapshot = SearchSnapshot()
 
         if var user = user {
-            if let contact = try? session.dbManager.fetchContacts(.init(id: [user.id])).first {
+            if let contact = try! session.dbManager.fetchContacts(.init(id: [user.id])).first {
+                user.isBanned = contact.isBanned
+                user.isBlocked = contact.isBlocked
                 user.authStatus = contact.authStatus
             }
 
