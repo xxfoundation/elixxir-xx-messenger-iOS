@@ -39,7 +39,6 @@ public final class GroupChatController: UIViewController {
     private let viewModel: GroupChatViewModel
     private let layoutDelegate = LayoutDelegate()
     private var cancellables = Set<AnyCancellable>()
-    private var drawerCancellables = Set<AnyCancellable>()
     private var sections = [ArraySection<ChatSection, Message>]()
     private var currentInterfaceActions = SetActor<Set<InterfaceActions>, ReactionTypes>()
 
@@ -279,11 +278,8 @@ public final class GroupChatController: UIViewController {
         button.action
             .receive(on: DispatchQueue.main)
             .sink { [weak drawer] in
-                drawer?.dismiss(animated: true) { [weak self] in
-                    guard let self = self else { return }
-                    self.drawerCancellables.removeAll()
-                }
-            }.store(in: &drawerCancellables)
+                drawer?.dismiss(animated: true)
+            }.store(in: &drawer.cancellables)
 
         return drawer
     }
