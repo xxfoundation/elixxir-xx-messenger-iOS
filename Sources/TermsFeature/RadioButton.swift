@@ -11,12 +11,12 @@ final class RadioButton: UIControl {
         containerView.layer.borderWidth = 1
         containerView.layer.cornerRadius = 15
         containerView.layer.masksToBounds = true
-        containerView.layer.borderColor = UIColor.gray.cgColor
+        containerView.layer.borderColor = Asset.neutralWhite.color.cgColor
 
         filledView.isHidden = true
         filledView.layer.cornerRadius = 10
         filledView.layer.masksToBounds = true
-        filledView.backgroundColor = Asset.brandPrimary.color
+        filledView.backgroundColor = Asset.neutralWhite.color
 
         containerView.isUserInteractionEnabled = false
         filledView.isUserInteractionEnabled = false

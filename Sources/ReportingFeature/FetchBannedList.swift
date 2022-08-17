@@ -18,7 +18,7 @@ public struct FetchBannedList {
 
 extension FetchBannedList {
     public static let live = FetchBannedList { completion in
-        let url = URL(string: "https://elixxir-bins.s3.us-west-1.amazonaws.com/client/bannedUsers/bannedTesting.csv")!
+        let url = URL(string: "https://elixxir-bins.s3.us-west-1.amazonaws.com/client/bannedUsers/banned.csv")!
         let session = URLSession.shared
         let request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalAndRemoteCacheData)
         let task = session.dataTask(with: request) { data, response, error in
