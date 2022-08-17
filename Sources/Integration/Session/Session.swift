@@ -460,6 +460,12 @@ public final class Session: SessionType {
                     return
                 }
 
+                if let contact = try! dbManager.fetchContacts(.init(id: [request.0.leaderId])).first {
+                    if contact.isBanned || contact.isBlocked {
+                        return
+                    }
+                }
+
                 DispatchQueue.global().async { [weak self] in
                     self?.processGroupCreation(request.0, memberIds: request.1, welcome: request.2)
                 }

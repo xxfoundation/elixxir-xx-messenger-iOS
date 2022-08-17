@@ -251,6 +251,7 @@ extension Session {
         contact.photo = nil
         contact.isRecent = false
         contact.marshaled = nil
+        contact.isBlocked = true
         contact.authStatus = .stranger
         contact.nickname = contact.username
         _ = try? dbManager.saveContact(contact)
