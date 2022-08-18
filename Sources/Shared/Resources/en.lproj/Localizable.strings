@@ -1029,9 +1029,9 @@
 = "Cancel search";
 
 "ud.search.placeholder.title"
-= "Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.";
+= "Search for #friends# privately, add them to your #connections# to start a completely private messaging channel.";
 "ud.search.placeholder.subtitle"
-= "Your searches are anonymous. Search information is never linked to your account or personally identifiable.";
+= "Your searches are private. Search information is never linked to your account or personally identifiable.";
 
 // LaunchFeature
 

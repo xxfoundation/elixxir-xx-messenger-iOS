@@ -1298,9 +1298,9 @@ public enum Localized {
         return Localized.tr("Localizable", "ud.search.input", String(describing: p1))
       }
       public enum Placeholder {
-        /// Your searches are anonymous. Search information is never linked to your account or personally identifiable.
+        /// Your searches are private. Search information is never linked to your account or personally identifiable.
         public static let subtitle = Localized.tr("Localizable", "ud.search.placeholder.subtitle")
-        /// Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.
+        /// Search for #friends# privately, add them to your #connections# to start a completely private messaging channel.
         public static let title = Localized.tr("Localizable", "ud.search.placeholder.title")
       }
     }
