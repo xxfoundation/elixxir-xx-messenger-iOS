@@ -36,7 +36,7 @@ final class RequestsSentViewModel {
         let query = Contact.Query(authStatus: [
             .requested,
             .requesting
-        ])
+        ], isBlocked: false, isBanned: false)
 
         session.dbManager.fetchContactsPublisher(query)
             .assertNoFailure()

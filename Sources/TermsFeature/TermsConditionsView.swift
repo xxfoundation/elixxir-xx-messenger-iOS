@@ -2,8 +2,8 @@ import UIKit
 import Shared
 
 final class TermsConditionsView: UIView {
-    let titleLabel = UILabel()
     let nextButton = CapsuleButton()
+    let logoImageView = UIImageView()
     let showTermsButton = CapsuleButton()
     let radioComponent = RadioTextComponent()
 
@@ -11,30 +11,15 @@ final class TermsConditionsView: UIView {
         super.init(frame: .zero)
         backgroundColor = Asset.neutralWhite.color
 
-        let attString = NSMutableAttributedString(string: Localized.Terms.title)
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.alignment = .left
-        paragraph.lineHeightMultiple = 1.15
-
-        attString.addAttribute(.paragraphStyle, value: paragraph)
-        attString.addAttribute(.foregroundColor, value: Asset.neutralActive.color)
-        attString.addAttribute(.font, value: Fonts.Mulish.bold.font(size: 34.0) as Any)
-
-        attString.addAttributes(attributes: [
-            .font: Fonts.Mulish.bold.font(size: 34.0) as Any,
-            .foregroundColor: Asset.brandPrimary.color
-        ], betweenCharacters: "#")
-
-        titleLabel.numberOfLines = 0
-        titleLabel.attributedText = attString
-
+        logoImageView.contentMode = .center
+        logoImageView.image = Asset.onboardingLogoStart.image
         radioComponent.titleLabel.text = Localized.Terms.radio
 
         nextButton.isEnabled = false
-        nextButton.set(style: .brandColored, title: Localized.Terms.accept)
-        showTermsButton.set(style: .seeThrough, title: Localized.Terms.show)
+        nextButton.set(style: .white, title: Localized.Terms.accept)
+        showTermsButton.set(style: .seeThroughWhite, title: Localized.Terms.show)
 
-        addSubview(titleLabel)
+        addSubview(logoImageView)
         addSubview(nextButton)
         addSubview(radioComponent)
         addSubview(showTermsButton)
@@ -45,10 +30,9 @@ final class TermsConditionsView: UIView {
     required init?(coder: NSCoder) { nil }
 
     private func setupConstraints() {
-        titleLabel.snp.makeConstraints {
+        logoImageView.snp.makeConstraints {
             $0.top.equalTo(safeAreaLayoutGuide).offset(30)
-            $0.left.equalToSuperview().offset(38)
-            $0.right.equalToSuperview().offset(-44)
+            $0.centerX.equalToSuperview()
         }
 
         radioComponent.snp.makeConstraints {

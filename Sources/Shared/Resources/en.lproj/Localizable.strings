@@ -114,6 +114,8 @@
 = "Select";
 "chat.bubbleMenu.retry"
 = "Retry";
+"chat.bubbleMenu.report"
+= "Report";
 
 "chat.e2e.placeholder"
 = "You and %@ now have a #quantum-secure#, completely private channel for messaging.\n#Say hello#!";
@@ -125,6 +127,8 @@
 = "Clear chat";
 "chat.sheetMenu.details"
 = "View contact profile";
+"chat.sheetMenu.report"
+= "Report user";
 "chat.retrySheet.retry"
 = "Try again";
 "chat.retrySheet.delete"
@@ -172,6 +176,17 @@
 "chat.clear.action"
 = "Clear";
 "chat.clear.cancel"
+= "Cancel";
+
+// ChatFeature - Report
+
+"chat.report.title"
+= "Report user";
+"chat.report.subtitle"
+= "Reporting this user will block them, delete them from your connections and you won’t see direct messages from them again. In case this user is marked as banned user by us you also won’t see any new group chat messages from this user";
+"chat.report.action"
+= "Confirm and Report";
+"chat.report.cancel"
 = "Cancel";
 
 // ScanFeature
@@ -243,9 +258,9 @@
 // ContactFeature - Delete
 
 "contact.delete.info.title"
-= "Delete Connection";
+= "Delete and block connection";
 "contact.delete.drawer.title"
-= "Delete Connection?";
+= "Delete and block connection?";
 "contact.delete.drawer.description"
 = "This is a silent deletion, %@ will not know you deleted them. This action will remove all information on your phone about this user, including your communications. You #cannot undo this step, and cannot re-add them unless they delete you as a connection as well.#";
 
@@ -1014,9 +1029,9 @@
 = "Cancel search";
 
 "ud.search.placeholder.title"
-= "Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.";
+= "Search for #friends# privately, add them to your #connections# to start a completely private messaging channel.";
 "ud.search.placeholder.subtitle"
-= "Your searches are anonymous. Search information is never linked to your account or personally identifiable.";
+= "Your searches are private. Search information is never linked to your account or personally identifiable.";
 
 // LaunchFeature
 

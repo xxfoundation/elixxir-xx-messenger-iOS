@@ -96,13 +96,6 @@ public final class PushHandler: PushHandling {
             return
         }
 
-        guard let showSender = defaults.value(forKey: Constants.usernamesSetting) as? Bool, showSender == true else {
-            pushes.map { ($0.type.unknownSenderContent!, $0) }
-                .map(contentsBuilder.build)
-                .forEach { completion($0) }
-            return
-        }
-
         let dbPath = FileManager.default
             .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
             .appendingPathComponent("xxm_database")
@@ -115,8 +108,16 @@ public final class PushHandler: PushHandling {
                 return ($0.type.unknownSenderContent!, $0)
             }
 
-            let name = (contact.nickname ?? contact.username) ?? ""
-            return ($0.type.knownSenderContent(name)!, $0)
+            if contact.isBlocked || contact.isBanned {
+                return nil
+            }
+
+            if let showSender = defaults.value(forKey: Constants.usernamesSetting) as? Bool, showSender == true {
+                let name = (contact.nickname ?? contact.username) ?? ""
+                return ($0.type.knownSenderContent(name)!, $0)
+            } else {
+                return ($0.type.unknownSenderContent!, $0)
+            }
         }
 
         tuples

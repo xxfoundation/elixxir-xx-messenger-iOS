@@ -1,9 +1,10 @@
 import UIKit
+import Combine
 
 public final class DrawerController: UIViewController {
     lazy private var screenView = DrawerView()
-
     private let content: [DrawerItem]
+    public var cancellables = Set<AnyCancellable>()
 
     public init(with content: [DrawerItem]) {
         self.content = content

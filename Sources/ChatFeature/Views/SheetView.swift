@@ -2,9 +2,10 @@ import UIKit
 import Shared
 
 final class SheetView: UIView {
-    let stack = UIStackView()
-    let clear = SheetButton()
-    let details = SheetButton()
+    let stackView = UIStackView()
+    let clearButton = SheetButton()
+    let reportButton = SheetButton()
+    let detailsButton = SheetButton()
 
     init() {
         super.init(frame: .zero)
@@ -13,23 +14,28 @@ final class SheetView: UIView {
         layer.masksToBounds = true
         backgroundColor = Asset.neutralWhite.color
 
-        clear.image.image = Asset.chatListDeleteSwipe.image
-        clear.title.text = Localized.Chat.SheetMenu.clear
+        clearButton.image.image = Asset.chatListDeleteSwipe.image
+        clearButton.title.text = Localized.Chat.SheetMenu.clear
 
-        details.tintColor = Asset.neutralDark.color
-        details.image.image = Asset.searchUsername.image
-        details.title.text = Localized.Chat.SheetMenu.details
+        detailsButton.tintColor = Asset.neutralDark.color
+        detailsButton.image.image = Asset.searchUsername.image
+        detailsButton.title.text = Localized.Chat.SheetMenu.details
 
-        stack.axis = .vertical
-        stack.distribution = .fillEqually
-        stack.addArrangedSubview(clear)
-        stack.addArrangedSubview(details)
-        addSubview(stack)
+        reportButton.tintColor = Asset.accentDanger.color
+        reportButton.image.image = Asset.searchUsername.image
+        reportButton.title.text = Localized.Chat.SheetMenu.report
 
-        stack.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(25)
-            make.left.right.equalToSuperview()
-            make.bottom.equalTo(safeAreaLayoutGuide)
+        stackView.axis = .vertical
+        stackView.distribution = .fillEqually
+        stackView.addArrangedSubview(clearButton)
+        stackView.addArrangedSubview(detailsButton)
+        stackView.addArrangedSubview(reportButton)
+        addSubview(stackView)
+
+        stackView.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(25)
+            $0.left.right.equalToSuperview()
+            $0.bottom.equalTo(safeAreaLayoutGuide)
         }
     }
 

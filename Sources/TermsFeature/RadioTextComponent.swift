@@ -13,7 +13,7 @@ final class RadioTextComponent: UIView {
         super.init(frame: .zero)
 
         titleLabel.numberOfLines = 0
-        titleLabel.textColor = Asset.neutralBody.color
+        titleLabel.textColor = Asset.neutralWhite.color
         titleLabel.font = Fonts.Mulish.regular.font(size: 13.0)
 
         addSubview(titleLabel)

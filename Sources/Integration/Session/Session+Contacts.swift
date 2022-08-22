@@ -244,15 +244,15 @@ extension Session {
         ///
         //try dbManager.deleteContact(contact)
 
-        _ = try? dbManager.deleteMessages(Message.Query(chat: .direct(myId, contact.id)))
         var contact = contact
         contact.email = nil
         contact.phone = nil
         contact.photo = nil
         contact.isRecent = false
         contact.marshaled = nil
+        contact.isBlocked = true
         contact.authStatus = .stranger
         contact.nickname = contact.username
-        _ = try? dbManager.saveContact(contact)
+        _ = try! dbManager.saveContact(contact)
     }
 }

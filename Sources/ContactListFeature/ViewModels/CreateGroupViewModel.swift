@@ -42,7 +42,7 @@ final class CreateGroupViewModel {
     // MARK: Lifecycle
 
     init() {
-        session.dbManager.fetchContactsPublisher(.init(authStatus: [.friend]))
+        session.dbManager.fetchContactsPublisher(.init(authStatus: [.friend], isBlocked: false, isBanned: false))
             .assertNoFailure()
             .map { $0.filter { $0.id != self.session.myId }}
             .map { $0.sorted(by: { $0.username! < $1.username! })}

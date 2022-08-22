@@ -442,6 +442,7 @@ public final class Session: SessionType {
         client.messages
             .sink { [unowned self] in
                 if var contact = try? dbManager.fetchContacts(.init(id: [$0.senderId])).first {
+                    guard contact.isBanned == false else { return }
                     contact.isRecent = false
                     _ = try? dbManager.saveContact(contact)
                 }
@@ -457,6 +458,12 @@ public final class Session: SessionType {
             .sink { [unowned self] request in
                 if let _ = try? dbManager.fetchGroups(.init(id: [request.0.id])).first {
                     return
+                }
+
+                if let contact = try! dbManager.fetchContacts(.init(id: [request.0.leaderId])).first {
+                    if contact.isBanned || contact.isBlocked {
+                        return
+                    }
                 }
 
                 DispatchQueue.global().async { [weak self] in

@@ -33,7 +33,10 @@ public final class ContactController: UIViewController {
         navigationItem.backButtonTitle = ""
         statusBarController.style.send(.lightContent)
         navigationController?.navigationBar
-            .customize(backgroundColor: Asset.neutralBody.color)
+            .customize(
+                backgroundColor: Asset.neutralBody.color,
+                tint: Asset.neutralWhite.color
+            )
     }
 
     public override func viewSafeAreaInsetsDidChange() {

@@ -7,8 +7,11 @@ import XXLogger
 import XXModels
 import Foundation
 import Integration
+import Defaults
 import Permissions
+import ToastFeature
 import DifferenceKit
+import ReportingFeature
 import DependencyInjection
 
 enum SingleChatNavigationRoutes: Equatable {
@@ -22,10 +25,14 @@ enum SingleChatNavigationRoutes: Equatable {
     case webview(String)
 }
 
-final class SingleChatViewModel {
+final class SingleChatViewModel: NSObject {
     @Dependency private var logger: XXLogger
     @Dependency private var session: SessionType
     @Dependency private var permissions: PermissionHandling
+    @Dependency private var toastController: ToastController
+    @Dependency private var sendReport: SendReport
+
+    @KeyObject(.username, defaultValue: nil) var username: String?
 
     var contact: Contact { contactSubject.value }
     private var stagedReply: Reply?
@@ -34,6 +41,7 @@ final class SingleChatViewModel {
     private let replySubject = PassthroughSubject<(String, String), Never>()
     private let navigationRoutes = PassthroughSubject<SingleChatNavigationRoutes, Never>()
     private let sectionsRelay = CurrentValueSubject<[ArraySection<ChatSection, Message>], Never>([])
+    private let reportPopupSubject = PassthroughSubject<Void, Never>()
 
     var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
     private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
@@ -43,6 +51,10 @@ final class SingleChatViewModel {
     var replyPublisher: AnyPublisher<(String, String), Never> { replySubject.eraseToAnyPublisher() }
     var navigation: AnyPublisher<SingleChatNavigationRoutes, Never> { navigationRoutes.eraseToAnyPublisher() }
     var shouldDisplayEmptyView: AnyPublisher<Bool, Never> { sectionsRelay.map { $0.isEmpty }.eraseToAnyPublisher() }
+
+    var reportPopupPublisher: AnyPublisher<Void, Never> {
+        reportPopupSubject.eraseToAnyPublisher()
+    }
 
     var messages: AnyPublisher<[ArraySection<ChatSection, Message>], Never> {
         sectionsRelay.map { sections -> [ArraySection<ChatSection, Message>] in
@@ -66,6 +78,7 @@ final class SingleChatViewModel {
 
     init(_ contact: Contact) {
         self.contactSubject = .init(contact)
+        super.init()
 
         updateRecentState(contact)
 
@@ -133,11 +146,11 @@ final class SingleChatViewModel {
         guard let id = message.id else { return }
         session.retryMessage(id)
     }
-   
+
     func didNavigateSomewhere() {
         navigationRoutes.send(.none)
     }
-    
+
     @discardableResult
     func didTest(permission: PermissionType) -> Bool {
         switch permission {
@@ -170,6 +183,10 @@ final class SingleChatViewModel {
 
     func didRequestDeleteSingle(_ model: Message) {
         didRequestDelete([model])
+    }
+
+    func didRequestReport(_: Message) {
+        reportPopupSubject.send()
     }
 
     func abortReply() {
@@ -236,5 +253,53 @@ final class SingleChatViewModel {
 
     func section(at index: Int) -> ChatSection? {
         sectionsRelay.value.count > 0 ? sectionsRelay.value[index].model : nil
+    }
+
+    func report(screenshot: UIImage, completion: @escaping (Bool) -> Void) {
+        let report = Report(
+            sender: .init(
+                userId: contact.id.base64EncodedString(),
+                username: contact.username!
+            ),
+            recipient: .init(
+                userId: session.myId.base64EncodedString(),
+                username: username!
+            ),
+            type: .dm,
+            screenshot: screenshot.pngData()!
+        )
+
+        hudRelay.send(.on)
+        sendReport(report) { result in
+            switch result {
+            case .failure(let error):
+                DispatchQueue.main.async {
+                    self.hudRelay.send(.error(.init(with: error)))
+                    completion(false)
+                }
+
+            case .success(_):
+                self.blockContact()
+                DispatchQueue.main.async {
+                    self.hudRelay.send(.none)
+                    self.presentReportConfirmation()
+                    completion(true)
+                }
+            }
+        }
+    }
+
+    private func blockContact() {
+        var contact = contact
+        contact.isBlocked = true
+        _ = try? session.dbManager.saveContact(contact)
+    }
+
+    private func presentReportConfirmation() {
+        let name = (contact.nickname ?? contact.username) ?? "the contact"
+        toastController.enqueueToast(model: .init(
+            title: "Your report has been sent and \(name) is now blocked.",
+            leftImage: Asset.requestSentToaster.image
+        ))
     }
 }

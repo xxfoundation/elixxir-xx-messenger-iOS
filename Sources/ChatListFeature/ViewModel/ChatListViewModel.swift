@@ -37,7 +37,8 @@ final class ChatListViewModel {
     }
 
     var recentsPublisher: AnyPublisher<RecentsSnapshot, Never> {
-        session.dbManager.fetchContactsPublisher(.init(isRecent: true))
+        let query = Contact.Query(isRecent: true, isBlocked: false, isBanned: false)
+        return session.dbManager.fetchContactsPublisher(query)
             .assertNoFailure()
             .map {
             let section = SectionId()
@@ -49,8 +50,13 @@ final class ChatListViewModel {
     }
 
     var searchPublisher: AnyPublisher<SearchSnapshot, Never> {
-        Publishers.CombineLatest3(
-            session.dbManager.fetchContactsPublisher(.init()).assertNoFailure(),
+        let contactsStream = session.dbManager
+            .fetchContactsPublisher(.init(isBlocked: false, isBanned: false))
+            .assertNoFailure()
+            .map { $0.filter { $0.id != self.session.myId }}
+
+        return Publishers.CombineLatest3(
+            contactsStream,
             chatsPublisher,
             searchSubject
                 .removeDuplicates()
@@ -107,7 +113,7 @@ final class ChatListViewModel {
             .confirmationFailed,
             .verificationFailed,
             .verificationInProgress
-        ])
+        ], isBlocked: false, isBanned: false)
 
         return Publishers.CombineLatest(
             session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure(),
@@ -127,10 +133,13 @@ final class ChatListViewModel {
             ChatInfo.Query(
                 contactChatInfoQuery: .init(
                     userId: session.myId,
-                    authStatus: [.friend]
+                    authStatus: [.friend],
+                    isBlocked: false,
+                    isBanned: false
                 ),
                 groupChatInfoQuery: GroupChatInfo.Query(
-                    authStatus: [.participating]
+                    authStatus: [.participating],
+                    excludeBannedContactsMessages: true
                 ),
                 groupQuery: Group.Query(
                     withMessages: false,

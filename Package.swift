@@ -52,6 +52,7 @@ let package = Package(
         .library(name: "GoogleDriveFeature", targets: ["GoogleDriveFeature"]),
         .library(name: "ContactListFeature", targets: ["ContactListFeature"]),
         .library(name: "DependencyInjection", targets: ["DependencyInjection"]),
+        .library(name: "ReportingFeature", targets: ["ReportingFeature"]),
     ],
     dependencies: [
         .package(
@@ -170,6 +171,7 @@ let package = Package(
                 .target(name: "ChatListFeature"),
                 .target(name: "SettingsFeature"),
                 .target(name: "RequestsFeature"),
+                .target(name: "ReportingFeature"),
                 .target(name: "OnboardingFeature"),
                 .target(name: "GoogleDriveFeature"),
                 .target(name: "ContactListFeature"),
@@ -462,6 +464,7 @@ let package = Package(
                 .target(name: "Presentation"),
                 .target(name: "DrawerFeature"),
                 .target(name: "ChatInputFeature"),
+                .target(name: "ReportingFeature"),
                 .target(name: "DependencyInjection"),
                 .product(name: "ChatLayout", package: "ChatLayout"),
                 .product(name: "DifferenceKit", package: "DifferenceKit"),
@@ -510,8 +513,8 @@ let package = Package(
                 .target(name: "Permissions"),
                 .target(name: "DropboxFeature"),
                 .target(name: "VersionChecking"),
+                .target(name: "ReportingFeature"),
                 .target(name: "DependencyInjection"),
-                .product(name: "SwiftCSV", package: "SwiftCSV"),
             ]
         ),
         .target(
@@ -519,7 +522,8 @@ let package = Package(
             dependencies: [
                 .target(name: "Theme"),
                 .target(name: "Shared"),
-                .target(name: "Defaults")
+                .target(name: "Defaults"),
+                .target(name: "Presentation"),
             ]
         ),
         .target(
@@ -737,6 +741,18 @@ let package = Package(
             dependencies: [
                 .target(name: "CollectionView"),
                 .product(name: "CustomDump", package: "swift-custom-dump"),
+            ]
+        ),
+        .target(
+            name: "ReportingFeature",
+            dependencies: [
+                .target(name: "DrawerFeature"),
+                .target(name: "Shared"),
+                .product(name: "SwiftCSV", package: "SwiftCSV"),
+                .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
+            ],
+            resources: [
+                .process("Resources"),
             ]
         ),
     ]
