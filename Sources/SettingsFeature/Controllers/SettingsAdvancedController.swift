@@ -63,7 +63,8 @@ public final class SettingsAdvancedController: UIViewController {
 
         screenView.reportingSwitcher.switcherView
             .publisher(for: .valueChanged)
-            .sink { [weak viewModel] in viewModel?.didToggleReporting() }
+            .compactMap { [weak screenView] _ in screenView?.reportingSwitcher.switcherView.isOn }
+            .sink { [weak viewModel] isOn in viewModel?.didSetReporting(enabled: isOn) }
             .store(in: &cancellables)
 
         viewModel.sharePublisher

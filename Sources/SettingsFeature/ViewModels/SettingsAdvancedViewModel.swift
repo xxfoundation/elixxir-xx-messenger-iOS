@@ -18,6 +18,7 @@ final class SettingsAdvancedViewModel {
     @KeyObject(.recordingLogs, defaultValue: true) var isRecordingLogs: Bool
     @KeyObject(.crashReporting, defaultValue: true) var isCrashReporting: Bool
 
+    private var cancellables = Set<AnyCancellable>()
     private let isShowingUsernamesKey = "isShowingUsernames"
 
     @Dependency private var logger: XXLogger
@@ -33,8 +34,12 @@ final class SettingsAdvancedViewModel {
     func loadCachedSettings() {
         stateRelay.value.isRecordingLogs = isRecordingLogs
         stateRelay.value.isCrashReporting = isCrashReporting
-        stateRelay.value.isReportingEnabled = reportingStatus.isEnabled()
         stateRelay.value.isReportingOptional = reportingStatus.isOptional()
+
+        reportingStatus
+            .isEnabledPublisher()
+            .sink { [weak stateRelay] in stateRelay?.value.isReportingEnabled = $0 }
+            .store(in: &cancellables)
 
         guard let defaults = UserDefaults(suiteName: "group.elixxir.messenger") else {
             print("^^^ Couldn't access user defaults in the app group container \(#file):\(#line)")
@@ -82,8 +87,7 @@ final class SettingsAdvancedViewModel {
         crashReporter.setEnabled(isCrashReporting)
     }
 
-    func didToggleReporting() {
-        reportingStatus.enable(reportingStatus.isEnabled())
-        stateRelay.value.isReportingEnabled.toggle()
+    func didSetReporting(enabled: Bool) {
+        reportingStatus.enable(enabled)
     }
 }
