@@ -3,6 +3,7 @@ import Models
 import Defaults
 import XXModels
 import Integration
+import ReportingFeature
 import DependencyInjection
 
 public final class PushHandler: PushHandling {
@@ -11,8 +12,9 @@ public final class PushHandler: PushHandling {
         static let usernamesSetting = "isShowingUsernames"
     }
 
+    @Dependency var reportingStatus: ReportingStatus
+
     @KeyObject(.pushNotifications, defaultValue: false) var isPushEnabled: Bool
-    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
 
     let requestAuth: RequestAuth
     public static let defaultRequestAuth = UNUserNotificationCenter.current().requestAuthorization
@@ -109,7 +111,7 @@ public final class PushHandler: PushHandling {
                 return ($0.type.unknownSenderContent!, $0)
             }
 
-            if isReportingEnabled, (contact.isBlocked || contact.isBanned) {
+            if reportingStatus.isEnabled(), (contact.isBlocked || contact.isBanned) {
                 return nil
             }
 

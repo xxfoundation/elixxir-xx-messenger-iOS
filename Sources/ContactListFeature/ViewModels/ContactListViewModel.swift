@@ -3,18 +3,18 @@ import Combine
 import XXModels
 import Defaults
 import Integration
+import ReportingFeature
 import DependencyInjection
 
 final class ContactListViewModel {
     @Dependency private var session: SessionType
-
-    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
+    @Dependency private var reportingStatus: ReportingStatus
 
     var contacts: AnyPublisher<[Contact], Never> {
         let query = Contact.Query(
             authStatus: [.friend],
-            isBlocked: isReportingEnabled ? false : nil,
-            isBanned: isReportingEnabled ? false: nil
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false: nil
         )
 
         return session.dbManager.fetchContactsPublisher(query)
@@ -26,8 +26,8 @@ final class ContactListViewModel {
     var requestCount: AnyPublisher<Int, Never> {
         let groupQuery = Group.Query(
             authStatus: [.pending],
-            isLeaderBlocked: isReportingEnabled ? false : nil,
-            isLeaderBanned: isReportingEnabled ? false : nil
+            isLeaderBlocked: reportingStatus.isEnabled() ? false : nil,
+            isLeaderBanned: reportingStatus.isEnabled() ? false : nil
         )
 
         let contactsQuery = Contact.Query(
@@ -38,8 +38,8 @@ final class ContactListViewModel {
                 .verificationFailed,
                 .verificationInProgress
             ],
-            isBlocked: isReportingEnabled ? false : nil,
-            isBanned: isReportingEnabled ? false : nil
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
         return Publishers.CombineLatest(

@@ -7,6 +7,7 @@ import Defaults
 import XXModels
 import Integration
 import ToastFeature
+import ReportingFeature
 import CombineSchedulers
 import DependencyInjection
 
@@ -17,9 +18,8 @@ struct RequestSent: Hashable, Equatable {
 
 final class RequestsSentViewModel {
     @Dependency private var session: SessionType
+    @Dependency private var reportingStatus: ReportingStatus
     @Dependency private var toastController: ToastController
-
-    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
@@ -41,8 +41,8 @@ final class RequestsSentViewModel {
                 .requested,
                 .requesting
             ],
-            isBlocked: isReportingEnabled ? false : nil,
-            isBanned: isReportingEnabled ? false : nil
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
         session.dbManager.fetchContactsPublisher(query)

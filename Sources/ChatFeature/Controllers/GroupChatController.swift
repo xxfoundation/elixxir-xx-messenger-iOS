@@ -25,6 +25,7 @@ public final class GroupChatController: UIViewController {
     @Dependency private var hud: HUD
     @Dependency private var session: SessionType
     @Dependency private var coordinator: ChatCoordinating
+    @Dependency private var reportingStatus: ReportingStatus
     @Dependency private var makeReportDrawer: MakeReportDrawer
     @Dependency private var makeAppScreenshot: MakeAppScreenshot
     @Dependency private var statusBarController: StatusBarStyleControlling
@@ -611,7 +612,7 @@ extension GroupChatController: UICollectionViewDelegate {
             } else {
                 children = [copy, reply, delete]
 
-                if self.viewModel.isReportingEnabled {
+                if self.reportingStatus.isEnabled() {
                     children.append(report)
                 }
             }

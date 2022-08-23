@@ -10,6 +10,7 @@ import Foundation
 import ToastFeature
 import BackupFeature
 import NetworkMonitor
+import ReportingFeature
 import DependencyInjection
 import XXLegacyDatabaseMigrator
 
@@ -47,10 +48,10 @@ public final class Session: SessionType {
     @KeyObject(.icognitoKeyboard, defaultValue: false) var icognitoKeyboard: Bool
     @KeyObject(.pushNotifications, defaultValue: false) var pushNotifications: Bool
     @KeyObject(.inappnotifications, defaultValue: true) var inappnotifications: Bool
-    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
 
     @Dependency var backupService: BackupService
     @Dependency var toastController: ToastController
+    @Dependency var reportingStatus: ReportingStatus
     @Dependency var networkMonitor: NetworkMonitoring
 
     public let client: Client
@@ -462,7 +463,7 @@ public final class Session: SessionType {
                 }
 
                 if let contact = try! dbManager.fetchContacts(.init(id: [request.0.leaderId])).first {
-                    if isReportingEnabled, (contact.isBlocked || contact.isBanned) {
+                    if reportingStatus.isEnabled(), (contact.isBlocked || contact.isBanned) {
                         return
                     }
                 }

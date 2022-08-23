@@ -7,6 +7,7 @@ import Defaults
 import XXModels
 import Integration
 import DrawerFeature
+import ReportingFeature
 import CombineSchedulers
 import DependencyInjection
 
@@ -18,8 +19,8 @@ struct RequestReceived: Hashable, Equatable {
 
 final class RequestsReceivedViewModel {
     @Dependency private var session: SessionType
+    @Dependency private var reportingStatus: ReportingStatus
 
-    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
     @KeyObject(.isShowingHiddenRequests, defaultValue: false) var isShowingHiddenRequests: Bool
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
@@ -58,8 +59,8 @@ final class RequestsReceivedViewModel {
                 .hidden,
                 .pending
             ],
-            isLeaderBlocked: isReportingEnabled ? false : nil,
-            isLeaderBanned: isReportingEnabled ? false : nil
+            isLeaderBlocked: reportingStatus.isEnabled() ? false : nil,
+            isLeaderBanned: reportingStatus.isEnabled() ? false : nil
         )
 
         let contactsQuery = Contact.Query(
@@ -70,8 +71,8 @@ final class RequestsReceivedViewModel {
                 .verificationFailed,
                 .verificationInProgress
             ],
-            isBlocked: isReportingEnabled ? false : nil,
-            isBanned: isReportingEnabled ? false : nil
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
         let groupStream = session.dbManager.fetchGroupsPublisher(groupsQuery).assertNoFailure()

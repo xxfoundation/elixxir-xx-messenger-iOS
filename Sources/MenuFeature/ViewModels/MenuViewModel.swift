@@ -3,20 +3,21 @@ import XXModels
 import Defaults
 import Foundation
 import Integration
+import ReportingFeature
 import DependencyInjection
 
 final class MenuViewModel {
     @Dependency private var session: SessionType
+    @Dependency private var reportingStatus: ReportingStatus
 
     @KeyObject(.avatar, defaultValue: nil) var avatar: Data?
     @KeyObject(.username, defaultValue: "") var username: String
-    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
 
     var requestCount: AnyPublisher<Int, Never> {
         let groupQuery = Group.Query(
             authStatus: [.pending],
-            isLeaderBlocked: isReportingEnabled ? false : nil,
-            isLeaderBanned: isReportingEnabled ? false : nil
+            isLeaderBlocked: reportingStatus.isEnabled() ? false : nil,
+            isLeaderBanned: reportingStatus.isEnabled() ? false : nil
         )
 
         let contactsQuery = Contact.Query(
@@ -27,8 +28,8 @@ final class MenuViewModel {
                 .verificationFailed,
                 .verificationInProgress
             ],
-            isBlocked: isReportingEnabled ? false : nil,
-            isBanned: isReportingEnabled ? false : nil
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
         return Publishers.CombineLatest(

@@ -7,6 +7,7 @@ import Defaults
 import Countries
 import Integration
 import NetworkMonitor
+import ReportingFeature
 import DependencyInjection
 
 typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchItem>
@@ -20,9 +21,8 @@ struct SearchLeftViewState {
 
 final class SearchLeftViewModel {
     @Dependency var session: SessionType
+    @Dependency var reportingStatus: ReportingStatus
     @Dependency var networkMonitor: NetworkMonitoring
-
-    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
@@ -153,10 +153,10 @@ final class SearchLeftViewModel {
                 user.authStatus = contact.authStatus
             }
 
-            if user.authStatus != .friend, !isReportingEnabled {
+            if user.authStatus != .friend, !reportingStatus.isEnabled() {
                 snapshot.appendSections([.stranger])
                 snapshot.appendItems([.stranger(user)], toSection: .stranger)
-            } else if user.authStatus != .friend, isReportingEnabled, !user.isBanned, !user.isBlocked {
+            } else if user.authStatus != .friend, reportingStatus.isEnabled(), !user.isBanned, !user.isBlocked {
                 snapshot.appendSections([.stranger])
                 snapshot.appendItems([.stranger(user)], toSection: .stranger)
             }
@@ -165,8 +165,8 @@ final class SearchLeftViewModel {
         let localsQuery = Contact.Query(
             text: stateSubject.value.input,
             authStatus: [.friend],
-            isBlocked: isReportingEnabled ? false : nil,
-            isBanned: isReportingEnabled ? false : nil
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
         if let locals = try? session.dbManager.fetchContacts(localsQuery),

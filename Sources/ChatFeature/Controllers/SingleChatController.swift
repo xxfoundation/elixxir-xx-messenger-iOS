@@ -29,6 +29,7 @@ public final class SingleChatController: UIViewController {
     @Dependency private var logger: XXLogger
     @Dependency private var voxophone: Voxophone
     @Dependency private var coordinator: ChatCoordinating
+    @Dependency private var reportingStatus: ReportingStatus
     @Dependency private var makeReportDrawer: MakeReportDrawer
     @Dependency private var makeAppScreenshot: MakeAppScreenshot
     @Dependency private var statusBarController: StatusBarStyleControlling
@@ -662,7 +663,7 @@ extension SingleChatController: UICollectionViewDelegate {
                 ActionFactory.build(from: item, action: .delete, closure: self.viewModel.didRequestDeleteSingle(_:))
             ]
 
-            if self.viewModel.isReportingEnabled {
+            if self.reportingStatus.isEnabled() {
                 children.append(
                     ActionFactory.build(from: item, action: .report, closure: self.viewModel.didRequestReport(_:))
                 )

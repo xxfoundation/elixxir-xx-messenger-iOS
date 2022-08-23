@@ -5,15 +5,16 @@ import Combine
 import XXModels
 import Defaults
 import Integration
+import ReportingFeature
 import DependencyInjection
 
 final class CreateGroupViewModel {
     @KeyObject(.username, defaultValue: "") var username: String
-    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
 
     // MARK: Injected
 
     @Dependency private var session: SessionType
+    @Dependency private var reportingStatus: ReportingStatus
 
     // MARK: Properties
 
@@ -45,8 +46,8 @@ final class CreateGroupViewModel {
     init() {
         let query = Contact.Query(
             authStatus: [.friend],
-            isBlocked: isReportingEnabled ? false : nil,
-            isBanned: isReportingEnabled ? false : nil
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
         session.dbManager.fetchContactsPublisher(query)

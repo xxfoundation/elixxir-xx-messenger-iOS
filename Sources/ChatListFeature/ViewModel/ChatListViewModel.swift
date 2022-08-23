@@ -6,6 +6,7 @@ import Combine
 import XXModels
 import Defaults
 import Integration
+import ReportingFeature
 import DependencyInjection
 
 enum SearchSection {
@@ -23,8 +24,7 @@ typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchIte
 
 final class ChatListViewModel {
     @Dependency private var session: SessionType
-
-    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
+    @Dependency private var reportingStatus: ReportingStatus
 
     var isOnline: AnyPublisher<Bool, Never> {
         session.isOnline
@@ -41,8 +41,8 @@ final class ChatListViewModel {
     var recentsPublisher: AnyPublisher<RecentsSnapshot, Never> {
         let query = Contact.Query(
             isRecent: true,
-            isBlocked: isReportingEnabled ? false : nil,
-            isBanned: isReportingEnabled ? false : nil
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
         return session.dbManager.fetchContactsPublisher(query)
@@ -58,8 +58,8 @@ final class ChatListViewModel {
 
     var searchPublisher: AnyPublisher<SearchSnapshot, Never> {
         let contactsQuery = Contact.Query(
-            isBlocked: isReportingEnabled ? false : nil,
-            isBanned: isReportingEnabled ? false : nil
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
         let contactsStream = session.dbManager
@@ -127,8 +127,8 @@ final class ChatListViewModel {
                 .verificationFailed,
                 .verificationInProgress
             ],
-            isBlocked: isReportingEnabled ? false : nil,
-            isBanned: isReportingEnabled ? false : nil
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
         return Publishers.CombineLatest(
@@ -150,12 +150,12 @@ final class ChatListViewModel {
                 contactChatInfoQuery: .init(
                     userId: session.myId,
                     authStatus: [.friend],
-                    isBlocked: isReportingEnabled ? false : nil,
-                    isBanned: isReportingEnabled ? false : nil
+                    isBlocked: reportingStatus.isEnabled() ? false : nil,
+                    isBanned: reportingStatus.isEnabled() ? false : nil
                 ),
                 groupChatInfoQuery: GroupChatInfo.Query(
                     authStatus: [.participating],
-                    excludeBannedContactsMessages: isReportingEnabled
+                    excludeBannedContactsMessages: reportingStatus.isEnabled()
                 ),
                 groupQuery: Group.Query(
                     withMessages: false,

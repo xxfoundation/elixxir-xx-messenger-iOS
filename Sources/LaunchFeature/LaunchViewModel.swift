@@ -36,13 +36,13 @@ final class LaunchViewModel {
     @Dependency private var keychainHandler: KeychainHandling
     @Dependency private var permissionHandler: PermissionHandling
     @Dependency private var fetchBannedList: FetchBannedList
+    @Dependency private var reportingStatus: ReportingStatus
     @Dependency private var processBannedList: ProcessBannedList
     @Dependency private var toastController: ToastController
     @Dependency private var session: SessionType
 
     @KeyObject(.username, defaultValue: nil) var username: String?
     @KeyObject(.biometrics, defaultValue: false) var isBiometricsOn: Bool
-    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
@@ -141,8 +141,8 @@ final class LaunchViewModel {
     func getContactWith(userId: Data) -> Contact? {
         let query = Contact.Query(
             id: [userId],
-            isBlocked: isReportingEnabled ? false : nil,
-            isBanned: isReportingEnabled ? false : nil
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
         return try! session.dbManager.fetchContacts(query).first
