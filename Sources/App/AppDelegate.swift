@@ -23,6 +23,7 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     @KeyObject(.hideAppList, defaultValue: false) var hideAppList: Bool
     @KeyObject(.recordingLogs, defaultValue: true) var recordingLogs: Bool
     @KeyObject(.crashReporting, defaultValue: true) var isCrashReportingEnabled: Bool
+    @KeyObject(.isReportingOptional, defaultValue: false) var isReportingOptional: Bool
 
     var calledStopNetwork = false
     var forceFailedPendingMessages = false
@@ -47,6 +48,8 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
 
         crashReporter.configure()
         crashReporter.setEnabled(isCrashReportingEnabled)
+
+        isReportingOptional = isReportingFeatureOptionalOnInfoPlist()
 
         UNUserNotificationCenter.current().delegate = self
 
@@ -173,6 +176,17 @@ func getUsernameFromInvitationDeepLink(_ url: URL) -> String? {
     }
 
     return nil
+}
+
+func isReportingFeatureOptionalOnInfoPlist() -> Bool {
+    struct Root : Decodable {
+        let isReportingOptional : Bool
+    }
+
+    let url = Bundle.main.url(forResource: "Info", withExtension: "plist")!
+    let data = try! Data(contentsOf: url)
+    let result = try! PropertyListDecoder().decode(Root.self, from: data)
+    return result.isReportingOptional
 }
 
 // MARK: Notifications

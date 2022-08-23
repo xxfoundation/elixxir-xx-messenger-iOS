@@ -18,7 +18,7 @@ final class SettingsAdvancedViewModel {
     @KeyObject(.crashReporting, defaultValue: true) var isCrashReporting: Bool
 
     @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
-    @KeyObject(.isReportingOptional, defaultValue: true) var isReportingOptional: Bool
+    @KeyObject(.isReportingOptional, defaultValue: false) var isReportingOptional: Bool
 
     private let isShowingUsernamesKey = "isShowingUsernames"
 
