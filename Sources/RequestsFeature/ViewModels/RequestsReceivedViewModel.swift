@@ -19,6 +19,7 @@ struct RequestReceived: Hashable, Equatable {
 final class RequestsReceivedViewModel {
     @Dependency private var session: SessionType
 
+    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
     @KeyObject(.isShowingHiddenRequests, defaultValue: false) var isShowingHiddenRequests: Bool
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
@@ -56,7 +57,10 @@ final class RequestsReceivedViewModel {
             authStatus: [
                 .hidden,
                 .pending
-            ], isLeaderBlocked: false, isLeaderBanned: false)
+            ],
+            isLeaderBlocked: isReportingEnabled ? false : nil,
+            isLeaderBanned: isReportingEnabled ? false : nil
+        )
 
         let contactsQuery = Contact.Query(
             authStatus: [
@@ -65,7 +69,10 @@ final class RequestsReceivedViewModel {
                 .verified,
                 .verificationFailed,
                 .verificationInProgress
-            ], isBlocked: false, isBanned: false)
+            ],
+            isBlocked: isReportingEnabled ? false : nil,
+            isBanned: isReportingEnabled ? false : nil
+        )
 
         let groupStream = session.dbManager.fetchGroupsPublisher(groupsQuery).assertNoFailure()
         let contactsStream = session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure()

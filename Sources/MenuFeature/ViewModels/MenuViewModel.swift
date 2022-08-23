@@ -10,16 +10,26 @@ final class MenuViewModel {
 
     @KeyObject(.avatar, defaultValue: nil) var avatar: Data?
     @KeyObject(.username, defaultValue: "") var username: String
+    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
 
     var requestCount: AnyPublisher<Int, Never> {
-        let groupQuery = Group.Query(authStatus: [.pending], isLeaderBlocked: false, isLeaderBanned: false)
-        let contactsQuery = Contact.Query(authStatus: [
-            .verified,
-            .confirming,
-            .confirmationFailed,
-            .verificationFailed,
-            .verificationInProgress
-        ], isBlocked: false, isBanned: false)
+        let groupQuery = Group.Query(
+            authStatus: [.pending],
+            isLeaderBlocked: isReportingEnabled ? false : nil,
+            isLeaderBanned: isReportingEnabled ? false : nil
+        )
+
+        let contactsQuery = Contact.Query(
+            authStatus: [
+                .verified,
+                .confirming,
+                .confirmationFailed,
+                .verificationFailed,
+                .verificationInProgress
+            ],
+            isBlocked: isReportingEnabled ? false : nil,
+            isBanned: isReportingEnabled ? false : nil
+        )
 
         return Publishers.CombineLatest(
             session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure(),

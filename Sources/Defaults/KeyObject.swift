@@ -41,6 +41,9 @@ public enum Key: String {
 
     case dummyTrafficOn
     case askedDummyTrafficOnce
+
+    case isReportingEnabled
+    case isReportingOptional
 }
 
 public struct KeyObjectStore {

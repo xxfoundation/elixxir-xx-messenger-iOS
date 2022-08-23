@@ -47,6 +47,7 @@ public final class Session: SessionType {
     @KeyObject(.icognitoKeyboard, defaultValue: false) var icognitoKeyboard: Bool
     @KeyObject(.pushNotifications, defaultValue: false) var pushNotifications: Bool
     @KeyObject(.inappnotifications, defaultValue: true) var inappnotifications: Bool
+    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
 
     @Dependency var backupService: BackupService
     @Dependency var toastController: ToastController
@@ -461,7 +462,7 @@ public final class Session: SessionType {
                 }
 
                 if let contact = try! dbManager.fetchContacts(.init(id: [request.0.leaderId])).first {
-                    if contact.isBanned || contact.isBlocked {
+                    if isReportingEnabled, (contact.isBlocked || contact.isBanned) {
                         return
                     }
                 }

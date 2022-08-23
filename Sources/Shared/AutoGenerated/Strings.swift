@@ -1110,6 +1110,12 @@ public enum Localized {
         /// Record logs
         public static let title = Localized.tr("Localizable", "settings.advanced.logs.title")
       }
+      public enum Reporting {
+        /// Allows you to report users sending innapropriate content
+        public static let description = Localized.tr("Localizable", "settings.advanced.reporting.description")
+        /// Enable user reporting feature
+        public static let title = Localized.tr("Localizable", "settings.advanced.reporting.title")
+      }
       public enum ShowUsername {
         /// Allow us to show a more detailed push notification
         public static let description = Localized.tr("Localizable", "settings.advanced.showUsername.description")

@@ -12,6 +12,7 @@ public final class PushHandler: PushHandling {
     }
 
     @KeyObject(.pushNotifications, defaultValue: false) var isPushEnabled: Bool
+    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
 
     let requestAuth: RequestAuth
     public static let defaultRequestAuth = UNUserNotificationCenter.current().requestAuthorization
@@ -108,7 +109,7 @@ public final class PushHandler: PushHandling {
                 return ($0.type.unknownSenderContent!, $0)
             }
 
-            if contact.isBlocked || contact.isBanned {
+            if isReportingEnabled, (contact.isBlocked || contact.isBanned) {
                 return nil
             }
 

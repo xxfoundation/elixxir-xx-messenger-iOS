@@ -9,11 +9,16 @@ struct AdvancedViewState: Equatable {
     var isRecordingLogs = false
     var isCrashReporting = false
     var isShowingUsernames = false
+    var isReportingEnabled = false
+    var isReportingOptional = false
 }
 
 final class SettingsAdvancedViewModel {
     @KeyObject(.recordingLogs, defaultValue: true) var isRecordingLogs: Bool
     @KeyObject(.crashReporting, defaultValue: true) var isCrashReporting: Bool
+
+    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
+    @KeyObject(.isReportingOptional, defaultValue: true) var isReportingOptional: Bool
 
     private let isShowingUsernamesKey = "isShowingUsernames"
 
@@ -29,6 +34,8 @@ final class SettingsAdvancedViewModel {
     func loadCachedSettings() {
         stateRelay.value.isRecordingLogs = isRecordingLogs
         stateRelay.value.isCrashReporting = isCrashReporting
+        stateRelay.value.isReportingEnabled = isReportingEnabled
+        stateRelay.value.isReportingOptional = isReportingOptional
 
         guard let defaults = UserDefaults(suiteName: "group.elixxir.messenger") else {
             print("^^^ Couldn't access user defaults in the app group container \(#file):\(#line)")
@@ -74,5 +81,10 @@ final class SettingsAdvancedViewModel {
         isCrashReporting.toggle()
         stateRelay.value.isCrashReporting.toggle()
         crashReporter.setEnabled(isCrashReporting)
+    }
+
+    func didToggleReporting() {
+        isReportingEnabled.toggle()
+        stateRelay.value.isReportingEnabled.toggle()
     }
 }

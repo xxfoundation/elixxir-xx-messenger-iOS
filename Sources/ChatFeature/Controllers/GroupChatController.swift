@@ -602,17 +602,21 @@ extension GroupChatController: UICollectionViewDelegate {
                 self?.viewModel.retry(item)
             }
 
-            let menu: UIMenu
+            var children = [UIAction]()
 
             if item.status == .sendingFailed {
-                menu = UIMenu(title: "", children: [copy, retry, delete])
+                children = [copy, retry, delete]
             } else if item.status == .sending {
-                menu = UIMenu(title: "", children: [copy])
+                children = [copy]
             } else {
-                menu = UIMenu(title: "", children: [copy, reply, delete, report])
+                children = [copy, reply, delete]
+
+                if self.viewModel.isReportingEnabled {
+                    children.append(report)
+                }
             }
 
-            return menu
+            return UIMenu(title: "", children: children)
         }
     }
 }

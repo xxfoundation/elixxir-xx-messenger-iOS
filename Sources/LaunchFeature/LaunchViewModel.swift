@@ -42,6 +42,7 @@ final class LaunchViewModel {
 
     @KeyObject(.username, defaultValue: nil) var username: String?
     @KeyObject(.biometrics, defaultValue: false) var isBiometricsOn: Bool
+    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
@@ -138,7 +139,12 @@ final class LaunchViewModel {
     }
 
     func getContactWith(userId: Data) -> Contact? {
-        let query = Contact.Query(id: [userId], isBlocked: false, isBanned: false)
+        let query = Contact.Query(
+            id: [userId],
+            isBlocked: isReportingEnabled ? false : nil,
+            isBanned: isReportingEnabled ? false : nil
+        )
+
         return try! session.dbManager.fetchContacts(query).first
     }
 

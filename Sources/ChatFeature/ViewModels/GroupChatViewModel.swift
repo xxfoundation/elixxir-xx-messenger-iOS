@@ -23,6 +23,7 @@ final class GroupChatViewModel {
     @Dependency private var toastController: ToastController
 
     @KeyObject(.username, defaultValue: nil) var username: String?
+    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
@@ -130,7 +131,7 @@ final class GroupChatViewModel {
 
         var name = (contact.nickname ?? contact.username) ?? "Fetching username..."
 
-        if contact.isBlocked {
+        if contact.isBlocked, isReportingEnabled {
             name = "\(name) (Blocked)"
         }
 

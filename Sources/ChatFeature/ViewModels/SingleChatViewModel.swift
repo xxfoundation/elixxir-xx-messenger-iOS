@@ -33,6 +33,7 @@ final class SingleChatViewModel: NSObject {
     @Dependency private var sendReport: SendReport
 
     @KeyObject(.username, defaultValue: nil) var username: String?
+    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
 
     var contact: Contact { contactSubject.value }
     private var stagedReply: Reply?

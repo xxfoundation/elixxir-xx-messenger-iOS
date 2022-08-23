@@ -9,6 +9,7 @@ import DependencyInjection
 
 final class CreateGroupViewModel {
     @KeyObject(.username, defaultValue: "") var username: String
+    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
 
     // MARK: Injected
 
@@ -42,7 +43,13 @@ final class CreateGroupViewModel {
     // MARK: Lifecycle
 
     init() {
-        session.dbManager.fetchContactsPublisher(.init(authStatus: [.friend], isBlocked: false, isBanned: false))
+        let query = Contact.Query(
+            authStatus: [.friend],
+            isBlocked: isReportingEnabled ? false : nil,
+            isBanned: isReportingEnabled ? false : nil
+        )
+
+        session.dbManager.fetchContactsPublisher(query)
             .assertNoFailure()
             .map { $0.filter { $0.id != self.session.myId }}
             .map { $0.sorted(by: { $0.username! < $1.username! })}

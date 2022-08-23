@@ -1,14 +1,21 @@
 import Models
 import Combine
 import XXModels
+import Defaults
 import Integration
 import DependencyInjection
 
 final class ContactListViewModel {
     @Dependency private var session: SessionType
 
+    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
+
     var contacts: AnyPublisher<[Contact], Never> {
-        let query = Contact.Query(authStatus: [.friend], isBlocked: false, isBanned: false)
+        let query = Contact.Query(
+            authStatus: [.friend],
+            isBlocked: isReportingEnabled ? false : nil,
+            isBanned: isReportingEnabled ? false: nil
+        )
 
         return session.dbManager.fetchContactsPublisher(query)
             .assertNoFailure()
@@ -17,14 +24,23 @@ final class ContactListViewModel {
     }
 
     var requestCount: AnyPublisher<Int, Never> {
-        let groupQuery = Group.Query(authStatus: [.pending], isLeaderBlocked: false, isLeaderBanned: false)
-        let contactsQuery = Contact.Query(authStatus: [
-            .verified,
-            .confirming,
-            .confirmationFailed,
-            .verificationFailed,
-            .verificationInProgress
-        ], isBlocked: false, isBanned: false)
+        let groupQuery = Group.Query(
+            authStatus: [.pending],
+            isLeaderBlocked: isReportingEnabled ? false : nil,
+            isLeaderBanned: isReportingEnabled ? false : nil
+        )
+
+        let contactsQuery = Contact.Query(
+            authStatus: [
+                .verified,
+                .confirming,
+                .confirmationFailed,
+                .verificationFailed,
+                .verificationInProgress
+            ],
+            isBlocked: isReportingEnabled ? false : nil,
+            isBanned: isReportingEnabled ? false : nil
+        )
 
         return Publishers.CombineLatest(
             session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure(),

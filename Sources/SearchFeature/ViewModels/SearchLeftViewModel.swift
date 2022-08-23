@@ -3,6 +3,7 @@ import UIKit
 import Shared
 import Combine
 import XXModels
+import Defaults
 import Countries
 import Integration
 import NetworkMonitor
@@ -20,6 +21,8 @@ struct SearchLeftViewState {
 final class SearchLeftViewModel {
     @Dependency var session: SessionType
     @Dependency var networkMonitor: NetworkMonitoring
+
+    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
@@ -150,7 +153,10 @@ final class SearchLeftViewModel {
                 user.authStatus = contact.authStatus
             }
 
-            if user.authStatus != .friend, !user.isBanned, !user.isBlocked {
+            if user.authStatus != .friend, !isReportingEnabled {
+                snapshot.appendSections([.stranger])
+                snapshot.appendItems([.stranger(user)], toSection: .stranger)
+            } else if user.authStatus != .friend, isReportingEnabled, !user.isBanned, !user.isBlocked {
                 snapshot.appendSections([.stranger])
                 snapshot.appendItems([.stranger(user)], toSection: .stranger)
             }
@@ -159,8 +165,8 @@ final class SearchLeftViewModel {
         let localsQuery = Contact.Query(
             text: stateSubject.value.input,
             authStatus: [.friend],
-            isBlocked: false,
-            isBanned: false
+            isBlocked: isReportingEnabled ? false : nil,
+            isBanned: isReportingEnabled ? false : nil
         )
 
         if let locals = try? session.dbManager.fetchContacts(localsQuery),

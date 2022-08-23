@@ -1,6 +1,7 @@
 import Shared
 import Combine
 import XXModels
+import Defaults
 import Foundation
 import Permissions
 import Integration
@@ -23,6 +24,8 @@ enum ScanningError: Equatable {
 final class SearchRightViewModel {
     @Dependency var session: SessionType
     @Dependency var permissions: PermissionHandling
+
+    @KeyObject(.isReportingEnabled, defaultValue: true) var isReportingEnabled: Bool
 
     var foundPublisher: AnyPublisher<Contact, Never> {
         foundSubject.eraseToAnyPublisher()
@@ -78,12 +81,12 @@ final class SearchRightViewModel {
         /// that we already have
         ///
         if let alreadyContact = try? session.dbManager.fetchContacts(.init(id: [userId])).first {
-            if alreadyContact.isBlocked {
+            if alreadyContact.isBlocked, isReportingEnabled {
                 statusSubject.send(.failed(.unknown("You previously blocked this user.")))
                 return
             }
 
-            if alreadyContact.isBanned {
+            if alreadyContact.isBanned, isReportingEnabled {
                 statusSubject.send(.failed(.unknown("This user was banned.")))
                 return
             }

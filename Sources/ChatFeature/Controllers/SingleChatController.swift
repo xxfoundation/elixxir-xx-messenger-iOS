@@ -655,13 +655,20 @@ extension SingleChatController: UICollectionViewDelegate {
             guard let self = self else { return nil }
             let item = self.sections[indexPath.section].elements[indexPath.item]
 
-            return UIMenu(title: "", children: [
+            var children = [
                 ActionFactory.build(from: item, action: .copy, closure: self.viewModel.didRequestCopy(_:)),
                 ActionFactory.build(from: item, action: .retry, closure: self.viewModel.didRequestRetry(_:)),
                 ActionFactory.build(from: item, action: .reply, closure: self.viewModel.didRequestReply(_:)),
-                ActionFactory.build(from: item, action: .delete, closure: self.viewModel.didRequestDeleteSingle(_:)),
-                ActionFactory.build(from: item, action: .report, closure: self.viewModel.didRequestReport(_:))
-            ].compactMap { $0 })
+                ActionFactory.build(from: item, action: .delete, closure: self.viewModel.didRequestDeleteSingle(_:))
+            ]
+
+            if self.viewModel.isReportingEnabled {
+                children.append(
+                    ActionFactory.build(from: item, action: .report, closure: self.viewModel.didRequestReport(_:))
+                )
+            }
+
+            return UIMenu(title: "", children: children.compactMap { $0 })
         }
     }
 
