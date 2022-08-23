@@ -3,6 +3,7 @@ import Models
 import Defaults
 import XXModels
 import Integration
+import ReportingFeature
 import DependencyInjection
 
 public final class PushHandler: PushHandling {
@@ -10,6 +11,8 @@ public final class PushHandler: PushHandling {
         static let appGroup = "group.elixxir.messenger"
         static let usernamesSetting = "isShowingUsernames"
     }
+
+    @Dependency var reportingStatus: ReportingStatus
 
     @KeyObject(.pushNotifications, defaultValue: false) var isPushEnabled: Bool
 
@@ -108,7 +111,7 @@ public final class PushHandler: PushHandling {
                 return ($0.type.unknownSenderContent!, $0)
             }
 
-            if contact.isBlocked || contact.isBanned {
+            if reportingStatus.isEnabled(), (contact.isBlocked || contact.isBanned) {
                 return nil
             }
 

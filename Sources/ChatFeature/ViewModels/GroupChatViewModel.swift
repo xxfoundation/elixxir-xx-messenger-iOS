@@ -20,6 +20,7 @@ enum GroupChatNavigationRoutes: Equatable {
 final class GroupChatViewModel {
     @Dependency private var session: SessionType
     @Dependency private var sendReport: SendReport
+    @Dependency private var reportingStatus: ReportingStatus
     @Dependency private var toastController: ToastController
 
     @KeyObject(.username, defaultValue: nil) var username: String?
@@ -130,7 +131,7 @@ final class GroupChatViewModel {
 
         var name = (contact.nickname ?? contact.username) ?? "Fetching username..."
 
-        if contact.isBlocked {
+        if contact.isBlocked, reportingStatus.isEnabled() {
             name = "\(name) (Blocked)"
         }
 

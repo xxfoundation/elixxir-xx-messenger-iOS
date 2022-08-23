@@ -630,6 +630,10 @@
 = "Enable crash reporting";
 "settings.advanced.crashes.description"
 = "Automatically sends anonymous reports containing crash data";
+"settings.advanced.reporting.title"
+= "Enable user reporting feature";
+"settings.advanced.reporting.description"
+= "Allows you to report users sending innapropriate content";
 "settings.advanced.accountBackup.title"
 = "Account Backup";
 

@@ -3,9 +3,11 @@ import UIKit
 import Shared
 import Combine
 import XXModels
+import Defaults
 import Countries
 import Integration
 import NetworkMonitor
+import ReportingFeature
 import DependencyInjection
 
 typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchItem>
@@ -19,6 +21,7 @@ struct SearchLeftViewState {
 
 final class SearchLeftViewModel {
     @Dependency var session: SessionType
+    @Dependency var reportingStatus: ReportingStatus
     @Dependency var networkMonitor: NetworkMonitoring
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
@@ -150,7 +153,10 @@ final class SearchLeftViewModel {
                 user.authStatus = contact.authStatus
             }
 
-            if user.authStatus != .friend, !user.isBanned, !user.isBlocked {
+            if user.authStatus != .friend, !reportingStatus.isEnabled() {
+                snapshot.appendSections([.stranger])
+                snapshot.appendItems([.stranger(user)], toSection: .stranger)
+            } else if user.authStatus != .friend, reportingStatus.isEnabled(), !user.isBanned, !user.isBlocked {
                 snapshot.appendSections([.stranger])
                 snapshot.appendItems([.stranger(user)], toSection: .stranger)
             }
@@ -159,8 +165,8 @@ final class SearchLeftViewModel {
         let localsQuery = Contact.Query(
             text: stateSubject.value.input,
             authStatus: [.friend],
-            isBlocked: false,
-            isBanned: false
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
         if let locals = try? session.dbManager.fetchContacts(localsQuery),

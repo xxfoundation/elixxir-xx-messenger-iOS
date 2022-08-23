@@ -1,14 +1,21 @@
 import Models
 import Combine
 import XXModels
+import Defaults
 import Integration
+import ReportingFeature
 import DependencyInjection
 
 final class ContactListViewModel {
     @Dependency private var session: SessionType
+    @Dependency private var reportingStatus: ReportingStatus
 
     var contacts: AnyPublisher<[Contact], Never> {
-        let query = Contact.Query(authStatus: [.friend], isBlocked: false, isBanned: false)
+        let query = Contact.Query(
+            authStatus: [.friend],
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false: nil
+        )
 
         return session.dbManager.fetchContactsPublisher(query)
             .assertNoFailure()
@@ -17,14 +24,23 @@ final class ContactListViewModel {
     }
 
     var requestCount: AnyPublisher<Int, Never> {
-        let groupQuery = Group.Query(authStatus: [.pending], isLeaderBlocked: false, isLeaderBanned: false)
-        let contactsQuery = Contact.Query(authStatus: [
-            .verified,
-            .confirming,
-            .confirmationFailed,
-            .verificationFailed,
-            .verificationInProgress
-        ], isBlocked: false, isBanned: false)
+        let groupQuery = Group.Query(
+            authStatus: [.pending],
+            isLeaderBlocked: reportingStatus.isEnabled() ? false : nil,
+            isLeaderBanned: reportingStatus.isEnabled() ? false : nil
+        )
+
+        let contactsQuery = Contact.Query(
+            authStatus: [
+                .verified,
+                .confirming,
+                .confirmationFailed,
+                .verificationFailed,
+                .verificationInProgress
+            ],
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
+        )
 
         return Publishers.CombineLatest(
             session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure(),

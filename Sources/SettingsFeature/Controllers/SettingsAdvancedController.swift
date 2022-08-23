@@ -61,9 +61,21 @@ public final class SettingsAdvancedController: UIViewController {
             .sink { [weak viewModel] in viewModel?.didToggleCrashReporting() }
             .store(in: &cancellables)
 
+        screenView.reportingSwitcher.switcherView
+            .publisher(for: .valueChanged)
+            .compactMap { [weak screenView] _ in screenView?.reportingSwitcher.switcherView.isOn }
+            .sink { [weak viewModel] isOn in viewModel?.didSetReporting(enabled: isOn) }
+            .store(in: &cancellables)
+
         viewModel.sharePublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in coordinator.toActivityController(with: [$0], from: self) }
+            .store(in: &cancellables)
+
+        viewModel.state
+            .removeDuplicates()
+            .map(\.isReportingOptional)
+            .sink { [unowned self] in screenView.reportingSwitcher.isHidden = !$0 }
             .store(in: &cancellables)
 
         viewModel.state
@@ -72,6 +84,7 @@ public final class SettingsAdvancedController: UIViewController {
                 screenView.logRecordingSwitcher.switcherView.setOn(state.isRecordingLogs, animated: true)
                 screenView.crashReportingSwitcher.switcherView.setOn(state.isCrashReporting, animated: true)
                 screenView.showUsernamesSwitcher.switcherView.setOn(state.isShowingUsernames, animated: true)
+                screenView.reportingSwitcher.switcherView.setOn(state.isReportingEnabled, animated: true)
             }.store(in: &cancellables)
     }
 }

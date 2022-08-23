@@ -10,6 +10,7 @@ import Foundation
 import ToastFeature
 import BackupFeature
 import NetworkMonitor
+import ReportingFeature
 import DependencyInjection
 import XXLegacyDatabaseMigrator
 
@@ -50,6 +51,7 @@ public final class Session: SessionType {
 
     @Dependency var backupService: BackupService
     @Dependency var toastController: ToastController
+    @Dependency var reportingStatus: ReportingStatus
     @Dependency var networkMonitor: NetworkMonitoring
 
     public let client: Client
@@ -461,7 +463,7 @@ public final class Session: SessionType {
                 }
 
                 if let contact = try! dbManager.fetchContacts(.init(id: [request.0.leaderId])).first {
-                    if contact.isBanned || contact.isBlocked {
+                    if reportingStatus.isEnabled(), (contact.isBlocked || contact.isBanned) {
                         return
                     }
                 }

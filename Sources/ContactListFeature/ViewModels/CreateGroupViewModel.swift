@@ -5,6 +5,7 @@ import Combine
 import XXModels
 import Defaults
 import Integration
+import ReportingFeature
 import DependencyInjection
 
 final class CreateGroupViewModel {
@@ -13,6 +14,7 @@ final class CreateGroupViewModel {
     // MARK: Injected
 
     @Dependency private var session: SessionType
+    @Dependency private var reportingStatus: ReportingStatus
 
     // MARK: Properties
 
@@ -42,7 +44,13 @@ final class CreateGroupViewModel {
     // MARK: Lifecycle
 
     init() {
-        session.dbManager.fetchContactsPublisher(.init(authStatus: [.friend], isBlocked: false, isBanned: false))
+        let query = Contact.Query(
+            authStatus: [.friend],
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
+        )
+
+        session.dbManager.fetchContactsPublisher(query)
             .assertNoFailure()
             .map { $0.filter { $0.id != self.session.myId }}
             .map { $0.sorted(by: { $0.username! < $1.username! })}

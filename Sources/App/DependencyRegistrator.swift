@@ -81,6 +81,7 @@ struct DependencyRegistrator {
         container.register(XXLogger.live())
         container.register(CrashReporter.live)
         container.register(VersionChecker.live())
+        container.register(ReportingStatus.live())
 
         container.register(XXNetwork<BindingsClient>() as XXNetworking)
         container.register(NetworkMonitor() as NetworkMonitoring)

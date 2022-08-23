@@ -25,6 +25,7 @@ public final class GroupChatController: UIViewController {
     @Dependency private var hud: HUD
     @Dependency private var session: SessionType
     @Dependency private var coordinator: ChatCoordinating
+    @Dependency private var reportingStatus: ReportingStatus
     @Dependency private var makeReportDrawer: MakeReportDrawer
     @Dependency private var makeAppScreenshot: MakeAppScreenshot
     @Dependency private var statusBarController: StatusBarStyleControlling
@@ -602,17 +603,21 @@ extension GroupChatController: UICollectionViewDelegate {
                 self?.viewModel.retry(item)
             }
 
-            let menu: UIMenu
+            var children = [UIAction]()
 
             if item.status == .sendingFailed {
-                menu = UIMenu(title: "", children: [copy, retry, delete])
+                children = [copy, retry, delete]
             } else if item.status == .sending {
-                menu = UIMenu(title: "", children: [copy])
+                children = [copy]
             } else {
-                menu = UIMenu(title: "", children: [copy, reply, delete, report])
+                children = [copy, reply, delete]
+
+                if self.reportingStatus.isEnabled() {
+                    children.append(report)
+                }
             }
 
-            return menu
+            return UIMenu(title: "", children: children)
         }
     }
 }

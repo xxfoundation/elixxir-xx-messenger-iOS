@@ -36,6 +36,7 @@ final class LaunchViewModel {
     @Dependency private var keychainHandler: KeychainHandling
     @Dependency private var permissionHandler: PermissionHandling
     @Dependency private var fetchBannedList: FetchBannedList
+    @Dependency private var reportingStatus: ReportingStatus
     @Dependency private var processBannedList: ProcessBannedList
     @Dependency private var toastController: ToastController
     @Dependency private var session: SessionType
@@ -138,7 +139,12 @@ final class LaunchViewModel {
     }
 
     func getContactWith(userId: Data) -> Contact? {
-        let query = Contact.Query(id: [userId], isBlocked: false, isBanned: false)
+        let query = Contact.Query(
+            id: [userId],
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
+        )
+
         return try! session.dbManager.fetchContacts(query).first
     }
 

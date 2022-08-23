@@ -29,6 +29,7 @@ public final class SingleChatController: UIViewController {
     @Dependency private var logger: XXLogger
     @Dependency private var voxophone: Voxophone
     @Dependency private var coordinator: ChatCoordinating
+    @Dependency private var reportingStatus: ReportingStatus
     @Dependency private var makeReportDrawer: MakeReportDrawer
     @Dependency private var makeAppScreenshot: MakeAppScreenshot
     @Dependency private var statusBarController: StatusBarStyleControlling
@@ -655,13 +656,20 @@ extension SingleChatController: UICollectionViewDelegate {
             guard let self = self else { return nil }
             let item = self.sections[indexPath.section].elements[indexPath.item]
 
-            return UIMenu(title: "", children: [
+            var children = [
                 ActionFactory.build(from: item, action: .copy, closure: self.viewModel.didRequestCopy(_:)),
                 ActionFactory.build(from: item, action: .retry, closure: self.viewModel.didRequestRetry(_:)),
                 ActionFactory.build(from: item, action: .reply, closure: self.viewModel.didRequestReply(_:)),
-                ActionFactory.build(from: item, action: .delete, closure: self.viewModel.didRequestDeleteSingle(_:)),
-                ActionFactory.build(from: item, action: .report, closure: self.viewModel.didRequestReport(_:))
-            ].compactMap { $0 })
+                ActionFactory.build(from: item, action: .delete, closure: self.viewModel.didRequestDeleteSingle(_:))
+            ]
+
+            if self.reportingStatus.isEnabled() {
+                children.append(
+                    ActionFactory.build(from: item, action: .report, closure: self.viewModel.didRequestReport(_:))
+                )
+            }
+
+            return UIMenu(title: "", children: children.compactMap { $0 })
         }
     }
 
