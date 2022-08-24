@@ -197,7 +197,9 @@ public final class InputField: UIView {
     }
 
     private func hideButtonImage(isSecureEntry: Bool) -> UIImage? {
-        isSecureEntry ? Asset.eyeClosed.image : Asset.eyeOpen.image
+        let openImage = Asset.eyeOpen.image.withTintColor(Asset.neutralWeak.color)
+        let closedImage = Asset.eyeClosed.image.withTintColor(Asset.neutralWeak.color)
+        return isSecureEntry ? closedImage : openImage
     }
 
     private func setup() {

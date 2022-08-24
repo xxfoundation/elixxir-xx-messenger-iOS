@@ -274,6 +274,22 @@ public enum Localized {
       /// Backup settings
       public static let title = Localized.tr("Localizable", "backup.config.title")
     }
+    public enum Passphrase {
+      /// Cancel
+      public static let cancel = Localized.tr("Localizable", "backup.passphrase.cancel")
+      /// Set password and continue
+      public static let `continue` = Localized.tr("Localizable", "backup.passphrase.continue")
+      /// Please select a password for your backup. If you lose this password, you will not be able to restore your account. Make sure to keep a record somewhere safe. Your password needs to be at least 8 characters with at least 1 uppercase, 1 lowercase and 1 number characters
+      public static let subtitle = Localized.tr("Localizable", "backup.passphrase.subtitle")
+      /// Secure your backup
+      public static let title = Localized.tr("Localizable", "backup.passphrase.title")
+      public enum Input {
+        /// * * * * * *
+        public static let placeholder = Localized.tr("Localizable", "backup.passphrase.input.placeholder")
+        /// Passphrase
+        public static let title = Localized.tr("Localizable", "backup.passphrase.input.title")
+      }
+    }
     public enum Setup {
       /// Setup your #backup service#.
       public static let title = Localized.tr("Localizable", "backup.setup.title")
