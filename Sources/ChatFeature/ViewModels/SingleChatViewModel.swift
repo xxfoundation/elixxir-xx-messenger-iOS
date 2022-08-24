@@ -6,6 +6,7 @@ import Combine
 import XXLogger
 import XXModels
 import XXClient
+import Defaults
 import Foundation
 import Permissions
 import ToastFeature
@@ -424,7 +425,7 @@ final class SingleChatViewModel: NSObject {
                 username: contact.username!
             ),
             recipient: .init(
-                userId: session.myId.base64EncodedString(),
+                userId: myId.base64EncodedString(),
                 username: username!
             ),
             type: .dm,
@@ -454,7 +455,7 @@ final class SingleChatViewModel: NSObject {
     private func blockContact() {
         var contact = contact
         contact.isBlocked = true
-        _ = try? session.dbManager.saveContact(contact)
+        _ = try? database.saveContact(contact)
     }
 
     private func presentReportConfirmation() {

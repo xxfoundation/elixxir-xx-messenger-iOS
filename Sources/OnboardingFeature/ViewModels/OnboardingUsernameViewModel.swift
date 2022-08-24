@@ -132,15 +132,17 @@ final class OnboardingUsernameViewModel {
         let cert = alternative ? try Data(contentsOf: URL(fileURLWithPath: certPath)) : e2e.getUdCertFromNdf()
         let contactFile = alternative ? try Data(contentsOf: URL(fileURLWithPath: contactFilePath)) : try e2e.getUdContactFromNdf()
 
-        let userDiscovery = try NewOrLoadUd.live(.init(
-            e2eId: e2e.getId(),
-            follower: .init(handle: { cMix.networkFollowerStatus().rawValue }),
-            username: self.stateRelay.value.input,
-            registrationValidationSignature: cMix.getReceptionRegistrationValidationSignature(),
-            cert: cert,
-            contactFile: contactFile,
-            address: address
-        ))
+        let userDiscovery = try NewOrLoadUd.live(
+            params: .init(
+                e2eId: e2e.getId(),
+                username: self.stateRelay.value.input,
+                registrationValidationSignature: cMix.getReceptionRegistrationValidationSignature(),
+                cert: cert,
+                contactFile: contactFile,
+                address: address
+            ),
+            follower: .init(handle: { cMix.networkFollowerStatus() })
+        )
 
         username = self.stateRelay.value.input
         DependencyInjection.Container.shared.register(userDiscovery)

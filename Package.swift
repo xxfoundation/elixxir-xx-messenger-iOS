@@ -223,6 +223,7 @@ let package = Package(
             dependencies: [
                 .target(name: "Models"),
                 .target(name: "Defaults"),
+                .target(name: "ReportingFeature"),
                 .target(name: "DependencyInjection"),
                 .product(name: "XXDatabase", package: "client-ios-db"),
             ]
@@ -625,6 +626,7 @@ let package = Package(
                 .target(name: "Defaults"),
                 .target(name: "Presentation"),
                 .target(name: "DrawerFeature"),
+                .target(name: "ReportingFeature"),
                 .target(name: "DependencyInjection"),
             ]
         ),

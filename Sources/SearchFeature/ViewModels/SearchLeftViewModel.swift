@@ -25,6 +25,7 @@ struct SearchLeftViewState {
 
 final class SearchLeftViewModel {
     @Dependency var e2e: E2E
+    @Dependency var cMix: CMix
     @Dependency var database: Database
     @Dependency var userDiscovery: UserDiscovery
     @Dependency var reportingStatus: ReportingStatus
@@ -107,41 +108,43 @@ final class SearchLeftViewModel {
         hudSubject.send(.onAction(Localized.Ud.Search.cancel))
 
         var content = stateSubject.value.input
-        let prefix = stateSubject.value.item.written.first!.uppercased()
 
         if stateSubject.value.item == .phone {
             content += stateSubject.value.country.code
         }
 
-//        backgroundScheduler.schedule { [weak self] in
-//            guard let self = self else { return }
+        let nrr = try! cMix.getNodeRegistrationStatus()
+        print("^^^ NRR: \(nrr.ratio)")
+
+        backgroundScheduler.schedule { [weak self] in
+            guard let self = self else { return }
 
             do {
                 let report = try SearchUD.live(
                     e2eId: self.e2e.getId(),
                     udContact: self.userDiscovery.getContact(),
-                    facts: [Fact(fact: "teste", type: 0)],
+                    facts: [Fact(fact: content, type: self.stateSubject.value.item.rawValue)],
                     callback: .init(handle: {
                         switch $0 {
                         case .success(let dataArray):
-                            print("^^^ \(#file):\(#line) \(dataArray.map { $0.base64EncodedString() })")
+                            print("^^^ searchUD success: \(dataArray.map { $0.base64EncodedString() })")
 
-                            // self.hudSubject.send(.none)
-                            // self.appendToLocalSearch(contact)
+                             self.hudSubject.send(.none)
+//                             self.appendToLocalSearch(contact)
 
                         case .failure(let error):
-                            print("^^^ \(#file):\(#line) error: \(error.localizedDescription)")
+                            print("^^^ searchUD error: \(error.localizedDescription)")
                             self.appendToLocalSearch(nil)
                             self.hudSubject.send(.error(.init(with: error)))
                         }
                     })
                 )
 
-                print(report)
+                print("^^^ report: \(report))")
             } catch {
-                print("^^^ \(#file):\(#line) error: \(error.localizedDescription)")
+                print("^^^ exception: \(error.localizedDescription)")
             }
-//        }
+        }
     }
 
     func didTapResend(contact: Contact) {

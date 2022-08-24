@@ -129,14 +129,14 @@ struct DependencyRegistrator {
 
         container.register(
             TermsCoordinator.live(
-                usernameFactory: OnboardingUsernameController.init(_:),
+                usernameFactory: OnboardingUsernameController.init,
                 chatListFactory: ChatListController.init
             )
         )
 
         container.register(
             LaunchCoordinator(
-                termsFactory: TermsConditionsController.init(_:),
+                termsFactory: TermsConditionsController.init,
                 searchFactory: SearchContainerController.init,
                 requestsFactory: RequestsContainerController.init,
                 chatListFactory: ChatListController.init,

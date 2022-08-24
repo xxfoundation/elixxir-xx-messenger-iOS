@@ -93,50 +93,49 @@ final class LaunchViewModel {
     }
 
     func versionApproved() {
-        //self.updateBannedList {
+        updateBannedList { [weak self] in
+            guard let self = self else { return }
 
-        _ = try? SetLogLevel.live(.trace)
+            _ = try? SetLogLevel.live(.trace)
 
-        try! setupDatabase()
+            try! self.setupDatabase()
 
-        if cMixManager.hasStorage(), username != nil {
-            checkBiometrics { [weak self] in
-                guard let self = self else { return }
+            if self.cMixManager.hasStorage(), self.username != nil {
+                self.checkBiometrics { [weak self] in
+                    guard let self = self else { return }
 
-                switch $0 {
-                case .success(false):
-                    break
-                case .success(true):
-                    do {
-                        //UpdateCommonErrors.live(jsonFile: ) DOWNLOAD THE JSON FROM THE REPO
+                    switch $0 {
+                    case .success(false):
+                        break
+                    case .success(true):
+                        do {
+                            //UpdateCommonErrors.live(jsonFile: ) DOWNLOAD THE JSON FROM THE REPO
 
-                        let cMix = try self.initCMix()
-                        try cMix.startNetworkFollower(timeoutMS: 10_000)
-                        guard cMix.waitForNetwork(timeoutMS: 10_000) else {
-                            fatalError("^^^ cMix.waitForNetwork returned FALSE")
+                            let cMix = try self.initCMix()
+                            try cMix.startNetworkFollower(timeoutMS: 10_000)
+                            guard cMix.waitForNetwork(timeoutMS: 30_000) else {
+                                fatalError("^^^ cMix.waitForNetwork returned FALSE")
+                            }
+
+                            let e2e = try self.initE2E(cMix)
+                            _ = try self.initUD(alternative: true, e2e: e2e, cMix: cMix)
+                            _ = try self.initGroupManager(e2e)
+                            _ = try self.initTransferManager(e2e)
+                            _ = try self.initDummyTrafficManager(e2e)
+
+                            self.hudSubject.send(.none)
+                            self.routeSubject.send(.chats)
+                        } catch {
+                            self.hudSubject.send(.error(.init(with: error)))
                         }
-
-                        let e2e = try self.initE2E(cMix)
-                        _ = try self.initUD(alternative: true, e2e: e2e, cMix: cMix)
-                        _ = try self.initGroupManager(e2e)
-                        _ = try self.initTransferManager(e2e)
-                        _ = try self.initDummyTrafficManager(e2e)
-
-
-                        self.hudSubject.send(.none)
-                        self.routeSubject.send(.chats)
-                    } catch {
+                    case .failure(let error):
                         self.hudSubject.send(.error(.init(with: error)))
                     }
-                case .failure(let error):
-                    self.hudSubject.send(.error(.init(with: error)))
                 }
-            case .failure(let error):
-                self.hudSubject.send(.error(HUDError(with: error)))
+            } else {
+                self.cleanUp()
+                self.presentOnboardingFlow()
             }
-        } else {
-            cleanUp()
-            presentOnboardingFlow()
         }
     }
 
@@ -326,15 +325,17 @@ final class LaunchViewModel {
         let cert = alternative ? try Data(contentsOf: URL(fileURLWithPath: certPath)) : e2e.getUdCertFromNdf()
         let contactFile = alternative ? try Data(contentsOf: URL(fileURLWithPath: contactFilePath)) : try e2e.getUdContactFromNdf()
 
-        let userDiscovery = try NewOrLoadUd.live(.init(
-            e2eId: e2e.getId(),
-            follower: .init(handle: { cMix.networkFollowerStatus().rawValue }),
-            username: username!,
-            registrationValidationSignature: cMix.getReceptionRegistrationValidationSignature(),
-            cert: cert,
-            contactFile: contactFile,
-            address: address
-        ))
+        let userDiscovery = try NewOrLoadUd.live(
+            params: .init(
+                e2eId: e2e.getId(),
+                username: username!,
+                registrationValidationSignature: cMix.getReceptionRegistrationValidationSignature(),
+                cert: cert,
+                contactFile: contactFile,
+                address: address
+            ),
+            follower: .init(handle: { cMix.networkFollowerStatus() })
+        )
 
         DependencyInjection.Container.shared.register(userDiscovery)
         return userDiscovery
@@ -519,14 +520,14 @@ final class LaunchViewModel {
                 switch result {
                 case .success(let userId):
                     let query = Contact.Query(id: [userId])
-                    if var contact = try! self.session.dbManager.fetchContacts(query).first {
+                    if var contact = try! database.fetchContacts(query).first {
                         if contact.isBanned == false {
                             contact.isBanned = true
-                            try! self.session.dbManager.saveContact(contact)
+                            try! database.saveContact(contact)
                             self.enqueueBanWarning(contact: contact)
                         }
                     } else {
-                        try! self.session.dbManager.saveContact(.init(id: userId, isBanned: true))
+                        try! database.saveContact(.init(id: userId, isBanned: true))
                     }
 
                 case .failure(_):

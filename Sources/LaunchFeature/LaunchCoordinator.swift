@@ -16,7 +16,7 @@ public protocol LaunchCoordinating {
 public struct LaunchCoordinator: LaunchCoordinating {
     var replacePresenter: Presenting = ReplacePresenter()
 
-    var termsFactory: (String?) -> UIViewController
+    var termsFactory: () -> UIViewController
     var searchFactory: (String) -> UIViewController
     var requestsFactory: () -> UIViewController
     var chatListFactory: () -> UIViewController
@@ -25,7 +25,7 @@ public struct LaunchCoordinator: LaunchCoordinating {
     var groupChatFactory: (GroupInfo) -> UIViewController
 
     public init(
-        termsFactory: @escaping (String?) -> UIViewController,
+        termsFactory: @escaping () -> UIViewController,
         searchFactory: @escaping (String) -> UIViewController,
         requestsFactory: @escaping () -> UIViewController,
         chatListFactory: @escaping () -> UIViewController,
@@ -51,7 +51,7 @@ public extension LaunchCoordinator {
     }
 
     func toTerms(from parent: UIViewController) {
-        let screen = termsFactory(nil)
+        let screen = termsFactory()
         replacePresenter.present(screen, from: parent)
     }
 

@@ -93,7 +93,7 @@ final class GroupChatViewModel {
     }
 
     func didRequestReport(_ message: Message) {
-        if let contact = try? session.dbManager.fetchContacts(.init(id: [message.senderId])).first {
+        if let contact = try? database.fetchContacts(.init(id: [message.senderId])).first {
             reportPopupSubject.send(contact)
         }
     }
@@ -253,7 +253,7 @@ final class GroupChatViewModel {
                 username: contact.username!
             ),
             recipient: .init(
-                userId: session.myId.base64EncodedString(),
+                userId: myId.base64EncodedString(),
                 username: username!
             ),
             type: .group,
@@ -288,7 +288,7 @@ final class GroupChatViewModel {
     private func blockContact(_ contact: Contact) {
         var contact = contact
         contact.isBlocked = true
-        _ = try? session.dbManager.saveContact(contact)
+        _ = try? database.saveContact(contact)
     }
 
     private func presentReportConfirmation(contact: Contact) {

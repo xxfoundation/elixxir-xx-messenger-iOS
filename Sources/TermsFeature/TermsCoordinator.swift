@@ -3,12 +3,12 @@ import Presentation
 
 public struct TermsCoordinator {
     var presentChatList: (UIViewController) -> Void
-    var presentUsername: (String, UIViewController) -> Void
+    var presentUsername: (UIViewController) -> Void
 }
 
 public extension TermsCoordinator {
     static func live(
-        usernameFactory: @escaping (String) -> UIViewController,
+        usernameFactory: @escaping () -> UIViewController,
         chatListFactory: @escaping () -> UIViewController
     ) -> Self {
         .init(
@@ -16,9 +16,9 @@ public extension TermsCoordinator {
                 let presenter = ReplacePresenter()
                 presenter.present(chatListFactory(), from: parent)
             },
-            presentUsername: { ndf, parent in
+            presentUsername: { parent in
                 let presenter = PushPresenter()
-                presenter.present(usernameFactory(ndf), from: parent)
+                presenter.present(usernameFactory(), from: parent)
             }
         )
     }

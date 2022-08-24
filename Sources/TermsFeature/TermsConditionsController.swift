@@ -10,19 +10,12 @@ public final class TermsConditionsController: UIViewController {
     @Dependency var coordinator: TermsCoordinator
     @Dependency var statusBarController: StatusBarStyleControlling
 
+    @KeyObject(.username, defaultValue: nil) var username: String?
     @KeyObject(.acceptedTerms, defaultValue: false) var didAcceptTerms: Bool
 
     lazy private var screenView = TermsConditionsView()
 
-    private let ndf: String?
     private var cancellables = Set<AnyCancellable>()
-
-    public init(_ ndf: String?) {
-        self.ndf = ndf
-        super.init(nibName: nil, bundle: nil)
-    }
-
-    required init?(coder: NSCoder) { nil }
 
     public override func loadView() {
         view = screenView
@@ -72,10 +65,10 @@ public final class TermsConditionsController: UIViewController {
             .sink { [unowned self] in
                 didAcceptTerms = true
 
-                if let ndf = ndf {
-                    coordinator.presentUsername(ndf, self)
-                } else {
+                if let _ = username {
                     coordinator.presentChatList(self)
+                } else {
+                    coordinator.presentUsername(self)
                 }
             }.store(in: &cancellables)
 

@@ -7,7 +7,6 @@ import Combine
 import XXModels
 import Voxophone
 import ChatLayout
-import Integration
 import DrawerFeature
 import DifferenceKit
 import ReportingFeature
@@ -23,7 +22,7 @@ typealias OutgoingFailedGroupReplyCell = CollectionCell<FlexibleSpace, ReplyStac
 
 public final class GroupChatController: UIViewController {
     @Dependency private var hud: HUD
-    @Dependency private var session: SessionType
+    @Dependency private var database: Database
     @Dependency private var coordinator: ChatCoordinating
     @Dependency private var reportingStatus: ReportingStatus
     @Dependency private var makeReportDrawer: MakeReportDrawer
@@ -360,7 +359,7 @@ extension GroupChatController: UICollectionViewDataSource {
 
         var isSenderBanned = false
 
-        if let sender = try? session.dbManager.fetchContacts(.init(id: [item.senderId])).first {
+        if let sender = try? database.fetchContacts(.init(id: [item.senderId])).first {
             isSenderBanned = sender.isBanned
         }
 

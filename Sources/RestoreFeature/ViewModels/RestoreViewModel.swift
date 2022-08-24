@@ -179,10 +179,18 @@ final class RestoreViewModel {
                     from: paramsData
                 )
 
-                var phoneFact: Fact?
-
                 self.phone = facts.phone
                 self.email = facts.email
+
+                var emailFact: Fact? = {
+                    if let email = facts.email { return Fact(fact: email, type: FactType.email.rawValue) }
+                    return nil
+                }()
+
+                var phoneFact: Fact? = {
+                    if let phone = facts.phone { return Fact(fact: phone, type: FactType.phone.rawValue) }
+                    return nil
+                }()
 
                 let cMix = try self.cMixManager.load()
 
@@ -225,15 +233,18 @@ final class RestoreViewModel {
                     fatalError("Couldn't retrieve alternative UD credentials")
                 }
 
-                let userDiscovery = try NewUdManagerFromBackup.live(.init(
-                    e2eId: e2e.getId(),
-                    follower: .init(handle: { cMix.networkFollowerStatus().rawValue }),
-                    email: nil,
-                    phone: nil,
-                    cert: Data(contentsOf: URL(fileURLWithPath: certPath)),
-                    contactFile: Data(contentsOf: URL(fileURLWithPath: contactFilePath)),
-                    address: "46.101.98.49:18001"
-                ))
+                let userDiscovery = try NewUdManagerFromBackup.live(
+                    params: .init(
+                        e2eId: e2e.getId(),
+                        username: Fact(fact: facts.username, type: 0),
+                        email: emailFact,
+                        phone: phoneFact,
+                        cert: Data(contentsOf: URL(fileURLWithPath: certPath)),
+                        contactFile: Data(contentsOf: URL(fileURLWithPath: contactFilePath)),
+                        address: "46.101.98.49:18001"
+                    ),
+                    follower: .init(handle: { cMix.networkFollowerStatus() })
+                )
 
                 DependencyInjection.Container.shared.register(userDiscovery)
 
