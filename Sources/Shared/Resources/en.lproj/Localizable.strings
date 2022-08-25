@@ -656,6 +656,19 @@
 "backup.config.infrastructure"
 = "Backup over";
 
+"backup.passphrase.title"
+= "Secure your backup";
+"backup.passphrase.subtitle"
+= "Please select a password for your backup. If you lose this password, you will not be able to restore your account. Make sure to keep a record somewhere safe. Your password needs to be at least 8 characters with at least 1 uppercase, 1 lowercase and 1 number characters";
+"backup.passphrase.input.title"
+= "Passphrase";
+"backup.passphrase.input.placeholder"
+= "* * * * * *";
+"backup.passphrase.continue"
+= "Set password and continue";
+"backup.passphrase.cancel"
+= "Cancel";
+
 "backup.iCloud"
 = "iCloud";
 "backup.dropbox"
