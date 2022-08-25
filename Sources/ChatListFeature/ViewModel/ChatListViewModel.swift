@@ -6,6 +6,7 @@ import Combine
 import XXModels
 import Defaults
 import Integration
+import ReportingFeature
 import DependencyInjection
 
 enum SearchSection {
@@ -23,6 +24,7 @@ typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchIte
 
 final class ChatListViewModel {
     @Dependency private var session: SessionType
+    @Dependency private var reportingStatus: ReportingStatus
 
     var isOnline: AnyPublisher<Bool, Never> {
         session.isOnline
@@ -37,7 +39,13 @@ final class ChatListViewModel {
     }
 
     var recentsPublisher: AnyPublisher<RecentsSnapshot, Never> {
-        session.dbManager.fetchContactsPublisher(.init(isRecent: true))
+        let query = Contact.Query(
+            isRecent: true,
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
+        )
+
+        return session.dbManager.fetchContactsPublisher(query)
             .assertNoFailure()
             .map {
             let section = SectionId()
@@ -49,8 +57,18 @@ final class ChatListViewModel {
     }
 
     var searchPublisher: AnyPublisher<SearchSnapshot, Never> {
-        Publishers.CombineLatest3(
-            session.dbManager.fetchContactsPublisher(.init()).assertNoFailure(),
+        let contactsQuery = Contact.Query(
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
+        )
+
+        let contactsStream = session.dbManager
+            .fetchContactsPublisher(contactsQuery)
+            .assertNoFailure()
+            .map { $0.filter { $0.id != self.session.myId }}
+
+        return Publishers.CombineLatest3(
+            contactsStream,
             chatsPublisher,
             searchSubject
                 .removeDuplicates()
@@ -101,13 +119,17 @@ final class ChatListViewModel {
 
     var badgeCountPublisher: AnyPublisher<Int, Never> {
         let groupQuery = Group.Query(authStatus: [.pending])
-        let contactsQuery = Contact.Query(authStatus: [
-            .verified,
-            .confirming,
-            .confirmationFailed,
-            .verificationFailed,
-            .verificationInProgress
-        ])
+        let contactsQuery = Contact.Query(
+            authStatus: [
+                .verified,
+                .confirming,
+                .confirmationFailed,
+                .verificationFailed,
+                .verificationInProgress
+            ],
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
+        )
 
         return Publishers.CombineLatest(
             session.dbManager.fetchContactsPublisher(contactsQuery).assertNoFailure(),
@@ -127,10 +149,13 @@ final class ChatListViewModel {
             ChatInfo.Query(
                 contactChatInfoQuery: .init(
                     userId: session.myId,
-                    authStatus: [.friend]
+                    authStatus: [.friend],
+                    isBlocked: reportingStatus.isEnabled() ? false : nil,
+                    isBanned: reportingStatus.isEnabled() ? false : nil
                 ),
                 groupChatInfoQuery: GroupChatInfo.Query(
-                    authStatus: [.participating]
+                    authStatus: [.participating],
+                    excludeBannedContactsMessages: reportingStatus.isEnabled()
                 ),
                 groupQuery: Group.Query(
                     withMessages: false,

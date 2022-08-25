@@ -12,6 +12,7 @@ import ChatLayout
 import DrawerFeature
 import DifferenceKit
 import ChatInputFeature
+import ReportingFeature
 import DependencyInjection
 import ScrollViewController
 
@@ -28,6 +29,9 @@ public final class SingleChatController: UIViewController {
     @Dependency private var logger: XXLogger
     @Dependency private var voxophone: Voxophone
     @Dependency private var coordinator: ChatCoordinating
+    @Dependency private var reportingStatus: ReportingStatus
+    @Dependency private var makeReportDrawer: MakeReportDrawer
+    @Dependency private var makeAppScreenshot: MakeAppScreenshot
     @Dependency private var statusBarController: StatusBarStyleControlling
 
     lazy private var infoView = UIControl()
@@ -35,7 +39,6 @@ public final class SingleChatController: UIViewController {
     lazy private var avatarView = AvatarView()
 
     lazy private var moreButton = UIButton()
-    lazy private var backButton = UIButton.back()
     lazy private var screenView = ChatView()
     lazy private var sheet = SheetController()
 
@@ -47,7 +50,6 @@ public final class SingleChatController: UIViewController {
     private let viewModel: SingleChatViewModel
     private let layoutDelegate = LayoutDelegate()
     private var cancellables = Set<AnyCancellable>()
-    private var drawerCancellables = Set<AnyCancellable>()
     private var sections = [ArraySection<ChatSection, Message>]()
     private var currentInterfaceActions: SetActor<Set<InterfaceActions>, ReactionTypes> = SetActor()
 
@@ -168,8 +170,6 @@ public final class SingleChatController: UIViewController {
         nameLabel.textColor = Asset.neutralActive.color
         nameLabel.font = Fonts.Mulish.semiBold.font(size: 18.0)
 
-        backButton.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-
         moreButton.setImage(Asset.chatMore.image, for: .normal)
         moreButton.addTarget(self, action: #selector(didTapDots), for: .touchUpInside)
 
@@ -188,12 +188,9 @@ public final class SingleChatController: UIViewController {
             $0.right.lessThanOrEqualToSuperview()
         }
 
-        let stackView = UIStackView()
-        stackView.addArrangedSubview(backButton)
-        stackView.addArrangedSubview(infoView)
-
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: moreButton)
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: stackView)
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: infoView)
+        navigationItem.leftItemsSupplementBackButton = true
     }
 
     private func setupInputController() {
@@ -256,6 +253,8 @@ public final class SingleChatController: UIViewController {
                     presentDeleteAllDrawer()
                 case .details:
                     coordinator.toContact(viewModel.contact, from: self)
+                case .report:
+                    presentReportDrawer()
                 }
             }.store(in: &cancellables)
 
@@ -268,6 +267,12 @@ public final class SingleChatController: UIViewController {
                 if $0 == true {
                     screenView.bringSubviewToFront(screenView.titleLabel)
                 }
+            }.store(in: &cancellables)
+
+        viewModel.reportPopupPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                presentReportDrawer()
             }.store(in: &cancellables)
 
         viewModel.isOnline
@@ -380,14 +385,24 @@ public final class SingleChatController: UIViewController {
 
         button.action
             .receive(on: DispatchQueue.main)
-            .sink { [weak drawer] in
-                drawer?.dismiss(animated: true) { [weak self] in
-                    guard let self = self else { return }
-                    self.drawerCancellables.removeAll()
-                }
-            }.store(in: &drawerCancellables)
+            .sink { [unowned drawer] in drawer.dismiss(animated: true) }
+            .store(in: &drawer.cancellables)
 
         return drawer
+    }
+
+    private func presentReportDrawer() {
+        var config = MakeReportDrawer.Config()
+        config.onReport = { [weak self] in
+            guard let self = self else { return }
+            let screenshot = try! self.makeAppScreenshot()
+            self.viewModel.report(screenshot: screenshot) { success in
+                guard success else { return }
+                self.navigationController?.popViewController(animated: true)
+            }
+        }
+        let drawer = makeReportDrawer(config)
+        coordinator.toDrawer(drawer, from: self)
     }
 
     private func presentDeleteAllDrawer() {
@@ -423,21 +438,17 @@ public final class SingleChatController: UIViewController {
 
         clearButton.publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
-            .sink {
-                drawer.dismiss(animated: true) { [weak self] in
-                    guard let self = self else { return }
-                    self.drawerCancellables.removeAll()
-                    self.viewModel.didRequestDeleteAll()
+            .sink { [unowned drawer, weak self] in
+                drawer.dismiss(animated: true) {
+                    self?.viewModel.didRequestDeleteAll()
                 }
-            }.store(in: &drawerCancellables)
+            }
+            .store(in: &drawer.cancellables)
 
         cancelButton.publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
-            .sink {
-                drawer.dismiss(animated: true) { [weak self] in
-                    self?.drawerCancellables.removeAll()
-                }
-            }.store(in: &drawerCancellables)
+            .sink { [unowned drawer] in drawer.dismiss(animated: true) }
+            .store(in: &drawer.cancellables)
 
         coordinator.toDrawer(drawer, from: self)
     }
@@ -461,10 +472,6 @@ public final class SingleChatController: UIViewController {
 
     @objc private func didTapInfo() {
         coordinator.toContact(viewModel.contact, from: self)
-    }
-
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
     }
 }
 
@@ -523,11 +530,21 @@ extension SingleChatController: KeyboardListenerDelegate {
     }
 
     func keyboardWillChangeFrame(info: KeyboardInfo) {
-        let keyWindow = UIApplication.shared.windows.filter { $0.isKeyWindow }.first
+        let keyWindow: UIWindow? = UIApplication.shared.connectedScenes
+            .filter { $0.activationState == .foregroundActive }
+            .compactMap { $0 as? UIWindowScene }
+            .first?
+            .windows
+            .first(where: \.isKeyWindow)
+
+        guard let keyWindow = keyWindow else {
+            fatalError("[keyboardWillChangeFrame]: Couldn't get key window")
+        }
+
+        let keyboardFrame = keyWindow.convert(info.frameEnd, to: view)
 
         guard !currentInterfaceActions.options.contains(.changingFrameSize),
               collectionView.contentInsetAdjustmentBehavior != .never,
-              let keyboardFrame = keyWindow?.convert(info.frameEnd, to: view),
               collectionView.convert(collectionView.bounds, to: keyWindow).maxY > info.frameEnd.minY else { return }
 
         currentInterfaceActions.options.insert(.changingKeyboardFrame)
@@ -639,12 +656,20 @@ extension SingleChatController: UICollectionViewDelegate {
             guard let self = self else { return nil }
             let item = self.sections[indexPath.section].elements[indexPath.item]
 
-            return UIMenu(title: "", children: [
+            var children = [
                 ActionFactory.build(from: item, action: .copy, closure: self.viewModel.didRequestCopy(_:)),
                 ActionFactory.build(from: item, action: .retry, closure: self.viewModel.didRequestRetry(_:)),
                 ActionFactory.build(from: item, action: .reply, closure: self.viewModel.didRequestReply(_:)),
                 ActionFactory.build(from: item, action: .delete, closure: self.viewModel.didRequestDeleteSingle(_:))
-            ].compactMap { $0 })
+            ]
+
+            if self.reportingStatus.isEnabled() {
+                children.append(
+                    ActionFactory.build(from: item, action: .report, closure: self.viewModel.didRequestReport(_:))
+                )
+            }
+
+            return UIMenu(title: "", children: children.compactMap { $0 })
         }
     }
 

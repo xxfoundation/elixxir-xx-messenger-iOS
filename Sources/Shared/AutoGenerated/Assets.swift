@@ -70,6 +70,7 @@ public enum Asset {
   public static let menuRequests = ImageAsset(name: "menu_requests")
   public static let menuScan = ImageAsset(name: "menu_scan")
   public static let menuSettings = ImageAsset(name: "menu_settings")
+  public static let menuShare = ImageAsset(name: "menu_share")
   public static let onboardingBackground = ImageAsset(name: "onboarding_background")
   public static let onboardingBottomLogoStart = ImageAsset(name: "onboarding_bottom_logo_start")
   public static let onboardingEmail = ImageAsset(name: "onboarding_email")

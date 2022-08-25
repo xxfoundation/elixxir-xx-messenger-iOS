@@ -1,7 +1,6 @@
 import HUD
 import Shared
 import Models
-
 import Combine
 import Defaults
 import XXModels
@@ -9,8 +8,10 @@ import Keychain
 import Foundation
 import Integration
 import Permissions
+import ToastFeature
 import DropboxFeature
 import VersionChecking
+import ReportingFeature
 import CombineSchedulers
 import DependencyInjection
 
@@ -34,6 +35,11 @@ final class LaunchViewModel {
     @Dependency private var dropboxService: DropboxInterface
     @Dependency private var keychainHandler: KeychainHandling
     @Dependency private var permissionHandler: PermissionHandling
+    @Dependency private var fetchBannedList: FetchBannedList
+    @Dependency private var reportingStatus: ReportingStatus
+    @Dependency private var processBannedList: ProcessBannedList
+    @Dependency private var toastController: ToastController
+    @Dependency private var session: SessionType
 
     @KeyObject(.username, defaultValue: nil) var username: String?
     @KeyObject(.biometrics, defaultValue: false) var isBiometricsOn: Bool
@@ -46,36 +52,37 @@ final class LaunchViewModel {
         routeSubject.eraseToAnyPublisher()
     }
 
+    var mainScheduler: AnySchedulerOf<DispatchQueue> = {
+        DispatchQueue.main.eraseToAnyScheduler()
+    }()
+
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = {
         DispatchQueue.global().eraseToAnyScheduler()
     }()
-
-    var getSession: (String) throws -> SessionType = Session.init
 
     private var cancellables = Set<AnyCancellable>()
     private let routeSubject = PassthroughSubject<LaunchRoute, Never>()
     private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
 
     func viewDidAppear() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1) { [weak self] in
-            self?.hudSubject.send(.on)
-            self?.checkVersion()
-        }
-    }
+        mainScheduler.schedule(after: .init(.now() + 1)) { [weak self] in
+            guard let self = self else { return }
 
-    private func checkVersion() {
-        versionChecker().sink { [unowned self] in
-            switch $0 {
-            case .upToDate:
-                versionApproved()
-            case .failure(let error):
-                versionFailed(error: error)
-            case .updateRequired(let info):
-                versionUpdateRequired(info)
-            case .updateRecommended(let info):
-                versionUpdateRecommended(info)
-            }
-        }.store(in: &cancellables)
+            self.hudSubject.send(.on)
+
+            self.versionChecker().sink { [unowned self] in
+                switch $0 {
+                case .upToDate:
+                    self.versionApproved()
+                case .failure(let error):
+                    self.versionFailed(error: error)
+                case .updateRequired(let info):
+                    self.versionUpdateRequired(info)
+                case .updateRecommended(let info):
+                    self.versionUpdateRecommended(info)
+                }
+            }.store(in: &self.cancellables)
+        }
     }
 
     func versionApproved() {
@@ -109,14 +116,22 @@ final class LaunchViewModel {
                     guard let self = self else { return }
 
                     do {
-                        let session = try self.getSession(ndf)
+                        let session = try Session(ndf: ndf)
                         DependencyInjection.Container.shared.register(session as SessionType)
-                        self.hudSubject.send(.none)
-                        self.checkBiometrics()
+
+                        self.updateBannedList {
+                            DispatchQueue.main.async {
+                                self.hudSubject.send(.none)
+                                self.checkBiometrics()
+                            }
+                        }
                     } catch {
-                        self.hudSubject.send(.error(HUDError(with: error)))
+                        DispatchQueue.main.async {
+                            self.hudSubject.send(.error(HUDError(with: error)))
+                        }
                     }
                 }
+
             case .failure(let error):
                 self.hudSubject.send(.error(HUDError(with: error)))
             }
@@ -124,21 +139,18 @@ final class LaunchViewModel {
     }
 
     func getContactWith(userId: Data) -> Contact? {
-        guard let session = try? DependencyInjection.Container.shared.resolve() as SessionType,
-              let contact = try? session.dbManager.fetchContacts(.init(id: [userId])).first else {
-            return nil
-        }
+        let query = Contact.Query(
+            id: [userId],
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
+        )
 
-        return contact
+        return try! session.dbManager.fetchContacts(query).first
     }
 
     func getGroupInfoWith(groupId: Data) -> GroupInfo? {
-        guard let session: SessionType = try? DependencyInjection.Container.shared.resolve(),
-              let info = try? session.dbManager.fetchGroupInfos(.init(groupId: groupId)).first else {
-            return nil
-        }
-
-        return info
+        let query = GroupInfo.Query(groupId: groupId)
+        return try! session.dbManager.fetchGroupInfos(query).first
     }
 
     private func versionFailed(error: Error) {
@@ -180,17 +192,75 @@ final class LaunchViewModel {
     private func checkBiometrics() {
         if permissionHandler.isBiometricsAvailable && isBiometricsOn {
             permissionHandler.requestBiometrics { [weak self] in
+                guard let self = self else { return }
+
                 switch $0 {
                 case .success(let granted):
                     guard granted else { return }
-                    self?.routeSubject.send(.chats)
+                    self.routeSubject.send(.chats)
 
                 case .failure(let error):
-                    self?.hudSubject.send(.error(HUDError(with: error)))
+                    self.hudSubject.send(.error(HUDError(with: error)))
                 }
             }
         } else {
-            routeSubject.send(.chats)
+            self.routeSubject.send(.chats)
         }
+    }
+
+    private func updateBannedList(completion: @escaping () -> Void) {
+        fetchBannedList { result in
+            switch result {
+            case .failure(_):
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                    self.updateBannedList(completion: completion)
+                }
+            case .success(let data):
+                self.processBannedList(data, completion: completion)
+            }
+        }
+    }
+
+    private func processBannedList(_ data: Data, completion: @escaping () -> Void) {
+        processBannedList(
+            data: data,
+            forEach: { result in
+                switch result {
+                case .success(let userId):
+                    let query = Contact.Query(id: [userId])
+                    if var contact = try! self.session.dbManager.fetchContacts(query).first {
+                        if contact.isBanned == false {
+                            contact.isBanned = true
+                            try! self.session.dbManager.saveContact(contact)
+                            self.enqueueBanWarning(contact: contact)
+                        }
+                    } else {
+                        try! self.session.dbManager.saveContact(.init(id: userId, isBanned: true))
+                    }
+
+                case .failure(_):
+                    break
+                }
+            },
+            completion: { result in
+                switch result {
+                case .failure(_):
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                        self.updateBannedList(completion: completion)
+                    }
+
+                case .success(_):
+                    completion()
+                }
+            }
+        )
+    }
+
+    private func enqueueBanWarning(contact: Contact) {
+        let name = (contact.nickname ?? contact.username) ?? "One of your contacts"
+        toastController.enqueueToast(model: .init(
+            title: "\(name) has been banned for offensive content.",
+            leftImage: Asset.requestSentToaster.image
+        ))
     }
 }

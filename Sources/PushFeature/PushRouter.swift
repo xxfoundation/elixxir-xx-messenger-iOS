@@ -7,6 +7,7 @@ public struct PushRouter {
         case requests
         case groupChat(id: Data)
         case contactChat(id: Data)
+        case search(username: String)
     }
 
     public var navigateTo: NavigateTo

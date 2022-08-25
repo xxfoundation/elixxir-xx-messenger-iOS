@@ -5,6 +5,7 @@ final class SheetController: UIViewController {
     enum Action {
         case clear
         case details
+        case report
     }
 
     lazy private var screenView = SheetView()
@@ -23,7 +24,7 @@ final class SheetController: UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
 
-        screenView.clear
+        screenView.clearButton
             .publisher(for: .touchUpInside)
             .sink { [unowned self] in
                 dismiss(animated: true) { [weak actionRelay] in
@@ -31,11 +32,19 @@ final class SheetController: UIViewController {
                 }
             }.store(in: &cancellables)
 
-        screenView.details
+        screenView.detailsButton
             .publisher(for: .touchUpInside)
             .sink { [unowned self] in
                 dismiss(animated: true) { [weak actionRelay] in
                     actionRelay?.send(.details)
+                }
+            }.store(in: &cancellables)
+
+        screenView.reportButton
+            .publisher(for: .touchUpInside)
+            .sink { [unowned self] in
+                dismiss(animated: true) { [weak actionRelay] in
+                    actionRelay?.send(.report)
                 }
             }.store(in: &cancellables)
     }

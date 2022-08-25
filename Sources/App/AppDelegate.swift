@@ -144,6 +144,35 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     ) -> Bool {
         dropboxService.handleOpenUrl(url)
     }
+
+    public func application(
+        _ application: UIApplication,
+        continue userActivity: NSUserActivity,
+        restorationHandler: @escaping ([UIUserActivityRestoring]?) -> Void
+    ) -> Bool {
+        guard userActivity.activityType == NSUserActivityTypeBrowsingWeb,
+              let incomingURL = userActivity.webpageURL,
+              let username = getUsernameFromInvitationDeepLink(incomingURL) else {
+            return false
+        }
+
+        let router = try! DependencyInjection.Container.shared.resolve() as PushRouter
+        router.navigateTo(.search(username: username), {})
+        return true
+    }
+}
+
+func getUsernameFromInvitationDeepLink(_ url: URL) -> String? {
+    if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+       components.scheme == "https",
+       components.host == "elixxir.io",
+       components.path == "/connect",
+       let queryItem = components.queryItems?.first(where: { $0.name == "username" }),
+       let username = queryItem.value {
+        return username
+    }
+
+    return nil
 }
 
 // MARK: Notifications

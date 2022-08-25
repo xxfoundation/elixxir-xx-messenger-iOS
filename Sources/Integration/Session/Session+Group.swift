@@ -53,7 +53,7 @@ extension Session {
                         recipientId: nil,
                         groupId: group.id,
                         date: group.createdAt,
-                        status: .received,
+                        status: .sent,
                         isUnread: false,
                         text: welcome,
                         replyMessageId: nil,

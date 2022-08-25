@@ -24,7 +24,7 @@ public struct RequestsCoordinator: RequestsCoordinating {
     var bottomPresenter: Presenting = BottomPresenter()
     var fullscreenPresenter: Presenting = FullscreenPresenter()
 
-    var searchFactory: () -> UIViewController
+    var searchFactory: (String?) -> UIViewController
     var contactFactory: (Contact) -> UIViewController
     var singleChatFactory: (Contact) -> UIViewController
     var groupChatFactory: (GroupInfo) -> UIViewController
@@ -32,7 +32,7 @@ public struct RequestsCoordinator: RequestsCoordinating {
     var nicknameFactory: (String, @escaping StringClosure) -> UIViewController
 
     public init(
-        searchFactory: @escaping () -> UIViewController,
+        searchFactory: @escaping (String?) -> UIViewController,
         contactFactory: @escaping (Contact) -> UIViewController,
         singleChatFactory: @escaping (Contact) -> UIViewController,
         groupChatFactory: @escaping (GroupInfo) -> UIViewController,
@@ -81,7 +81,7 @@ public extension RequestsCoordinator {
     }
 
     func toSearch(from parent: UIViewController) {
-        let screen = searchFactory()
+        let screen = searchFactory(nil)
         pushPresenter.present(screen, from: parent)
     }
 

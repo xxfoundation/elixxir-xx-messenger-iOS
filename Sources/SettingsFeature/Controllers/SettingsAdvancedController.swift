@@ -17,6 +17,7 @@ public final class SettingsAdvancedController: UIViewController {
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationItem.backButtonTitle = ""
         navigationController?.navigationBar
             .customize(backgroundColor: Asset.neutralWhite.color)
     }
@@ -30,19 +31,13 @@ public final class SettingsAdvancedController: UIViewController {
     }
 
     private func setupNavigationBar() {
-        navigationItem.backButtonTitle = ""
-
         let title = UILabel()
         title.text = Localized.Settings.Advanced.title
         title.textColor = Asset.neutralActive.color
         title.font = Fonts.Mulish.semiBold.font(size: 18.0)
 
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            customView: UIStackView(arrangedSubviews: [back, title])
-        )
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: title)
+        navigationItem.leftItemsSupplementBackButton = true
     }
 
     private func setupBindings() {
@@ -66,9 +61,21 @@ public final class SettingsAdvancedController: UIViewController {
             .sink { [weak viewModel] in viewModel?.didToggleCrashReporting() }
             .store(in: &cancellables)
 
+        screenView.reportingSwitcher.switcherView
+            .publisher(for: .valueChanged)
+            .compactMap { [weak screenView] _ in screenView?.reportingSwitcher.switcherView.isOn }
+            .sink { [weak viewModel] isOn in viewModel?.didSetReporting(enabled: isOn) }
+            .store(in: &cancellables)
+
         viewModel.sharePublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in coordinator.toActivityController(with: [$0], from: self) }
+            .store(in: &cancellables)
+
+        viewModel.state
+            .removeDuplicates()
+            .map(\.isReportingOptional)
+            .sink { [unowned self] in screenView.reportingSwitcher.isHidden = !$0 }
             .store(in: &cancellables)
 
         viewModel.state
@@ -77,10 +84,7 @@ public final class SettingsAdvancedController: UIViewController {
                 screenView.logRecordingSwitcher.switcherView.setOn(state.isRecordingLogs, animated: true)
                 screenView.crashReportingSwitcher.switcherView.setOn(state.isCrashReporting, animated: true)
                 screenView.showUsernamesSwitcher.switcherView.setOn(state.isShowingUsernames, animated: true)
+                screenView.reportingSwitcher.switcherView.setOn(state.isReportingEnabled, animated: true)
             }.store(in: &cancellables)
-    }
-
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
     }
 }

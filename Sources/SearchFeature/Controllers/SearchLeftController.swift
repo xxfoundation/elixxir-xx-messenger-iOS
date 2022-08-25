@@ -19,13 +19,20 @@ final class SearchLeftController: UIViewController {
 
     lazy private var screenView = SearchLeftView()
 
+    let viewModel: SearchLeftViewModel
     private var dataSource: SearchDiffableDataSource!
-    private(set) var viewModel = SearchLeftViewModel()
     private var drawerCancellables = Set<AnyCancellable>()
     private let adrpURLString = "https://links.xx.network/adrp"
 
     private var cancellables = Set<AnyCancellable>()
     private var hudCancellables = Set<AnyCancellable>()
+
+    init(_ invitation: String? = nil) {
+        self.viewModel = .init(invitation)
+        super.init(nibName: nil, bundle: nil)
+    }
+
+    required init?(coder: NSCoder) { nil }
 
     override func loadView() {
         view = screenView
@@ -35,6 +42,11 @@ final class SearchLeftController: UIViewController {
         super.viewDidLoad()
         setupTableView()
         setupBindings()
+    }
+
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        viewModel.viewDidAppear()
     }
 
     func endEditing() {
@@ -129,6 +141,13 @@ final class SearchLeftController: UIViewController {
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in screenView.countryButton.setFlag($0.flag, prefix: $0.prefix) }
+            .store(in: &cancellables)
+
+        viewModel.statePublisher
+            .map(\.input)
+            .removeDuplicates()
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in screenView.inputField.update(content: $0) }
             .store(in: &cancellables)
 
         viewModel.statePublisher
@@ -403,7 +422,6 @@ final class SearchLeftController: UIViewController {
 
         coordinator.toDrawer(drawer, from: self)
     }
-
 }
 
 extension SearchLeftController: UITableViewDelegate {

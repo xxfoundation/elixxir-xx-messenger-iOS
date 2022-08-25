@@ -2,13 +2,15 @@ import HUD
 import UIKit
 import Shared
 import Combine
+import Defaults
 import PushFeature
 import DependencyInjection
-
 
 public final class LaunchController: UIViewController {
     @Dependency private var hud: HUD
     @Dependency private var coordinator: LaunchCoordinating
+
+    @KeyObject(.acceptedTerms, defaultValue: false) var didAcceptTerms: Bool
 
     lazy private var screenView = LaunchView()
 
@@ -51,10 +53,18 @@ public final class LaunchController: UIViewController {
             .sink { [unowned self] in
                 switch $0 {
                 case .chats:
+                    guard didAcceptTerms == true else {
+                        coordinator.toTerms(from: self)
+                        return
+                    }
+
                     if let pushRoute = pendingPushRoute {
                         switch pushRoute {
                         case .requests:
                             coordinator.toRequests(from: self)
+
+                        case .search(username: let username):
+                            coordinator.toSearch(searching: username, from: self)
 
                         case .groupChat(id: let groupId):
                             if let groupInfo = viewModel.getGroupInfoWith(groupId: groupId) {

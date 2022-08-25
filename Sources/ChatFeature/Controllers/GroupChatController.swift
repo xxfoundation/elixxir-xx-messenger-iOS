@@ -1,3 +1,4 @@
+import HUD
 import UIKit
 import Theme
 import Models
@@ -6,8 +7,10 @@ import Combine
 import XXModels
 import Voxophone
 import ChatLayout
+import Integration
 import DrawerFeature
 import DifferenceKit
+import ReportingFeature
 import ChatInputFeature
 import DependencyInjection
 
@@ -19,7 +22,12 @@ typealias OutgoingFailedGroupTextCell = CollectionCell<FlexibleSpace, StackMessa
 typealias OutgoingFailedGroupReplyCell = CollectionCell<FlexibleSpace, ReplyStackMessageView>
 
 public final class GroupChatController: UIViewController {
+    @Dependency private var hud: HUD
+    @Dependency private var session: SessionType
     @Dependency private var coordinator: ChatCoordinating
+    @Dependency private var reportingStatus: ReportingStatus
+    @Dependency private var makeReportDrawer: MakeReportDrawer
+    @Dependency private var makeAppScreenshot: MakeAppScreenshot
     @Dependency private var statusBarController: StatusBarStyleControlling
 
     private let members: MembersController
@@ -32,7 +40,6 @@ public final class GroupChatController: UIViewController {
     private let viewModel: GroupChatViewModel
     private let layoutDelegate = LayoutDelegate()
     private var cancellables = Set<AnyCancellable>()
-    private var drawerCancellables = Set<AnyCancellable>()
     private var sections = [ArraySection<ChatSection, Message>]()
     private var currentInterfaceActions = SetActor<Set<InterfaceActions>, ReactionTypes>()
 
@@ -122,14 +129,10 @@ public final class GroupChatController: UIViewController {
     }
 
     private func setupNavigationBar() {
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-
         let more = UIButton()
         more.setImage(Asset.chatMore.image, for: .normal)
         more.addTarget(self, action: #selector(didTapDots), for: .touchUpInside)
 
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: back)
         navigationItem.titleView = header
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: more)
     }
@@ -178,6 +181,17 @@ public final class GroupChatController: UIViewController {
                 case .webview(let urlString):
                     coordinator.toWebview(with: urlString, from: self)
                 }
+            }.store(in: &cancellables)
+
+        viewModel.hudPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [hud] in hud.update(with: $0) }
+            .store(in: &cancellables)
+
+        viewModel.reportPopupPublisher
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] contact in
+                presentReportDrawer(contact)
             }.store(in: &cancellables)
 
         viewModel.messages
@@ -229,12 +243,21 @@ public final class GroupChatController: UIViewController {
             .store(in: &cancellables)
     }
 
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
-    }
-
     @objc private func didTapDots() {
         coordinator.toMembersList(members, from: self)
+    }
+
+    private func presentReportDrawer(_ contact: Contact) {
+        var config = MakeReportDrawer.Config()
+        config.onReport = { [weak self] in
+            guard let self = self else { return }
+            let screenshot = try! self.makeAppScreenshot()
+            self.viewModel.report(contact: contact, screenshot: screenshot) {
+                self.collectionView.reloadData()
+            }
+        }
+        let drawer = makeReportDrawer(config)
+        coordinator.toDrawer(drawer, from: self)
     }
 
     private func makeWaitingRoundDrawer() -> UIViewController {
@@ -256,11 +279,8 @@ public final class GroupChatController: UIViewController {
         button.action
             .receive(on: DispatchQueue.main)
             .sink { [weak drawer] in
-                drawer?.dismiss(animated: true) { [weak self] in
-                    guard let self = self else { return }
-                    self.drawerCancellables.removeAll()
-                }
-            }.store(in: &drawerCancellables)
+                drawer?.dismiss(animated: true)
+            }.store(in: &drawer.cancellables)
 
         return drawer
     }
@@ -325,7 +345,7 @@ extension GroupChatController: UICollectionViewDataSource {
         cellForItemAt indexPath: IndexPath
     ) -> UICollectionViewCell {
 
-        let item = sections[indexPath.section].elements[indexPath.item]
+        var item = sections[indexPath.section].elements[indexPath.item]
         let canReply: () -> Bool = {
             (item.status == .sent || item.status == .received) && item.networkId != nil
         }
@@ -338,7 +358,30 @@ extension GroupChatController: UICollectionViewDataSource {
         let showRound: (String?) -> Void = viewModel.showRoundFrom(_:)
         let replyContent: (Data) -> (String, String) = viewModel.getReplyContent(for:)
 
+        var isSenderBanned = false
+
+        if let sender = try? session.dbManager.fetchContacts(.init(id: [item.senderId])).first {
+            isSenderBanned = sender.isBanned
+        }
+
         if item.status == .received {
+            guard isSenderBanned == false else {
+                item.text = "This user has been banned"
+
+                let cell: IncomingGroupTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
+                Bubbler.buildGroup(
+                    bubble: cell.leftView,
+                    with: item,
+                    with: "Banned user"
+                )
+
+                cell.canReply = false
+                cell.performReply = {}
+                cell.leftView.didTapShowRound = {}
+
+                return cell
+            }
+
             if let replyMessageId = item.replyMessageId {
                 let cell: IncomingGroupReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
 
@@ -552,21 +595,29 @@ extension GroupChatController: UICollectionViewDelegate {
                 self?.viewModel.didRequestDelete([item])
             }
 
+            let report = UIAction(title: Localized.Chat.BubbleMenu.report, state: .off) { [weak self] _ in
+                self?.viewModel.didRequestReport(item)
+            }
+
             let retry = UIAction(title: Localized.Chat.BubbleMenu.retry, state: .off) { [weak self] _ in
                 self?.viewModel.retry(item)
             }
 
-            let menu: UIMenu
+            var children = [UIAction]()
 
             if item.status == .sendingFailed {
-                menu = UIMenu(title: "", children: [copy, retry, delete])
+                children = [copy, retry, delete]
             } else if item.status == .sending {
-                menu = UIMenu(title: "", children: [copy])
+                children = [copy]
             } else {
-                menu = UIMenu(title: "", children: [copy, reply, delete])
+                children = [copy, reply, delete]
+
+                if self.reportingStatus.isEnabled() {
+                    children.append(report)
+                }
             }
 
-            return menu
+            return UIMenu(title: "", children: children)
         }
     }
 }

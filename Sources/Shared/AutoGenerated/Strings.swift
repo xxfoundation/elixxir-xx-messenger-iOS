@@ -218,7 +218,9 @@ public enum Localized {
       public static let login = Localized.tr("Localizable", "accountRestore.sftp.login")
       /// Password
       public static let password = Localized.tr("Localizable", "accountRestore.sftp.password")
-      /// Login to your server. Your credentials will be automatically and securely saved locally on your device.
+      /// Login to your server. Your credentials will be automatically and securely saved locally on your device. Your backups are encrypted and protected by your backup password which is stored separately from these credentials.
+      /// 
+      /// *Please Note: at this time, host key fingerprint checking is not implemented. If the server's fingerprint changes you will not be notified.*
       public static let subtitle = Localized.tr("Localizable", "accountRestore.sftp.subtitle")
       /// Login to your SFTP
       public static let title = Localized.tr("Localizable", "accountRestore.sftp.title")
@@ -272,6 +274,22 @@ public enum Localized {
       /// Backup settings
       public static let title = Localized.tr("Localizable", "backup.config.title")
     }
+    public enum Passphrase {
+      /// Cancel
+      public static let cancel = Localized.tr("Localizable", "backup.passphrase.cancel")
+      /// Set password and continue
+      public static let `continue` = Localized.tr("Localizable", "backup.passphrase.continue")
+      /// Please select a password for your backup. If you lose this password, you will not be able to restore your account. Make sure to keep a record somewhere safe. Your password needs to be at least 8 characters with at least 1 uppercase, 1 lowercase and 1 number characters
+      public static let subtitle = Localized.tr("Localizable", "backup.passphrase.subtitle")
+      /// Secure your backup
+      public static let title = Localized.tr("Localizable", "backup.passphrase.title")
+      public enum Input {
+        /// * * * * * *
+        public static let placeholder = Localized.tr("Localizable", "backup.passphrase.input.placeholder")
+        /// Passphrase
+        public static let title = Localized.tr("Localizable", "backup.passphrase.input.title")
+      }
+    }
     public enum Setup {
       /// Setup your #backup service#.
       public static let title = Localized.tr("Localizable", "backup.setup.title")
@@ -322,6 +340,8 @@ public enum Localized {
       public static let delete = Localized.tr("Localizable", "chat.bubbleMenu.delete")
       /// Reply
       public static let reply = Localized.tr("Localizable", "chat.bubbleMenu.reply")
+      /// Report
+      public static let report = Localized.tr("Localizable", "chat.bubbleMenu.report")
       /// Retry
       public static let retry = Localized.tr("Localizable", "chat.bubbleMenu.retry")
       /// Select
@@ -349,6 +369,16 @@ public enum Localized {
       /// All
       public static let deleteAll = Localized.tr("Localizable", "chat.menu.deleteAll")
     }
+    public enum Report {
+      /// Confirm and Report
+      public static let action = Localized.tr("Localizable", "chat.report.action")
+      /// Cancel
+      public static let cancel = Localized.tr("Localizable", "chat.report.cancel")
+      /// Reporting this user will block them, delete them from your connections and you won’t see direct messages from them again. In case this user is marked as banned user by us you also won’t see any new group chat messages from this user
+      public static let subtitle = Localized.tr("Localizable", "chat.report.subtitle")
+      /// Report user
+      public static let title = Localized.tr("Localizable", "chat.report.title")
+    }
     public enum RetrySheet {
       /// Cancel
       public static let cancel = Localized.tr("Localizable", "chat.retrySheet.cancel")
@@ -368,6 +398,8 @@ public enum Localized {
       public static let clear = Localized.tr("Localizable", "chat.sheetMenu.clear")
       /// View contact profile
       public static let details = Localized.tr("Localizable", "chat.sheetMenu.details")
+      /// Report user
+      public static let report = Localized.tr("Localizable", "chat.sheetMenu.report")
     }
   }
 
@@ -481,11 +513,11 @@ public enum Localized {
         public static func description(_ p1: Any) -> String {
           return Localized.tr("Localizable", "contact.delete.drawer.description", String(describing: p1))
         }
-        /// Delete Connection?
+        /// Delete and block connection?
         public static let title = Localized.tr("Localizable", "contact.delete.drawer.title")
       }
       public enum Info {
-        /// Delete Connection
+        /// Delete and block connection
         public static let title = Localized.tr("Localizable", "contact.delete.info.title")
       }
     }
@@ -633,6 +665,8 @@ public enum Localized {
     public static let contacts = Localized.tr("Localizable", "menu.contacts")
     /// Dashboard
     public static let dashboard = Localized.tr("Localizable", "menu.dashboard")
+    /// Join xx network
+    public static let join = Localized.tr("Localizable", "menu.join")
     /// Profile
     public static let profile = Localized.tr("Localizable", "menu.profile")
     /// Requests
@@ -641,6 +675,16 @@ public enum Localized {
     public static let scan = Localized.tr("Localizable", "menu.scan")
     /// Settings
     public static let settings = Localized.tr("Localizable", "menu.settings")
+    /// Share my profile
+    public static let share = Localized.tr("Localizable", "menu.share")
+    /// Hi, I'm using xx messenger, you can download it here:
+    /// https://invite.xx.network
+    /// 
+    /// And you can add me using this link:
+    /// %@
+    public static func shareContent(_ p1: Any) -> String {
+      return Localized.tr("Localizable", "menu.shareContent", String(describing: p1))
+    }
     /// Hello
     public static let title = Localized.tr("Localizable", "menu.title")
     /// Version %@
@@ -1010,13 +1054,13 @@ public enum Localized {
       }
     }
     public enum Error {
-      /// Camera needs permission to be used
-      public static let denied = Localized.tr("Localizable", "scan.error.denied")
       /// You've already added 
       /// #%@#
-      public static func friends(_ p1: Any) -> String {
-        return Localized.tr("Localizable", "scan.error.friends", String(describing: p1))
+      public static func alreadyFriends(_ p1: Any) -> String {
+        return Localized.tr("Localizable", "scan.error.alreadyFriends", String(describing: p1))
       }
+      /// Camera needs permission to be used
+      public static let cameraPermissionNeeded = Localized.tr("Localizable", "scan.error.cameraPermissionNeeded")
       /// Something’s gone wrong. Please try again.
       public static let general = Localized.tr("Localizable", "scan.error.general")
       /// Invalid QR code
@@ -1039,6 +1083,8 @@ public enum Localized {
       public static let `right` = Localized.tr("Localizable", "scan.segmentedControl.right")
     }
     public enum Status {
+      /// Processing...
+      public static let processing = Localized.tr("Localizable", "scan.status.processing")
       /// Place QR code inside frame to scan
       public static let reading = Localized.tr("Localizable", "scan.status.reading")
       /// Success
@@ -1079,6 +1125,12 @@ public enum Localized {
         public static let description = Localized.tr("Localizable", "settings.advanced.logs.description")
         /// Record logs
         public static let title = Localized.tr("Localizable", "settings.advanced.logs.title")
+      }
+      public enum Reporting {
+        /// Allows you to report users sending innapropriate content
+        public static let description = Localized.tr("Localizable", "settings.advanced.reporting.description")
+        /// Enable user reporting feature
+        public static let title = Localized.tr("Localizable", "settings.advanced.reporting.title")
       }
       public enum ShowUsername {
         /// Allow us to show a more detailed push notification
@@ -1208,6 +1260,17 @@ public enum Localized {
     }
   }
 
+  public enum Terms {
+    /// Accept and proceed
+    public static let accept = Localized.tr("Localizable", "terms.accept")
+    /// By enabling the checkbox on the left, you agree with the terms and conditions.
+    public static let radio = Localized.tr("Localizable", "terms.radio")
+    /// Show terms and conditions
+    public static let show = Localized.tr("Localizable", "terms.show")
+    /// Terms #&# Conditions
+    public static let title = Localized.tr("Localizable", "terms.title")
+  }
+
   public enum Ud {
     /// There are no users with that %@.
     public static func noneFound(_ p1: Any) -> String {
@@ -1257,9 +1320,9 @@ public enum Localized {
         return Localized.tr("Localizable", "ud.search.input", String(describing: p1))
       }
       public enum Placeholder {
-        /// Your searches are anonymous. Search information is never linked to your account or personally identifiable.
+        /// Your searches are private. Search information is never linked to your account or personally identifiable.
         public static let subtitle = Localized.tr("Localizable", "ud.search.placeholder.subtitle")
-        /// Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.
+        /// Search for #friends# privately, add them to your #connections# to start a completely private messaging channel.
         public static let title = Localized.tr("Localizable", "ud.search.placeholder.title")
       }
     }

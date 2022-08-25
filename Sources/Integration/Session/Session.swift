@@ -10,6 +10,7 @@ import Foundation
 import ToastFeature
 import BackupFeature
 import NetworkMonitor
+import ReportingFeature
 import DependencyInjection
 import XXLegacyDatabaseMigrator
 
@@ -50,6 +51,7 @@ public final class Session: SessionType {
 
     @Dependency var backupService: BackupService
     @Dependency var toastController: ToastController
+    @Dependency var reportingStatus: ReportingStatus
     @Dependency var networkMonitor: NetworkMonitoring
 
     public let client: Client
@@ -140,9 +142,7 @@ public final class Session: SessionType {
             }
         }
 
-        print("^^^ \(report.parameters)")
-
-        guard username!.isEmpty == false else {
+        guard let username = username, username.isEmpty == false else {
             fatalError("Trying to restore an account that has no username")
         }
 
@@ -444,6 +444,7 @@ public final class Session: SessionType {
         client.messages
             .sink { [unowned self] in
                 if var contact = try? dbManager.fetchContacts(.init(id: [$0.senderId])).first {
+                    guard contact.isBanned == false else { return }
                     contact.isRecent = false
                     _ = try? dbManager.saveContact(contact)
                 }
@@ -459,6 +460,12 @@ public final class Session: SessionType {
             .sink { [unowned self] request in
                 if let _ = try? dbManager.fetchGroups(.init(id: [request.0.id])).first {
                     return
+                }
+
+                if let contact = try! dbManager.fetchContacts(.init(id: [request.0.leaderId])).first {
+                    if reportingStatus.isEnabled(), (contact.isBlocked || contact.isBanned) {
+                        return
+                    }
                 }
 
                 DispatchQueue.global().async { [weak self] in

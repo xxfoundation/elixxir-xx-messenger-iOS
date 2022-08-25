@@ -36,6 +36,13 @@ public final class ChatListController: UIViewController {
         }
     }
 
+    public override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
+        super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
+        navigationItem.backButtonTitle = ""
+    }
+
+    required init?(coder: NSCoder) { nil }
+
     public override func loadView() {
         view = screenView
     }
@@ -55,7 +62,6 @@ public final class ChatListController: UIViewController {
     }
 
     private func setupNavigationBar() {
-        navigationItem.backButtonTitle = ""
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: topLeftView)
         navigationItem.rightBarButtonItem = UIBarButtonItem(customView: topRightView)
 

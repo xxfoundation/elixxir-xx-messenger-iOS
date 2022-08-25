@@ -9,6 +9,7 @@ public enum MenuItem {
     case join
     case scan
     case chats
+    case share
     case profile
     case contacts
     case requests
@@ -168,6 +169,19 @@ public final class MenuController: UIViewController {
                             guard let url = URL(string: "https://xx.network") else { return }
                             UIApplication.shared.open(url, options: [:])
                         }
+                }
+            }.store(in: &cancellables)
+
+        screenView.shareButton
+            .publisher(for: .touchUpInside)
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+                dismiss(animated: true) { [weak self] in
+                    guard let self = self, self.previousItem != .share else { return }
+                    self.coordinator.toActivityController(
+                        with: [Localized.Menu.shareContent(self.viewModel.referralDeeplink)],
+                        from: self.previousController
+                    )
                 }
             }.store(in: &cancellables)
 

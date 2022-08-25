@@ -22,6 +22,7 @@ public final class ProfileCodeController: UIViewController {
 
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
+        navigationItem.backButtonTitle = ""
         navigationController?.navigationBar
             .customize(backgroundColor: Asset.neutralWhite.color)
     }
@@ -39,18 +40,9 @@ public final class ProfileCodeController: UIViewController {
 
     public override func viewDidLoad() {
         super.viewDidLoad()
-        setupNavigationBar()
         setupScrollView()
         setupBindings()
         setupDetail()
-    }
-
-    private func setupNavigationBar() {
-        navigationItem.backButtonTitle = " "
-
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: back)
     }
 
     private func setupScrollView() {
@@ -127,9 +119,5 @@ public final class ProfileCodeController: UIViewController {
         }
 
         screenView.set(content, isEmail: confirmation.isEmail)
-    }
-
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
     }
 }

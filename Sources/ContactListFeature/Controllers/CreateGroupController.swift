@@ -40,22 +40,25 @@ public final class CreateGroupController: UIViewController {
         view = screenView
     }
 
+    public override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationItem.backButtonTitle = ""
+        navigationController?.navigationBar
+            .customize(backgroundColor: Asset.neutralWhite.color)
+    }
+
     public override func viewDidLoad() {
         super.viewDidLoad()
         setupNavigationBar()
         setupTableAndCollection()
         setupBindings()
+
+        count = 0
     }
 
     private func setupNavigationBar() {
-        navigationItem.backButtonTitle = " "
-
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            customView: UIStackView(arrangedSubviews: [back, titleLabel])
-        )
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: titleLabel)
+        navigationItem.leftItemsSupplementBackButton = true
 
         createButton.setTitle(Localized.CreateGroup.create, for: .normal)
         createButton.setTitleColor(Asset.brandPrimary.color, for: .normal)
@@ -165,10 +168,6 @@ public final class CreateGroupController: UIViewController {
                     }
                 )
             }.store(in: &cancellables)
-    }
-
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
     }
 }
 

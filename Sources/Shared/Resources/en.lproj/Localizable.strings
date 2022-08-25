@@ -8,6 +8,10 @@
 = "Connections";
 "menu.requests"
 = "Requests";
+"menu.join"
+= "Join xx network";
+"menu.share"
+= "Share my profile";
 "menu.viewProfile"
 = "View Profile";
 "menu.profile"
@@ -22,6 +26,8 @@
 = "Build %@";
 "menu.version"
 = "Version %@";
+"menu.shareContent"
+= "Hi, I'm using xx messenger, you can download it here:\nhttps://invite.xx.network\n\nAnd you can add me using this link:\n%@";
 
 // ChatListFeature
 
@@ -108,6 +114,8 @@
 = "Select";
 "chat.bubbleMenu.retry"
 = "Retry";
+"chat.bubbleMenu.report"
+= "Report";
 
 "chat.e2e.placeholder"
 = "You and %@ now have a #quantum-secure#, completely private channel for messaging.\n#Say hello#!";
@@ -119,6 +127,8 @@
 = "Clear chat";
 "chat.sheetMenu.details"
 = "View contact profile";
+"chat.sheetMenu.report"
+= "Report user";
 "chat.retrySheet.retry"
 = "Try again";
 "chat.retrySheet.delete"
@@ -168,10 +178,23 @@
 "chat.clear.cancel"
 = "Cancel";
 
+// ChatFeature - Report
+
+"chat.report.title"
+= "Report user";
+"chat.report.subtitle"
+= "Reporting this user will block them, delete them from your connections and you won’t see direct messages from them again. In case this user is marked as banned user by us you also won’t see any new group chat messages from this user";
+"chat.report.action"
+= "Confirm and Report";
+"chat.report.cancel"
+= "Cancel";
+
 // ScanFeature
 
 "scan.status.reading"
 = "Place QR code inside frame to scan";
+"scan.status.processing"
+= "Processing...";
 "scan.status.success"
 = "Success";
 "scan.display.copied"
@@ -197,7 +220,7 @@
 = "Scan Code";
 "scan.segmentedControl.right"
 = "My Code";
-"scan.error.denied"
+"scan.error.cameraPermissionNeeded"
 = "Camera needs permission to be used";
 "scan.error.invalid"
 = "Invalid QR code";
@@ -205,7 +228,7 @@
 = "Something’s gone wrong. Please try again.";
 "scan.error.requested"
 = "You already have a request open with this contact.";
-"scan.error.friends"
+"scan.error.alreadyFriends"
 = "You've already added \n#%@#";
 "scan.error.pending"
 = "This user is already pending in your contact list";
@@ -235,9 +258,9 @@
 // ContactFeature - Delete
 
 "contact.delete.info.title"
-= "Delete Connection";
+= "Delete and block connection";
 "contact.delete.drawer.title"
-= "Delete Connection?";
+= "Delete and block connection?";
 "contact.delete.drawer.description"
 = "This is a silent deletion, %@ will not know you deleted them. This action will remove all information on your phone about this user, including your communications. You #cannot undo this step, and cannot re-add them unless they delete you as a connection as well.#";
 
@@ -607,6 +630,10 @@
 = "Enable crash reporting";
 "settings.advanced.crashes.description"
 = "Automatically sends anonymous reports containing crash data";
+"settings.advanced.reporting.title"
+= "Enable user reporting feature";
+"settings.advanced.reporting.description"
+= "Allows you to report users sending innapropriate content";
 "settings.advanced.accountBackup.title"
 = "Account Backup";
 
@@ -629,6 +656,19 @@
 "backup.config.infrastructure"
 = "Backup over";
 
+"backup.passphrase.title"
+= "Secure your backup";
+"backup.passphrase.subtitle"
+= "Please select a password for your backup. If you lose this password, you will not be able to restore your account. Make sure to keep a record somewhere safe. Your password needs to be at least 8 characters with at least 1 uppercase, 1 lowercase and 1 number characters";
+"backup.passphrase.input.title"
+= "Passphrase";
+"backup.passphrase.input.placeholder"
+= "* * * * * *";
+"backup.passphrase.continue"
+= "Set password and continue";
+"backup.passphrase.cancel"
+= "Cancel";
+
 "backup.iCloud"
 = "iCloud";
 "backup.dropbox"
@@ -637,6 +677,17 @@
 = "Google Drive";
 "backup.SFTP"
 = "SFTP";
+
+// Terms & Conditions
+
+"terms.title"
+= "Terms #&# Conditions";
+"terms.radio"
+= "By enabling the checkbox on the left, you agree with the terms and conditions.";
+"terms.accept"
+= "Accept and proceed";
+"terms.show"
+= "Show terms and conditions";
 
 // Settings - Delete Account
 
@@ -849,7 +900,7 @@
 "accountRestore.sftp.title"
 = "Login to your SFTP";
 "accountRestore.sftp.subtitle"
-= "Login to your server. Your credentials will be automatically and securely saved locally on your device.";
+= "Login to your server. Your credentials will be automatically and securely saved locally on your device. Your backups are encrypted and protected by your backup password which is stored separately from these credentials.\n\n*Please Note: at this time, host key fingerprint checking is not implemented. If the server's fingerprint changes you will not be notified.*";
 "accountRestore.sftp.host"
 = "Host";
 "accountRestore.sftp.username"
@@ -995,9 +1046,9 @@
 = "Cancel search";
 
 "ud.search.placeholder.title"
-= "Search for #friends# anonymously, add them to your #connections# to start a completely private messaging channel.";
+= "Search for #friends# privately, add them to your #connections# to start a completely private messaging channel.";
 "ud.search.placeholder.subtitle"
-= "Your searches are anonymous. Search information is never linked to your account or personally identifiable.";
+= "Your searches are private. Search information is never linked to your account or personally identifiable.";
 
 // LaunchFeature
 

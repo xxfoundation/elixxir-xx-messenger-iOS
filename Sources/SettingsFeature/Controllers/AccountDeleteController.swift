@@ -28,7 +28,6 @@ public final class AccountDeleteController: UIViewController {
 
     public override func viewDidLoad() {
         super.viewDidLoad()
-        setupNavigationBar()
         setupScrollView()
         setupBindings()
 
@@ -40,12 +39,6 @@ public final class AccountDeleteController: UIViewController {
                 subtitle: Localized.Settings.Delete.Info.subtitle
             )
         }
-    }
-
-    private func setupNavigationBar() {
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: back)
     }
 
     private func setupScrollView() {
@@ -82,10 +75,6 @@ public final class AccountDeleteController: UIViewController {
         screenView.cancelButton.publisher(for: .touchUpInside)
             .sink { [unowned self] in navigationController?.popViewController(animated: true) }
             .store(in: &cancellables)
-    }
-
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
     }
 
     private func presentInfo(title: String, subtitle: String) {

@@ -136,7 +136,7 @@ public final class SettingsController: UIViewController {
                     title: Localized.Settings.Drawer.title(Localized.Settings.privacyPolicy),
                     subtitle: Localized.Settings.Drawer.subtitle(Localized.Settings.privacyPolicy),
                     actionTitle: Localized.ChatList.Dashboard.open) {
-                        guard let url = URL(string: "https://xx.network/privategrity-corporation-privacy-policy") else { return }
+                        guard let url = URL(string: "https://elixxir.io/privategrity-corporation-privacy-policy/") else { return }
                         UIApplication.shared.open(url, options: [:])
                     }
             }.store(in: &cancellables)
@@ -149,7 +149,7 @@ public final class SettingsController: UIViewController {
                     title: Localized.Settings.Drawer.title(Localized.Settings.disclosures),
                     subtitle: Localized.Settings.Drawer.subtitle(Localized.Settings.disclosures),
                     actionTitle: Localized.ChatList.Dashboard.open) {
-                        guard let url = URL(string: "https://xx.network/privategrity-corporation-terms-of-use") else { return }
+                        guard let url = URL(string: "https://elixxir.io/privategrity-corporation-terms-of-use/") else { return }
                         UIApplication.shared.open(url, options: [:])
                     }
             }.store(in: &cancellables)

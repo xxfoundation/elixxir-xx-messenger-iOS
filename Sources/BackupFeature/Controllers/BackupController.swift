@@ -11,6 +11,13 @@ public final class BackupController: UIViewController {
     private let viewModel = BackupViewModel.live()
     private var cancellables = Set<AnyCancellable>()
 
+    public override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        navigationItem.backButtonTitle = ""
+        navigationController?.navigationBar
+            .customize(backgroundColor: Asset.neutralWhite.color)
+    }
+
     public override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = Asset.neutralWhite.color
@@ -21,19 +28,12 @@ public final class BackupController: UIViewController {
     }
 
     private func setupNavigationBar() {
-        navigationItem.backButtonTitle = ""
-
         let title = UILabel()
         title.text = Localized.Backup.header
         title.textColor = Asset.neutralActive.color
         title.font = Fonts.Mulish.semiBold.font(size: 18.0)
-
-        let back = UIButton.back()
-        back.addTarget(self, action: #selector(didTapBack), for: .touchUpInside)
-
-        navigationItem.leftBarButtonItem = UIBarButtonItem(
-            customView: UIStackView(arrangedSubviews: [back, title])
-        )
+        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: title)
+        navigationItem.leftItemsSupplementBackButton = true
     }
 
     private func setupBindings() {
@@ -69,9 +69,5 @@ public final class BackupController: UIViewController {
                 newValue.didMove(toParent: self)
             }
         }
-    }
-
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
     }
 }

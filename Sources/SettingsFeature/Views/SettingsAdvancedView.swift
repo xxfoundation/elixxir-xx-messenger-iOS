@@ -7,6 +7,7 @@ final class SettingsAdvancedView: UIView {
     let logRecordingSwitcher = SettingsSwitcher()
     let crashReportingSwitcher = SettingsSwitcher()
     let showUsernamesSwitcher = SettingsSwitcher()
+    let reportingSwitcher = SettingsSwitcher()
 
     init() {
         super.init(frame: .zero)
@@ -33,21 +34,29 @@ final class SettingsAdvancedView: UIView {
             icon: Asset.settingsCrash.image
         )
 
+        reportingSwitcher.set(
+            title: Localized.Settings.Advanced.Reporting.title,
+            text: Localized.Settings.Advanced.Reporting.description,
+            icon: Asset.settingsCrash.image
+        )
+
         stackView.axis = .vertical
         stackView.addArrangedSubview(logRecordingSwitcher)
         stackView.addArrangedSubview(crashReportingSwitcher)
         stackView.addArrangedSubview(showUsernamesSwitcher)
+        stackView.addArrangedSubview(reportingSwitcher)
 
         stackView.setCustomSpacing(20, after: logRecordingSwitcher)
         stackView.setCustomSpacing(10, after: crashReportingSwitcher)
         stackView.setCustomSpacing(10, after: showUsernamesSwitcher)
+        stackView.setCustomSpacing(10, after: reportingSwitcher)
 
         addSubview(stackView)
 
-        stackView.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(24)
-            make.left.equalToSuperview().offset(16)
-            make.right.equalToSuperview().offset(-16)
+        stackView.snp.makeConstraints {
+            $0.top.equalToSuperview().offset(24)
+            $0.left.equalToSuperview().offset(16)
+            $0.right.equalToSuperview().offset(-16)
         }
     }
 

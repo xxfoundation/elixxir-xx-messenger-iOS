@@ -30,7 +30,7 @@ public extension CapsuleButtonStyle {
         borderWidth: 0,
         borderColor: nil,
         titleColor: Asset.brandPrimary.color,
-        disabledTitleColor: Asset.neutralWhite.color
+        disabledTitleColor: Asset.neutralWhite.color.withAlphaComponent(0.5)
     )
 
     static let brandColored = CapsuleButtonStyle(

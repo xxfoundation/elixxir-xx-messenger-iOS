@@ -3,9 +3,11 @@ import UIKit
 import Models
 import Shared
 import Combine
+import Defaults
 import XXModels
 import Integration
 import ToastFeature
+import ReportingFeature
 import CombineSchedulers
 import DependencyInjection
 
@@ -16,6 +18,7 @@ struct RequestSent: Hashable, Equatable {
 
 final class RequestsSentViewModel {
     @Dependency private var session: SessionType
+    @Dependency private var reportingStatus: ReportingStatus
     @Dependency private var toastController: ToastController
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
@@ -33,10 +36,14 @@ final class RequestsSentViewModel {
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
     init() {
-        let query = Contact.Query(authStatus: [
-            .requested,
-            .requesting
-        ])
+        let query = Contact.Query(
+            authStatus: [
+                .requested,
+                .requesting
+            ],
+            isBlocked: reportingStatus.isEnabled() ? false : nil,
+            isBanned: reportingStatus.isEnabled() ? false : nil
+        )
 
         session.dbManager.fetchContactsPublisher(query)
             .assertNoFailure()
