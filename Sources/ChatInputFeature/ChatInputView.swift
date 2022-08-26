@@ -122,7 +122,12 @@ public final class ChatInputView: UIToolbar {
             .map(\.text)
             .sink { [unowned self] in
                 if text.textView.markedTextRange == nil {
+                    let range = text.textView.selectedTextRange
                     text.textView.text = $0
+
+                    if let range = range {
+                        text.textView.selectedTextRange = range
+                    }
                 } else if $0 == "" {
                     text.textView.text = $0
                 }
