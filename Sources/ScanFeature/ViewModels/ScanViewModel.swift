@@ -32,8 +32,8 @@ final class ScanViewModel {
     var backgroundScheduler: AnySchedulerOf<DispatchQueue>
         = DispatchQueue.global().eraseToAnyScheduler()
 
-    var contactPublisher: AnyPublisher<Contact, Never> { contactRelay.eraseToAnyPublisher() }
-    private let contactRelay = PassthroughSubject<Contact, Never>()
+    var contactPublisher: AnyPublisher<XXModels.Contact, Never> { contactRelay.eraseToAnyPublisher() }
+    private let contactRelay = PassthroughSubject<XXModels.Contact, Never>()
 
     var state: AnyPublisher<ScanViewState, Never> { stateRelay.eraseToAnyPublisher() }
     private let stateRelay = CurrentValueSubject<ScanViewState, Never>(.init())
@@ -73,7 +73,7 @@ final class ScanViewModel {
                     return
                 }
 
-                let facts = try? self.getFactsFromContact(contact: data)
+                let facts = try? self.getFactsFromContact(data)
                 let contactEmail = facts?.first(where: { $0.type == FactType.email.rawValue })?.fact
                 let contactPhone = facts?.first(where: { $0.type == FactType.phone.rawValue })?.fact
 
@@ -99,14 +99,14 @@ final class ScanViewModel {
 
     private func verifyScanned(_ data: Data) throws -> (String, Data)? {
         let id = try? GetIdFromContact.live(data)
-        let facts = try? getFactsFromContact(contact: data)
+        let facts = try? getFactsFromContact(data)
         let username = facts?.first(where: { $0.type == FactType.username.rawValue })?.fact
 
         guard let id = id, let username = username else { return nil }
         return (username, id)
     }
 
-    private func succeed(with contact: Contact) {
+    private func succeed(with contact: XXModels.Contact) {
         stateRelay.value.status = .success
         contactRelay.send(contact)
     }

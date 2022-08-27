@@ -13,6 +13,7 @@ import NetworkMonitor
 import ReportingFeature
 import CombineSchedulers
 import DependencyInjection
+import XXMessengerClient
 
 typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchItem>
 
@@ -24,24 +25,22 @@ struct SearchLeftViewState {
 }
 
 final class SearchLeftViewModel {
-    @Dependency var e2e: E2E
-    @Dependency var cMix: CMix
     @Dependency var database: Database
-    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var messenger: Messenger
     @Dependency var reportingStatus: ReportingStatus
     @Dependency var networkMonitor: NetworkMonitoring
 
     @KeyObject(.username, defaultValue: nil) var username: String?
 
     var myId: Data {
-        try! GetIdFromContact.live(userDiscovery.getContact())
+        try! messenger.ud.get()!.getContact().getId()
     }
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
     }
 
-    var successPublisher: AnyPublisher<Contact, Never> {
+    var successPublisher: AnyPublisher<XXModels.Contact, Never> {
         successSubject.eraseToAnyPublisher()
     }
 
@@ -53,7 +52,7 @@ final class SearchLeftViewModel {
 
     private var invitation: String?
     private var searchCancellables = Set<AnyCancellable>()
-    private let successSubject = PassthroughSubject<Contact, Never>()
+    private let successSubject = PassthroughSubject<XXModels.Contact, Never>()
     private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
     private let stateSubject = CurrentValueSubject<SearchLeftViewState, Never>(.init())
     private var networkCancellable = Set<AnyCancellable>()
@@ -70,17 +69,17 @@ final class SearchLeftViewModel {
 
             networkCancellable.removeAll()
 
-            networkMonitor.statusPublisher
-                .first { $0 == .available }
-                .eraseToAnyPublisher()
-                .flatMap { _ in self.session.waitForNodes(timeout: 5) }
-                .sink {
-                    if case .failure(let error) = $0 {
-                        self.hudSubject.send(.error(.init(with: error)))
-                    }
-                } receiveValue: {
-                    self.didStartSearching()
-                }.store(in: &networkCancellable)
+//            networkMonitor.statusPublisher
+//                .first { $0 == .available }
+//                .eraseToAnyPublisher()
+//                .flatMap { _ in self.session.waitForNodes(timeout: 5) }
+//                .sink {
+//                    if case .failure(let error) = $0 {
+//                        self.hudSubject.send(.error(.init(with: error)))
+//                    }
+//                } receiveValue: {
+//                    self.didStartSearching()
+//                }.store(in: &networkCancellable)
         }
     }
 
@@ -113,7 +112,7 @@ final class SearchLeftViewModel {
             content += stateSubject.value.country.code
         }
 
-        let nrr = try! cMix.getNodeRegistrationStatus()
+        let nrr = try! messenger.cMix.get()!.getNodeRegistrationStatus()
         print("^^^ NRR: \(nrr.ratio)")
 
         backgroundScheduler.schedule { [weak self] in
@@ -121,16 +120,29 @@ final class SearchLeftViewModel {
 
             do {
                 let report = try SearchUD.live(
-                    e2eId: self.e2e.getId(),
-                    udContact: self.userDiscovery.getContact(),
+                    e2eId: self.messenger.e2e.get()!.getId(),
+                    udContact: self.messenger.ud.get()!.getContact(),
                     facts: [Fact(fact: content, type: self.stateSubject.value.item.rawValue)],
                     callback: .init(handle: {
                         switch $0 {
-                        case .success(let dataArray):
-                            print("^^^ searchUD success: \(dataArray.map { $0.base64EncodedString() })")
-
+                        case .success(let results):
                              self.hudSubject.send(.none)
-//                             self.appendToLocalSearch(contact)
+                             self.appendToLocalSearch(
+                                XXModels.Contact(
+                                    id: try! results.first!.getId(),
+                                    marshaled: results.first!.data,
+                                    username: try! results.first?.getFacts().first(where: { $0.type == FactType.username.rawValue })?.fact,
+                                    email: try? results.first?.getFacts().first(where: { $0.type == FactType.email.rawValue })?.fact,
+                                    phone: try? results.first?.getFacts().first(where: { $0.type == FactType.phone.rawValue })?.fact,
+                                    nickname: nil,
+                                    photo: nil,
+                                    authStatus: .stranger,
+                                    isRecent: false,
+                                    isBlocked: false,
+                                    isBanned: false,
+                                    createdAt: Date()
+                                )
+                             )
 
                         case .failure(let error):
                             print("^^^ searchUD error: \(error.localizedDescription)")
@@ -147,7 +159,7 @@ final class SearchLeftViewModel {
         }
     }
 
-    func didTapResend(contact: Contact) {
+    func didTapResend(contact: XXModels.Contact) {
         hudSubject.send(.on)
 
         var contact = contact
@@ -159,11 +171,11 @@ final class SearchLeftViewModel {
             do {
                 try self.database.saveContact(contact)
 
-                var myFacts = try self.userDiscovery.getFacts()
+                var myFacts = try self.messenger.ud.get()!.getFacts()
                 myFacts.append(Fact(fact: self.username!, type: FactType.username.rawValue))
 
-                let _ = try self.e2e.requestAuthenticatedChannel(
-                    partnerContact: contact.id,
+                let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
+                    partner: XXClient.Contact.live(contact.marshaled!),
                     myFacts: myFacts
                 )
 
@@ -179,7 +191,7 @@ final class SearchLeftViewModel {
         }
     }
 
-    func didTapRequest(contact: Contact) {
+    func didTapRequest(contact: XXModels.Contact) {
         hudSubject.send(.on)
 
         var contact = contact
@@ -192,11 +204,11 @@ final class SearchLeftViewModel {
             do {
                 try self.database.saveContact(contact)
 
-                var myFacts = try self.userDiscovery.getFacts()
+                var myFacts = try self.messenger.ud.get()!.getFacts()
                 myFacts.append(Fact(fact: self.username!, type: FactType.username.rawValue))
 
-                let _ = try self.e2e.requestAuthenticatedChannel(
-                    partnerContact: contact.marshaled!,
+                let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
+                    partner: XXClient.Contact.live(contact.marshaled!),
                     myFacts: myFacts
                 )
 
@@ -213,14 +225,14 @@ final class SearchLeftViewModel {
         }
     }
 
-    func didSet(nickname: String, for contact: Contact) {
+    func didSet(nickname: String, for contact: XXModels.Contact) {
         if var contact = try? database.fetchContacts(.init(id: [contact.id])).first {
             contact.nickname = nickname
             _ = try? database.saveContact(contact)
         }
     }
 
-    private func appendToLocalSearch(_ user: Contact?) {
+    private func appendToLocalSearch(_ user: XXModels.Contact?) {
         var snapshot = SearchSnapshot()
 
         if var user = user {
@@ -259,7 +271,7 @@ final class SearchLeftViewModel {
         stateSubject.value.snapshot = snapshot
     }
 
-    private func removeMyself(from collection: [Contact]) -> [Contact]? {
+    private func removeMyself(from collection: [XXModels.Contact]) -> [XXModels.Contact]? {
         collection.filter { $0.id != myId }
     }
 }

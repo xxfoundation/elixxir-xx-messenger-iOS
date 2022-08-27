@@ -2,11 +2,13 @@ import HUD
 import Shared
 import Models
 import Combine
+import XXClient
 import Countries
 import InputField
-import XXClient
+import Foundation
 import CombineSchedulers
 import DependencyInjection
+import XXMessengerClient
 
 struct OnboardingPhoneViewState: Equatable {
     var input: String = ""
@@ -16,7 +18,7 @@ struct OnboardingPhoneViewState: Equatable {
 }
 
 final class OnboardingPhoneViewModel {
-    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var messenger: Messenger
 
     var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
     private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
@@ -55,7 +57,7 @@ final class OnboardingPhoneViewModel {
             let content = "\(self.stateRelay.value.input)\(self.stateRelay.value.country.code)"
 
             do {
-                let confirmationId = try self.userDiscovery.sendRegisterFact(
+                let confirmationId = try self.messenger.ud.get()!.sendRegisterFact(
                     .init(fact: content, type: FactType.phone.rawValue)
                 )
 

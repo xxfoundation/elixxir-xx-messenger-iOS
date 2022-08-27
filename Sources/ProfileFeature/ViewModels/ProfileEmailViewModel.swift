@@ -2,10 +2,12 @@ import HUD
 import Models
 import Shared
 import Combine
-import InputField
 import XXClient
+import Foundation
+import InputField
 import CombineSchedulers
 import DependencyInjection
+import XXMessengerClient
 
 struct ProfileEmailViewState: Equatable {
     var input: String = ""
@@ -16,7 +18,7 @@ struct ProfileEmailViewState: Equatable {
 final class ProfileEmailViewModel {
     // MARK: Injected
 
-    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var messenger: Messenger
 
     // MARK: Properties
 
@@ -46,7 +48,7 @@ final class ProfileEmailViewModel {
             guard let self = self else { return }
 
             do {
-                let confirmationId = try self.userDiscovery.sendRegisterFact(
+                let confirmationId = try self.messenger.ud.get()!.sendRegisterFact(
                     .init(fact: self.stateRelay.value.input, type: FactType.email.rawValue)
                 )
 

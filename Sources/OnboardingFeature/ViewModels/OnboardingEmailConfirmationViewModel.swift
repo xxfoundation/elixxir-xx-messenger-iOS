@@ -8,6 +8,7 @@ import InputField
 import XXClient
 import CombineSchedulers
 import DependencyInjection
+import XXMessengerClient
 
 struct OnboardingEmailConfirmationViewState: Equatable {
     var input: String = ""
@@ -16,7 +17,7 @@ struct OnboardingEmailConfirmationViewState: Equatable {
 }
 
 final class OnboardingEmailConfirmationViewModel {
-    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var messenger: Messenger
 
     @KeyObject(.email, defaultValue: nil) var email: String?
 
@@ -66,7 +67,7 @@ final class OnboardingEmailConfirmationViewModel {
             guard let self = self else { return }
 
             do {
-                try self.userDiscovery.confirmFact(
+                try self.messenger.ud.get()!.confirmFact(
                     confirmationId: self.confirmation.confirmationId!,
                     code: self.stateRelay.value.input
                 )

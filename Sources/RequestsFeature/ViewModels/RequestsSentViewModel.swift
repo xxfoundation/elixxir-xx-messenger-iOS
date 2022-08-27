@@ -11,6 +11,7 @@ import ToastFeature
 import ReportingFeature
 import CombineSchedulers
 import DependencyInjection
+import XXMessengerClient
 
 struct RequestSent: Hashable, Equatable {
     var request: Request
@@ -18,9 +19,8 @@ struct RequestSent: Hashable, Equatable {
 }
 
 final class RequestsSentViewModel {
-    @Dependency var e2e: E2E
     @Dependency var database: Database
-    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var messenger: Messenger
     @Dependency var reportingStatus: ReportingStatus
     @Dependency var toastController: ToastController
 
@@ -70,11 +70,11 @@ final class RequestsSentViewModel {
             guard let self = self else { return }
 
             do {
-                var myFacts = try self.userDiscovery.getFacts()
+                var myFacts = try self.messenger.ud.get()!.getFacts()
                 myFacts.append(Fact(fact: self.username!, type: FactType.username.rawValue))
 
-                let _ = try self.e2e.requestAuthenticatedChannel(
-                    partnerContact: contact.id,
+                let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
+                    partner: XXClient.Contact.live(contact.marshaled!),
                     myFacts: myFacts
                 )
 

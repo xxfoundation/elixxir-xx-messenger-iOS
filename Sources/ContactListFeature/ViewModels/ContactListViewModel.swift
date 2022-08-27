@@ -4,20 +4,21 @@ import XXModels
 import Defaults
 import ReportingFeature
 import DependencyInjection
+import XXMessengerClient
 
 import Foundation
 import XXClient
 
 final class ContactListViewModel {
     @Dependency var database: Database
-    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var messenger: Messenger
     @Dependency private var reportingStatus: ReportingStatus
 
     var myId: Data {
-        try! GetIdFromContact.live(userDiscovery.getContact())
+        try! messenger.ud.get()!.getContact().getId()
     }
 
-    var contacts: AnyPublisher<[Contact], Never> {
+    var contacts: AnyPublisher<[XXModels.Contact], Never> {
         let query = Contact.Query(
             authStatus: [.friend],
             isBlocked: reportingStatus.isEnabled() ? false : nil,

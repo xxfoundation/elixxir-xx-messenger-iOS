@@ -8,6 +8,7 @@ import XXClient
 import ReportingFeature
 import CombineSchedulers
 import DependencyInjection
+import XXMessengerClient
 
 final class CreateGroupViewModel {
     @KeyObject(.username, defaultValue: "") var username: String
@@ -16,20 +17,20 @@ final class CreateGroupViewModel {
 
     @Dependency var database: Database
     @Dependency var groupManager: GroupChat
-    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var messenger: Messenger
     @Dependency var reportingStatus: ReportingStatus
 
     // MARK: Properties
 
     var myId: Data {
-        try! GetIdFromContact.live(userDiscovery.getContact())
+        try! messenger.ud.get()!.getContact().getId()
     }
 
-    var selected: AnyPublisher<[Contact], Never> {
+    var selected: AnyPublisher<[XXModels.Contact], Never> {
         selectedContactsRelay.eraseToAnyPublisher()
     }
 
-    var contacts: AnyPublisher<[Contact], Never> {
+    var contacts: AnyPublisher<[XXModels.Contact], Never> {
         contactsRelay.eraseToAnyPublisher()
     }
 
@@ -44,12 +45,12 @@ final class CreateGroupViewModel {
     var backgroundScheduler: AnySchedulerOf<DispatchQueue>
     = DispatchQueue.global().eraseToAnyScheduler()
 
-    private var allContacts = [Contact]()
+    private var allContacts = [XXModels.Contact]()
     private var cancellables = Set<AnyCancellable>()
     private let infoRelay = PassthroughSubject<GroupInfo, Never>()
     private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
-    private let contactsRelay = CurrentValueSubject<[Contact], Never>([])
-    private let selectedContactsRelay = CurrentValueSubject<[Contact], Never>([])
+    private let contactsRelay = CurrentValueSubject<[XXModels.Contact], Never>([])
+    private let selectedContactsRelay = CurrentValueSubject<[XXModels.Contact], Never>([])
 
     // MARK: Lifecycle
 
@@ -72,7 +73,7 @@ final class CreateGroupViewModel {
 
     // MARK: Public
 
-    func didSelect(contact: Contact) {
+    func didSelect(contact: XXModels.Contact) {
         if selectedContactsRelay.value.contains(contact) {
             selectedContactsRelay.value.removeAll { $0.username == contact.username }
         } else {
@@ -93,7 +94,7 @@ final class CreateGroupViewModel {
         )
     }
 
-    func create(name: String, welcome: String?, members: [Contact]) {
+    func create(name: String, welcome: String?, members: [XXModels.Contact]) {
         hudRelay.send(.on)
 
         backgroundScheduler.schedule { [weak self] in

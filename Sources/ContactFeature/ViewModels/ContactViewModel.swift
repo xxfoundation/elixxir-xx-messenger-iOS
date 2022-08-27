@@ -6,6 +6,7 @@ import XXModels
 import Defaults
 import CombineSchedulers
 import DependencyInjection
+import XXMessengerClient
 
 import XXClient
 
@@ -19,14 +20,13 @@ struct ContactViewState: Equatable {
 }
 
 final class ContactViewModel {
-    @Dependency var e2e: E2E
     @Dependency var database: Database
-    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var messenger: Messenger
     @Dependency var getFactsFromContact: GetFactsFromContact
 
     @KeyObject(.username, defaultValue: nil) var username: String?
 
-    var contact: Contact
+    var contact: XXModels.Contact
 
     var popToRootPublisher: AnyPublisher<Void, Never> { popToRootRelay.eraseToAnyPublisher() }
     var popPublisher: AnyPublisher<Void, Never> { popRelay.eraseToAnyPublisher() }
@@ -41,15 +41,15 @@ final class ContactViewModel {
     private let stateRelay = CurrentValueSubject<ContactViewState, Never>(.init())
 
     var myId: Data {
-        try! GetIdFromContact.live(userDiscovery.getContact())
+        try! messenger.ud.get()!.getContact().getId()
     }
 
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
-    init(_ contact: Contact) {
+    init(_ contact: XXModels.Contact) {
         self.contact = contact
 
-        let facts = try? getFactsFromContact(contact: contact.marshaled!)
+        let facts = try? getFactsFromContact(contact.marshaled!)
         let email = facts?.first(where: { $0.type == FactType.email.rawValue })?.fact
         let phone = facts?.first(where: { $0.type == FactType.phone.rawValue })?.fact
 
@@ -73,7 +73,7 @@ final class ContactViewModel {
         hudRelay.send(.on)
 
         do {
-            try e2e.deleteRequest.partner(contact.id)
+            try messenger.e2e.get()!.deleteRequest.partnerId(contact.id)
             try database.deleteContact(contact)
 
             hudRelay.send(.none)
@@ -111,11 +111,11 @@ final class ContactViewModel {
             do {
                 try self.database.saveContact(self.contact)
 
-                var myFacts = try self.userDiscovery.getFacts()
+                var myFacts = try self.messenger.ud.get()!.getFacts()
                 myFacts.append(Fact(fact: self.username!, type: FactType.username.rawValue))
 
-                let _ = try self.e2e.requestAuthenticatedChannel(
-                    partnerContact: self.contact.id,
+                let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
+                    partner: XXClient.Contact.live(self.contact.marshaled!),
                     myFacts: myFacts
                 )
 
@@ -143,11 +143,11 @@ final class ContactViewModel {
             do {
                 try self.database.saveContact(self.contact)
 
-                var myFacts = try self.userDiscovery.getFacts()
+                var myFacts = try self.messenger.ud.get()!.getFacts()
                 myFacts.append(Fact(fact: self.username!, type: FactType.username.rawValue))
 
-                let _ = try self.e2e.requestAuthenticatedChannel(
-                    partnerContact: self.contact.marshaled!,
+                let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
+                    partner: XXClient.Contact.live(self.contact.marshaled!),
                     myFacts: myFacts
                 )
 
@@ -175,7 +175,7 @@ final class ContactViewModel {
             do {
                 try self.database.saveContact(self.contact)
 
-                let _ = try self.e2e.confirmReceivedRequest(partnerContact: self.contact.marshaled!)
+                let _ = try self.messenger.e2e.get()!.confirmReceivedRequest(partner: XXClient.Contact.live(self.contact.marshaled!))
 
                 self.contact.authStatus = .friend
                 try self.database.saveContact(self.contact)

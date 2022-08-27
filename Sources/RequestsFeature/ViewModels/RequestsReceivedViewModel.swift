@@ -10,6 +10,7 @@ import DrawerFeature
 import ReportingFeature
 import CombineSchedulers
 import DependencyInjection
+import XXMessengerClient
 
 import struct XXModels.Group
 
@@ -20,10 +21,9 @@ struct RequestReceived: Hashable, Equatable {
 }
 
 final class RequestsReceivedViewModel {
-    @Dependency var e2e: E2E
     @Dependency var database: Database
     @Dependency var groupManager: GroupChat
-    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var messenger: Messenger
     @Dependency var reportingStatus: ReportingStatus
 
     @KeyObject(.isShowingHiddenRequests, defaultValue: false) var isShowingHiddenRequests: Bool
@@ -44,7 +44,7 @@ final class RequestsReceivedViewModel {
         groupConfirmationSubject.eraseToAnyPublisher()
     }
 
-    var contactConfirmationPublisher: AnyPublisher<Contact, Never> {
+    var contactConfirmationPublisher: AnyPublisher<XXModels.Contact, Never> {
         contactConfirmationSubject.eraseToAnyPublisher()
     }
 
@@ -53,7 +53,7 @@ final class RequestsReceivedViewModel {
     private let verifyingSubject = PassthroughSubject<Void, Never>()
     private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
     private let groupConfirmationSubject = PassthroughSubject<Group, Never>()
-    private let contactConfirmationSubject = PassthroughSubject<Contact, Never>()
+    private let contactConfirmationSubject = PassthroughSubject<XXModels.Contact, Never>()
     private let itemsSubject = CurrentValueSubject<NSDiffableDataSourceSnapshot<Section, RequestReceived>, Never>(.init())
 
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
@@ -156,16 +156,16 @@ final class RequestsReceivedViewModel {
 
                     if contact.email == nil && contact.phone == nil {
                         let _ = try LookupUD.live(
-                            e2eId: self.e2e.getId(),
-                            udContact: self.userDiscovery.getContact(),
+                            e2eId: self.messenger.e2e.get()!.getId(),
+                            udContact: self.messenger.ud.get()!.getContact(),
                             lookupId: contact.id,
                             callback: .init(handle: {
                                 switch $0 {
-                                case .success(let data):
-                                    let ownershipResult = try! self.e2e.verifyOwnership(
-                                        receivedContact: contact.marshaled!,
-                                        verifiedContact: data,
-                                        e2eId: self.e2e.getId()
+                                case .success(let secondContact):
+                                    let ownershipResult = try! self.messenger.e2e.get()!.verifyOwnership(
+                                        received: XXClient.Contact.live(contact.marshaled!),
+                                        verified: secondContact,
+                                        e2eId: self.messenger.e2e.get()!.getId()
                                     )
 
                                     if ownershipResult == true {
@@ -262,14 +262,14 @@ final class RequestsReceivedViewModel {
         }
     }
 
-    func didRequestHide(contact: Contact) {
+    func didRequestHide(contact: XXModels.Contact) {
         if var contact = try? database.fetchContacts(.init(id: [contact.id])).first {
             contact.authStatus = .hidden
             _ = try? database.saveContact(contact)
         }
     }
 
-    func didRequestAccept(contact: Contact, nickname: String? = nil) {
+    func didRequestAccept(contact: XXModels.Contact, nickname: String? = nil) {
         hudSubject.send(.on)
 
         var contact = contact
@@ -282,7 +282,7 @@ final class RequestsReceivedViewModel {
             do {
                 try self.database.saveContact(contact)
 
-                let _ = try self.e2e.confirmReceivedRequest(partnerContact: contact.id)
+                let _ = try self.messenger.e2e.get()!.confirmReceivedRequest(partner: XXClient.Contact.live(contact.marshaled!))
                 contact.authStatus = .friend
                 try self.database.saveContact(contact)
 

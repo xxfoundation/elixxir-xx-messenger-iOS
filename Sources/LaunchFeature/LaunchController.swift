@@ -144,7 +144,7 @@ public final class LaunchController: UIViewController {
             negativeButton.publisher(for: .touchUpInside)
                 .sink { [unowned self] in
                     blocker.hideWindow()
-                    viewModel.versionApproved()
+                    viewModel.continueWithInitialization()
                 }.store(in: &cancellables)
 
             vStack.addArrangedSubview(negativeButton)

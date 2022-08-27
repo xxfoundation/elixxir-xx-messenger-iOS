@@ -3,10 +3,12 @@ import Shared
 import Models
 import Combine
 import Defaults
-import InputField
 import XXClient
+import Foundation
+import InputField
 import CombineSchedulers
 import DependencyInjection
+import XXMessengerClient
 
 struct ProfileCodeViewState: Equatable {
     var input: String = ""
@@ -15,7 +17,7 @@ struct ProfileCodeViewState: Equatable {
 }
 
 final class ProfileCodeViewModel {
-    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var messenger: Messenger
 
     @KeyObject(.email, defaultValue: nil) var email: String?
     @KeyObject(.phone, defaultValue: nil) var phone: String?
@@ -67,7 +69,7 @@ final class ProfileCodeViewModel {
             guard let self = self else { return }
 
             do {
-                try self.userDiscovery.confirmFact(
+                try self.messenger.ud.get()!.confirmFact(
                     confirmationId: self.confirmation.confirmationId!,
                     code: self.stateRelay.value.input
                 )

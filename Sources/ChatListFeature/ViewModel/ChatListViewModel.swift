@@ -5,6 +5,7 @@ import Models
 import Combine
 import XXModels
 import Defaults
+import XXMessengerClient
 import ReportingFeature
 import DependencyInjection
 
@@ -18,16 +19,16 @@ enum SearchSection {
 
 enum SearchItem: Equatable, Hashable {
     case chat(ChatInfo)
-    case connection(Contact)
+    case connection(XXModels.Contact)
 }
 
-typealias RecentsSnapshot = NSDiffableDataSourceSnapshot<SectionId, Contact>
+typealias RecentsSnapshot = NSDiffableDataSourceSnapshot<SectionId, XXModels.Contact>
 typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchItem>
 
 final class ChatListViewModel {
     @Dependency var database: Database
+    @Dependency var messenger: Messenger
     @Dependency var groupManager: GroupChat
-    @Dependency var userDiscovery: UserDiscovery
     @Dependency var reportingStatus: ReportingStatus
 
     // TO REFACTOR:
@@ -36,7 +37,7 @@ final class ChatListViewModel {
     }
 
     var myId: Data {
-        try! GetIdFromContact.live(userDiscovery.getContact())
+        try! messenger.ud.get()!.getContact().getId()
     }
 
     var chatsPublisher: AnyPublisher<[ChatInfo], Never> {
@@ -189,7 +190,7 @@ final class ChatListViewModel {
         }
     }
 
-    func clear(_ contact: Contact) {
+    func clear(_ contact: XXModels.Contact) {
         _ = try? database.deleteMessages(.init(chat: .direct(myId, contact.id)))
     }
 

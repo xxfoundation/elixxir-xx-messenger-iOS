@@ -499,6 +499,7 @@ let package = Package(
                 .target(name: "ReportingFeature"),
                 .target(name: "DependencyInjection"),
                 .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
+                .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
                 .product(name: "CombineSchedulers", package: "combine-schedulers"),
                 .product(name: "XXLegacyDatabaseMigrator", package: "client-ios-db"),
             ],

@@ -13,6 +13,7 @@ import ToastFeature
 import DifferenceKit
 import ReportingFeature
 import DependencyInjection
+import XXMessengerClient
 
 import struct XXModels.Message
 import struct XXModels.FileTransfer
@@ -29,22 +30,20 @@ enum SingleChatNavigationRoutes: Equatable {
 }
 
 final class SingleChatViewModel: NSObject {
-    @Dependency var e2e: E2E
-    @Dependency var cMix: CMix
     @Dependency var logger: XXLogger
     @Dependency var database: Database
     @Dependency var sendReport: SendReport
-    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var messenger: Messenger
     @Dependency var permissions: PermissionHandling
     @Dependency var toastController: ToastController
     @Dependency var transferManager: XXClient.FileTransfer
 
     @KeyObject(.username, defaultValue: nil) var username: String?
 
-    var contact: Contact { contactSubject.value }
+    var contact: XXModels.Contact { contactSubject.value }
     private var stagedReply: Reply?
     private var cancellables = Set<AnyCancellable>()
-    private let contactSubject: CurrentValueSubject<Contact, Never>
+    private let contactSubject: CurrentValueSubject<XXModels.Contact, Never>
     private let replySubject = PassthroughSubject<(String, String), Never>()
     private let navigationRoutes = PassthroughSubject<SingleChatNavigationRoutes, Never>()
     private let sectionsRelay = CurrentValueSubject<[ArraySection<ChatSection, Message>], Never>([])
@@ -59,10 +58,10 @@ final class SingleChatViewModel: NSObject {
     }
 
     var myId: Data {
-        try! GetIdFromContact.live(userDiscovery.getContact())
+        try! messenger.ud.get()!.getContact().getId()
     }
 
-    var contactPublisher: AnyPublisher<Contact, Never> { contactSubject.eraseToAnyPublisher() }
+    var contactPublisher: AnyPublisher<XXModels.Contact, Never> { contactSubject.eraseToAnyPublisher() }
     var replyPublisher: AnyPublisher<(String, String), Never> { replySubject.eraseToAnyPublisher() }
     var navigation: AnyPublisher<SingleChatNavigationRoutes, Never> { navigationRoutes.eraseToAnyPublisher() }
     var shouldDisplayEmptyView: AnyPublisher<Bool, Never> { sectionsRelay.map { $0.isEmpty }.eraseToAnyPublisher() }
@@ -79,7 +78,7 @@ final class SingleChatViewModel: NSObject {
         }.eraseToAnyPublisher()
     }
 
-    private func updateRecentState(_ contact: Contact) {
+    private func updateRecentState(_ contact: XXModels.Contact) {
         if contact.isRecent == true {
             var contact = contact
             contact.isRecent = false
@@ -91,7 +90,7 @@ final class SingleChatViewModel: NSObject {
         updateRecentState(contact)
     }
 
-    init(_ contact: Contact) {
+    init(_ contact: XXModels.Contact) {
         self.contactSubject = .init(contact)
         super.init()
 
@@ -215,7 +214,7 @@ final class SingleChatViewModel: NSObject {
                 reply = Reply(messageId: replyId, senderId: myId)
             }
 
-            let report = try e2e.send(
+            let report = try messenger.e2e.get()!.send(
                 messageType: 2,
                 recipientId: contact.id,
                 payload: Payload(
@@ -225,7 +224,7 @@ final class SingleChatViewModel: NSObject {
                 e2eParams: GetE2EParams.liveDefault()
             )
 
-            try cMix.waitForRoundResult(
+            try messenger.cMix.get()!.waitForRoundResult(
                 roundList: try report.encode(),
                 timeoutMS: 5_000,
                 callback: .init(handle: {
@@ -320,14 +319,14 @@ final class SingleChatViewModel: NSObject {
         do {
             message = try database.saveMessage(message)
 
-            let report = try e2e.send(
+            let report = try messenger.e2e.get()!.send(
                 messageType: 2,
                 recipientId: contact.id,
                 payload: Payload(text: message.text, reply: stagedReply).asData(),
                 e2eParams: GetE2EParams.liveDefault()
             )
 
-            try cMix.waitForRoundResult(
+            try messenger.cMix.get()!.waitForRoundResult(
                 roundList: try report.encode(),
                 timeoutMS: 5_000,
                 callback: .init(handle: {

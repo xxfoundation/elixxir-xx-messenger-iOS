@@ -2,11 +2,13 @@ import HUD
 import Shared
 import Models
 import Combine
+import XXClient
 import Countries
 import InputField
-import XXClient
+import Foundation
 import CombineSchedulers
 import DependencyInjection
+import XXMessengerClient
 
 struct ProfilePhoneViewState: Equatable {
     var input: String = ""
@@ -18,7 +20,7 @@ struct ProfilePhoneViewState: Equatable {
 final class ProfilePhoneViewModel {
     // MARK: Injected
 
-    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var messenger: Messenger
 
     // MARK: Properties
 
@@ -55,7 +57,7 @@ final class ProfilePhoneViewModel {
             let content = "\(self.stateRelay.value.input)\(self.stateRelay.value.country.code)"
 
             do {
-                let confirmationId = try self.userDiscovery.sendRegisterFact(
+                let confirmationId = try self.messenger.ud.get()!.sendRegisterFact(
                     .init(fact: content, type: FactType.phone.rawValue)
                 )
 

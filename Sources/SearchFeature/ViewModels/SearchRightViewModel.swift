@@ -29,7 +29,7 @@ final class SearchRightViewModel {
     @Dependency var reportingStatus: ReportingStatus
     @Dependency var getFactsFromContact: GetFactsFromContact
 
-    var foundPublisher: AnyPublisher<Contact, Never> {
+    var foundPublisher: AnyPublisher<XXModels.Contact, Never> {
         foundSubject.eraseToAnyPublisher()
     }
 
@@ -41,7 +41,7 @@ final class SearchRightViewModel {
         statusSubject.eraseToAnyPublisher()
     }
 
-    private let foundSubject = PassthroughSubject<Contact, Never>()
+    private let foundSubject = PassthroughSubject<XXModels.Contact, Never>()
     private let cameraSemaphoreSubject = PassthroughSubject<Bool, Never>()
     private(set) var statusSubject = CurrentValueSubject<ScanningStatus, Never>(.reading)
 
@@ -73,7 +73,7 @@ final class SearchRightViewModel {
         /// otherwise is just noise or an unknown qr code
         ///
         let userId = try? GetIdFromContact.live(data)
-        let facts = try? getFactsFromContact(contact: data)
+        let facts = try? getFactsFromContact(data)
         let username = facts?.first(where: { $0.type == FactType.username.rawValue })?.fact
 
         guard let userId = userId, let username = username else {
@@ -113,11 +113,11 @@ final class SearchRightViewModel {
         statusSubject.send(.success)
         cameraSemaphoreSubject.send(false)
 
-        let email = try? GetFactsFromContact.live(contact: data)
+        let email = try? GetFactsFromContact.live(data)
             .first(where: { $0.type == FactType.email.rawValue })
             .map(\.fact)
 
-        let phone = try? GetFactsFromContact.live(contact: data)
+        let phone = try? GetFactsFromContact.live(data)
             .first(where: { $0.type == FactType.phone.rawValue })
             .map(\.fact)
 

@@ -225,7 +225,7 @@ final class RestoreViewModel {
                             }
                         }
                     ),
-                    identity: try cMix.makeLegacyReceptionIdentity()
+                    identity: try cMix.makeReceptionIdentity()
                 )
 
                 guard let certPath = Bundle.module.path(forResource: "cmix.rip", ofType: "crt"),
@@ -240,7 +240,7 @@ final class RestoreViewModel {
                         email: emailFact,
                         phone: phoneFact,
                         cert: Data(contentsOf: URL(fileURLWithPath: certPath)),
-                        contactFile: Data(contentsOf: URL(fileURLWithPath: contactFilePath)),
+                        contact: Data(contentsOf: URL(fileURLWithPath: contactFilePath)),
                         address: "46.101.98.49:18001"
                     ),
                     follower: .init(handle: { cMix.networkFollowerStatus() })

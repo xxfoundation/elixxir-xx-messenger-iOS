@@ -10,6 +10,7 @@ import Permissions
 import XXClient
 import CombineSchedulers
 import DependencyInjection
+import XXMessengerClient
 
 enum ProfileNavigationRoutes {
     case none
@@ -31,7 +32,7 @@ final class ProfileViewModel {
     @KeyObject(.sharingEmail, defaultValue: false) var isEmailSharing: Bool
     @KeyObject(.sharingPhone, defaultValue: false) var isPhoneSharing: Bool
 
-    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var messenger: Messenger
     @Dependency private var permissions: PermissionHandling
 
     var name: String { username! }
@@ -90,9 +91,9 @@ final class ProfileViewModel {
             guard let self = self else { return }
 
             do {
-                try self.userDiscovery.removeFact(
+                try self.messenger.ud.get()!.removeFact(
                     .init(
-                        fact: isEmail ? "E\(self.emailStored!)" : "P\(self.phoneStored!)",
+                        fact: isEmail ? self.emailStored! : self.phoneStored!,
                         type: isEmail ? FactType.email.rawValue : FactType.phone.rawValue
                     )
                 )

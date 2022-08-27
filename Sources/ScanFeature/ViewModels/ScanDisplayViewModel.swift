@@ -5,6 +5,7 @@ import Defaults
 import Countries
 import XXClient
 import DependencyInjection
+import XXMessengerClient
 
 struct ScanDisplayViewState: Equatable {
     var image: CIImage?
@@ -15,7 +16,7 @@ struct ScanDisplayViewState: Equatable {
 }
 
 final class ScanDisplayViewModel {
-    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var messenger: Messenger
 
     @KeyObject(.email, defaultValue: nil) private var email: String?
     @KeyObject(.phone, defaultValue: nil) private var phone: String?
@@ -60,7 +61,7 @@ final class ScanDisplayViewModel {
         guard let filter = CIFilter(name: "CIQRCodeGenerator") else { return }
 
         var facts: [Fact] = []
-        let myContact = try! userDiscovery.getContact()
+        let myContact = try! messenger.ud.get()!.getContact()
 
         if sharingPhone {
             facts.append(Fact(fact: phone!, type: FactType.phone.rawValue))
@@ -71,7 +72,7 @@ final class ScanDisplayViewModel {
         }
 
         let myContactWithFacts = try! SetFactsOnContact.live(
-            contact: myContact,
+            contactData: myContact.data,
             facts: facts
         )
 

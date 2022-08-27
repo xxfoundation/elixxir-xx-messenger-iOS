@@ -10,6 +10,7 @@ import ToastFeature
 import DifferenceKit
 import ReportingFeature
 import DependencyInjection
+import XXMessengerClient
 
 import struct XXModels.Message
 import XXClient
@@ -20,25 +21,24 @@ enum GroupChatNavigationRoutes: Equatable {
 }
 
 final class GroupChatViewModel {
-    @Dependency var cMix: CMix
     @Dependency var database: Database
     @Dependency var sendReport: SendReport
     @Dependency var groupManager: GroupChat
-    @Dependency var userDiscovery: UserDiscovery
+    @Dependency var messenger: Messenger
     @Dependency var reportingStatus: ReportingStatus
     @Dependency var toastController: ToastController
 
     @KeyObject(.username, defaultValue: nil) var username: String?
 
     var myId: Data {
-        try! GetIdFromContact.live(userDiscovery.getContact())
+        try! messenger.ud.get()!.getContact().getId()
     }
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
     }
 
-    var reportPopupPublisher: AnyPublisher<Contact, Never> {
+    var reportPopupPublisher: AnyPublisher<XXModels.Contact, Never> {
         reportPopupSubject.eraseToAnyPublisher()
     }
 
@@ -54,7 +54,7 @@ final class GroupChatViewModel {
     private var stagedReply: Reply?
     private var cancellables = Set<AnyCancellable>()
     private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
-    private let reportPopupSubject = PassthroughSubject<Contact, Never>()
+    private let reportPopupSubject = PassthroughSubject<XXModels.Contact, Never>()
     private let replySubject = PassthroughSubject<(String, String), Never>()
     private let routesSubject = PassthroughSubject<GroupChatNavigationRoutes, Never>()
 
@@ -121,7 +121,7 @@ final class GroupChatViewModel {
                 ).asData()
             )
 
-            try cMix.waitForRoundResult(
+            try messenger.cMix.get()!.waitForRoundResult(
                 roundList: try report.encode(),
                 timeoutMS: 5_000,
                 callback: .init(handle: {
@@ -174,7 +174,7 @@ final class GroupChatViewModel {
                 ).asData()
             )
 
-            try cMix.waitForRoundResult(
+            try messenger.cMix.get()!.waitForRoundResult(
                 roundList: try report.encode(),
                 timeoutMS: 5_000,
                 callback: .init(handle: {
@@ -246,7 +246,7 @@ final class GroupChatViewModel {
         replySubject.send(getReplyContent(for: networkId))
     }
 
-    func report(contact: Contact, screenshot: UIImage, completion: @escaping () -> Void) {
+    func report(contact: XXModels.Contact, screenshot: UIImage, completion: @escaping () -> Void) {
         let report = Report(
             sender: .init(
                 userId: contact.id.base64EncodedString(),
@@ -285,13 +285,13 @@ final class GroupChatViewModel {
         }
     }
 
-    private func blockContact(_ contact: Contact) {
+    private func blockContact(_ contact: XXModels.Contact) {
         var contact = contact
         contact.isBlocked = true
         _ = try? database.saveContact(contact)
     }
 
-    private func presentReportConfirmation(contact: Contact) {
+    private func presentReportConfirmation(contact: XXModels.Contact) {
         let name = (contact.nickname ?? contact.username) ?? "the contact"
         toastController.enqueueToast(model: .init(
             title: "Your report has been sent and \(name) is now blocked.",
