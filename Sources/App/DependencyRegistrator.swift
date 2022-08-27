@@ -57,6 +57,8 @@ struct DependencyRegistrator {
         container.register(XXLogger.noop)
         container.register(CrashReporter.noop)
         container.register(VersionChecker.mock)
+        container.register(ReportingStatus.mock())
+        container.register(SendReport.mock())
         container.register(XXNetwork<BindingsMock>() as XXNetworking)
         container.register(MockNetworkMonitor() as NetworkMonitoring)
         container.register(KeyObjectStore.userDefaults)
@@ -81,6 +83,8 @@ struct DependencyRegistrator {
         container.register(XXLogger.live())
         container.register(CrashReporter.live)
         container.register(VersionChecker.live())
+        container.register(ReportingStatus.live())
+        container.register(SendReport.live)
 
         container.register(XXNetwork<BindingsClient>() as XXNetworking)
         container.register(NetworkMonitor() as NetworkMonitoring)
@@ -103,9 +107,7 @@ struct DependencyRegistrator {
     static private func registerCommonDependencies() {
         container.register(Voxophone())
         container.register(BackupService())
-        container.register(ReportingStatus.live())
         container.register(MakeAppScreenshot.live)
-        container.register(SendReport.live)
         container.register(FetchBannedList.live)
         container.register(ProcessBannedList.live)
         container.register(MakeReportDrawer.live)

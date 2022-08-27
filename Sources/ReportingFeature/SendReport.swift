@@ -37,6 +37,18 @@ extension SendReport {
         }
         task.resume()
     }
+
+    public static func mock(
+        result: Result<Void, Error> = .success(())
+    ) -> SendReport {
+        SendReport { report, completion in
+            print("[SendReport.mock] Sending report: \(report)")
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                print("[SendReport.mock] Sending report finished")
+                completion(result)
+            }
+        }
+    }
 }
 
 extension SendReport {
