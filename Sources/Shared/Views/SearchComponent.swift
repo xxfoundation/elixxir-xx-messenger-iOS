@@ -51,6 +51,7 @@ public final class SearchComponent: UIView {
         rightButton.setContentCompressionResistancePriority(.required, for: .horizontal)
 
         inputField.delegate = self
+        inputField.autocapitalizationType = .none
         inputField.textColor = Asset.neutralActive.color
         inputField.font = Fonts.Mulish.regular.font(size: 16.0)
 
