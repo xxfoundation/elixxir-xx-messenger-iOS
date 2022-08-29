@@ -1,9 +1,17 @@
 import HUD
 import Combine
+import Defaults
 import Foundation
+import XXClient
+import XXMessengerClient
 import DependencyInjection
+import Models
 
 final class AccountDeleteViewModel {
+    @Dependency var messenger: Messenger
+
+    @KeyObject(.username, defaultValue: nil) var username: String?
+
     var deleting = false
 
     var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
@@ -18,6 +26,10 @@ final class AccountDeleteViewModel {
         }
 
         do {
+            let fact = Fact(fact: username!, type: FactType.username.rawValue)
+            try messenger.ud.get()!.permanentDeleteAccount(username: fact)
+            try messenger.destroy()
+
             DispatchQueue.main.async { [weak self] in
                 self?.hudRelay.send(.error(.init(
                     content: "Now kill the app and re-open",
@@ -26,7 +38,6 @@ final class AccountDeleteViewModel {
                 )))
             }
         } catch {
-
             DispatchQueue.main.async { [weak self] in
                 self?.hudRelay.send(.error(.init(with: error)))
             }

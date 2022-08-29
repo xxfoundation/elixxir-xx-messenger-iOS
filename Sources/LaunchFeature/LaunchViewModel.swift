@@ -145,10 +145,16 @@ final class LaunchViewModel {
                 try messenger.connect()
             }
 
+            try messenger.e2e.get()?.registerListener(
+                senderId: nil,
+                messageType: 2,
+                callback: .init(handle: {
+                    print(">>> \(String(data: $0.payload, encoding: .utf8))")
+                })
+            )
+
             try generateGroupManager(messenger: messenger)
-
             try generateTrafficManager(messenger: messenger)
-
             try generateTransferManager(messenger: messenger)
 
             if messenger.isLoggedIn() == false {
@@ -448,8 +454,8 @@ extension LaunchViewModel {
             createdAt: Date()
         ))
 
-        if email == nil, phone == nil {
-            do {
+        do {
+            if email == nil, phone == nil {
                 try performLookup(on: contact) { [weak self] in
                     guard let self = self else { return }
 
@@ -467,11 +473,27 @@ extension LaunchViewModel {
                         try! self.database.saveContact(model)
                     }
                 }
-            } catch {
-                print(">>> Error \(#file):\(#line): \(error.localizedDescription)")
+            } else {
+                try performSearch(on: contact) { [weak self] in
+                    guard let self = self else { return }
+
+                    switch $0 {
+                    case .success(let searchedContact):
+                        if try! self.verifyOwnership(contact, searchedContact) { // How could this ever throw?
+                            model.authStatus = .verified
+                            try! self.database.saveContact(model)
+                        } else {
+                            try! self.database.deleteContact(model)
+                        }
+                    case .failure(let error):
+                        model.authStatus = .verificationFailed
+                        print(">>> Error \(#file):\(#line): \(error.localizedDescription)")
+                        try! self.database.saveContact(model)
+                    }
+                }
             }
-        } else {
-            performSearch(on: contact)
+        } catch {
+            print(">>> Error \(#file):\(#line): \(error.localizedDescription)")
         }
     }
 
@@ -494,7 +516,36 @@ extension LaunchViewModel {
     }
 
     private func handleGroupRequest(from group: XXClient.Group) {
-        // TODO
+        if let _ = try? database.fetchGroups(.init(id: [group.getId()])).first {
+            print(">>> Tried to handle a group request that is already handled")
+            return
+        }
+
+        let leaderId = try! group.getMembership() // This is all users on the group, the 1st is the leader/creator.
+
+        try! database.saveGroup(.init(
+            id: group.getId(),
+            name: String(data: group.getName(), encoding: .utf8)!,
+            leaderId: leaderId,
+            createdAt: Date.fromTimestamp(Int(group.getCreatedMS())),
+            authStatus: .pending,
+            serialized: group.serialize()
+        ))
+
+        if let initialMessage = String(data: group.getInitMessage(), encoding: .utf8) {
+            try! database.saveMessage(.init(
+                senderId: leaderId,
+                recipientId: nil,
+                groupId: group.getId(),
+                date: Date.fromTimestamp(Int(group.getCreatedMS())),
+                status: .received,
+                isUnread: true,
+                text: initialMessage
+            ))
+        }
+
+        // TODO:
+        // All other members should be added to the database as GroupMembers
     }
 
     private func performLookup(
@@ -515,19 +566,40 @@ extension LaunchViewModel {
                 switch $0 {
                 case .success(let otherContact):
                     print(">>> Lookup succeeded")
-
                     completion(.success(otherContact))
                 case .failure(let error):
                     print(">>> Lookup failed: \(error.localizedDescription)")
-
                     completion(.failure(error))
                 }
             })
         )
     }
 
-    private func performSearch(on contact: XXClient.Contact) {
-        fatalError(">>> UD Search is not implemented yet")
+    private func performSearch(
+        on contact: XXClient.Contact,
+        completion: @escaping (Result<XXClient.Contact, Error>) -> Void
+    ) throws {
+        guard let messenger = try? DependencyInjection.Container.shared.resolve() as Messenger else {
+            fatalError(">>> Tried to search, but there's no messenger instance on DI container")
+        }
+
+        print(">>> Performing Search")
+
+        let _ = try SearchUD.live(
+            e2eId: messenger.e2e.get()!.getId(),
+            udContact: try messenger.ud.get()!.getContact(),
+            facts: contact.getFacts(),
+            callback: .init(handle: {
+                switch $0 {
+                case .success(let otherContact):
+                    print(">>> Search succeeded")
+                    completion(.success(otherContact.first!))
+                case .failure(let error):
+                    print(">>> Search failed: \(error.localizedDescription)")
+                    completion(.failure(error))
+                }
+            })
+        )
     }
 
     private func verifyOwnership(
