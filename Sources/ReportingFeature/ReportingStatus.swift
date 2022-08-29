@@ -35,4 +35,17 @@ extension ReportingStatus {
             }
         )
     }
+
+    public static func mock(
+        isEnabled: Bool = false,
+        isOptional: Bool = true
+    ) -> ReportingStatus {
+        let isEnabledSubject = CurrentValueSubject<Bool, Never>(isEnabled)
+        return ReportingStatus(
+            isOptional: { isOptional },
+            isEnabled: { isEnabledSubject.value },
+            isEnabledPublisher: { isEnabledSubject.eraseToAnyPublisher() },
+            enable: { isEnabledSubject.send($0) }
+        )
+    }
 }
