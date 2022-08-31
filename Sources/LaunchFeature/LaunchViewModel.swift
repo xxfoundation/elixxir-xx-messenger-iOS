@@ -450,7 +450,7 @@ extension LaunchViewModel {
             nickname: nil,
             photo: nil,
             authStatus: .verificationInProgress,
-            isRecent: false,
+            isRecent: true,
             createdAt: Date()
         ))
 

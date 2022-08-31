@@ -41,7 +41,7 @@ final class ContactViewModel {
     private let stateRelay = CurrentValueSubject<ContactViewState, Never>(.init())
 
     var myId: Data {
-        try! messenger.ud.get()!.getContact().getId()
+        try! messenger.e2e.get()!.getContact().getId()
     }
 
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()

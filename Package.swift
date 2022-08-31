@@ -469,10 +469,12 @@ let package = Package(
                 .target(name: "HUD"),
                 .target(name: "Shared"),
                 .target(name: "Countries"),
+                .target(name: "PushFeature"),
                 .target(name: "Presentation"),
                 .target(name: "ContactFeature"),
                 .target(name: "NetworkMonitor"),
                 .target(name: "DependencyInjection"),
+                .product(name: "Retry", package: "Retry"),
                 .product(name: "XXDatabase", package: "client-ios-db"),
             ]
         ),

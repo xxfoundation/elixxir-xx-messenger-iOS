@@ -1,19 +1,19 @@
 import HUD
+import Retry
 import UIKit
+import Models
 import Shared
 import Combine
 import XXModels
 import XXClient
 import Defaults
 import Countries
-import Models
-import Defaults
 import CustomDump
 import NetworkMonitor
 import ReportingFeature
 import CombineSchedulers
-import DependencyInjection
 import XXMessengerClient
+import DependencyInjection
 
 typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchItem>
 
@@ -33,7 +33,7 @@ final class SearchLeftViewModel {
     @KeyObject(.username, defaultValue: nil) var username: String?
 
     var myId: Data {
-        try! messenger.ud.get()!.getContact().getId()
+        try! messenger.e2e.get()!.getContact().getId()
     }
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
@@ -112,8 +112,33 @@ final class SearchLeftViewModel {
             content += stateSubject.value.country.code
         }
 
-        let nrr = try! messenger.cMix.get()!.getNodeRegistrationStatus()
-        print("^^^ NRR: \(nrr.ratio)")
+        enum NodeRegistrationError: Error {
+            case unhealthyNet
+            case belowMinimum
+        }
+
+        retry(max: 5, retryStrategy: .delay(seconds: 2)) { [weak self] in
+            guard let self = self else { return }
+
+            do {
+                let nrr = try self.messenger.cMix.get()!.getNodeRegistrationStatus()
+                if nrr.ratio < 0.8 { throw NodeRegistrationError.belowMinimum }
+            } catch {
+                throw NodeRegistrationError.unhealthyNet
+            }
+        }.finalCatch { [weak self] in
+            guard let self = self else { return }
+
+            if case .unhealthyNet = $0 as? NodeRegistrationError {
+                self.hudSubject.send(.error(.init(content: "Network is not healthy yet, try again within the next minute or so.")))
+            } else if case .belowMinimum = $0 as? NodeRegistrationError {
+                self.hudSubject.send(.error(.init(content: "Node registration ratio is still below 80%, try again within the next minute or so.")))
+            } else {
+                self.hudSubject.send(.error(.init(with: $0)))
+            }
+
+            return
+        }
 
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }
@@ -137,7 +162,7 @@ final class SearchLeftViewModel {
                                     nickname: nil,
                                     photo: nil,
                                     authStatus: .stranger,
-                                    isRecent: false,
+                                    isRecent: true,
                                     isBlocked: false,
                                     isBanned: false,
                                     createdAt: Date()
@@ -175,7 +200,7 @@ final class SearchLeftViewModel {
                 myFacts.append(Fact(fact: self.username!, type: FactType.username.rawValue))
 
                 let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
-                    partner: XXClient.Contact.live(contact.marshaled!),
+                    partner: .live(contact.marshaled!),
                     myFacts: myFacts
                 )
 
@@ -208,7 +233,7 @@ final class SearchLeftViewModel {
                 myFacts.append(Fact(fact: self.username!, type: FactType.username.rawValue))
 
                 let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
-                    partner: XXClient.Contact.live(contact.marshaled!),
+                    partner: .live(contact.marshaled!),
                     myFacts: myFacts
                 )
 

@@ -50,8 +50,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ekazaev/ChatLayout",
       "state" : {
-        "revision" : "d0edb6f3ae716a26842467c540a6bee909b80360",
-        "version" : "1.1.14"
+        "revision" : "88cbfc1c5c371be5fd51eaded329eb61386495dc",
+        "version" : "1.2.5"
       }
     },
     {
@@ -105,7 +105,7 @@
       "location" : "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
       "state" : {
         "branch" : "development",
-        "revision" : "108dd0bfc00775b051f848cdc8b3921c26be47e7"
+        "revision" : "8e3717558823ea713fd6b516cc2fcbef01d003ed"
       }
     },
     {
@@ -210,7 +210,7 @@
     {
       "identity" : "keychainaccess",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/kishikawakatsumi/KeychainAccess",
+      "location" : "https://github.com/kishikawakatsumi/KeychainAccess.git",
       "state" : {
         "revision" : "84e546727d66f1adc5439debad16270d0fdd04e7",
         "version" : "4.2.2"
@@ -335,7 +335,7 @@
     {
       "identity" : "swift-custom-dump",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/swift-custom-dump",
+      "location" : "https://github.com/pointfreeco/swift-custom-dump.git",
       "state" : {
         "revision" : "21ec1d717c07cea5a026979cb0471dd95c7087e7",
         "version" : "0.5.0"
@@ -364,8 +364,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/swiftcsv/SwiftCSV.git",
       "state" : {
-        "revision" : "048a1d3c2950b9c151ef9364b36f91baadc2c28c",
-        "version" : "0.8.0"
+        "revision" : "96fa14b92e88e0befdbc8bc31c7c2c9594a30060",
+        "version" : "0.8.1"
       }
     },
     {
@@ -389,7 +389,7 @@
     {
       "identity" : "xctest-dynamic-overlay",
       "kind" : "remoteSourceControl",
-      "location" : "https://github.com/pointfreeco/xctest-dynamic-overlay",
+      "location" : "https://github.com/pointfreeco/xctest-dynamic-overlay.git",
       "state" : {
         "revision" : "38bc9242e4388b80bd23ddfdf3071428859e3260",
         "version" : "0.4.0"

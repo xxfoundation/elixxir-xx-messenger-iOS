@@ -15,7 +15,7 @@ final class ContactListViewModel {
     @Dependency private var reportingStatus: ReportingStatus
 
     var myId: Data {
-        try! messenger.ud.get()!.getContact().getId()
+        try! messenger.e2e.get()!.getContact().getId()
     }
 
     var contacts: AnyPublisher<[XXModels.Contact], Never> {

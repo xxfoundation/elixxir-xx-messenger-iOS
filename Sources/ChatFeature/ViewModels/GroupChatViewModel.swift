@@ -31,7 +31,7 @@ final class GroupChatViewModel {
     @KeyObject(.username, defaultValue: nil) var username: String?
 
     var myId: Data {
-        try! messenger.ud.get()!.getContact().getId()
+        try! messenger.e2e.get()!.getContact().getId()
     }
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {

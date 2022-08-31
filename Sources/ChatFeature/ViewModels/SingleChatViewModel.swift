@@ -58,7 +58,7 @@ final class SingleChatViewModel: NSObject {
     }
 
     var myId: Data {
-        try! messenger.ud.get()!.getContact().getId()
+        try! messenger.e2e.get()!.getContact().getId()
     }
 
     var contactPublisher: AnyPublisher<XXModels.Contact, Never> { contactSubject.eraseToAnyPublisher() }

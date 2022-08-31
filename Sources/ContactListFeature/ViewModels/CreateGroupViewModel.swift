@@ -23,7 +23,7 @@ final class CreateGroupViewModel {
     // MARK: Properties
 
     var myId: Data {
-        try! messenger.ud.get()!.getContact().getId()
+        try! messenger.e2e.get()!.getContact().getId()
     }
 
     var selected: AnyPublisher<[XXModels.Contact], Never> {

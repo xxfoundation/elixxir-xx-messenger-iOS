@@ -37,7 +37,7 @@ final class ChatListViewModel {
     }
 
     var myId: Data {
-        try! messenger.ud.get()!.getContact().getId()
+        try! messenger.e2e.get()!.getContact().getId()
     }
 
     var chatsPublisher: AnyPublisher<[ChatInfo], Never> {

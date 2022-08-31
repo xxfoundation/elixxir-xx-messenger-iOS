@@ -1,7 +1,7 @@
 import UIKit
 import ChatLayout
 
-extension ChatLayout {
+extension CollectionViewChatLayout {
     func configure(_ layoutDelegate: ChatLayoutDelegate) {
         delegate = layoutDelegate
         settings.estimatedItemSize = CGSize(width: 100, height: 65)
@@ -13,11 +13,11 @@ extension ChatLayout {
 }
 
 final class LayoutDelegate: ChatLayoutDelegate {
-    public func alignmentForItem(_: ChatLayout, of kind: ItemKind, at: IndexPath) -> ChatItemAlignment {
+    public func alignmentForItem(_: CollectionViewChatLayout, of kind: ItemKind, at: IndexPath) -> ChatItemAlignment {
         .fullWidth
     }
 
-    public func shouldPresentHeader(_ chatLayout: ChatLayout, at sectionIndex: Int) -> Bool {
+    public func shouldPresentHeader(_ chatLayout: CollectionViewChatLayout, at sectionIndex: Int) -> Bool {
         true
     }
 }

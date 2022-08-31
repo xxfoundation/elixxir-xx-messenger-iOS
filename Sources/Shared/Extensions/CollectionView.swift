@@ -29,7 +29,7 @@ public extension UICollectionView {
                                          withReuseIdentifier: T.reuseIdentifier, for: indexPath) as! T
     }
 
-    convenience init(on view: UIView, with layout: ChatLayout) {
+    convenience init(on view: UIView, with layout: CollectionViewChatLayout) {
         self.init(frame: view.frame, collectionViewLayout: layout)
         view.addSubview(self)
 

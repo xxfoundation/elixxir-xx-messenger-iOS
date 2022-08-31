@@ -34,11 +34,11 @@ public final class GroupChatController: UIViewController {
     lazy private var header = GroupHeaderView()
     private let inputComponent: ChatInputView
 
-    private let chatLayout = ChatLayout()
     private var animator: ManualAnimator?
     private let viewModel: GroupChatViewModel
     private let layoutDelegate = LayoutDelegate()
     private var cancellables = Set<AnyCancellable>()
+    private let chatLayout = CollectionViewChatLayout()
     private var sections = [ArraySection<ChatSection, Message>]()
     private var currentInterfaceActions = SetActor<Set<InterfaceActions>, ReactionTypes>()
 

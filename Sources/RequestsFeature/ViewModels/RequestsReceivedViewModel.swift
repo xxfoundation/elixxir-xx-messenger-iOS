@@ -181,6 +181,33 @@ final class RequestsReceivedViewModel {
                                 }
                             })
                         )
+                    } else {
+                        let _ = try SearchUD.live(
+                            e2eId: self.messenger.e2e.get()!.getId(),
+                            udContact: self.messenger.ud.get()!.getContact(),
+                            facts: XXClient.Contact.live(contact.marshaled!).getFacts(),
+                            callback: .init(handle: {
+                                switch $0 {
+                                case .success(let results):
+                                    let ownershipResult = try! self.messenger.e2e.get()!.verifyOwnership(
+                                        received: XXClient.Contact.live(contact.marshaled!),
+                                        verified: results.first!,
+                                        e2eId: self.messenger.e2e.get()!.getId()
+                                    )
+
+                                    if ownershipResult == true {
+                                        contact.authStatus = .verified
+                                        _ = try? self.database.saveContact(contact)
+                                    } else {
+                                        _ = try? self.database.deleteContact(contact)
+                                    }
+                                case .failure(let error):
+                                    print("^^^ \(#file):\(#line)  \(error.localizedDescription)")
+                                    contact.authStatus = .verificationFailed
+                                    _ = try? self.database.saveContact(contact)
+                                }
+                            })
+                        )
                     }
                 } catch {
                     print("^^^ \(#file):\(#line)  \(error.localizedDescription)")
@@ -282,7 +309,7 @@ final class RequestsReceivedViewModel {
             do {
                 try self.database.saveContact(contact)
 
-                let _ = try self.messenger.e2e.get()!.confirmReceivedRequest(partner: XXClient.Contact.live(contact.marshaled!))
+                let _ = try self.messenger.e2e.get()!.confirmReceivedRequest(partner: .live(contact.marshaled!))
                 contact.authStatus = .friend
                 try self.database.saveContact(contact)
 

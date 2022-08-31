@@ -18,10 +18,11 @@ struct ScanDisplayViewState: Equatable {
 final class ScanDisplayViewModel {
     @Dependency var messenger: Messenger
 
-    @KeyObject(.email, defaultValue: nil) private var email: String?
-    @KeyObject(.phone, defaultValue: nil) private var phone: String?
-    @KeyObject(.sharingEmail, defaultValue: false) private var sharingEmail: Bool
-    @KeyObject(.sharingPhone, defaultValue: false) private var sharingPhone: Bool
+    @KeyObject(.email, defaultValue: nil) var email: String?
+    @KeyObject(.phone, defaultValue: nil) var phone: String?
+    @KeyObject(.username, defaultValue: nil) var username: String?
+    @KeyObject(.sharingEmail, defaultValue: false) var sharingEmail: Bool
+    @KeyObject(.sharingPhone, defaultValue: false) var sharingPhone: Bool
 
     var statePublisher: AnyPublisher<ScanDisplayViewState, Never> {
         stateSubject.eraseToAnyPublisher()
@@ -60,8 +61,7 @@ final class ScanDisplayViewModel {
     func generateQR() {
         guard let filter = CIFilter(name: "CIQRCodeGenerator") else { return }
 
-        var facts: [Fact] = []
-        let myContact = try! messenger.ud.get()!.getContact()
+        var facts: [Fact] = [Fact(fact: username!, type: FactType.username.rawValue)]
 
         if sharingPhone {
             facts.append(Fact(fact: phone!, type: FactType.phone.rawValue))
@@ -71,12 +71,11 @@ final class ScanDisplayViewModel {
             facts.append(Fact(fact: email!, type: FactType.email.rawValue))
         }
 
-        let myContactWithFacts = try! SetFactsOnContact.live(
-            contactData: myContact.data,
-            facts: facts
-        )
+        let e2e = messenger.e2e.get()!
+        let contactData = e2e.getContact().data
+        let wrappedContact = try! SetFactsOnContact.live(contactData: contactData, facts: facts)
 
-        filter.setValue(myContactWithFacts, forKey: "inputMessage")
+        filter.setValue(wrappedContact, forKey: "inputMessage")
         let transform = CGAffineTransform(scaleX: 5, y: 5)
 
         if let output = filter.outputImage?.transformed(by: transform) {

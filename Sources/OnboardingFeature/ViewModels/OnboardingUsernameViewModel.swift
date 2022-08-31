@@ -56,8 +56,8 @@ final class OnboardingUsernameViewModel {
                 )
 
                 try self.database.saveContact(.init(
-                    id: self.messenger.ud.get()!.getContact().getId(),
-                    marshaled: self.messenger.ud.get()!.getContact().data,
+                    id: self.messenger.e2e.get()!.getContact().getId(),
+                    marshaled: self.messenger.e2e.get()!.getContact().data,
                     username: self.stateRelay.value.input,
                     email: nil,
                     phone: nil,
