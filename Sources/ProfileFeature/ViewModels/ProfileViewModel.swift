@@ -109,7 +109,8 @@ final class ProfileViewModel {
                 self.hudRelay.send(.none)
                 self.refresh()
             } catch {
-                self.hudRelay.send(.error(.init(with: error)))
+                let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
+                self.hudRelay.send(.error(.init(content: xxError)))
             }
         }
     }

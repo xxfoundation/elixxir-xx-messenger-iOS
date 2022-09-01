@@ -4,8 +4,8 @@ import Models
 import Shared
 import Combine
 import Defaults
-import InputField
 import XXClient
+import InputField
 import CombineSchedulers
 import DependencyInjection
 import XXMessengerClient
@@ -56,7 +56,8 @@ final class OnboardingEmailViewModel {
                     confirmationId: confirmationId
                 )
             } catch {
-                self.hudRelay.send(.error(.init(with: error)))
+                let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
+                self.hudRelay.send(.error(.init(content: xxError)))
             }
         }
     }

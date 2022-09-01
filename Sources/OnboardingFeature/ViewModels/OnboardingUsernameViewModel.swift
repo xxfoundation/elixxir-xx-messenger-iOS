@@ -4,6 +4,7 @@ import Models
 import Combine
 import Defaults
 import XXModels
+import XXClient
 import InputField
 import Foundation
 import XXMessengerClient
@@ -75,7 +76,7 @@ final class OnboardingUsernameViewModel {
                 self.greenRelay.send()
             } catch {
                 self.hudRelay.send(.none)
-                self.stateRelay.value.status = .invalid(error.localizedDescription)
+                self.stateRelay.value.status = .invalid(CreateUserFriendlyErrorMessage.live(error.localizedDescription))
             }
         }
     }

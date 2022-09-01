@@ -78,7 +78,8 @@ final class OnboardingPhoneConfirmationViewModel {
                 self.hudRelay.send(.none)
                 self.completionRelay.send(self.confirmation)
             } catch {
-                self.hudRelay.send(.error(.init(with: error)))
+                let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
+                self.hudRelay.send(.error(.init(content: xxError)))
             }
         }
     }

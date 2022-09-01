@@ -530,12 +530,14 @@ extension SingleChatController: KeyboardListenerDelegate {
     }
 
     func keyboardWillChangeFrame(info: KeyboardInfo) {
-        let keyWindow: UIWindow? = UIApplication.shared.connectedScenes
-            .filter { $0.activationState == .foregroundActive }
-            .compactMap { $0 as? UIWindowScene }
-            .first?
-            .windows
-            .first(where: \.isKeyWindow)
+        let keyWindow = UIApplication.shared.windows.filter { $0.isKeyWindow }.first
+
+//        let keyWindow: UIWindow? = UIApplication.shared.connectedScenes
+//            .filter { $0.activationState == .foregroundActive }
+//            .compactMap { $0 as? UIWindowScene }
+//            .first?
+//            .windows
+//            .first(where: \.isKeyWindow)
 
         guard let keyWindow = keyWindow else {
             fatalError("[keyboardWillChangeFrame]: Couldn't get key window")

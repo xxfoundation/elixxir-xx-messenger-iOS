@@ -68,7 +68,8 @@ final class ProfilePhoneViewModel {
                 )
 
             } catch {
-                self.hudRelay.send(.error(.init(with: error)))
+                let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
+                self.hudRelay.send(.error(.init(content: xxError)))
             }
         }
     }

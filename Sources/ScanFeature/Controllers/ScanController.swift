@@ -83,8 +83,7 @@ final class ScanController: UIViewController {
             .sink { [unowned self] in coordinator.toContact($0, from: self) }
             .store(in: &cancellables)
 
-        viewModel.state
-            .map(\.status)
+        viewModel.statePublisher
             .removeDuplicates()
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in

@@ -2,9 +2,9 @@ import Shared
 import Models
 import Combine
 import XXModels
-import Foundation
 import XXClient
-import CombineSchedulers
+import Foundation
+import ReportingFeature
 import DependencyInjection
 
 enum ScanStatus: Equatable {
@@ -21,93 +21,77 @@ enum ScanError: Equatable {
     case alreadyFriends(String)
 }
 
-struct ScanViewState: Equatable {
-    var status: ScanStatus = .reading
-}
-
 final class ScanViewModel {
     @Dependency var database: Database
-    @Dependency var getFactsFromContact: GetFactsFromContact
+    @Dependency var reportingStatus: ReportingStatus
 
-    var backgroundScheduler: AnySchedulerOf<DispatchQueue>
-        = DispatchQueue.global().eraseToAnyScheduler()
+    var contactPublisher: AnyPublisher<XXModels.Contact, Never> {
+        contactSubject.eraseToAnyPublisher()
+    }
 
-    var contactPublisher: AnyPublisher<XXModels.Contact, Never> { contactRelay.eraseToAnyPublisher() }
-    private let contactRelay = PassthroughSubject<XXModels.Contact, Never>()
+    var statePublisher: AnyPublisher<ScanStatus, Never> {
+        stateSubject.eraseToAnyPublisher()
+    }
 
-    var state: AnyPublisher<ScanViewState, Never> { stateRelay.eraseToAnyPublisher() }
-    private let stateRelay = CurrentValueSubject<ScanViewState, Never>(.init())
+    private let contactSubject = PassthroughSubject<XXModels.Contact, Never>()
+    private let stateSubject = CurrentValueSubject<ScanStatus, Never>(.reading)
 
     func resetScanner() {
-        stateRelay.value.status = .reading
+        stateSubject.send(.reading)
     }
 
     func didScanData(_ data: Data) {
-        guard stateRelay.value.status == .reading else { return }
-        stateRelay.value.status = .processing
+        guard stateSubject.value == .reading else { return }
+        stateSubject.send(.processing)
 
-        backgroundScheduler.schedule { [weak self] in
-            guard let self = self else { return }
+        let user = XXClient.Contact.live(data)
 
-            do {
-                guard let usernameAndId = try self.verifyScanned(data) else {
-                    self.stateRelay.value.status = .failed(.unknown(Localized.Scan.Error.general))
-                    return
-                }
-
-
-
-                if let previouslyAdded = try? self.database.fetchContacts(.init(id: [usernameAndId.1])).first {
-                    var error = ScanError.unknown(Localized.Scan.Error.general)
-
-                    switch previouslyAdded.authStatus {
-                    case .friend:
-                        error = .alreadyFriends(usernameAndId.0)
-                    case .requested, .verified:
-                        error = .requestOpened
-                    default:
-                        break
-                    }
-
-                    self.stateRelay.value.status = .failed(error)
-                    return
-                }
-
-                let facts = try? self.getFactsFromContact(data)
-                let contactEmail = facts?.first(where: { $0.type == FactType.email.rawValue })?.fact
-                let contactPhone = facts?.first(where: { $0.type == FactType.phone.rawValue })?.fact
-
-                let contact = Contact(
-                    id: usernameAndId.1,
-                    marshaled: data,
-                    username: usernameAndId.0,
-                    email: contactEmail,
-                    phone: contactPhone,
-                    nickname: nil,
-                    photo: nil,
-                    authStatus: .stranger,
-                    isRecent: false,
-                    createdAt: Date()
-                )
-
-                self.succeed(with: contact)
-            } catch {
-                self.stateRelay.value.status = .failed(.unknown(Localized.Scan.Error.invalid))
-            }
+        guard let uid = try? user.getId(),
+              let facts = try? user.getFacts(),
+              let username = facts.first(where: { $0.type == FactType.username.rawValue })?.fact else {
+            let errorTitle = Localized.Scan.Error.invalid
+            stateSubject.send(.failed(.unknown(errorTitle)))
+            return
         }
-    }
 
-    private func verifyScanned(_ data: Data) throws -> (String, Data)? {
-        let id = try? GetIdFromContact.live(data)
-        let facts = try? getFactsFromContact(data)
-        let username = facts?.first(where: { $0.type == FactType.username.rawValue })?.fact
+        let email = facts.first { $0.type == FactType.email.rawValue }?.fact
+        let phone = facts.first { $0.type == FactType.phone.rawValue }?.fact
 
-        guard let id = id, let username = username else { return nil }
-        return (username, id)
-    }
+        if let alreadyContact = try? database.fetchContacts(.init(id: [uid])).first {
+            if alreadyContact.isBlocked, reportingStatus.isEnabled() {
+                stateSubject.send(.failed(.unknown("You previously blocked this user.")))
+                return
+            }
 
-    private func succeed(with contact: XXModels.Contact) {
-        stateRelay.value.status = .success
-        contactRelay.send(contact)
+            if alreadyContact.isBanned, reportingStatus.isEnabled() {
+                stateSubject.send(.failed(.unknown("This user was banned.")))
+                return
+            }
+
+            if alreadyContact.authStatus == .friend {
+                stateSubject.send(.failed(.alreadyFriends(username)))
+            } else if [.requested, .verified].contains(alreadyContact.authStatus) {
+                stateSubject.send(.failed(.requestOpened))
+            } else {
+                let generalErrorTitle = Localized.Scan.Error.general
+                stateSubject.send(.failed(.unknown(generalErrorTitle)))
+            }
+
+            return
+        }
+
+        stateSubject.send(.success)
+        contactSubject.send(.init(
+            id: uid,
+            marshaled: data,
+            username: username,
+            email: email,
+            phone: phone,
+            nickname: nil,
+            photo: nil,
+            authStatus: .stranger,
+            isRecent: false,
+            createdAt: Date()
+        ))
     }
 }

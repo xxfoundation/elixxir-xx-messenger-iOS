@@ -81,7 +81,11 @@ final class LaunchViewModel {
             self.versionChecker().sink { [unowned self] in
                 switch $0 {
                 case .upToDate:
-                    self.updateBannedList { self.continueWithInitialization() }
+                    self.updateBannedList {
+                        self.updateErrors {
+                            self.continueWithInitialization()
+                        }
+                    }
                 case .failure(let error):
                     self.versionFailed(error: error)
                 case .updateRequired(let info):
@@ -97,7 +101,7 @@ final class LaunchViewModel {
         do {
             try self.setupDatabase()
 
-            try SetLogLevel.live(.trace)
+            _ = try SetLogLevel.live(.trace)
 
             guard let certPath = Bundle.module.path(forResource: "cmix.rip", ofType: "crt"),
                   let contactFilePath = Bundle.module.path(forResource: "udContact", ofType: "bin") else {
@@ -324,6 +328,32 @@ final class LaunchViewModel {
         } else {
             completion(.success(true))
         }
+    }
+
+    private func updateErrors(completion: @escaping () -> Void) {
+        let errorsURLString = "https://git.xx.network/elixxir/client-error-database/-/raw/main/clientErrors.json"
+
+        URLSession.shared.dataTask(with: URL(string: errorsURLString)!) { [weak self] data, _, error in
+            guard let self = self else { return }
+
+            guard error == nil else {
+                print(">>> Issue when trying to download errors json: \(error!.localizedDescription)")
+                self.updateErrors(completion: completion)
+                return
+            }
+
+            guard let data = data, let json = String(data: data, encoding: .utf8) else {
+                print(">>> Issue when trying to unwrap errors json")
+                return
+            }
+
+            do {
+                try UpdateCommonErrors.live(jsonFile: json)
+                completion()
+            } catch {
+                print(">>> Issue when trying to update common errors: \(error.localizedDescription)")
+            }
+        }.resume()
     }
 
     private func updateBannedList(completion: @escaping () -> Void) {
