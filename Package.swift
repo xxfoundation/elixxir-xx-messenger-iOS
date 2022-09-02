@@ -190,7 +190,10 @@ let package = Package(
             name: "CrashReporting"
         ),
         .target(
-            name: "NetworkMonitor"
+            name: "NetworkMonitor",
+            dependencies: [
+                .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
+            ]
         ),
         .target(
             name: "VersionChecking"
@@ -452,6 +455,7 @@ let package = Package(
                 .product(name: "ChatLayout", package: "ChatLayout"),
                 .product(name: "DifferenceKit", package: "DifferenceKit"),
                 .product(name: "ScrollViewController", package: "ScrollViewController"),
+                .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
             ]
         ),
         .testTarget(
@@ -631,6 +635,7 @@ let package = Package(
                 .target(name: "DrawerFeature"),
                 .target(name: "ReportingFeature"),
                 .target(name: "DependencyInjection"),
+                .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
             ]
         ),
         .target(

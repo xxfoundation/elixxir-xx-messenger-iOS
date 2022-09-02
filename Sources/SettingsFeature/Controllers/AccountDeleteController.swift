@@ -51,7 +51,7 @@ public final class AccountDeleteController: UIViewController {
     }
 
     private func setupBindings() {
-        viewModel.hud
+        viewModel.hudPublisher
             .receive(on: DispatchQueue.main)
             .sink { [hud] in hud.update(with: $0) }
             .store(in: &cancellables)

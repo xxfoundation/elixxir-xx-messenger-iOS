@@ -14,9 +14,11 @@ import DifferenceKit
 import ReportingFeature
 import DependencyInjection
 import XXMessengerClient
+import XXClient
 
 import struct XXModels.Message
 import struct XXModels.FileTransfer
+import NetworkMonitor
 
 enum SingleChatNavigationRoutes: Equatable {
     case none
@@ -36,6 +38,7 @@ final class SingleChatViewModel: NSObject {
     @Dependency var messenger: Messenger
     @Dependency var permissions: PermissionHandling
     @Dependency var toastController: ToastController
+    @Dependency var networkMonitor: NetworkMonitoring
     @Dependency var transferManager: XXClient.FileTransfer
 
     @KeyObject(.username, defaultValue: nil) var username: String?
@@ -49,13 +52,18 @@ final class SingleChatViewModel: NSObject {
     private let sectionsRelay = CurrentValueSubject<[ArraySection<ChatSection, Message>], Never>([])
     private let reportPopupSubject = PassthroughSubject<Void, Never>()
 
+    private var healthCancellable: XXClient.Cancellable?
+
     var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
     private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
 
     var isOnline: AnyPublisher<Bool, Never> {
-        // TO REFACTOR:
-        Just(.init(true)).eraseToAnyPublisher()
+        networkMonitor
+            .statusPublisher
+            .map { $0 == .available }
+            .eraseToAnyPublisher()
     }
+
 
     var myId: Data {
         try! messenger.e2e.get()!.getContact().getId()
@@ -116,6 +124,11 @@ final class SingleChatViewModel: NSObject {
             }.receive(on: DispatchQueue.main)
             .sink { [unowned self] in sectionsRelay.send($0) }
             .store(in: &cancellables)
+
+        healthCancellable = messenger.cMix.get()!.addHealthCallback(.init(handle: { [weak self] in
+            guard let self = self else { return }
+            self.networkMonitor.update($0)
+        }))
     }
 
     // MARK: Public
@@ -316,50 +329,54 @@ final class SingleChatViewModel: NSObject {
             replyMessageId: stagedReply?.messageId
         )
 
-        do {
-            message = try database.saveMessage(message)
+        DispatchQueue.global().async { [weak self] in
+            guard let self = self else { return }
 
-            let report = try messenger.e2e.get()!.send(
-                messageType: 2,
-                recipientId: contact.id,
-                payload: Payload(text: message.text, reply: stagedReply).asData(),
-                e2eParams: GetE2EParams.liveDefault()
-            )
+            do {
+                message = try self.database.saveMessage(message)
 
-            try messenger.cMix.get()!.waitForRoundResult(
-                roundList: try report.encode(),
-                timeoutMS: 5_000,
-                callback: .init(handle: {
-                    switch $0 {
-                    case .delivered:
-                        message.status = .sent
-                        _ = try? self.database.saveMessage(message)
+                let report = try self.messenger.e2e.get()!.send(
+                    messageType: 2,
+                    recipientId: self.contact.id,
+                    payload: Payload(text: message.text, reply: self.stagedReply).asData(),
+                    e2eParams: GetE2EParams.liveDefault()
+                )
 
-                    case .notDelivered(timedOut: let timedOut):
-                        if timedOut {
-                            message.status = .sendingTimedOut
-                        } else {
-                            message.status = .sendingFailed
+                try self.messenger.cMix.get()!.waitForRoundResult(
+                    roundList: try report.encode(),
+                    timeoutMS: 5_000,
+                    callback: .init(handle: {
+                        switch $0 {
+                        case .delivered:
+                            message.status = .sent
+                            _ = try? self.database.saveMessage(message)
+
+                        case .notDelivered(timedOut: let timedOut):
+                            if timedOut {
+                                message.status = .sendingTimedOut
+                            } else {
+                                message.status = .sendingFailed
+                            }
+
+                            _ = try? self.database.saveMessage(message)
                         }
+                    })
+                )
 
-                        _ = try? self.database.saveMessage(message)
-                    }
-                })
-            )
+                message.networkId = report.messageId
+                if let timestamp = report.timestamp {
+                    message.date = Date.fromTimestamp(Int(timestamp))
+                }
 
-            message.networkId = report.messageId
-            if let timestamp = report.timestamp {
-                message.date = Date.fromTimestamp(Int(timestamp))
+                message = try self.database.saveMessage(message)
+            } catch {
+                print(error.localizedDescription)
+                message.status = .sendingFailed
+                _ = try? self.database.saveMessage(message)
             }
 
-            message = try database.saveMessage(message)
-        } catch {
-            print(error.localizedDescription)
-            message.status = .sendingFailed
-            _ = try? database.saveMessage(message)
+            self.stagedReply = nil
         }
-
-        stagedReply = nil
     }
 
     func didRequestReply(_ message: Message) {

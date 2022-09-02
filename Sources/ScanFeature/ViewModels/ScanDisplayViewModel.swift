@@ -72,10 +72,10 @@ final class ScanDisplayViewModel {
         }
 
         let e2e = messenger.e2e.get()!
-        let contactData = e2e.getContact().data
-        let wrappedContact = try! SetFactsOnContact.live(contactData: contactData, facts: facts)
+        var contact = e2e.getContact()
+        try! contact.setFacts(facts)
 
-        filter.setValue(wrappedContact, forKey: "inputMessage")
+        filter.setValue(contact.data, forKey: "inputMessage")
         let transform = CGAffineTransform(scaleX: 5, y: 5)
 
         if let output = filter.outputImage?.transformed(by: transform) {

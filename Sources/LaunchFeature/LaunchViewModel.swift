@@ -21,6 +21,7 @@ import class XXClient.Cancellable
 import XXDatabase
 import XXLegacyDatabaseMigrator
 import XXMessengerClient
+import NetworkMonitor
 
 struct Update {
     let content: String
@@ -44,11 +45,13 @@ final class LaunchViewModel {
     @Dependency var reportingStatus: ReportingStatus
     @Dependency var toastController: ToastController
     @Dependency var keychainHandler: KeychainHandling
+    @Dependency var networkMonitor: NetworkMonitoring
     @Dependency var processBannedList: ProcessBannedList
     @Dependency var permissionHandler: PermissionHandling
 
     @KeyObject(.username, defaultValue: nil) var username: String?
     @KeyObject(.biometrics, defaultValue: false) var isBiometricsOn: Bool
+    @KeyObject(.dummyTrafficOn, defaultValue: false) var dummyTrafficOn: Bool
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
@@ -153,13 +156,33 @@ final class LaunchViewModel {
                 senderId: nil,
                 messageType: 2,
                 callback: .init(handle: {
-                    print(">>> \(String(data: $0.payload, encoding: .utf8))")
+                    // let roundId = $0.roundId
+
+                    guard let payload = try? Payload(with: $0.payload) else {
+                        fatalError("Couldn't decode payload: \(String(data: $0.payload, encoding: .utf8) ?? "nil")")
+                    }
+
+                    try! self.database.saveMessage(.init(
+                        networkId: $0.id,
+                        senderId: $0.sender,
+                        recipientId: messenger.e2e.get()!.getContact().getId(),
+                        groupId: nil,
+                        date: Date.fromTimestamp($0.timestamp),
+                        status: .received,
+                        isUnread: true,
+                        text: payload.text,
+                        replyMessageId: payload.reply?.messageId,
+                        roundURL: "https://www.google.com.br",
+                        fileTransferId: nil
+                    ))
                 })
             )
 
             try generateGroupManager(messenger: messenger)
             try generateTrafficManager(messenger: messenger)
             try generateTransferManager(messenger: messenger)
+
+            networkMonitor.start()
 
             if messenger.isLoggedIn() == false {
                 if try messenger.isRegistered() == false {
@@ -452,6 +475,7 @@ extension LaunchViewModel {
         )
 
         DependencyInjection.Container.shared.register(manager)
+        try! manager.setStatus(dummyTrafficOn)
     }
 }
 
@@ -551,12 +575,14 @@ extension LaunchViewModel {
             return
         }
 
-        let leaderId = try! group.getMembership() // This is all users on the group, the 1st is the leader/creator.
+        guard let members = try? group.getMembership(), let leader = members.first else {
+            fatalError("Failed to get group membership/leader")
+        }
 
         try! database.saveGroup(.init(
             id: group.getId(),
             name: String(data: group.getName(), encoding: .utf8)!,
-            leaderId: leaderId,
+            leaderId: leader.id,
             createdAt: Date.fromTimestamp(Int(group.getCreatedMS())),
             authStatus: .pending,
             serialized: group.serialize()
@@ -564,7 +590,7 @@ extension LaunchViewModel {
 
         if let initialMessage = String(data: group.getInitMessage(), encoding: .utf8) {
             try! database.saveMessage(.init(
-                senderId: leaderId,
+                senderId: leader.id,
                 recipientId: nil,
                 groupId: group.getId(),
                 date: Date.fromTimestamp(Int(group.getCreatedMS())),

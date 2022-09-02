@@ -9,6 +9,7 @@ final class SearchContainerViewModel {
     @Dependency var pushHandler: PushHandling
     @Dependency var dummyTrafficManager: DummyTraffic
 
+    @KeyObject(.dummyTrafficOn, defaultValue: false) var dummyTrafficOn
     @KeyObject(.pushNotifications, defaultValue: false) var pushNotifications
     @KeyObject(.askedDummyTrafficOnce, defaultValue: false) var offeredCoverTraffic
 
@@ -25,6 +26,7 @@ final class SearchContainerViewModel {
 
     func didEnableCoverTraffic() {
         try! dummyTrafficManager.setStatus(true)
+        dummyTrafficOn = dummyTrafficManager.getStatus()
     }
 
     private func verifyCoverTraffic() {

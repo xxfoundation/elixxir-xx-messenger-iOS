@@ -2,6 +2,7 @@
 
 import Network
 import Combine
+import XXClient
 import Foundation
 
 public enum NetworkStatus: Equatable {

@@ -21,15 +21,16 @@ struct SettingsViewState: Equatable {
 }
 
 final class SettingsViewModel {
+    @Dependency var pushHandler: PushHandling
+    @Dependency var permissions: PermissionHandling
     @Dependency var dummyTrafficManager: DummyTraffic
-    @Dependency private var pushHandler: PushHandling
-    @Dependency private var permissions: PermissionHandling
 
-    @KeyObject(.biometrics, defaultValue: false) private var biometrics
-    @KeyObject(.hideAppList, defaultValue: false) private var hideAppList
-    @KeyObject(.icognitoKeyboard, defaultValue: false) private var icognitoKeyboard
-    @KeyObject(.pushNotifications, defaultValue: false) private var pushNotifications
-    @KeyObject(.inappnotifications, defaultValue: true) private var inAppNotifications
+    @KeyObject(.biometrics, defaultValue: false) var biometrics
+    @KeyObject(.hideAppList, defaultValue: false) var hideAppList
+    @KeyObject(.dummyTrafficOn, defaultValue: false) var dummyTrafficOn
+    @KeyObject(.icognitoKeyboard, defaultValue: false) var icognitoKeyboard
+    @KeyObject(.pushNotifications, defaultValue: false) var pushNotifications
+    @KeyObject(.inappnotifications, defaultValue: true) var inAppNotifications
 
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
@@ -66,6 +67,7 @@ final class SettingsViewModel {
         let currently = dummyTrafficManager.getStatus()
         try! dummyTrafficManager.setStatus(!currently)
         stateRelay.value.isDummyTrafficOn = !currently
+        dummyTrafficOn = stateRelay.value.isDummyTrafficOn
     }
 
     func didToggleHideActiveApps() {

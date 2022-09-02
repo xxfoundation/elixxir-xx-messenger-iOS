@@ -9,6 +9,7 @@ import XXClient
 import Defaults
 import Countries
 import CustomDump
+import ToastFeature
 import NetworkMonitor
 import ReportingFeature
 import CombineSchedulers
@@ -28,6 +29,7 @@ final class SearchLeftViewModel {
     @Dependency var database: Database
     @Dependency var messenger: Messenger
     @Dependency var reportingStatus: ReportingStatus
+    @Dependency var toastController: ToastController
     @Dependency var networkMonitor: NetworkMonitoring
 
     @KeyObject(.username, defaultValue: nil) var username: String?
@@ -208,6 +210,7 @@ final class SearchLeftViewModel {
                 contact = try self.database.saveContact(contact)
 
                 self.hudSubject.send(.none)
+                self.presentSuccessToast(for: contact, resent: true)
             } catch {
                 contact.authStatus = .requestFailed
                 _ = try? self.database.saveContact(contact)
@@ -242,6 +245,7 @@ final class SearchLeftViewModel {
 
                 self.hudSubject.send(.none)
                 self.successSubject.send(contact)
+                self.presentSuccessToast(for: contact, resent: false)
             } catch {
                 contact.authStatus = .requestFailed
                 _ = try? self.database.saveContact(contact)
@@ -298,5 +302,16 @@ final class SearchLeftViewModel {
 
     private func removeMyself(from collection: [XXModels.Contact]) -> [XXModels.Contact]? {
         collection.filter { $0.id != myId }
+    }
+
+    private func presentSuccessToast(for contact: XXModels.Contact, resent: Bool) {
+        let name = contact.nickname ?? contact.username
+        let sentTitle = Localized.Requests.Sent.Toast.sent(name ?? "")
+        let resentTitle = Localized.Requests.Sent.Toast.resent(name ?? "")
+
+        toastController.enqueueToast(model: .init(
+            title: resent ? resentTitle : sentTitle,
+            leftImage: Asset.sharedSuccess.image
+        ))
     }
 }

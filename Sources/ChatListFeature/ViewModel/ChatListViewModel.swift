@@ -50,6 +50,7 @@ final class ChatListViewModel {
 
     var recentsPublisher: AnyPublisher<RecentsSnapshot, Never> {
         let query = Contact.Query(
+            authStatus: [.friend],
             isRecent: true,
             isBlocked: reportingStatus.isEnabled() ? false : nil,
             isBanned: reportingStatus.isEnabled() ? false : nil
