@@ -8,10 +8,12 @@ import Foundation
 import XXMessengerClient
 import DependencyInjection
 import Retry
+import XXModels
 
 final class AccountDeleteViewModel {
     @Dependency var messenger: Messenger
     @Dependency var keychain: KeychainHandling
+    @Dependency var database: Database
 
     @KeyObject(.username, defaultValue: nil) var username: String?
 
@@ -35,10 +37,20 @@ final class AccountDeleteViewModel {
             guard let self = self else { return }
 
             do {
+                print(">>> try self.cleanUD()")
                 try self.cleanUD()
-                try self.stopNetwork()
+
+                print(">>> try self.messenger.destroy()")
                 try self.messenger.destroy()
+
+                print(">>> try self.keychain.clear()")
                 try self.keychain.clear()
+
+                print(">>> try database.drop()")
+                try self.database.drop()
+
+                print(">>> try self.deleteDatabase()")
+
                 try self.deleteDatabase()
 
                 UserDefaults.resetStandardUserDefaults()
@@ -67,22 +79,6 @@ final class AccountDeleteViewModel {
 
         print(">>> Deleting my username (\(fact.fact)) from ud")
         try messenger.ud.get()!.permanentDeleteAccount(username: fact)
-    }
-
-    private func stopNetwork() throws {
-        let cMix = messenger.cMix.get()!
-
-        print(">>> Stopping network follower...")
-        try cMix.stopNetworkFollower()
-
-        retry(max: 10, retryStrategy: .delay(seconds: 2)) {
-            if cMix.networkFollowerStatus() != .stopped {
-                print(">>> Network still hasn't stopped. Its \(cMix.networkFollowerStatus())")
-                throw NSError.create("Gave up on stopping the network.")
-            }
-
-            print(">>> Network has stopped")
-        }
     }
 
     private func deleteDatabase() throws {

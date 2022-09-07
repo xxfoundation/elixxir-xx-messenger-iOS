@@ -10,6 +10,7 @@ public enum KeychainSFTP: String {
 public protocol KeychainHandling {
     func clear() throws
     func getPassword() throws -> Data?
+    func remove(_ key: String) throws
     func store(password pwd: Data) throws
 
     func get(key: KeychainSFTP) throws -> String?
@@ -22,6 +23,10 @@ public struct KeychainHandler: KeychainHandling {
 
     public init() {
         self.keychain = Keychain(service: "XXM")
+    }
+
+    public func remove(_ key: String) throws {
+        try keychain.remove(key)
     }
 
     public func clear() throws {

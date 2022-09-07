@@ -105,7 +105,7 @@
       "location" : "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
       "state" : {
         "branch" : "development",
-        "revision" : "8e3717558823ea713fd6b516cc2fcbef01d003ed"
+        "revision" : "15a7ab035a7c0b9031cf0fa977563b3a1a254647"
       }
     },
     {
@@ -319,8 +319,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-collections",
       "state" : {
-        "revision" : "48254824bb4248676bf7ce56014ff57b142b77eb",
-        "version" : "1.0.2"
+        "revision" : "f504716c27d2e5d4144fa4794b12129301d17729",
+        "version" : "1.0.3"
       }
     },
     {

@@ -4,6 +4,7 @@ import Models
 import Combine
 import Defaults
 import XXModels
+import XXLogger
 import Keychain
 import Foundation
 import Permissions
@@ -106,6 +107,10 @@ final class LaunchViewModel {
 
             _ = try SetLogLevel.live(.trace)
 
+            RegisterLogWriter.live(.init(handle: {
+                XXLogger.live().debug($0)
+            }))
+
             guard let certPath = Bundle.module.path(forResource: "cmix.rip", ofType: "crt"),
                   let contactFilePath = Bundle.module.path(forResource: "udContact", ofType: "bin") else {
                 fatalError("Couldn't retrieve alternative UD credentials")
@@ -175,6 +180,11 @@ final class LaunchViewModel {
                         roundURL: "https://www.google.com.br",
                         fileTransferId: nil
                     ))
+
+                    if var contact = try? self.database.fetchContacts(.init(id: [$0.sender])).first {
+                        contact.isRecent = false
+                        try! self.database.saveContact(contact)
+                    }
                 })
             )
 
@@ -221,7 +231,8 @@ final class LaunchViewModel {
                 }
             }
         } catch {
-            print(">>> Initialization couldn't be completed: \(error.localizedDescription)")
+            let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
+            hudSubject.send(.error(.init(content: xxError)))
         }
     }
 

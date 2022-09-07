@@ -456,6 +456,7 @@ let package = Package(
                 .product(name: "DifferenceKit", package: "DifferenceKit"),
                 .product(name: "ScrollViewController", package: "ScrollViewController"),
                 .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
+                .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
             ]
         ),
         .testTarget(
