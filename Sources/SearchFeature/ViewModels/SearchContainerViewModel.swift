@@ -26,7 +26,7 @@ final class SearchContainerViewModel {
 
     func didEnableCoverTraffic() {
         try! dummyTrafficManager.setStatus(true)
-        dummyTrafficOn = dummyTrafficManager.getStatus()
+        dummyTrafficOn = true
     }
 
     private func verifyCoverTraffic() {

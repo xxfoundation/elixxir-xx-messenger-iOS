@@ -75,10 +75,8 @@ final class AccountDeleteViewModel {
     }
 
     private func cleanUD() throws {
-        let fact = Fact(fact: username!, type: FactType.username.rawValue)
-
-        print(">>> Deleting my username (\(fact.fact)) from ud")
-        try messenger.ud.get()!.permanentDeleteAccount(username: fact)
+        print(">>> Deleting my username (\(username ?? "NO_USERNAME")) from ud")
+        try messenger.ud.get()!.permanentDeleteAccount(username: .init(type: .username, value: username!))
     }
 
     private func deleteDatabase() throws {

@@ -58,7 +58,7 @@ final class OnboardingPhoneViewModel {
 
             do {
                 let confirmationId = try self.messenger.ud.get()!.sendRegisterFact(
-                    .init(fact: content, type: FactType.phone.rawValue)
+                    .init(type: .phone, value: content)
                 )
 
                 self.hudRelay.send(.none)

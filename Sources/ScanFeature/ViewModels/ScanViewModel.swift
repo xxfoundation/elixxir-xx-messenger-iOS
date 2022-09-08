@@ -48,14 +48,14 @@ final class ScanViewModel {
 
         guard let uid = try? user.getId(),
               let facts = try? user.getFacts(),
-              let username = facts.first(where: { $0.type == FactType.username.rawValue })?.fact else {
+              let username = facts.first(where: { $0.type == .username })?.value else {
             let errorTitle = Localized.Scan.Error.invalid
             stateSubject.send(.failed(.unknown(errorTitle)))
             return
         }
 
-        let email = facts.first { $0.type == FactType.email.rawValue }?.fact
-        let phone = facts.first { $0.type == FactType.phone.rawValue }?.fact
+        let email = facts.first { $0.type == .email }?.value
+        let phone = facts.first { $0.type == .phone }?.value
 
         if let alreadyContact = try? database.fetchContacts(.init(id: [uid])).first {
             if alreadyContact.isBlocked, reportingStatus.isEnabled() {

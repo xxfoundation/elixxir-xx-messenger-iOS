@@ -182,15 +182,11 @@ final class RestoreViewModel {
                 self.phone = facts.phone
                 self.email = facts.email
 
-                var emailFact: Fact? = {
-                    if let email = facts.email { return Fact(fact: email, type: FactType.email.rawValue) }
-                    return nil
-                }()
+                var emailFact: Fact?
+                var phoneFact: Fact?
 
-                var phoneFact: Fact? = {
-                    if let phone = facts.phone { return Fact(fact: phone, type: FactType.phone.rawValue) }
-                    return nil
-                }()
+                if let email = self.email { emailFact = .init(type: .email, value: email) }
+                if let phone = self.phone { phoneFact = .init(type: .phone, value: phone) }
 
                 let cMix = try self.cMixManager.load()
 
@@ -236,7 +232,7 @@ final class RestoreViewModel {
                 let userDiscovery = try NewUdManagerFromBackup.live(
                     params: .init(
                         e2eId: e2e.getId(),
-                        username: Fact(fact: facts.username, type: 0),
+                        username: .init(type: .username, value: facts.username),
                         email: emailFact,
                         phone: phoneFact,
                         cert: Data(contentsOf: URL(fileURLWithPath: certPath)),

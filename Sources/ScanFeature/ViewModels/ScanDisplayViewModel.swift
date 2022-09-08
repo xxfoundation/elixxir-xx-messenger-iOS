@@ -61,14 +61,14 @@ final class ScanDisplayViewModel {
     func generateQR() {
         guard let filter = CIFilter(name: "CIQRCodeGenerator") else { return }
 
-        var facts: [Fact] = [Fact(fact: username!, type: FactType.username.rawValue)]
+        var facts: [Fact] = [.init(type: .username, value: username!)]
 
         if sharingPhone {
-            facts.append(Fact(fact: phone!, type: FactType.phone.rawValue))
+            facts.append(.init(type: .phone, value: phone!))
         }
 
         if sharingEmail {
-            facts.append(Fact(fact: email!, type: FactType.email.rawValue))
+            facts.append(.init(type: .email, value: email!))
         }
 
         let e2e = messenger.e2e.get()!

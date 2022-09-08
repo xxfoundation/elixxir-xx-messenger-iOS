@@ -123,7 +123,7 @@ final class GroupChatViewModel {
 
             try messenger.cMix.get()!.waitForRoundResult(
                 roundList: try report.encode(),
-                timeoutMS: 5_000,
+                timeoutMS: 15_000,
                 callback: .init(handle: {
                     switch $0 {
                     case .delivered:
@@ -176,7 +176,7 @@ final class GroupChatViewModel {
 
             try messenger.cMix.get()!.waitForRoundResult(
                 roundList: try report.encode(),
-                timeoutMS: 5_000,
+                timeoutMS: 15_000,
                 callback: .init(handle: {
                     switch $0 {
                     case .delivered:

@@ -1,8 +1,10 @@
 import UIKit
 import Models
 import Defaults
+import XXClient
 import XXModels
 import XXDatabase
+import XXMessengerClient
 import ReportingFeature
 import DependencyInjection
 
@@ -12,6 +14,7 @@ public final class PushHandler: PushHandling {
         static let usernamesSetting = "isShowingUsernames"
     }
 
+    @Dependency var messenger: Messenger
     @Dependency var reportingStatus: ReportingStatus
 
     @KeyObject(.pushNotifications, defaultValue: false) var isPushEnabled: Bool
@@ -38,8 +41,12 @@ public final class PushHandler: PushHandling {
 
     public func registerToken(_ token: Data) {
         do {
-            fatalError(">>> Missing API for notifications")
+            try RegisterForNotifications.live(
+                e2eId: messenger.e2e.get()!.getId(),
+                token: token.map { String(format: "%02hhx", $0) }.joined()
+            )
         } catch {
+            print(error.localizedDescription)
             isPushEnabled = false
         }
     }

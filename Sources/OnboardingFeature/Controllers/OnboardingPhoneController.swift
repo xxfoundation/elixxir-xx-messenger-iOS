@@ -81,7 +81,7 @@ public final class OnboardingPhoneController: UIViewController {
         screenView.inputField.codePublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
-                coordinator.toCountries(from: self) { viewModel.didChooseCountry($0) }
+                coordinator.toCountries(from: self) { self.viewModel.didChooseCountry($0) }
             }.store(in: &cancellables)
 
         viewModel.state.map(\.confirmation)
@@ -93,10 +93,10 @@ public final class OnboardingPhoneController: UIViewController {
                     let successModel = OnboardingSuccessModel(
                         title: Localized.Onboarding.Success.Phone.title,
                         subtitle: nil,
-                        nextController: coordinator.toChats(from:)
+                        nextController: self.coordinator.toChats(from:)
                     )
 
-                    coordinator.toSuccess(with: successModel, from: controller)
+                    self.coordinator.toSuccess(with: successModel, from: controller)
                 }
             }.store(in: &cancellables)
 

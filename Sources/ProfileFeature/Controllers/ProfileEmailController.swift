@@ -61,8 +61,8 @@ public final class ProfileEmailController: UIViewController {
             .sink { [unowned self] in
                 viewModel.clearUp()
                 coordinator.toCode(with: $0, from: self) { _, _ in
-                    if let viewControllers = navigationController?.viewControllers {
-                        navigationController?.popToViewController(
+                    if let viewControllers = self.navigationController?.viewControllers {
+                        self.navigationController?.popToViewController(
                             viewControllers[viewControllers.count - 3],
                             animated: true
                         )

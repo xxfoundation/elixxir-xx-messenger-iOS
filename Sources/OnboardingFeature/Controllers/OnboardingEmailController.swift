@@ -73,10 +73,10 @@ public final class OnboardingEmailController: UIViewController {
                     let successModel = OnboardingSuccessModel(
                         title: Localized.Onboarding.Success.Email.title,
                         subtitle: nil,
-                        nextController: coordinator.toPhone(from:)
+                        nextController: self.coordinator.toPhone(from:)
                     )
 
-                    coordinator.toSuccess(with: successModel, from: controller)
+                    self.coordinator.toSuccess(with: successModel, from: controller)
                 }
             }.store(in: &cancellables)
 

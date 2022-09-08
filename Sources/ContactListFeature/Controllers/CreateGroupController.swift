@@ -164,7 +164,7 @@ public final class CreateGroupController: UIViewController {
                 coordinator.toGroupDrawer(
                     with: count + 1,
                     from: self, { (name, welcome) in
-                        viewModel.create(name: name, welcome: welcome, members: selectedElements)
+                        self.viewModel.create(name: name, welcome: welcome, members: self.selectedElements)
                     }
                 )
             }.store(in: &cancellables)

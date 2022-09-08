@@ -143,7 +143,7 @@ final class SingleChatViewModel: NSObject {
 
     func didSendAudio(url: URL) {
         do {
-            let transferId = try transferManager.send(
+            let _ = try transferManager.send(
                 params: .init(
                     payload: .init(
                         name: "",
@@ -152,7 +152,6 @@ final class SingleChatViewModel: NSObject {
                         contents: Data()
                     ),
                     recipientId: contact.id,
-                    paramsJSON: Data(),
                     retry: 1,
                     period: ""
                 ),
@@ -177,16 +176,15 @@ final class SingleChatViewModel: NSObject {
         hudRelay.send(.on)
 
         do {
-            let transferId = try transferManager.send(
+            let _ = try transferManager.send(
                 params: .init(
                     payload: .init(
                         name: "",
                         type: "",
                         preview: Data(),
-                        contents: Data()
+                        contents: imageData
                     ),
                     recipientId: Data(),
-                    paramsJSON: Data(),
                     retry: 1,
                     period: ""
                 ),
@@ -200,7 +198,7 @@ final class SingleChatViewModel: NSObject {
                 })
             )
         } catch {
-             // self?.hudRelay.send(.error(.init(with: error)))
+            hudRelay.send(.error(.init(with: error)))
         }
     }
 
@@ -239,7 +237,7 @@ final class SingleChatViewModel: NSObject {
 
             try messenger.cMix.get()!.waitForRoundResult(
                 roundList: try report.encode(),
-                timeoutMS: 5_000,
+                timeoutMS: 15_000,
                 callback: .init(handle: {
                     switch $0 {
                     case .delivered:
@@ -258,6 +256,7 @@ final class SingleChatViewModel: NSObject {
                 })
             )
 
+            //message.roundURL = report.roundURL
             message.networkId = report.messageId
             if let timestamp = report.timestamp {
                 message.date = Date.fromTimestamp(Int(timestamp))
@@ -344,7 +343,7 @@ final class SingleChatViewModel: NSObject {
 
                 try self.messenger.cMix.get()!.waitForRoundResult(
                     roundList: try report.encode(),
-                    timeoutMS: 5_000,
+                    timeoutMS: 15_000,
                     callback: .init(handle: {
                         switch $0 {
                         case .delivered:
@@ -363,6 +362,7 @@ final class SingleChatViewModel: NSObject {
                     })
                 )
 
+                message.roundURL = report.roundURL
                 message.networkId = report.messageId
                 if let timestamp = report.timestamp {
                     message.date = Date.fromTimestamp(Int(timestamp))

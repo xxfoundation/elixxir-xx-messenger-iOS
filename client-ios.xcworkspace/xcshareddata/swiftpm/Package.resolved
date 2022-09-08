@@ -68,8 +68,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/combine-schedulers",
       "state" : {
-        "revision" : "9e42b4b0453da417a44daa17174103e7d1c5be07",
-        "version" : "0.7.3"
+        "revision" : "11973960af9c5426f22d337628cec4342c5e660d",
+        "version" : "0.7.4"
       }
     },
     {
@@ -105,7 +105,7 @@
       "location" : "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
       "state" : {
         "branch" : "development",
-        "revision" : "15a7ab035a7c0b9031cf0fa977563b3a1a254647"
+        "revision" : "f1ea0689bbd0e2faa978d5b478c9d594a9f96115"
       }
     },
     {
@@ -176,8 +176,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/groue/GRDB.swift",
       "state" : {
-        "revision" : "23f4254ae36fa19aecd73047c0577a9f49850d1c",
-        "version" : "5.26.0"
+        "revision" : "dd7e7f39e8e4d7a22d258d9809a882f914690b01",
+        "version" : "5.26.1"
       }
     },
     {
@@ -328,8 +328,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-composable-architecture.git",
       "state" : {
-        "revision" : "a518935116b2bada7234f47073159b433d432af1",
-        "version" : "0.39.1"
+        "revision" : "5b78fbcb0583568392762b15a262b3106cfb5185",
+        "version" : "0.40.0"
       }
     },
     {

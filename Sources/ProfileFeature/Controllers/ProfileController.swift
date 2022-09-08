@@ -69,7 +69,7 @@ public final class ProfileController: UIViewController {
                         actionTitle: Localized.Profile.Delete.action(
                             Localized.Profile.Email.title
                         )) {
-                            viewModel.didTapDelete(isEmail: true)
+                            self.viewModel.didTapDelete(isEmail: true)
                         }
                 } else {
                     coordinator.toEmail(from: self)
@@ -91,7 +91,7 @@ public final class ProfileController: UIViewController {
                         actionTitle: Localized.Profile.Delete.action(
                             Localized.Profile.Phone.title
                         )) {
-                            viewModel.didTapDelete(isEmail: false)
+                            self.viewModel.didTapDelete(isEmail: false)
                         }
                 } else {
                     coordinator.toPhone(from: self)
@@ -114,7 +114,7 @@ public final class ProfileController: UIViewController {
                         title: Localized.Profile.Photo.title,
                         subtitle: Localized.Profile.Photo.subtitle,
                         actionTitle: Localized.Profile.Photo.continue) {
-                            coordinator.toPhotos(from: self)
+                            self.coordinator.toPhotos(from: self)
                         }
                 case .libraryPermission:
                     coordinator.toPermission(type: .library, from: self)

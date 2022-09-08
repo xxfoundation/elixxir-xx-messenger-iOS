@@ -50,8 +50,8 @@ final class ContactViewModel {
         self.contact = contact
 
         let facts = try? getFactsFromContact(contact.marshaled!)
-        let email = facts?.first(where: { $0.type == FactType.email.rawValue })?.fact
-        let phone = facts?.first(where: { $0.type == FactType.phone.rawValue })?.fact
+        let email = facts?.first(where: { $0.type == .email })?.value
+        let phone = facts?.first(where: { $0.type == .phone })?.value
 
         stateRelay.value = .init(
             title: contact.nickname ?? contact.username,
@@ -112,7 +112,7 @@ final class ContactViewModel {
                 try self.database.saveContact(self.contact)
 
                 var myFacts = try self.messenger.ud.get()!.getFacts()
-                myFacts.append(Fact(fact: self.username!, type: FactType.username.rawValue))
+                myFacts.append(.init(type: .username, value: self.username!))
 
                 let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
                     partner: XXClient.Contact.live(self.contact.marshaled!),
@@ -144,7 +144,7 @@ final class ContactViewModel {
                 try self.database.saveContact(self.contact)
 
                 var myFacts = try self.messenger.ud.get()!.getFacts()
-                myFacts.append(Fact(fact: self.username!, type: FactType.username.rawValue))
+                myFacts.append(.init(type: .username, value: self.username!))
 
                 let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
                     partner: XXClient.Contact.live(self.contact.marshaled!),

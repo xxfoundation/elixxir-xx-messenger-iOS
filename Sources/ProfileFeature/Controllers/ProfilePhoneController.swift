@@ -6,8 +6,6 @@ import Theme
 import DependencyInjection
 import ScrollViewController
 
-#warning("TODO: Merge ProfilePhoneController/ProfileEmailController")
-
 public final class ProfilePhoneController: UIViewController {
     @Dependency private var hud: HUD
     @Dependency private var coordinator: ProfileCoordinating
@@ -59,7 +57,7 @@ public final class ProfilePhoneController: UIViewController {
         screenView.inputField.codePublisher
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
-                coordinator.toCountries(from: self) { viewModel.didChooseCountry($0) }
+                coordinator.toCountries(from: self) { self.viewModel.didChooseCountry($0) }
             }.store(in: &cancellables)
 
         viewModel.state
@@ -69,8 +67,8 @@ public final class ProfilePhoneController: UIViewController {
             .sink { [unowned self] in
                 viewModel.clearUp()
                 coordinator.toCode(with: $0, from: self) { _, _ in
-                    if let viewControllers = navigationController?.viewControllers {
-                        navigationController?.popToViewController(
+                    if let viewControllers = self.navigationController?.viewControllers {
+                        self.navigationController?.popToViewController(
                             viewControllers[viewControllers.count - 3],
                             animated: true
                         )

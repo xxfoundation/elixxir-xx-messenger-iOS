@@ -71,7 +71,7 @@ final class RequestsSentViewModel {
 
             do {
                 var myFacts = try self.messenger.ud.get()!.getFacts()
-                myFacts.append(Fact(fact: self.username!, type: FactType.username.rawValue))
+                myFacts.append(.init(type: .username, value: self.username!))
 
                 let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
                     partner: XXClient.Contact.live(contact.marshaled!),

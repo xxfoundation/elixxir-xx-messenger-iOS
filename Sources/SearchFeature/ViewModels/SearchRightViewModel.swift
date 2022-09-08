@@ -77,15 +77,15 @@ final class SearchRightViewModel {
         guard
             let uid = try? user.getId(),
             let facts = try? user.getFacts(),
-            let username = facts.first(where: { $0.type == FactType.username.rawValue })?.fact
+            let username = facts.first(where: { $0.type == .username })?.value
         else {
             let errorTitle = Localized.Scan.Error.invalid
             statusSubject.send(.failed(.unknown(errorTitle)))
             return
         }
 
-        let email = facts.first { $0.type == FactType.email.rawValue }?.fact
-        let phone = facts.first { $0.type == FactType.phone.rawValue }?.fact
+        let email = facts.first { $0.type == .email }?.value
+        let phone = facts.first { $0.type == .phone }?.value
 
         /// Make sure we are not processing a contact
         /// that we already have

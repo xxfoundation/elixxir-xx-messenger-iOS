@@ -6,6 +6,7 @@ import Defaults
 import Permissions
 import PushFeature
 import XXClient
+import XXMessengerClient
 import UserNotifications
 import CombineSchedulers
 import DependencyInjection
@@ -21,6 +22,7 @@ struct SettingsViewState: Equatable {
 }
 
 final class SettingsViewModel {
+    @Dependency var messenger: Messenger
     @Dependency var pushHandler: PushHandling
     @Dependency var permissions: PermissionHandling
     @Dependency var dummyTrafficManager: DummyTraffic
@@ -135,10 +137,14 @@ final class SettingsViewModel {
                 guard let self = self else { return }
 
                 do {
-                    fatalError(">>> Missing API for notifications")
+                    try UnregisterForNotifications.live(
+                        e2eId: self.messenger.e2e.get()!.getId()
+                    )
+
                     self.hudRelay.send(.none)
                 } catch {
-                    self.hudRelay.send(.error(.init(with: error)))
+                    let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
+                    self.hudRelay.send(.error(.init(content: xxError)))
                 }
 
                 self.pushNotifications = false

@@ -603,8 +603,6 @@ extension SingleChatController: UICollectionViewDelegate {
             return UITargetedPreview(view: leftView, parameters: parameters)
         }
 
-        #warning("TODO: Refactor")
-
         var rightView: UIView!
 
         if let cell = cell as? OutgoingTextCell {

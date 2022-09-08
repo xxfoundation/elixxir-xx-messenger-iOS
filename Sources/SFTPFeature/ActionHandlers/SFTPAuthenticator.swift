@@ -42,7 +42,7 @@ extension SFTPAuthenticator {
             } else if let error = error as? Socket.Error {
                 print(error.errorCode)
                 print(error.description)
-                print(error.errorReason)
+                print(error.errorReason ?? "No error reason available")
                 print(error.localizedDescription)
             } else {
                 print(error.localizedDescription)

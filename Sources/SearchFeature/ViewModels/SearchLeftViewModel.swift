@@ -142,6 +142,12 @@ final class SearchLeftViewModel {
             return
         }
 
+        var factType: FactType = .email
+
+        if stateSubject.value.item == .phone {
+            factType = .phone
+        }
+
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }
 
@@ -149,7 +155,7 @@ final class SearchLeftViewModel {
                 let report = try SearchUD.live(
                     e2eId: self.messenger.e2e.get()!.getId(),
                     udContact: self.messenger.ud.get()!.getContact(),
-                    facts: [Fact(fact: content, type: self.stateSubject.value.item.rawValue)],
+                    facts: [.init(type: factType, value: content)],
                     callback: .init(handle: {
                         switch $0 {
                         case .success(let results):
@@ -158,9 +164,9 @@ final class SearchLeftViewModel {
                                 XXModels.Contact(
                                     id: try! results.first!.getId(),
                                     marshaled: results.first!.data,
-                                    username: try! results.first?.getFacts().first(where: { $0.type == FactType.username.rawValue })?.fact,
-                                    email: try? results.first?.getFacts().first(where: { $0.type == FactType.email.rawValue })?.fact,
-                                    phone: try? results.first?.getFacts().first(where: { $0.type == FactType.phone.rawValue })?.fact,
+                                    username: try! results.first?.getFacts().first(where: { $0.type == .username })?.value,
+                                    email: try? results.first?.getFacts().first(where: { $0.type == .email })?.value,
+                                    phone: try? results.first?.getFacts().first(where: { $0.type == .phone })?.value,
                                     nickname: nil,
                                     photo: nil,
                                     authStatus: .stranger,
@@ -199,7 +205,7 @@ final class SearchLeftViewModel {
                 try self.database.saveContact(contact)
 
                 var myFacts = try self.messenger.ud.get()!.getFacts()
-                myFacts.append(Fact(fact: self.username!, type: FactType.username.rawValue))
+                myFacts.append(.init(type: .username, value: self.username!))
 
                 let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
                     partner: .live(contact.marshaled!),
@@ -233,7 +239,7 @@ final class SearchLeftViewModel {
                 try self.database.saveContact(contact)
 
                 var myFacts = try self.messenger.ud.get()!.getFacts()
-                myFacts.append(Fact(fact: self.username!, type: FactType.username.rawValue))
+                myFacts.append(.init(type: .username, value: self.username!))
 
                 let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
                     partner: .live(contact.marshaled!),

@@ -105,7 +105,7 @@ final class LaunchViewModel {
         do {
             try self.setupDatabase()
 
-            _ = try SetLogLevel.live(.trace)
+            _ = try SetLogLevel.live(.fatal)
 
             RegisterLogWriter.live(.init(handle: {
                 XXLogger.live().debug($0)
@@ -161,6 +161,7 @@ final class LaunchViewModel {
                 senderId: nil,
                 messageType: 2,
                 callback: .init(handle: {
+
                     // let roundId = $0.roundId
 
                     guard let payload = try? Payload(with: $0.payload) else {
@@ -178,6 +179,7 @@ final class LaunchViewModel {
                         text: payload.text,
                         replyMessageId: payload.reply?.messageId,
                         roundURL: "https://www.google.com.br",
+                        //roundURL: $0.roundURL,
                         fileTransferId: nil
                     ))
 
@@ -502,9 +504,9 @@ extension LaunchViewModel {
         }
 
         let facts = try? contact.getFacts()
-        let email = facts?.first(where: { $0.type == FactType.email.rawValue })?.fact
-        let phone = facts?.first(where: { $0.type == FactType.phone.rawValue })?.fact
-        let username = facts?.first(where: { $0.type == FactType.username.rawValue })?.fact
+        let email = facts?.first(where: { $0.type == .email })?.value
+        let phone = facts?.first(where: { $0.type == .phone })?.value
+        let username = facts?.first(where: { $0.type == .username })?.value
 
         var model = try! database.saveContact(.init(
             id: id,
@@ -599,20 +601,49 @@ extension LaunchViewModel {
             serialized: group.serialize()
         ))
 
-        if let initialMessage = String(data: group.getInitMessage(), encoding: .utf8) {
-            try! database.saveMessage(.init(
-                senderId: leader.id,
-                recipientId: nil,
-                groupId: group.getId(),
-                date: Date.fromTimestamp(Int(group.getCreatedMS())),
-                status: .received,
-                isUnread: true,
-                text: initialMessage
-            ))
+//        if let initialMessage = String(data: group.getInitMessage(), encoding: .utf8) {
+//            try! database.saveMessage(.init(
+//                senderId: leader.id,
+//                recipientId: nil,
+//                groupId: group.getId(),
+//                date: Date.fromTimestamp(Int(group.getCreatedMS())),
+//                status: .received,
+//                isUnread: true,
+//                text: initialMessage
+//            ))
+//        }
+
+        let friends = try! database.fetchContacts(.init(id: Set(members.map(\.id))))
+        let strangers = members.filter { !friends.map(\.id).contains($0.id) }
+
+        members.forEach {
+            if strangers.map(\.id).contains($0.id) {
+                try! database.saveContact(.init(
+                    id: $0.id,
+                    marshaled: nil,
+                    username: "Fetching...",
+                    email: nil,
+                    phone: nil,
+                    nickname: nil,
+                    photo: nil,
+                    authStatus: .stranger,
+                    isRecent: false,
+                    isBlocked: false,
+                    isBanned: false,
+                    createdAt: Date()
+                ))
+            }
         }
 
-        // TODO:
-        // All other members should be added to the database as GroupMembers
+        members.forEach {
+            let model = XXModels.GroupMember(groupId: group.getId(), contactId: $0.id)
+            _ = try? database.saveGroupMember(model)
+        }
+
+//        DispatchQueue.global().async { [weak self] in
+//            guard let self = self else { return }
+//            // Multilookup on strangers
+//        }
     }
 
     private func performLookup(

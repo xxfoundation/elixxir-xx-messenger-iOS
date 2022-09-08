@@ -93,8 +93,8 @@ final class ProfileViewModel {
             do {
                 try self.messenger.ud.get()!.removeFact(
                     .init(
-                        fact: isEmail ? self.emailStored! : self.phoneStored!,
-                        type: isEmail ? FactType.email.rawValue : FactType.phone.rawValue
+                        type: isEmail ? .email : .phone,
+                        value: isEmail ? self.emailStored! : self.phoneStored!
                     )
                 )
 

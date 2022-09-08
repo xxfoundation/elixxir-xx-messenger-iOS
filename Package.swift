@@ -229,6 +229,8 @@ let package = Package(
                 .target(name: "ReportingFeature"),
                 .target(name: "DependencyInjection"),
                 .product(name: "XXDatabase", package: "client-ios-db"),
+                .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
+                .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
             ]
         ),
         .target(
@@ -560,6 +562,8 @@ let package = Package(
                 .target(name: "DependencyInjection"),
                 .product(name: "CombineSchedulers", package: "combine-schedulers"),
                 .product(name: "ScrollViewController", package: "ScrollViewController"),
+                .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
+                .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
             ]
         ),
         .testTarget(

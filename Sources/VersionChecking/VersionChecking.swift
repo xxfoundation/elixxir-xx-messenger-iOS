@@ -1,8 +1,6 @@
 import Combine
 import Foundation
 
-#warning("TODO: Unit test this feature")
-
 public enum VersionInfo {
     case upToDate
     case failure(Error)

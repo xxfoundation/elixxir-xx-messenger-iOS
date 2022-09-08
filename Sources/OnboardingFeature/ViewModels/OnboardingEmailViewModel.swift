@@ -46,7 +46,7 @@ final class OnboardingEmailViewModel {
 
             do {
                 let confirmationId = try self.messenger.ud.get()!.sendRegisterFact(
-                    .init(fact: self.stateRelay.value.input, type: FactType.email.rawValue)
+                    .init(type: .email, value: self.stateRelay.value.input)
                 )
 
                 self.hudRelay.send(.none)
