@@ -142,10 +142,12 @@ final class SearchLeftViewModel {
             return
         }
 
-        var factType: FactType = .email
+        var factType: FactType = .username
 
         if stateSubject.value.item == .phone {
             factType = .phone
+        } else if stateSubject.value.item == .email {
+            factType = .email
         }
 
         backgroundScheduler.schedule { [weak self] in

@@ -111,20 +111,35 @@ final class LaunchViewModel {
                 XXLogger.live().debug($0)
             }))
 
-            guard let certPath = Bundle.module.path(forResource: "cmix.rip", ofType: "crt"),
-                  let contactFilePath = Bundle.module.path(forResource: "udContact", ofType: "bin") else {
-                fatalError("Couldn't retrieve alternative UD credentials")
-            }
-
-            let address = "46.101.98.49:18001"
-            let cert = try Data(contentsOf: URL(fileURLWithPath: certPath))
-            let contactFile = try Data(contentsOf: URL(fileURLWithPath: contactFilePath))
-
             var environment: MessengerEnvironment = .live()
-            environment.udCert = cert
-            environment.udAddress = address
-            environment.udContact = contactFile
             environment.ndfEnvironment = .mainnet
+            environment.udAddress = "46.101.98.49:18001"
+            environment.udCert = """
+            -----BEGIN CERTIFICATE-----
+            MIIDbDCCAlSgAwIBAgIJAOUNtZneIYECMA0GCSqGSIb3DQEBBQUAMGgxCzAJBgNV
+            BAYTAlVTMRMwEQYDVQQIDApDYWxpZm9ybmlhMRIwEAYDVQQHDAlDbGFyZW1vbnQx
+            GzAZBgNVBAoMElByaXZhdGVncml0eSBDb3JwLjETMBEGA1UEAwwKKi5jbWl4LnJp
+            cDAeFw0xOTAzMDUxODM1NDNaFw0yOTAzMDIxODM1NDNaMGgxCzAJBgNVBAYTAlVT
+            MRMwEQYDVQQIDApDYWxpZm9ybmlhMRIwEAYDVQQHDAlDbGFyZW1vbnQxGzAZBgNV
+            BAoMElByaXZhdGVncml0eSBDb3JwLjETMBEGA1UEAwwKKi5jbWl4LnJpcDCCASIw
+            DQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAPP0WyVkfZA/CEd2DgKpcudn0oDh
+            Dwsjmx8LBDWsUgQzyLrFiVigfUmUefknUH3dTJjmiJtGqLsayCnWdqWLHPJYvFfs
+            WYW0IGF93UG/4N5UAWO4okC3CYgKSi4ekpfw2zgZq0gmbzTnXcHF9gfmQ7jJUKSE
+            tJPSNzXq+PZeJTC9zJAb4Lj8QzH18rDM8DaL2y1ns0Y2Hu0edBFn/OqavBJKb/uA
+            m3AEjqeOhC7EQUjVamWlTBPt40+B/6aFJX5BYm2JFkRsGBIyBVL46MvC02MgzTT9
+            bJIJfwqmBaTruwemNgzGu7Jk03hqqS1TUEvSI6/x8bVoba3orcKkf9HsDjECAwEA
+            AaMZMBcwFQYDVR0RBA4wDIIKKi5jbWl4LnJpcDANBgkqhkiG9w0BAQUFAAOCAQEA
+            neUocN4AbcQAC1+b3To8u5UGdaGxhcGyZBlAoenRVdjXK3lTjsMdMWb4QctgNfIf
+            U/zuUn2mxTmF/ekP0gCCgtleZr9+DYKU5hlXk8K10uKxGD6EvoiXZzlfeUuotgp2
+            qvI3ysOm/hvCfyEkqhfHtbxjV7j7v7eQFPbvNaXbLa0yr4C4vMK/Z09Ui9JrZ/Z4
+            cyIkxfC6/rOqAirSdIp09EGiw7GM8guHyggE4IiZrDslT8V3xIl985cbCxSxeW1R
+            tgH4rdEXuVe9+31oJhmXOE9ux2jCop9tEJMgWg7HStrJ5plPbb+HmjoX3nBO04E5
+            6m52PyzMNV+2N21IPppKwA==
+            -----END CERTIFICATE-----
+            """.data(using: .utf8)!
+            environment.udContact = """
+      <xxc(2)7mbKFLE201WzH4SGxAOpHjjehwztIV+KGifi5L/PYPcDkAZiB9kZo+Dl3Vc7dD2SdZCFMOJVgwqGzfYRDkjc8RGEllBqNxq2sRRX09iQVef0kJQUgJCHNCOcvm6Ki0JJwvjLceyFh36iwK8oLbhLgqEZY86UScdACTyBCzBIab3ob5mBthYc3mheV88yq5PGF2DQ+dEvueUm+QhOSfwzppAJA/rpW9Wq9xzYcQzaqc3ztAGYfm2BBAHS7HVmkCbvZ/K07Xrl4EBPGHJYq12tWAN/C3mcbbBYUOQXyEzbSl/mO7sL3ORr0B4FMuqCi8EdlD6RO52pVhY+Cg6roRH1t5Ng1JxPt8Mv1yyjbifPhZ5fLKwxBz8UiFORfk0/jnhwgm25LRHqtNRRUlYXLvhv0HhqyYTUt17WNtCLATSVbqLrFGdy2EGadn8mP+kQNHp93f27d/uHgBNNe7LpuYCJMdWpoG6bOqmHEftxt0/MIQA8fTtTm3jJzv+7/QjZJDvQIv0SNdp8HFogpuwde+GuS4BcY7v5xz+ArGWcRR63ct2z83MqQEn9ODr1/gAAAgA7szRpDDQIdFUQo9mkWg8xBA==xxc>
+      """.data(using: .utf8)
 
             let messenger = Messenger.live(environment)
 
@@ -175,8 +190,7 @@ final class LaunchViewModel {
                         isUnread: true,
                         text: payload.text,
                         replyMessageId: payload.reply?.messageId,
-                        roundURL: "https://www.google.com.br",
-                        //roundURL: $0.roundURL,
+                        roundURL: $0.roundURL,
                         fileTransferId: nil
                     ))
 
@@ -283,6 +297,8 @@ final class LaunchViewModel {
 
         DependencyInjection.Container.shared.register(database)
 
+        _ = try? database.bulkUpdateContacts(.init(authStatus: [.requesting]), .init(authStatus: .requestFailed))
+        _ = try? database.bulkUpdateContacts(.init(authStatus: [.confirming]), .init(authStatus: .confirmationFailed))
         _ = try? database.bulkUpdateContacts(.init(authStatus: [.verificationInProgress]), .init(authStatus: .verificationFailed))
     }
 

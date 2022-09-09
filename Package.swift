@@ -414,9 +414,6 @@ let package = Package(
                 .target(name: "GoogleDriveFeature"),
                 .target(name: "DependencyInjection"),
                 .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
-            ],
-            resources: [
-                .process("Resources"),
             ]
         ),
         .target(
@@ -511,9 +508,6 @@ let package = Package(
                 .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
                 .product(name: "CombineSchedulers", package: "combine-schedulers"),
                 .product(name: "XXLegacyDatabaseMigrator", package: "client-ios-db"),
-            ],
-            resources: [
-                .process("Resources"),
             ]
         ),
         .target(
@@ -616,9 +610,6 @@ let package = Package(
                 .target(name: "DependencyInjection"),
                 .product(name: "CombineSchedulers", package: "combine-schedulers"),
                 .product(name: "ScrollViewController", package: "ScrollViewController"),
-            ],
-            resources: [
-                .process("Resources"),
             ]
         ),
         .testTarget(

@@ -11,7 +11,6 @@ public final class ScanContainerController: UIViewController {
 
     lazy private var screenView = ScanContainerView()
 
-    private var previousPoint: CGPoint = .zero
     private let scanController = ScanController()
     private let displayController = ScanDisplayController()
 
@@ -48,22 +47,10 @@ public final class ScanContainerController: UIViewController {
         screenView.bringSubviewToFront(screenView.segmentedControl)
     }
 
-    public override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        screenView.scrollView.contentOffset = previousPoint
-    }
-
-    public override func viewWillDisappear(_ animated: Bool) {
-        super.viewWillDisappear(animated)
-        previousPoint = screenView.scrollView.contentOffset
-        screenView.scrollView.contentOffset = .zero
-    }
-
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         statusBarController.style.send(.lightContent)
         navigationController?.navigationBar.customize(translucent: true)
-        screenView.scrollView.contentOffset = .zero
     }
 
     public override func viewDidLoad() {

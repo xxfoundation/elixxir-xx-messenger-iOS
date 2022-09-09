@@ -30,7 +30,7 @@ final class RequestsFailedViewModel {
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
     init() {
-        database.fetchContactsPublisher(.init(authStatus: [.requestFailed]))
+        database.fetchContactsPublisher(.init(authStatus: [.requestFailed, .confirmationFailed]))
             .assertNoFailure()
             .map { data -> NSDiffableDataSourceSnapshot<Section, Request> in
                 var snapshot = NSDiffableDataSourceSnapshot<Section, Request>()
@@ -42,21 +42,33 @@ final class RequestsFailedViewModel {
     }
 
     func didTapStateButtonFor(request: Request) {
-        guard case let .contact(contact) = request, request.status == .failedToRequest else { return }
+        guard case var .contact(contact) = request,
+                request.status == .failedToRequest || request.status == .failedToConfirm else { return }
 
         hudSubject.send(.on)
         backgroundScheduler.schedule { [weak self] in
             guard let self = self else { return }
 
             do {
-                var myFacts = try self.messenger.ud.get()!.getFacts()
-                myFacts.append(.init(type: .username, value: self.username!))
+                if request.status == .failedToRequest {
+                    var myFacts = try self.messenger.ud.get()!.getFacts()
+                    myFacts.append(.init(type: .username, value: self.username!))
 
-                let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
-                    partner: XXClient.Contact.live(contact.marshaled!),
-                    myFacts: myFacts
-                )
+                    let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
+                        partner: XXClient.Contact.live(contact.marshaled!),
+                        myFacts: myFacts
+                    )
 
+                    contact.authStatus = .requested
+                } else {
+                    let _ = try self.messenger.e2e.get()!.confirmReceivedRequest(
+                        partner: XXClient.Contact.live(contact.marshaled!)
+                    )
+
+                    contact.authStatus = .friend
+                }
+
+                try self.database.saveContact(contact)
                 self.hudSubject.send(.none)
             } catch {
                 self.hudSubject.send(.error(.init(with: error)))

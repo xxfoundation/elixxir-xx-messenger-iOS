@@ -102,7 +102,8 @@ final class RequestsSentViewModel {
                 snapshot.appendItems(allRequests, toSection: .appearing)
                 self.itemsSubject.send(snapshot)
             } catch {
-                self.hudSubject.send(.error(.init(with: error)))
+                let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
+                self.hudSubject.send(.error(.init(content: xxError)))
             }
         }
     }

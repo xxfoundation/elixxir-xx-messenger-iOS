@@ -105,7 +105,7 @@
       "location" : "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
       "state" : {
         "branch" : "development",
-        "revision" : "f1ea0689bbd0e2faa978d5b478c9d594a9f96115"
+        "revision" : "5b190dca4d200203cbe371a6f8e179842d459176"
       }
     },
     {
@@ -328,8 +328,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/pointfreeco/swift-composable-architecture.git",
       "state" : {
-        "revision" : "5b78fbcb0583568392762b15a262b3106cfb5185",
-        "version" : "0.40.0"
+        "revision" : "cbe013b42b3c368957f8f882c960b93845e1589d",
+        "version" : "0.40.1"
       }
     },
     {
