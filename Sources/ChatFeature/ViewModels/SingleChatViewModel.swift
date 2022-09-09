@@ -172,20 +172,23 @@ final class SingleChatViewModel: NSObject {
     }
 
     func didSend(image: UIImage) {
-        guard let imageData = image.orientedUp().jpegData(compressionQuality: 1.0) else { return }
+        guard let imageData = image.orientedUp().jpegData(compressionQuality: 1.0) else {
+            return
+        }
+
         hudRelay.send(.on)
 
         do {
             let _ = try transferManager.send(
                 params: .init(
                     payload: .init(
-                        name: "",
-                        type: "",
+                        name: "abc",
+                        type: "jpeg",
                         preview: Data(),
                         contents: imageData
                     ),
-                    recipientId: Data(),
-                    retry: 1,
+                    recipientId: contact.id,
+                    retry: 10,
                     period: ""
                 ),
                 callback: .init(handle: {
@@ -197,6 +200,8 @@ final class SingleChatViewModel: NSObject {
                     }
                 })
             )
+
+            hudRelay.send(.none)
         } catch {
             hudRelay.send(.error(.init(with: error)))
         }
@@ -256,7 +261,7 @@ final class SingleChatViewModel: NSObject {
                 })
             )
 
-            //message.roundURL = report.roundURL
+            message.roundURL = report.roundURL
             message.networkId = report.messageId
             if let timestamp = report.timestamp {
                 message.date = Date.fromTimestamp(Int(timestamp))

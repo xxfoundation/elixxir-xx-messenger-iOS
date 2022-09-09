@@ -14,6 +14,7 @@ import CrashReporting
 import DependencyInjection
 
 import XXClient
+import XXMessengerClient
 
 public class AppDelegate: UIResponder, UIApplicationDelegate {
     @Dependency private var pushRouter: PushRouter
@@ -70,39 +71,38 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     }
 
     public func applicationDidEnterBackground(_ application: UIApplication) {
-        if let cMix: CMix = try? DependencyInjection.Container.shared.resolve(),
-           let database: Database = try? DependencyInjection.Container.shared.resolve() {
-            let backgroundTask = application.beginBackgroundTask(withName: "xx.stop.network") {}
+        if let messenger = try? DependencyInjection.Container.shared.resolve() as Messenger,
+            let database = try? DependencyInjection.Container.shared.resolve() as Database,
+            let cMix = messenger.cMix.get() {
+                let backgroundTask = application.beginBackgroundTask(withName: "xx.stop.network") {}
 
-            // An option here would be: create async completion closure
-
-            backgroundTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { timer in
-                guard UIApplication.shared.backgroundTimeRemaining > 8 else {
-                    if !self.calledStopNetwork {
-                        self.calledStopNetwork = true
-                        try! cMix.stopNetworkFollower()
-                    } else {
-                        if cMix.hasRunningProcesses() == false {
-                            application.endBackgroundTask(backgroundTask)
-                            timer.invalidate()
+                backgroundTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { timer in
+                    guard UIApplication.shared.backgroundTimeRemaining > 8 else {
+                        if !self.calledStopNetwork {
+                            self.calledStopNetwork = true
+                            try! cMix.stopNetworkFollower()
+                        } else {
+                            if cMix.hasRunningProcesses() == false {
+                                application.endBackgroundTask(backgroundTask)
+                                timer.invalidate()
+                            }
                         }
+
+                        return
                     }
 
-                    return
-                }
+                    guard UIApplication.shared.backgroundTimeRemaining > 9 else {
+                        if !self.forceFailedPendingMessages {
+                            self.forceFailedPendingMessages = true
 
-                guard UIApplication.shared.backgroundTimeRemaining > 9 else {
-                    if !self.forceFailedPendingMessages {
-                        self.forceFailedPendingMessages = true
+                            let query = Message.Query(status: [.sending])
+                            let assignment = Message.Assignments(status: .sendingFailed)
+                            _ = try? database.bulkUpdateMessages(query, assignment)
+                        }
 
-                        let query = Message.Query(status: [.sending])
-                        let assignment = Message.Assignments(status: .sendingFailed)
-                        _ = try? database.bulkUpdateMessages(query, assignment)
+                        return
                     }
-
-                    return
-                }
-            }
+                })
         }
     }
 
@@ -116,7 +116,8 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     }
     
     public func applicationWillTerminate(_ application: UIApplication) {
-        if let cMix: CMix = try? DependencyInjection.Container.shared.resolve() {
+        if let messenger = try? DependencyInjection.Container.shared.resolve() as Messenger,
+            let cMix = messenger.cMix.get() {
             try? cMix.stopNetworkFollower()
         }
     }
@@ -127,7 +128,8 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
             backgroundTimer = nil
         }
 
-        if let cMix: CMix = try? DependencyInjection.Container.shared.resolve() {
+        if let messenger = try? DependencyInjection.Container.shared.resolve() as Messenger,
+            let cMix = messenger.cMix.get() {
             guard self.calledStopNetwork == true else { return }
             try? cMix.startNetworkFollower(timeoutMS: 10_000)
             self.calledStopNetwork = false

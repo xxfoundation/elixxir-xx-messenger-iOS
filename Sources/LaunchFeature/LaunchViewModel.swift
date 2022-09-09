@@ -105,7 +105,7 @@ final class LaunchViewModel {
         do {
             try self.setupDatabase()
 
-            _ = try SetLogLevel.live(.fatal)
+            _ = try SetLogLevel.live(.info)
 
             RegisterLogWriter.live(.init(handle: {
                 XXLogger.live().debug($0)
@@ -161,9 +161,6 @@ final class LaunchViewModel {
                 senderId: nil,
                 messageType: 2,
                 callback: .init(handle: {
-
-                    // let roundId = $0.roundId
-
                     guard let payload = try? Payload(with: $0.payload) else {
                         fatalError("Couldn't decode payload: \(String(data: $0.payload, encoding: .utf8) ?? "nil")")
                     }
@@ -241,7 +238,6 @@ final class LaunchViewModel {
     private func cleanUp() {
 //        try? cMixManager.remove()
 //        try? keychainHandler.clear()
-//
 //        dropboxService.unlink()
     }
 
@@ -286,6 +282,8 @@ final class LaunchViewModel {
         }
 
         DependencyInjection.Container.shared.register(database)
+
+        _ = try? database.bulkUpdateContacts(.init(authStatus: [.verificationInProgress]), .init(authStatus: .verificationFailed))
     }
 
     func getContactWith(userId: Data) -> XXModels.Contact? {
@@ -457,7 +455,7 @@ extension LaunchViewModel {
                 guard let self = self else { return }
                 self.handleGroupRequest(from: group)
             }),
-            groupChatProcessor: .init(handle: { print($0) }) // What is this?
+            groupChatProcessor: .init(handle: { print(String(data: $0.msg, encoding: .utf8)) })
         )
 
         DependencyInjection.Container.shared.register(manager)
@@ -574,12 +572,16 @@ extension LaunchViewModel {
             return
         }
 
+        existentContact.isRecent = true
         existentContact.authStatus = .friend
         try! database.saveContact(existentContact)
     }
 
-    private func handleReset(from contact: XXClient.Contact) {
-        // TODO
+    private func handleReset(from user: XXClient.Contact) {
+        if var contact = try? database.fetchContacts(.init(id: [user.getId()])).first {
+            contact.authStatus = .friend
+            _ = try? database.saveContact(contact)
+        }
     }
 
     private func handleGroupRequest(from group: XXClient.Group) {
