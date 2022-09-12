@@ -31,6 +31,11 @@ public final class SearchContainerController: UIViewController {
         embedControllers()
     }
 
+    public func startSearchingFor(_ string: String) {
+        leftController.viewModel.invitation = string
+        leftController.viewModel.viewDidAppear()
+    }
+
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationItem.backButtonTitle = ""

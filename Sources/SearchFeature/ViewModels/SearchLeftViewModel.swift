@@ -52,7 +52,7 @@ final class SearchLeftViewModel {
 
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
-    private var invitation: String?
+    var invitation: String?
     private var searchCancellables = Set<AnyCancellable>()
     private let successSubject = PassthroughSubject<XXModels.Contact, Never>()
     private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
@@ -71,17 +71,18 @@ final class SearchLeftViewModel {
 
             networkCancellable.removeAll()
 
-//            networkMonitor.statusPublisher
-//                .first { $0 == .available }
-//                .eraseToAnyPublisher()
-//                .flatMap { _ in self.session.waitForNodes(timeout: 5) }
-//                .sink {
-//                    if case .failure(let error) = $0 {
-//                        self.hudSubject.send(.error(.init(with: error)))
-//                    }
-//                } receiveValue: {
-//                    self.didStartSearching()
-//                }.store(in: &networkCancellable)
+            networkMonitor.statusPublisher
+                .first { $0 == .available }
+                .eraseToAnyPublisher()
+                .flatMap { _ in
+                    self.waitForNodes(timeout: 5)
+                }.sink(receiveCompletion: {
+                    if case .failure(let error) = $0 {
+                        self.hudSubject.send(.error(.init(with: error)))
+                    }
+                }, receiveValue: {
+                    self.didStartSearching()
+                }).store(in: &networkCancellable)
         }
     }
 
@@ -321,5 +322,19 @@ final class SearchLeftViewModel {
             title: resent ? resentTitle : sentTitle,
             leftImage: Asset.sharedSuccess.image
         ))
+    }
+
+    private func waitForNodes(timeout: Int) -> AnyPublisher<Void, Error> {
+        Deferred {
+            Future { promise in
+                retry(max: timeout, retryStrategy: .delay(seconds: 1)) { [weak self] in
+                    guard let self = self else { return }
+                    _ = try self.messenger.cMix.get()!.getNodeRegistrationStatus()
+                    promise(.success(()))
+                }.finalCatch {
+                    promise(.failure($0))
+                }
+            }
+        }.eraseToAnyPublisher()
     }
 }

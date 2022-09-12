@@ -105,6 +105,6 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 	<key>isReportingOptional</key>
-	<true/>
+	<false/>
 </dict>
 </plist>

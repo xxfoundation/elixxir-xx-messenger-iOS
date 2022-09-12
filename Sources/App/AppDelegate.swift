@@ -77,10 +77,13 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
                 let backgroundTask = application.beginBackgroundTask(withName: "xx.stop.network") {}
 
                 backgroundTimer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true, block: { timer in
+                    print(">>> .backgroundTimeRemaining: \(UIApplication.shared.backgroundTimeRemaining)")
+
                     guard UIApplication.shared.backgroundTimeRemaining > 8 else {
                         if !self.calledStopNetwork {
                             self.calledStopNetwork = true
                             try! cMix.stopNetworkFollower()
+                            print(">>> Called stopNetworkFollower")
                         } else {
                             if cMix.hasRunningProcesses() == false {
                                 application.endBackgroundTask(backgroundTask)
@@ -126,12 +129,14 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
         if backgroundTimer != nil {
             backgroundTimer?.invalidate()
             backgroundTimer = nil
+            print(">>> Invalidated background timer")
         }
 
         if let messenger = try? DependencyInjection.Container.shared.resolve() as Messenger,
             let cMix = messenger.cMix.get() {
             guard self.calledStopNetwork == true else { return }
             try? cMix.startNetworkFollower(timeoutMS: 10_000)
+            print(">>> Called startNetworkFollower")
             self.calledStopNetwork = false
         }
     }
@@ -156,11 +161,11 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     ) -> Bool {
         guard userActivity.activityType == NSUserActivityTypeBrowsingWeb,
               let incomingURL = userActivity.webpageURL,
-              let username = getUsernameFromInvitationDeepLink(incomingURL) else {
+              let username = getUsernameFromInvitationDeepLink(incomingURL),
+              let router = try? DependencyInjection.Container.shared.resolve() as PushRouter else {
             return false
         }
 
-        let router = try! DependencyInjection.Container.shared.resolve() as PushRouter
         router.navigateTo(.search(username: username), {})
         return true
     }

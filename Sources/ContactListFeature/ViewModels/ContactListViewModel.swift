@@ -12,7 +12,7 @@ import XXClient
 final class ContactListViewModel {
     @Dependency var database: Database
     @Dependency var messenger: Messenger
-    @Dependency private var reportingStatus: ReportingStatus
+    @Dependency var reportingStatus: ReportingStatus
 
     var myId: Data {
         try! messenger.e2e.get()!.getContact().getId()

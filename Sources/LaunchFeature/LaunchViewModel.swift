@@ -59,6 +59,7 @@ final class LaunchViewModel {
     }
 
     var authCallbacksCancellable: Cancellable?
+    var networkCallbacksCancellable: Cancellable?
 
     var routePublisher: AnyPublisher<LaunchRoute, Never> {
         routeSubject.eraseToAnyPublisher()
@@ -105,7 +106,7 @@ final class LaunchViewModel {
         do {
             try self.setupDatabase()
 
-            _ = try SetLogLevel.live(.info)
+            _ = try SetLogLevel.live(.error)
 
             RegisterLogWriter.live(.init(handle: {
                 XXLogger.live().debug($0)
@@ -206,6 +207,12 @@ final class LaunchViewModel {
             try generateTransferManager(messenger: messenger)
 
             networkMonitor.start()
+
+            networkCallbacksCancellable = messenger.cMix.get()!.addHealthCallback(.init(handle: { [weak self] in
+                guard let self = self else { return }
+                print(">>> healthCallback: \($0)")
+                self.networkMonitor.update($0)
+            }))
 
             if messenger.isLoggedIn() == false {
                 if try messenger.isRegistered() == false {
@@ -536,44 +543,17 @@ extension LaunchViewModel {
         ))
 
         do {
-            if email == nil, phone == nil {
-                try performLookup(on: contact) { [weak self] in
-                    guard let self = self else { return }
-
-                    switch $0 {
-                    case .success(let lookedUpContact):
-                        if try! self.verifyOwnership(contact, lookedUpContact) { // How could this ever throw?
-                            model.authStatus = .verified
-                            try! self.database.saveContact(model)
-                        } else {
-                            try! self.database.deleteContact(model)
-                        }
-                    case .failure(let error):
-                        model.authStatus = .verificationFailed
-                        print(">>> Error \(#file):\(#line): \(error.localizedDescription)")
-                        try! self.database.saveContact(model)
-                    }
-                }
-            } else {
-                try performSearch(on: contact) { [weak self] in
-                    guard let self = self else { return }
-
-                    switch $0 {
-                    case .success(let searchedContact):
-                        if try! self.verifyOwnership(contact, searchedContact) { // How could this ever throw?
-                            model.authStatus = .verified
-                            try! self.database.saveContact(model)
-                        } else {
-                            try! self.database.deleteContact(model)
-                        }
-                    case .failure(let error):
-                        model.authStatus = .verificationFailed
-                        print(">>> Error \(#file):\(#line): \(error.localizedDescription)")
-                        try! self.database.saveContact(model)
-                    }
+            if let messenger: Messenger = try? DependencyInjection.Container.shared.resolve() {
+                if try messenger.verifyContact(contact) {
+                    model.authStatus = .verified
+                    try database.saveContact(model)
+                } else {
+                    try database.deleteContact(model)
                 }
             }
         } catch {
+            model.authStatus = .verificationFailed
+            try! database.saveContact(model)
             print(">>> Error \(#file):\(#line): \(error.localizedDescription)")
         }
     }
@@ -662,71 +642,5 @@ extension LaunchViewModel {
 //            guard let self = self else { return }
 //            // Multilookup on strangers
 //        }
-    }
-
-    private func performLookup(
-        on contact: XXClient.Contact,
-        completion: @escaping (Result<XXClient.Contact, Error>) -> Void
-    ) throws {
-        guard let messenger = try? DependencyInjection.Container.shared.resolve() as Messenger else {
-            fatalError(">>> Tried to lookup, but there's no messenger instance on DI container")
-        }
-
-        print(">>> Performing Lookup")
-
-        let _ = try LookupUD.live(
-            e2eId: messenger.e2e.get()!.getId(),
-            udContact: try messenger.ud.get()!.getContact(),
-            lookupId: contact.getId(),
-            callback: .init(handle: {
-                switch $0 {
-                case .success(let otherContact):
-                    print(">>> Lookup succeeded")
-                    completion(.success(otherContact))
-                case .failure(let error):
-                    print(">>> Lookup failed: \(error.localizedDescription)")
-                    completion(.failure(error))
-                }
-            })
-        )
-    }
-
-    private func performSearch(
-        on contact: XXClient.Contact,
-        completion: @escaping (Result<XXClient.Contact, Error>) -> Void
-    ) throws {
-        guard let messenger = try? DependencyInjection.Container.shared.resolve() as Messenger else {
-            fatalError(">>> Tried to search, but there's no messenger instance on DI container")
-        }
-
-        print(">>> Performing Search")
-
-        let _ = try SearchUD.live(
-            e2eId: messenger.e2e.get()!.getId(),
-            udContact: try messenger.ud.get()!.getContact(),
-            facts: contact.getFacts(),
-            callback: .init(handle: {
-                switch $0 {
-                case .success(let otherContact):
-                    print(">>> Search succeeded")
-                    completion(.success(otherContact.first!))
-                case .failure(let error):
-                    print(">>> Search failed: \(error.localizedDescription)")
-                    completion(.failure(error))
-                }
-            })
-        )
-    }
-
-    private func verifyOwnership(
-        _ lhs: XXClient.Contact,
-        _ rhs: XXClient.Contact
-    ) throws -> Bool {
-        guard let messenger = try? DependencyInjection.Container.shared.resolve() as Messenger else {
-            fatalError(">>> Tried to verify ownership, but there's no messenger instance on DI container")
-        }
-
-        let e2e = messenger.e2e.get()!
-        return try e2e.verifyOwnership(received: lhs, verified: rhs, e2eId: e2e.getId())
     }
 }

@@ -12,39 +12,31 @@ public final class ScanContainerController: UIViewController {
     lazy private var screenView = ScanContainerView()
 
     private let scanController = ScanController()
-    private let displayController = ScanDisplayController()
-
     private var cancellables = Set<AnyCancellable>()
     private var drawerCancellables = Set<AnyCancellable>()
+    private let displayController = ScanDisplayController()
+    private let pageController = UIPageViewController(
+        transitionStyle: .scroll,
+        navigationOrientation: .horizontal
+    )
 
     public override func loadView() {
         view = screenView
-        screenView.scrollView.delegate = self
 
-        addChild(scanController)
-        addChild(displayController)
-
-        screenView.scrollView.addSubview(scanController.view)
-        screenView.scrollView.addSubview(displayController.view)
-
-        scanController.view.snp.makeConstraints {
-            $0.top.equalTo(screenView)
-            $0.width.equalTo(screenView)
-            $0.bottom.equalTo(screenView)
+        addChild(pageController)
+        screenView.addSubview(pageController.view)
+        pageController.view.snp.makeConstraints {
+            $0.top.equalTo(screenView.stackView.snp.bottom)
             $0.left.equalToSuperview()
-            $0.right.equalTo(displayController.view.snp.left)
+            $0.right.equalToSuperview()
+            $0.bottom.equalTo(screenView)
         }
 
-        displayController.view.snp.makeConstraints {
-            $0.top.equalTo(screenView.segmentedControl.snp.bottom)
-            $0.width.equalTo(scanController.view)
-            $0.bottom.equalTo(scanController.view)
-        }
-
-        scanController.didMove(toParent: self)
-        displayController.didMove(toParent: self)
-
-        screenView.bringSubviewToFront(screenView.segmentedControl)
+        pageController.delegate = self
+        pageController.dataSource = self
+        pageController.didMove(toParent: self)
+        pageController.setViewControllers([scanController], direction: .forward, animated: true)
+        screenView.bringSubviewToFront(screenView.stackView)
     }
 
     public override func viewWillAppear(_ animated: Bool) {
@@ -96,29 +88,25 @@ public final class ScanContainerController: UIViewController {
     }
 
     private func setupBindings() {
-        screenView.segmentedControl.leftButton
-            .publisher(for: .touchUpInside)
-            .sink { [unowned self] _ in screenView.scrollView.setContentOffset(.zero, animated: true) }
-            .store(in: &cancellables)
-
-        screenView.segmentedControl.rightButton
+        screenView.leftButton
             .publisher(for: .touchUpInside)
             .sink { [unowned self] _ in
-                let point = CGPoint(x: screenView.frame.width, y: 0.0)
-                screenView.scrollView.setContentOffset(point, animated: true)
+                screenView.leftButton.set(selected: true)
+                screenView.rightButton.set(selected: false)
+                pageController.setViewControllers([scanController], direction: .reverse, animated: true, completion: nil)
+            }.store(in: &cancellables)
+
+        screenView.rightButton
+            .publisher(for: .touchUpInside)
+            .sink { [unowned self] _ in
+                screenView.leftButton.set(selected: false)
+                screenView.rightButton.set(selected: true)
+                pageController.setViewControllers([displayController], direction: .forward, animated: true, completion: nil)
             }.store(in: &cancellables)
     }
 
     @objc private func didTapMenu() {
         coordinator.toSideMenu(from: self)
-    }
-
-    public func scrollViewDidScroll(_ scrollView: UIScrollView) {
-        let percentage = scrollView.contentOffset.x / view.frame.width
-
-        scanController.view.alpha = 1 - percentage
-        displayController.view.alpha = percentage
-        screenView.segmentedControl.updateLeftConstraint(percentage)
     }
 
     private func presentInfo(title: String, subtitle: String) {
@@ -163,4 +151,40 @@ public final class ScanContainerController: UIViewController {
     }
 }
 
-extension ScanContainerController: UIScrollViewDelegate {}
+extension ScanContainerController: UIPageViewControllerDataSource {
+    public func pageViewController(
+        _ pageViewController: UIPageViewController,
+        viewControllerAfter viewController: UIViewController
+    ) -> UIViewController? {
+        guard viewController != displayController else { return nil }
+        return displayController
+    }
+
+    public func pageViewController(
+        _ pageViewController: UIPageViewController,
+        viewControllerBefore viewController: UIViewController
+    ) -> UIViewController? {
+        guard viewController != scanController else { return nil }
+        return scanController
+    }
+}
+
+
+extension ScanContainerController: UIPageViewControllerDelegate {
+    public func pageViewController(
+        _ pageViewController: UIPageViewController,
+        didFinishAnimating finished: Bool,
+        previousViewControllers: [UIViewController],
+        transitionCompleted completed: Bool
+    ) {
+        guard finished, completed else { return }
+
+        if previousViewControllers.contains(scanController) {
+            screenView.leftButton.set(selected: false)
+            screenView.rightButton.set(selected: true)
+        } else {
+            screenView.leftButton.set(selected: true)
+            screenView.rightButton.set(selected: false)
+        }
+    }
+}

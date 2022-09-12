@@ -43,7 +43,10 @@ final class RequestsFailedViewModel {
 
     func didTapStateButtonFor(request: Request) {
         guard case var .contact(contact) = request,
-                request.status == .failedToRequest || request.status == .failedToConfirm else { return }
+                request.status == .failedToRequest ||
+                request.status == .failedToConfirm else {
+            return
+        }
 
         hudSubject.send(.on)
         backgroundScheduler.schedule { [weak self] in
@@ -71,7 +74,8 @@ final class RequestsFailedViewModel {
                 try self.database.saveContact(contact)
                 self.hudSubject.send(.none)
             } catch {
-                self.hudSubject.send(.error(.init(with: error)))
+                let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
+                self.hudSubject.send(.error(.init(content: xxError)))
             }
         }
     }

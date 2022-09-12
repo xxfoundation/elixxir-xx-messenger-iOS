@@ -63,7 +63,14 @@ final class RequestsSentViewModel {
     }
 
     func didTapStateButtonFor(request item: RequestSent) {
-        guard case let .contact(contact) = item.request, item.request.status == .requested else { return }
+        guard case let .contact(contact) = item.request,
+              item.request.status == .requested ||
+                item.request.status == .requesting ||
+                item.request.status == .failedToRequest else {
+            return
+        }
+
+        let name = (contact.nickname ?? contact.username) ?? ""
 
         hudSubject.send(.on)
         backgroundScheduler.schedule { [weak self] in
@@ -90,8 +97,6 @@ final class RequestsSentViewModel {
                 item.isResent = true
                 allRequests.append(item)
 
-                let name = (contact.nickname ?? contact.username) ?? ""
-
                 self.toastController.enqueueToast(model: .init(
                     title: Localized.Requests.Sent.Toast.resent(name),
                     leftImage: Asset.requestSentToaster.image
@@ -102,6 +107,11 @@ final class RequestsSentViewModel {
                 snapshot.appendItems(allRequests, toSection: .appearing)
                 self.itemsSubject.send(snapshot)
             } catch {
+                self.toastController.enqueueToast(model: .init(
+                    title: Localized.Requests.Sent.Toast.resentFailed(name),
+                    leftImage: Asset.requestFailedToaster.image
+                ))
+
                 let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
                 self.hudSubject.send(.error(.init(content: xxError)))
             }
