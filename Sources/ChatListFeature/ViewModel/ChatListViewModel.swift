@@ -185,6 +185,7 @@ final class ChatListViewModel {
         do {
             try groupManager.leaveGroup(groupId: group.id)
             try database.deleteMessages(.init(chat: .group(group.id)))
+            try database.deleteGroup(group)
             hudSubject.send(.none)
         } catch {
             hudSubject.send(.error(.init(with: error)))

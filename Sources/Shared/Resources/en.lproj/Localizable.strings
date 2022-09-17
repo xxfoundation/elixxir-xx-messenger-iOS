@@ -983,7 +983,7 @@
 "createGroup.drawer.title"
 = "Create Group";
 "createGroup.drawer.subtitle"
-= "You are about to create a group message with %@ users. The information below will be visible to all members of the group.";
+= "You are about to create a group message with other %@ users. The information below will be visible to all members of the group.";
 "createGroup.drawer.input"
 = "Group Name";
 "createGroup.drawer.otherInput"

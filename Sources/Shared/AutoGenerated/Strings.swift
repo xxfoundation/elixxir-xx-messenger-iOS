@@ -617,7 +617,7 @@ public enum Localized {
       public static let otherPlaceholder = Localized.tr("Localizable", "createGroup.drawer.otherPlaceholder")
       /// Secret Family
       public static let placeholder = Localized.tr("Localizable", "createGroup.drawer.placeholder")
-      /// You are about to create a group message with %@ users. The information below will be visible to all members of the group.
+      /// You are about to create a group message with other %@ users. The information below will be visible to all members of the group.
       public static func subtitle(_ p1: Any) -> String {
         return Localized.tr("Localizable", "createGroup.drawer.subtitle", String(describing: p1))
       }

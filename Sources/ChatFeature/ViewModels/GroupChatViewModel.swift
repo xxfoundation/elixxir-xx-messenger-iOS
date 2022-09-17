@@ -110,16 +110,35 @@ final class GroupChatViewModel {
             replyMessageId: stagedReply?.messageId
         )
 
+        print("")
+        print("Outgoing GroupMessage:")
+        print("- groupId: \(info.group.id.base64EncodedString().prefix(10))...")
+        print("- senderId: \(myId.base64EncodedString().prefix(10))...")
+        print("- payload.text: \(message.text)")
+
         do {
-            try database.saveMessage(message)
+            message = try database.saveMessage(message)
+
+            let payload = Payload(
+                text: text.trimmingCharacters(in: .whitespacesAndNewlines),
+                reply: stagedReply
+            ).asData()
 
             let report = try groupManager.send(
                 groupId: info.group.id,
-                message: Payload(
-                    text: text.trimmingCharacters(in: .whitespacesAndNewlines),
-                    reply: stagedReply
-                ).asData()
+                message: payload
             )
+
+            print("- messageId: \(report.messageId.base64EncodedString().prefix(10))...")
+
+            if let foo = stagedReply {
+                print("- payload.reply.messageId: \(foo.messageId.base64EncodedString().prefix(10))...")
+                print("- payload.reply.senderId: \(foo.senderId.base64EncodedString().prefix(10))...")
+            } else {
+                print("- payload.reply: ∅")
+            }
+
+            message.networkId = report.messageId
 
             try messenger.cMix.get()!.waitForRoundResult(
                 roundList: try report.encode(),
@@ -128,8 +147,9 @@ final class GroupChatViewModel {
                     switch $0 {
                     case .delivered:
                         message.status = .sent
-                        _ = try? self.database.saveMessage(message)
-
+                        if let foo = try? self.database.saveMessage(message) {
+                            message = foo
+                        }
                     case .notDelivered(timedOut: let timedOut):
                         if timedOut {
                             message.status = .sendingTimedOut
@@ -137,17 +157,23 @@ final class GroupChatViewModel {
                             message.status = .sendingFailed
                         }
 
-                        _ = try? self.database.saveMessage(message)
+                        if let foo = try? self.database.saveMessage(message) {
+                            message = foo
+                        }
                     }
                 })
             )
 
-            message.networkId = report.messageId
+            print("")
+
+            message.roundURL = report.roundURL
             message.date = Date.fromTimestamp(Int(report.timestamp))
-            try database.saveMessage(message)
+            message = try database.saveMessage(message)
         } catch {
             message.status = .sendingFailed
-            _ = try? database.saveMessage(message)
+            if let foo = try? database.saveMessage(message) {
+                message = foo
+            }
         }
 
         stagedReply = nil
@@ -181,8 +207,9 @@ final class GroupChatViewModel {
                     switch $0 {
                     case .delivered:
                         message.status = .sent
-                        _ = try? self.database.saveMessage(message)
-
+                        if let foo = try? self.database.saveMessage(message) {
+                            message = foo
+                        }
                     case .notDelivered(timedOut: let timedOut):
                         if timedOut {
                             message.status = .sendingTimedOut
@@ -190,7 +217,9 @@ final class GroupChatViewModel {
                             message.status = .sendingFailed
                         }
 
-                        _ = try? self.database.saveMessage(message)
+                        if let foo = try? self.database.saveMessage(message) {
+                            message = foo
+                        }
                     }
                 })
             )
@@ -200,7 +229,9 @@ final class GroupChatViewModel {
             message = try database.saveMessage(message)
         } catch {
             message.status = .sendingFailed
-            _ = try? database.saveMessage(message)
+            if let foo = try? database.saveMessage(message) {
+                message = foo
+            }
         }
     }
 

@@ -106,7 +106,7 @@ final class LaunchViewModel {
         do {
             try self.setupDatabase()
 
-            _ = try SetLogLevel.live(.error)
+            _ = try SetLogLevel.live(.fatal)
 
             RegisterLogWriter.live(.init(handle: {
                 XXLogger.live().debug($0)
@@ -210,7 +210,6 @@ final class LaunchViewModel {
 
             networkCallbacksCancellable = messenger.cMix.get()!.addHealthCallback(.init(handle: { [weak self] in
                 guard let self = self else { return }
-                print(">>> healthCallback: \($0)")
                 self.networkMonitor.update($0)
             }))
 
@@ -476,9 +475,53 @@ extension LaunchViewModel {
             e2eId: messenger.e2e()!.getId(),
             groupRequest: .init(handle: { [weak self] group in
                 guard let self = self else { return }
-                self.handleGroupRequest(from: group)
+                self.handleGroupRequest(from: group, messenger: messenger)
             }),
-            groupChatProcessor: .init(handle: { print(String(data: $0.msg, encoding: .utf8)) })
+            groupChatProcessor: .init(handle: { result in
+                switch result {
+                case .success(let cb):
+
+                    print("Incoming GroupMessage:")
+                    print("- groupId: \(cb.decryptedMessage.groupId.base64EncodedString().prefix(10))...")
+                    print("- senderId: \(cb.decryptedMessage.senderId.base64EncodedString().prefix(10))...")
+                    print("- messageId: \(cb.decryptedMessage.messageId.base64EncodedString().prefix(10))...")
+
+                    if let payload = try? Payload(with: cb.decryptedMessage.payload) {
+                        print("- payload.text: \(payload.text)")
+
+                        if let reply = payload.reply {
+                            print("- payload.reply.senderId: \(reply.senderId.base64EncodedString().prefix(10))...")
+                            print("- payload.reply.messageId: \(reply.messageId.base64EncodedString().prefix(10))...")
+                        } else {
+                            print("- payload.reply: ∅")
+                        }
+                    }
+                    print("")
+
+                    guard let payload = try? Payload(with: cb.decryptedMessage.payload) else {
+                        fatalError("Couldn't decode payload: \(String(data: cb.decryptedMessage.payload, encoding: .utf8) ?? "nil")")
+                    }
+
+                    let msg = Message(
+                        networkId: cb.decryptedMessage.messageId,
+                        senderId: cb.decryptedMessage.senderId,
+                        recipientId: nil,
+                        groupId: cb.decryptedMessage.groupId,
+                        date: Date.fromTimestamp(Int(cb.decryptedMessage.timestamp)),
+                        status: .received,
+                        isUnread: true,
+                        text: payload.text,
+                        replyMessageId: payload.reply?.messageId,
+                        roundURL: "https://google.com.br",
+                        fileTransferId: nil
+                    )
+
+                    _ = try? self.database.saveMessage(msg)
+
+                case .failure(let error):
+                    break
+                }
+            })
         )
 
         DependencyInjection.Container.shared.register(manager)
@@ -502,10 +545,7 @@ extension LaunchViewModel {
 
     private func generateTrafficManager(messenger: Messenger) throws {
         let manager = try NewDummyTrafficManager.live(
-            cMixId: messenger.e2e()!.getId(),
-            maxNumMessages: 1,
-            avgSendDeltaMS: 1,
-            randomRangeMS: 1
+            cMixId: messenger.e2e()!.getId()
         )
 
         DependencyInjection.Container.shared.register(manager)
@@ -543,18 +583,23 @@ extension LaunchViewModel {
         ))
 
         do {
-            if let messenger: Messenger = try? DependencyInjection.Container.shared.resolve() {
-                if try messenger.verifyContact(contact) {
-                    model.authStatus = .verified
-                    try database.saveContact(model)
-                } else {
-                    try database.deleteContact(model)
-                }
+            let messenger: Messenger = try DependencyInjection.Container.shared.resolve()
+            print(">>> [messenger.verifyContact] will start")
+
+            if try messenger.verifyContact(contact) {
+                print(">>> [messenger.verifyContact] verified")
+
+                model.authStatus = .verified
+                model = try database.saveContact(model)
+            } else {
+                print(">>> [messenger.verifyContact] is fake")
+                try database.deleteContact(model)
             }
         } catch {
+            print(">>> [messenger.verifyContact] thrown an exception: \(error.localizedDescription)")
+
             model.authStatus = .verificationFailed
-            try! database.saveContact(model)
-            print(">>> Error \(#file):\(#line): \(error.localizedDescription)")
+            model = try! database.saveContact(model)
         }
     }
 
@@ -580,7 +625,7 @@ extension LaunchViewModel {
         }
     }
 
-    private func handleGroupRequest(from group: XXClient.Group) {
+    private func handleGroupRequest(from group: XXClient.Group, messenger: Messenger) {
         if let _ = try? database.fetchGroups(.init(id: [group.getId()])).first {
             print(">>> Tried to handle a group request that is already handled")
             return
@@ -594,22 +639,23 @@ extension LaunchViewModel {
             id: group.getId(),
             name: String(data: group.getName(), encoding: .utf8)!,
             leaderId: leader.id,
-            createdAt: Date.fromTimestamp(Int(group.getCreatedMS())),
+            createdAt: Date.fromMSTimestamp(group.getCreatedMS()),
             authStatus: .pending,
             serialized: group.serialize()
         ))
 
-//        if let initialMessage = String(data: group.getInitMessage(), encoding: .utf8) {
-//            try! database.saveMessage(.init(
-//                senderId: leader.id,
-//                recipientId: nil,
-//                groupId: group.getId(),
-//                date: Date.fromTimestamp(Int(group.getCreatedMS())),
-//                status: .received,
-//                isUnread: true,
-//                text: initialMessage
-//            ))
-//        }
+        if let initMessageData = group.getInitMessage(),
+            let initMessage = String(data: initMessageData, encoding: .utf8) {
+            try! database.saveMessage(.init(
+                senderId: leader.id,
+                recipientId: nil,
+                groupId: group.getId(),
+                date: Date.fromMSTimestamp(group.getCreatedMS()),
+                status: .received,
+                isUnread: true,
+                text: initMessage
+            ))
+        }
 
         let friends = try! database.fetchContacts(.init(id: Set(members.map(\.id))))
         let strangers = members.filter { !friends.map(\.id).contains($0.id) }
@@ -628,7 +674,7 @@ extension LaunchViewModel {
                     isRecent: false,
                     isBlocked: false,
                     isBanned: false,
-                    createdAt: Date()
+                    createdAt: Date.fromMSTimestamp(group.getCreatedMS())
                 ))
             }
         }
@@ -638,9 +684,34 @@ extension LaunchViewModel {
             _ = try? database.saveGroupMember(model)
         }
 
-//        DispatchQueue.global().async { [weak self] in
-//            guard let self = self else { return }
-//            // Multilookup on strangers
-//        }
+        print(">>> Performing a multi-lookup for group strangers:")
+        strangers.enumerated().forEach {
+            print("- Stranger N\($0.offset): \($0.element.id.base64EncodedString().prefix(10))...")
+        }
+
+        do {
+            let multiLookup = try messenger.lookupContacts(ids: strangers.map(\.id))
+
+            for user in multiLookup.contacts {
+                print("+ Found stranger w/ id: \(try! user.getId().base64EncodedString().prefix(10))...")
+
+                if var foo = try? self.database.fetchContacts(.init(id: [user.getId()])).first,
+                   let username = try? user.getFact(.username)?.value {
+                    foo.username = username
+                    print("+ Set username: \(username) for \(try! user.getId().base64EncodedString().prefix(10))...")
+                    _ = try? self.database.saveContact(foo)
+                }
+            }
+
+            for error in multiLookup.errors {
+                print("+ Failure on Multilookup: \(error.localizedDescription)")
+            }
+
+            for failedId in multiLookup.failedIds {
+                print("+ Failed id: \(failedId.base64EncodedString().prefix(10))...")
+            }
+        } catch {
+            print(">>> Exception on multilookup: \(error.localizedDescription)")
+        }
     }
 }

@@ -43,7 +43,7 @@ final class CreateDrawerViewModel {
             return
         }
 
-        guard value.count < 32 else {
+        guard value.count < 21 else {
             stateSubject.value.status = .invalid(Localized.CreateGroup.Drawer.maximum)
             return
         }

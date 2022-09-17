@@ -30,7 +30,10 @@ public final class CreateGroupController: UIViewController {
             let attString = NSMutableAttributedString(string: text)
             attString.addAttribute(.font, value: Fonts.Mulish.semiBold.font(size: 18.0) as Any)
             attString.addAttribute(.foregroundColor, value: Asset.neutralActive.color)
-            attString.addAttribute(name: .foregroundColor, value: Asset.neutralDisabled.color, betweenCharacters: "#")
+            attString.addAttributes(attributes: [
+                .foregroundColor: Asset.neutralDisabled.color,
+                .font: Fonts.Mulish.regular.font(size: 15.0) as Any
+            ], betweenCharacters: "#")
 
             titleLabel.attributedText = attString
         }
@@ -162,9 +165,13 @@ public final class CreateGroupController: UIViewController {
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in
                 coordinator.toGroupDrawer(
-                    with: count + 1,
+                    with: count,
                     from: self, { (name, welcome) in
-                        self.viewModel.create(name: name, welcome: welcome, members: self.selectedElements)
+                        self.viewModel.create(
+                            name: name,
+                            welcome: welcome,
+                            members: self.selectedElements
+                        )
                     }
                 )
             }.store(in: &cancellables)

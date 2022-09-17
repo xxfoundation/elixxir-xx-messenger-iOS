@@ -28,48 +28,37 @@ final class AccountDeleteViewModel {
         guard isCurrentlyDeleting == false else { return }
         isCurrentlyDeleting = true
 
-        DispatchQueue.main.async { [weak self] in
-            guard let self = self else { return }
-            self.hudSubject.send(.on)
-        }
+        hudSubject.send(.on)
 
-        DispatchQueue.global().async { [weak self] in
-            guard let self = self else { return }
+        do {
+            print(">>> try self.cleanUD()")
+            try cleanUD()
 
-            do {
-                print(">>> try self.cleanUD()")
-                try self.cleanUD()
+            print(">>> try self.messenger.destroy()")
+            try messenger.destroy()
 
-                print(">>> try self.messenger.destroy()")
-                try self.messenger.destroy()
+            print(">>> try self.keychain.clear()")
+            try keychain.clear()
 
-                print(">>> try self.keychain.clear()")
-                try self.keychain.clear()
+            print(">>> try database.drop()")
+            try database.drop()
 
-                print(">>> try database.drop()")
-                try self.database.drop()
+            print(">>> try self.deleteDatabase()")
+            try deleteDatabase()
 
-                print(">>> try self.deleteDatabase()")
+            UserDefaults.resetStandardUserDefaults()
+            UserDefaults.standard.removePersistentDomain(forName: Bundle.main.bundleIdentifier!)
+            UserDefaults.standard.synchronize()
 
-                try self.deleteDatabase()
-
-                UserDefaults.resetStandardUserDefaults()
-                UserDefaults.standard.removePersistentDomain(forName: Bundle.main.bundleIdentifier!)
-                UserDefaults.standard.synchronize()
-
-                DispatchQueue.main.async { [weak self] in
-                    guard let self = self else { return }
-                    self.hudSubject.send(.error(.init(
-                        content: "Now kill the app and re-open",
-                        title: "Account deleted",
-                        dismissable: false
-                    )))
-                }
-            } catch {
-                DispatchQueue.main.async { [weak self] in
-                    guard let self = self else { return }
-                    self.hudSubject.send(.error(.init(with: error)))
-                }
+            hudSubject.send(.error(.init(
+                content: "Now kill the app and re-open",
+                title: "Account deleted",
+                dismissable: false
+            )))
+        } catch {
+            DispatchQueue.main.async { [weak self] in
+                guard let self = self else { return }
+                self.hudSubject.send(.error(.init(with: error)))
             }
         }
     }

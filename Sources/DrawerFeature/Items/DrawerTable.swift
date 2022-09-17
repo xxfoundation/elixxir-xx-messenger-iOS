@@ -49,6 +49,7 @@ public final class DrawerTable: DrawerItem {
         tableView.register(DrawerTableCell.self)
         tableView.dataSource = dataSource
         tableView.separatorStyle = .none
+        tableView.backgroundColor = UIColor.white
 
         view.addSubview(tableView)
 

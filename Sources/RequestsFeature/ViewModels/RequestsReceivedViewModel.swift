@@ -154,63 +154,21 @@ final class RequestsReceivedViewModel {
                     contact.authStatus = .verificationInProgress
                     try self.database.saveContact(contact)
 
-                    if contact.email == nil && contact.phone == nil {
-                        let _ = try LookupUD.live(
-                            e2eId: self.messenger.e2e.get()!.getId(),
-                            udContact: self.messenger.ud.get()!.getContact(),
-                            lookupId: contact.id,
-                            callback: .init(handle: {
-                                switch $0 {
-                                case .success(let secondContact):
-                                    let ownershipResult = try! self.messenger.e2e.get()!.verifyOwnership(
-                                        received: XXClient.Contact.live(contact.marshaled!),
-                                        verified: secondContact,
-                                        e2eId: self.messenger.e2e.get()!.getId()
-                                    )
+                    print(">>> [messenger.verifyContact] will start")
 
-                                    if ownershipResult == true {
-                                        contact.authStatus = .verified
-                                        _ = try? self.database.saveContact(contact)
-                                    } else {
-                                        _ = try? self.database.deleteContact(contact)
-                                    }
-                                case .failure(let error):
-                                    print("^^^ \(#file):\(#line)  \(error.localizedDescription)")
-                                    contact.authStatus = .verificationFailed
-                                    _ = try? self.database.saveContact(contact)
-                                }
-                            })
-                        )
+                    if try self.messenger.verifyContact(XXClient.Contact.live(contact.marshaled!)) {
+                        print(">>> [messenger.verifyContact] verified")
+
+                        contact.authStatus = .verified
+                        contact = try self.database.saveContact(contact)
                     } else {
-                        let _ = try SearchUD.live(
-                            e2eId: self.messenger.e2e.get()!.getId(),
-                            udContact: self.messenger.ud.get()!.getContact(),
-                            facts: XXClient.Contact.live(contact.marshaled!).getFacts(),
-                            callback: .init(handle: {
-                                switch $0 {
-                                case .success(let results):
-                                    let ownershipResult = try! self.messenger.e2e.get()!.verifyOwnership(
-                                        received: XXClient.Contact.live(contact.marshaled!),
-                                        verified: results.first!,
-                                        e2eId: self.messenger.e2e.get()!.getId()
-                                    )
+                        print(">>> [messenger.verifyContact] is fake")
 
-                                    if ownershipResult == true {
-                                        contact.authStatus = .verified
-                                        _ = try? self.database.saveContact(contact)
-                                    } else {
-                                        _ = try? self.database.deleteContact(contact)
-                                    }
-                                case .failure(let error):
-                                    print("^^^ \(#file):\(#line)  \(error.localizedDescription)")
-                                    contact.authStatus = .verificationFailed
-                                    _ = try? self.database.saveContact(contact)
-                                }
-                            })
-                        )
+                        try self.database.deleteContact(contact)
                     }
                 } catch {
-                    print("^^^ \(#file):\(#line)  \(error.localizedDescription)")
+                    print(">>> [messenger.verifyContact] thrown an exception: \(error.localizedDescription)")
+
                     contact.authStatus = .verificationFailed
                     _ = try? self.database.saveContact(contact)
                 }
@@ -234,11 +192,7 @@ final class RequestsReceivedViewModel {
             guard let self = self else { return }
 
             do {
-                let trackedId = try self.groupManager
-                    .getGroup(groupId: group.id)
-                    .getTrackedID()
-
-                try self.groupManager.joinGroup(trackedGroupId: trackedId)
+                try self.groupManager.joinGroup(serializedGroupData: group.serialized)
 
                 var group = group
                 group.authStatus = .participating

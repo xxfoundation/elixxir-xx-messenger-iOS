@@ -43,6 +43,10 @@ public extension Date {
     static func fromTimestamp(_ timestamp: Int) -> Date {
         Date(timeIntervalSince1970: TimeInterval(timestamp.nanoToSeconds()))
     }
+
+    static func fromMSTimestamp(_ timestampMS: Int64) -> Date {
+        Date(timeIntervalSince1970: TimeInterval(timestampMS) / 1000)
+    }
 }
 
 private extension Int {

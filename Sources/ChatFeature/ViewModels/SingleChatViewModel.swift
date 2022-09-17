@@ -153,7 +153,7 @@ final class SingleChatViewModel: NSObject {
                     ),
                     recipientId: contact.id,
                     retry: 1,
-                    period: ""
+                    period: 1_000
                 ),
                 callback: .init(handle: {
                     switch $0 {
@@ -189,7 +189,7 @@ final class SingleChatViewModel: NSObject {
                     ),
                     recipientId: contact.id,
                     retry: 10,
-                    period: ""
+                    period: 1_000
                 ),
                 callback: .init(handle: {
                     switch $0 {

@@ -156,14 +156,16 @@ final class SearchLeftViewModel {
 
             do {
                 let report = try SearchUD.live(
-                    e2eId: self.messenger.e2e.get()!.getId(),
-                    udContact: self.messenger.ud.get()!.getContact(),
-                    facts: [.init(type: factType, value: content)],
+                    params: .init(
+                        e2eId: self.messenger.e2e.get()!.getId(),
+                        udContact: self.messenger.ud.get()!.getContact(),
+                        facts: [.init(type: factType, value: content)]
+                    ),
                     callback: .init(handle: {
                         switch $0 {
                         case .success(let results):
-                             self.hudSubject.send(.none)
-                             self.appendToLocalSearch(
+                            self.hudSubject.send(.none)
+                            self.appendToLocalSearch(
                                 XXModels.Contact(
                                     id: try! results.first!.getId(),
                                     marshaled: results.first!.data,
@@ -178,19 +180,19 @@ final class SearchLeftViewModel {
                                     isBanned: false,
                                     createdAt: Date()
                                 )
-                             )
-
+                            )
                         case .failure(let error):
-                            print("^^^ searchUD error: \(error.localizedDescription)")
+                            print(">>> SearchUD error: \(error.localizedDescription)")
+
                             self.appendToLocalSearch(nil)
                             self.hudSubject.send(.error(.init(with: error)))
                         }
                     })
                 )
 
-                print("^^^ report: \(report))")
+                print(">>> UDSearch.Report: \(report))")
             } catch {
-                print("^^^ exception: \(error.localizedDescription)")
+                print(">>> UDSearch.Exception: \(error.localizedDescription)")
             }
         }
     }
