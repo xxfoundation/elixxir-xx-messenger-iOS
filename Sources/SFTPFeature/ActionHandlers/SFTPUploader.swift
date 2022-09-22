@@ -5,7 +5,7 @@ import Keychain
 import Foundation
 import DependencyInjection
 
-public typealias SFTPUploadResult = (Result<Backup, Error>) -> Void
+public typealias SFTPUploadResult = (Result<BackupModel, Error>) -> Void
 
 public struct SFTPUploader {
     public var upload: (URL, @escaping SFTPUploadResult) -> Void

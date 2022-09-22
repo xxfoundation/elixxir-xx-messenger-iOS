@@ -60,6 +60,7 @@ final class LaunchViewModel {
 
     var authCallbacksCancellable: Cancellable?
     var networkCallbacksCancellable: Cancellable?
+    var messageListenerCallbacksCancellable: Cancellable?
 
     var routePublisher: AnyPublisher<LaunchRoute, Never> {
         routeSubject.eraseToAnyPublisher()
@@ -106,45 +107,12 @@ final class LaunchViewModel {
         do {
             try self.setupDatabase()
 
-            _ = try SetLogLevel.live(.fatal)
-
-            RegisterLogWriter.live(.init(handle: {
-                XXLogger.live().debug($0)
-            }))
-
-            var environment: MessengerEnvironment = .live()
-            environment.ndfEnvironment = .mainnet
-            environment.udAddress = "46.101.98.49:18001"
-            environment.udCert = """
-            -----BEGIN CERTIFICATE-----
-            MIIDbDCCAlSgAwIBAgIJAOUNtZneIYECMA0GCSqGSIb3DQEBBQUAMGgxCzAJBgNV
-            BAYTAlVTMRMwEQYDVQQIDApDYWxpZm9ybmlhMRIwEAYDVQQHDAlDbGFyZW1vbnQx
-            GzAZBgNVBAoMElByaXZhdGVncml0eSBDb3JwLjETMBEGA1UEAwwKKi5jbWl4LnJp
-            cDAeFw0xOTAzMDUxODM1NDNaFw0yOTAzMDIxODM1NDNaMGgxCzAJBgNVBAYTAlVT
-            MRMwEQYDVQQIDApDYWxpZm9ybmlhMRIwEAYDVQQHDAlDbGFyZW1vbnQxGzAZBgNV
-            BAoMElByaXZhdGVncml0eSBDb3JwLjETMBEGA1UEAwwKKi5jbWl4LnJpcDCCASIw
-            DQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAPP0WyVkfZA/CEd2DgKpcudn0oDh
-            Dwsjmx8LBDWsUgQzyLrFiVigfUmUefknUH3dTJjmiJtGqLsayCnWdqWLHPJYvFfs
-            WYW0IGF93UG/4N5UAWO4okC3CYgKSi4ekpfw2zgZq0gmbzTnXcHF9gfmQ7jJUKSE
-            tJPSNzXq+PZeJTC9zJAb4Lj8QzH18rDM8DaL2y1ns0Y2Hu0edBFn/OqavBJKb/uA
-            m3AEjqeOhC7EQUjVamWlTBPt40+B/6aFJX5BYm2JFkRsGBIyBVL46MvC02MgzTT9
-            bJIJfwqmBaTruwemNgzGu7Jk03hqqS1TUEvSI6/x8bVoba3orcKkf9HsDjECAwEA
-            AaMZMBcwFQYDVR0RBA4wDIIKKi5jbWl4LnJpcDANBgkqhkiG9w0BAQUFAAOCAQEA
-            neUocN4AbcQAC1+b3To8u5UGdaGxhcGyZBlAoenRVdjXK3lTjsMdMWb4QctgNfIf
-            U/zuUn2mxTmF/ekP0gCCgtleZr9+DYKU5hlXk8K10uKxGD6EvoiXZzlfeUuotgp2
-            qvI3ysOm/hvCfyEkqhfHtbxjV7j7v7eQFPbvNaXbLa0yr4C4vMK/Z09Ui9JrZ/Z4
-            cyIkxfC6/rOqAirSdIp09EGiw7GM8guHyggE4IiZrDslT8V3xIl985cbCxSxeW1R
-            tgH4rdEXuVe9+31oJhmXOE9ux2jCop9tEJMgWg7HStrJ5plPbb+HmjoX3nBO04E5
-            6m52PyzMNV+2N21IPppKwA==
-            -----END CERTIFICATE-----
-            """.data(using: .utf8)!
-            environment.udContact = """
-      <xxc(2)7mbKFLE201WzH4SGxAOpHjjehwztIV+KGifi5L/PYPcDkAZiB9kZo+Dl3Vc7dD2SdZCFMOJVgwqGzfYRDkjc8RGEllBqNxq2sRRX09iQVef0kJQUgJCHNCOcvm6Ki0JJwvjLceyFh36iwK8oLbhLgqEZY86UScdACTyBCzBIab3ob5mBthYc3mheV88yq5PGF2DQ+dEvueUm+QhOSfwzppAJA/rpW9Wq9xzYcQzaqc3ztAGYfm2BBAHS7HVmkCbvZ/K07Xrl4EBPGHJYq12tWAN/C3mcbbBYUOQXyEzbSl/mO7sL3ORr0B4FMuqCi8EdlD6RO52pVhY+Cg6roRH1t5Ng1JxPt8Mv1yyjbifPhZ5fLKwxBz8UiFORfk0/jnhwgm25LRHqtNRRUlYXLvhv0HhqyYTUt17WNtCLATSVbqLrFGdy2EGadn8mP+kQNHp93f27d/uHgBNNe7LpuYCJMdWpoG6bOqmHEftxt0/MIQA8fTtTm3jJzv+7/QjZJDvQIv0SNdp8HFogpuwde+GuS4BcY7v5xz+ArGWcRR63ct2z83MqQEn9ODr1/gAAAgA7szRpDDQIdFUQo9mkWg8xBA==xxc>
-      """.data(using: .utf8)
-
-            let messenger = Messenger.live(environment)
-
+            let messenger = makeMessenger()
             DependencyInjection.Container.shared.register(messenger)
+
+            setupLogWriter()
+            setupAuthCallback(messenger)
+            setupMessageCallback(messenger)
 
             if messenger.isLoaded() == false {
                 if messenger.isCreated() == false {
@@ -156,99 +124,32 @@ final class LaunchViewModel {
 
             try messenger.start()
 
-            authCallbacksCancellable = messenger.registerAuthCallbacks(
-                AuthCallbacks(handle: {
-                    switch $0 {
-                    case .confirm(contact: let contact, receptionId: _, ephemeralId: _, roundId: _):
-                        self.handleConfirm(from: contact)
-                    case .request(contact: let contact, receptionId: _, ephemeralId: _, roundId: _):
-                        self.handleDirectRequest(from: contact)
-                    case .reset(contact: let contact, receptionId: _, ephemeralId: _, roundId: _):
-                        self.handleReset(from: contact)
-                    }
-                })
-            )
-
             if messenger.isConnected() == false {
                 try messenger.connect()
+                try messenger.listenForMessages()
             }
 
-            try messenger.e2e.get()?.registerListener(
-                senderId: nil,
-                messageType: 2,
-                callback: .init(handle: {
-                    guard let payload = try? Payload(with: $0.payload) else {
-                        fatalError("Couldn't decode payload: \(String(data: $0.payload, encoding: .utf8) ?? "nil")")
-                    }
-
-                    try! self.database.saveMessage(.init(
-                        networkId: $0.id,
-                        senderId: $0.sender,
-                        recipientId: messenger.e2e.get()!.getContact().getId(),
-                        groupId: nil,
-                        date: Date.fromTimestamp($0.timestamp),
-                        status: .received,
-                        isUnread: true,
-                        text: payload.text,
-                        replyMessageId: payload.reply?.messageId,
-                        roundURL: $0.roundURL,
-                        fileTransferId: nil
-                    ))
-
-                    if var contact = try? self.database.fetchContacts(.init(id: [$0.sender])).first {
-                        contact.isRecent = false
-                        try! self.database.saveContact(contact)
-                    }
-                })
-            )
-
-            try generateGroupManager(messenger: messenger)
-            try generateTrafficManager(messenger: messenger)
-            try generateTransferManager(messenger: messenger)
-
-            networkMonitor.start()
-
-            networkCallbacksCancellable = messenger.cMix.get()!.addHealthCallback(.init(handle: { [weak self] in
-                guard let self = self else { return }
-                self.networkMonitor.update($0)
-            }))
+            try generateGroupManager(messenger)
+            try generateTrafficManager(messenger)
+            try generateTransferManager(messenger)
+            listenToNetworkUpdates(messenger)
 
             if messenger.isLoggedIn() == false {
-                if try messenger.isRegistered() == false {
+                if try messenger.isRegistered() {
+                    try messenger.logIn()
                     hudSubject.send(.none)
-                    routeSubject.send(.onboarding)
+                    routeSubject.send(.chats)
                 } else {
                     hudSubject.send(.none)
-                    checkBiometrics { [weak self] bioResult in
-
-                        switch bioResult {
-                        case .success(let granted):
-                            if granted {
-                                try! messenger.logIn()
-                                self?.routeSubject.send(.chats)
-                            } else {
-                                // WHAT SHOULD HAPPEN HERE?
-                            }
-                        case .failure(let error):
-                            print(">>> Bio auth failed: \(error.localizedDescription)")
-                        }
-                    }
+                    routeSubject.send(.onboarding)
                 }
             } else {
                 hudSubject.send(.none)
-                checkBiometrics { [weak self] bioResult in
-                    switch bioResult {
-                    case .success(let granted):
-                        if granted {
-                            self?.routeSubject.send(.chats)
-                        } else {
-                            // WHAT SHOULD HAPPEN HERE?
-                        }
-                    case .failure(let error):
-                        print(">>> Bio auth failed: \(error.localizedDescription)")
-                    }
-                }
+                routeSubject.send(.chats)
             }
+
+            // TODO: Biometric auth
+
         } catch {
             let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
             hudSubject.send(.error(.init(content: xxError)))
@@ -470,7 +371,7 @@ final class LaunchViewModel {
 }
 
 extension LaunchViewModel {
-    private func generateGroupManager(messenger: Messenger) throws {
+    private func generateGroupManager(_ messenger: Messenger) throws {
         let manager = try NewGroupChat.live(
             e2eId: messenger.e2e()!.getId(),
             groupRequest: .init(handle: { [weak self] group in
@@ -527,13 +428,15 @@ extension LaunchViewModel {
         DependencyInjection.Container.shared.register(manager)
     }
 
-    private func generateTransferManager(messenger: Messenger) throws {
+    private func generateTransferManager(_ messenger: Messenger) throws {
         let manager = try InitFileTransfer.live(
             e2eId: messenger.e2e()!.getId(),
-            callback: .init(handle: {
+            callback: .init(handle: { [weak self] in
+                guard let self = self else { return }
+
                 switch $0 {
                 case .success(let receivedFile):
-                    print(receivedFile.name)
+                    self.handleIncomingTransfer(receivedFile, messenger: messenger)
                 case .failure(let error):
                     print(error.localizedDescription)
                 }
@@ -543,7 +446,7 @@ extension LaunchViewModel {
         DependencyInjection.Container.shared.register(manager)
     }
 
-    private func generateTrafficManager(messenger: Messenger) throws {
+    private func generateTrafficManager(_ messenger: Messenger) throws {
         let manager = try NewDummyTrafficManager.live(
             cMixId: messenger.e2e()!.getId()
         )
@@ -584,15 +487,15 @@ extension LaunchViewModel {
 
         do {
             let messenger: Messenger = try DependencyInjection.Container.shared.resolve()
-            print(">>> [messenger.verifyContact] will start")
+            try messenger.waitForNetwork()
 
             if try messenger.verifyContact(contact) {
-                print(">>> [messenger.verifyContact] verified")
+                print(">>> [messenger.verifyContact \(#file):\(#line)]")
 
                 model.authStatus = .verified
                 model = try database.saveContact(model)
             } else {
-                print(">>> [messenger.verifyContact] is fake")
+                print(">>> [messenger.verifyContact \(#file):\(#line)]")
                 try database.deleteContact(model)
             }
         } catch {
@@ -713,5 +616,151 @@ extension LaunchViewModel {
         } catch {
             print(">>> Exception on multilookup: \(error.localizedDescription)")
         }
+    }
+}
+
+extension LaunchViewModel {
+    private func handleIncomingTransfer(_ receivedFile: ReceivedFile, messenger: Messenger) {
+        if var model = try? database.saveFileTransfer(.init(
+            id: receivedFile.transferId,
+            contactId: receivedFile.senderId,
+            name: receivedFile.name,
+            type: receivedFile.type,
+            data: nil,
+            progress: 0.0,
+            isIncoming: true,
+            createdAt: Date()
+        )) {
+            try! database.saveMessage(.init(
+                networkId: nil,
+                senderId: receivedFile.senderId,
+                recipientId: messenger.e2e.get()!.getContact().getId(),
+                groupId: nil,
+                date: Date(),
+                status: .receiving,
+                isUnread: false,
+                text: "",
+                replyMessageId: nil,
+                roundURL: nil,
+                fileTransferId: model.id
+            ))
+
+            if let manager: XXClient.FileTransfer = try? DependencyInjection.Container.shared.resolve() {
+                print(">>> registerReceivedProgressCallback")
+
+                try! manager.registerReceivedProgressCallback(
+                    transferId: receivedFile.transferId,
+                    period: 1_000,
+                    callback: .init(handle: { [weak self] in
+                        guard let self = self else { return }
+                        switch $0 {
+                        case .success(let cb):
+                            if cb.progress.completed {
+                                model.progress = 100
+                                model.data = try! manager.receive(transferId: receivedFile.transferId)
+                            } else {
+                                model.progress = Float(cb.progress.transmitted/cb.progress.total)
+                            }
+
+                            model = try! self.database.saveFileTransfer(model)
+
+                        case .failure(let error):
+                            print(error.localizedDescription)
+                        }
+                    })
+                )
+            } else {
+//                print(DependencyInjection.Container.shared.dependencies)
+            }
+        }
+    }
+
+    private func setupLogWriter() {
+        _ = try! SetLogLevel.live(.debug)
+        RegisterLogWriter.live(.init(handle: { XXLogger.live().debug($0) }))
+    }
+
+    private func makeMessenger() -> Messenger {
+        var environment: MessengerEnvironment = .live()
+        environment.ndfEnvironment = .mainnet
+        environment.udAddress = "46.101.98.49:18001"
+        environment.udCert = """
+            -----BEGIN CERTIFICATE-----
+            MIIDbDCCAlSgAwIBAgIJAOUNtZneIYECMA0GCSqGSIb3DQEBBQUAMGgxCzAJBgNV
+            BAYTAlVTMRMwEQYDVQQIDApDYWxpZm9ybmlhMRIwEAYDVQQHDAlDbGFyZW1vbnQx
+            GzAZBgNVBAoMElByaXZhdGVncml0eSBDb3JwLjETMBEGA1UEAwwKKi5jbWl4LnJp
+            cDAeFw0xOTAzMDUxODM1NDNaFw0yOTAzMDIxODM1NDNaMGgxCzAJBgNVBAYTAlVT
+            MRMwEQYDVQQIDApDYWxpZm9ybmlhMRIwEAYDVQQHDAlDbGFyZW1vbnQxGzAZBgNV
+            BAoMElByaXZhdGVncml0eSBDb3JwLjETMBEGA1UEAwwKKi5jbWl4LnJpcDCCASIw
+            DQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAPP0WyVkfZA/CEd2DgKpcudn0oDh
+            Dwsjmx8LBDWsUgQzyLrFiVigfUmUefknUH3dTJjmiJtGqLsayCnWdqWLHPJYvFfs
+            WYW0IGF93UG/4N5UAWO4okC3CYgKSi4ekpfw2zgZq0gmbzTnXcHF9gfmQ7jJUKSE
+            tJPSNzXq+PZeJTC9zJAb4Lj8QzH18rDM8DaL2y1ns0Y2Hu0edBFn/OqavBJKb/uA
+            m3AEjqeOhC7EQUjVamWlTBPt40+B/6aFJX5BYm2JFkRsGBIyBVL46MvC02MgzTT9
+            bJIJfwqmBaTruwemNgzGu7Jk03hqqS1TUEvSI6/x8bVoba3orcKkf9HsDjECAwEA
+            AaMZMBcwFQYDVR0RBA4wDIIKKi5jbWl4LnJpcDANBgkqhkiG9w0BAQUFAAOCAQEA
+            neUocN4AbcQAC1+b3To8u5UGdaGxhcGyZBlAoenRVdjXK3lTjsMdMWb4QctgNfIf
+            U/zuUn2mxTmF/ekP0gCCgtleZr9+DYKU5hlXk8K10uKxGD6EvoiXZzlfeUuotgp2
+            qvI3ysOm/hvCfyEkqhfHtbxjV7j7v7eQFPbvNaXbLa0yr4C4vMK/Z09Ui9JrZ/Z4
+            cyIkxfC6/rOqAirSdIp09EGiw7GM8guHyggE4IiZrDslT8V3xIl985cbCxSxeW1R
+            tgH4rdEXuVe9+31oJhmXOE9ux2jCop9tEJMgWg7HStrJ5plPbb+HmjoX3nBO04E5
+            6m52PyzMNV+2N21IPppKwA==
+            -----END CERTIFICATE-----
+            """.data(using: .utf8)!
+        environment.udContact = """
+      <xxc(2)7mbKFLE201WzH4SGxAOpHjjehwztIV+KGifi5L/PYPcDkAZiB9kZo+Dl3Vc7dD2SdZCFMOJVgwqGzfYRDkjc8RGEllBqNxq2sRRX09iQVef0kJQUgJCHNCOcvm6Ki0JJwvjLceyFh36iwK8oLbhLgqEZY86UScdACTyBCzBIab3ob5mBthYc3mheV88yq5PGF2DQ+dEvueUm+QhOSfwzppAJA/rpW9Wq9xzYcQzaqc3ztAGYfm2BBAHS7HVmkCbvZ/K07Xrl4EBPGHJYq12tWAN/C3mcbbBYUOQXyEzbSl/mO7sL3ORr0B4FMuqCi8EdlD6RO52pVhY+Cg6roRH1t5Ng1JxPt8Mv1yyjbifPhZ5fLKwxBz8UiFORfk0/jnhwgm25LRHqtNRRUlYXLvhv0HhqyYTUt17WNtCLATSVbqLrFGdy2EGadn8mP+kQNHp93f27d/uHgBNNe7LpuYCJMdWpoG6bOqmHEftxt0/MIQA8fTtTm3jJzv+7/QjZJDvQIv0SNdp8HFogpuwde+GuS4BcY7v5xz+ArGWcRR63ct2z83MqQEn9ODr1/gAAAgA7szRpDDQIdFUQo9mkWg8xBA==xxc>
+      """.data(using: .utf8)
+
+        return Messenger.live(environment)
+    }
+
+    private func setupAuthCallback(_ messenger: Messenger) {
+        authCallbacksCancellable = messenger.registerAuthCallbacks(
+            AuthCallbacks(handle: {
+                switch $0 {
+                case .confirm(contact: let contact, receptionId: _, ephemeralId: _, roundId: _):
+                    self.handleConfirm(from: contact)
+                case .request(contact: let contact, receptionId: _, ephemeralId: _, roundId: _):
+                    self.handleDirectRequest(from: contact)
+                case .reset(contact: let contact, receptionId: _, ephemeralId: _, roundId: _):
+                    self.handleReset(from: contact)
+                }
+            })
+        )
+    }
+
+    private func setupMessageCallback(_ messenger: Messenger) {
+        messageListenerCallbacksCancellable = messenger.registerMessageListener(.init(handle: {
+            guard let payload = try? Payload(with: $0.payload) else {
+                fatalError("Couldn't decode payload: \(String(data: $0.payload, encoding: .utf8) ?? "nil")")
+            }
+
+            try! self.database.saveMessage(.init(
+                networkId: $0.id,
+                senderId: $0.sender,
+                recipientId: messenger.e2e.get()!.getContact().getId(),
+                groupId: nil,
+                date: Date.fromTimestamp($0.timestamp),
+                status: .received,
+                isUnread: true,
+                text: payload.text,
+                replyMessageId: payload.reply?.messageId,
+                roundURL: $0.roundURL,
+                fileTransferId: nil
+            ))
+
+            if var contact = try? self.database.fetchContacts(.init(id: [$0.sender])).first {
+                contact.isRecent = false
+                try! self.database.saveContact(contact)
+            }
+        }))
+    }
+
+    private func listenToNetworkUpdates(_ messenger: Messenger) {
+        networkMonitor.start()
+        networkCallbacksCancellable = messenger.cMix.get()!.addHealthCallback(.init(handle: { [weak self] in
+            guard let self = self else { return }
+            self.networkMonitor.update($0)
+        }))
     }
 }

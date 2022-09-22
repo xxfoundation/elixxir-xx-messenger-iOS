@@ -76,7 +76,7 @@ final class RestoreListViewModel {
                 self.googleDriveService.downloadMetadata { downloadResult in
                     switch downloadResult {
                     case .success(let metadata):
-                        var backup: Backup?
+                        var backup: BackupModel?
 
                         if let metadata = metadata {
                             backup = .init(id: metadata.identifier, date: metadata.modifiedDate, size: metadata.size)
@@ -102,7 +102,7 @@ final class RestoreListViewModel {
             icloudService.downloadMetadata { result in
                 switch result {
                 case .success(let metadata):
-                    var backup: Backup?
+                    var backup: BackupModel?
 
                     if let metadata = metadata {
                         backup = .init(id: metadata.path, date: metadata.modifiedDate, size: metadata.size)
@@ -133,7 +133,7 @@ final class RestoreListViewModel {
                     dropboxService.downloadMetadata { metadataResult in
                         switch metadataResult {
                         case .success(let metadata):
-                            var backup: Backup?
+                            var backup: BackupModel?
 
                             if let metadata = metadata {
                                 backup = .init(id: metadata.path, date: metadata.modifiedDate, size: metadata.size)

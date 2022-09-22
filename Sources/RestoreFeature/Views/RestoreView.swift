@@ -104,7 +104,7 @@ final class RestoreView: UIView {
         }
     }
 
-    private func showBackup(_ backup: Backup, fromCloud cloud: CloudService) {
+    private func showBackup(_ backup: BackupModel, fromCloud cloud: CloudService) {
         titleLabel.text = Localized.AccountRestore.Found.title
         subtitleLabel.text = Localized.AccountRestore.Found.subtitle
 

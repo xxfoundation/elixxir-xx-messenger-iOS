@@ -17,7 +17,10 @@ public struct iCloudService: iCloudInterface {
     }
 
     public func downloadMetadata(_ completion: @escaping (Result<iCloudMetadata?, Error>) -> Void) {
-        guard let documentsProvider = documentsProvider else { fatalError() }
+        guard let documentsProvider = documentsProvider else {
+            // TODO: Use some generic error
+            fatalError()
+        }
 
         documentsProvider.contentsOfDirectory(path: "/", completionHandler: { contents, error in
             guard error == nil else {

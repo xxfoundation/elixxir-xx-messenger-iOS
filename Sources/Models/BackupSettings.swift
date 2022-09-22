@@ -5,14 +5,14 @@ public struct BackupSettings: Equatable, Codable {
     public var automaticBackups: Bool
     public var enabledService: CloudService?
     public var connectedServices: Set<CloudService>
-    public var backups: [CloudService: Backup]
+    public var backups: [CloudService: BackupModel]
 
     public init(
         wifiOnlyBackup: Bool = false,
         automaticBackups: Bool = false,
         enabledService: CloudService? = nil,
         connectedServices: Set<CloudService> = [],
-        backups: [CloudService: Backup] = [:]
+        backups: [CloudService: BackupModel] = [:]
     ) {
         self.wifiOnlyBackup = wifiOnlyBackup
         self.automaticBackups = automaticBackups
@@ -38,11 +38,11 @@ public struct BackupSettings: Equatable, Codable {
 }
 
 public struct RestoreSettings {
-    public var backup: Backup?
+    public var backup: BackupModel?
     public var cloudService: CloudService
 
     public init(
-        backup: Backup? = nil,
+        backup: BackupModel? = nil,
         cloudService: CloudService
     ) {
         self.backup = backup

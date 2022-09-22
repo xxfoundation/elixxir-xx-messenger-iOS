@@ -117,7 +117,7 @@ let package = Package(
         .package(
             path: "../elixxir-dapps-sdk-swift"
 //            url: "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
-//            branch: "development"
+//            branch: "feature/messenger-restore-from-backup"
         ),
         .package(
             url: "https://git.xx.network/elixxir/client-ios-db.git",
@@ -554,6 +554,7 @@ let package = Package(
                 .target(name: "Permissions"),
                 .target(name: "Presentation"),
                 .target(name: "DrawerFeature"),
+                .target(name: "BackupFeature"),
                 .target(name: "DependencyInjection"),
                 .product(name: "CombineSchedulers", package: "combine-schedulers"),
                 .product(name: "ScrollViewController", package: "ScrollViewController"),

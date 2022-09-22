@@ -9,18 +9,25 @@ import DropboxFeature
 import NetworkMonitor
 import GoogleDriveFeature
 import DependencyInjection
+import XXClient
+import XXMessengerClient
 
 public final class BackupService {
-    @Dependency private var sftpService: SFTPService
-    @Dependency private var icloudService: iCloudInterface
-    @Dependency private var dropboxService: DropboxInterface
-    @Dependency private var networkManager: NetworkMonitoring
-    @Dependency private var keychainHandler: KeychainHandling
-    @Dependency private var driveService: GoogleDriveInterface
+    @Dependency var messenger: Messenger
+    @Dependency var sftpService: SFTPService
+    @Dependency var icloudService: iCloudInterface
+    @Dependency var dropboxService: DropboxInterface
+    @Dependency var networkManager: NetworkMonitoring
+    @Dependency var keychainHandler: KeychainHandling
+    @Dependency var driveService: GoogleDriveInterface
+
+    @KeyObject(.email, defaultValue: nil) var email: String?
+    @KeyObject(.phone, defaultValue: nil) var phone: String?
+    @KeyObject(.username, defaultValue: nil) var username: String?
+
+    var manager: XXClient.Backup?
 
     @KeyObject(.backupSettings, defaultValue: Data()) private var storedSettings: Data
-
-    public var passphrase: String?
 
     public var settingsPublisher: AnyPublisher<BackupSettings, Never> {
         settings.handleEvents(receiveSubscription: { [weak self] _ in
@@ -56,6 +63,36 @@ public final class BackupService {
 }
 
 extension BackupService {
+    public func initializeBackup(passphrase: String) {
+        manager = try! InitializeBackup.live(
+            e2eId: messenger.e2e.get()!.getId(),
+            udId: messenger.ud.get()!.getId(),
+            password: passphrase,
+            callback: .init(handle: { [weak self] backupData in
+                self?.updateBackup(data: backupData)
+            })
+        )
+
+        didUpdateFacts()
+    }
+
+    public func didUpdateFacts() {
+        if let manager = manager {
+            let currentFacts = try! JSONEncoder().encode(
+                BackupParams(
+                    username: username!,
+                    email: email,
+                    phone: phone
+                )
+            )
+
+            manager.addJSON(String(data: currentFacts, encoding: .utf8)!)
+        }
+
+        guard settings.value.automaticBackups == true else { return }
+        performBackup()
+    }
+
     public func performBackupIfAutomaticIsEnabled() {
         guard settings.value.automaticBackups == true else { return }
         performBackup()
@@ -207,7 +244,7 @@ extension BackupService {
                     return
                 }
 
-                settings.value.backups[.icloud] = Backup(
+                settings.value.backups[.icloud] = BackupModel(
                     id: metadata.path,
                     date: metadata.modifiedDate,
                     size: metadata.size
@@ -224,7 +261,7 @@ extension BackupService {
                     return
                 }
 
-                settings.value.backups[.sftp] = Backup(
+                settings.value.backups[.sftp] = BackupModel(
                     id: metadata.id,
                     date: metadata.date,
                     size: metadata.size
@@ -241,7 +278,7 @@ extension BackupService {
                     return
                 }
 
-                settings.value.backups[.dropbox] = Backup(
+                settings.value.backups[.dropbox] = BackupModel(
                     id: metadata.path,
                     date: metadata.modifiedDate,
                     size: metadata.size
@@ -256,7 +293,7 @@ extension BackupService {
                 self.driveService.downloadMetadata {
                     guard let metadata = try? $0.get() else { return }
 
-                    settings.value.backups[.drive] = Backup(
+                    settings.value.backups[.drive] = BackupModel(
                         id: metadata.identifier,
                         date: metadata.modifiedDate,
                         size: metadata.size

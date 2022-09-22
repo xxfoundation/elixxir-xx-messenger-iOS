@@ -1,6 +1,6 @@
 import Foundation
 
-public struct Backup: Equatable, Codable {
+public struct BackupModel: Equatable, Codable {
     public var id: String
     public var date: Date
     public var size: Float

@@ -172,17 +172,16 @@ final class SingleChatViewModel: NSObject {
     }
 
     func didSend(image: UIImage) {
-        guard let imageData = image.orientedUp().jpegData(compressionQuality: 1.0) else {
-            return
-        }
-
+        guard let imageData = image.orientedUp().jpegData(compressionQuality: 1.0) else { return }
         hudRelay.send(.on)
 
+        let transferName = UUID().uuidString
+
         do {
-            let _ = try transferManager.send(
+            let tid = try transferManager.send(
                 params: .init(
                     payload: .init(
-                        name: "abc",
+                        name: transferName,
                         type: "jpeg",
                         preview: Data(),
                         contents: imageData
@@ -194,12 +193,47 @@ final class SingleChatViewModel: NSObject {
                 callback: .init(handle: {
                     switch $0 {
                     case .success(let progressCallback):
-                        print(progressCallback.progress.total)
+
+                        if progressCallback.progress.completed {
+                            print(">>> Outgoing transfer finished successfully")
+                        } else {
+                            print(">>> Outgoing transfer. (\(progressCallback.progress.transmitted)/\(progressCallback.progress.total))")
+                        }
+
+                        /// THIS IS TOO COMPLEX, NEEDS HELP FROM DARIUSZ
+
                     case .failure(let error):
-                        print(error.localizedDescription)
+                        print(">>> Transfer.error: \(error.localizedDescription)")
                     }
                 })
             )
+
+            let transferModel = FileTransfer(
+                id: tid,
+                contactId: contact.id,
+                name: transferName,
+                type: "jpeg",
+                data: imageData,
+                progress: 0.0,
+                isIncoming: false,
+                createdAt: Date()
+            )
+
+            let transferMessage = Message(
+                senderId: myId,
+                recipientId: contact.id,
+                groupId: nil,
+                date: Date(),
+                status: .sending,
+                isUnread: false,
+                text: "",
+                replyMessageId: nil,
+                roundURL: nil,
+                fileTransferId: tid
+            )
+
+            try database.saveFileTransfer(transferModel)
+            try database.saveMessage(transferMessage)
 
             hudRelay.send(.none)
         } catch {

@@ -25,6 +25,8 @@ final class RequestsSentViewModel {
     @Dependency var toastController: ToastController
 
     @KeyObject(.username, defaultValue: nil) var username: String?
+    @KeyObject(.sharingEmail, defaultValue: false) var sharingEmail: Bool
+    @KeyObject(.sharingPhone, defaultValue: false) var sharingPhone: Bool
 
     var hudPublisher: AnyPublisher<HUDStatus, Never> {
         hudSubject.eraseToAnyPublisher()
@@ -77,12 +79,24 @@ final class RequestsSentViewModel {
             guard let self = self else { return }
 
             do {
-                var myFacts = try self.messenger.ud.get()!.getFacts()
-                myFacts.append(.init(type: .username, value: self.username!))
+                var includedFacts: [Fact] = []
+                let myFacts = try self.messenger.ud.get()!.getFacts()
+
+                if let fact = myFacts.get(.username) {
+                    includedFacts.append(fact)
+                }
+
+                if self.sharingEmail, let fact = myFacts.get(.email) {
+                    includedFacts.append(fact)
+                }
+
+                if self.sharingPhone, let fact = myFacts.get(.phone) {
+                    includedFacts.append(fact)
+                }
 
                 let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
-                    partner: XXClient.Contact.live(contact.marshaled!),
-                    myFacts: myFacts
+                    partner: .live(contact.marshaled!),
+                    myFacts: includedFacts
                 )
 
                 self.hudSubject.send(.none)

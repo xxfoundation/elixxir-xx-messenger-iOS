@@ -25,6 +25,8 @@ final class ContactViewModel {
     @Dependency var getFactsFromContact: GetFactsFromContact
 
     @KeyObject(.username, defaultValue: nil) var username: String?
+    @KeyObject(.sharingEmail, defaultValue: false) var sharingEmail: Bool
+    @KeyObject(.sharingPhone, defaultValue: false) var sharingPhone: Bool
 
     var contact: XXModels.Contact
 
@@ -111,12 +113,24 @@ final class ContactViewModel {
             do {
                 try self.database.saveContact(self.contact)
 
-                var myFacts = try self.messenger.ud.get()!.getFacts()
-                myFacts.append(.init(type: .username, value: self.username!))
+                var includedFacts: [Fact] = []
+                let myFacts = try self.messenger.ud.get()!.getFacts()
+
+                if let fact = myFacts.get(.username) {
+                    includedFacts.append(fact)
+                }
+
+                if self.sharingEmail, let fact = myFacts.get(.email) {
+                    includedFacts.append(fact)
+                }
+
+                if self.sharingPhone, let fact = myFacts.get(.phone) {
+                    includedFacts.append(fact)
+                }
 
                 let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
-                    partner: XXClient.Contact.live(self.contact.marshaled!),
-                    myFacts: myFacts
+                    partner: .live(self.contact.marshaled!),
+                    myFacts: includedFacts
                 )
 
                 self.contact.authStatus = .requested
@@ -143,12 +157,24 @@ final class ContactViewModel {
             do {
                 try self.database.saveContact(self.contact)
 
-                var myFacts = try self.messenger.ud.get()!.getFacts()
-                myFacts.append(.init(type: .username, value: self.username!))
+                var includedFacts: [Fact] = []
+                let myFacts = try self.messenger.ud.get()!.getFacts()
+
+                if let fact = myFacts.get(.username) {
+                    includedFacts.append(fact)
+                }
+
+                if self.sharingEmail, let fact = myFacts.get(.email) {
+                    includedFacts.append(fact)
+                }
+
+                if self.sharingPhone, let fact = myFacts.get(.phone) {
+                    includedFacts.append(fact)
+                }
 
                 let _ = try self.messenger.e2e.get()!.requestAuthenticatedChannel(
-                    partner: XXClient.Contact.live(self.contact.marshaled!),
-                    myFacts: myFacts
+                    partner: .live(self.contact.marshaled!),
+                    myFacts: includedFacts
                 )
 
                 self.contact.authStatus = .requested

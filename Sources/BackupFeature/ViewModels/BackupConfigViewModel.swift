@@ -1,10 +1,13 @@
+import HUD
 import UIKit
 import Models
 import Shared
 import Combine
+import XXClient
+import Defaults
 import Foundation
+
 import DependencyInjection
-import HUD
 
 enum BackupActionState {
     case backupFinished
@@ -21,7 +24,7 @@ struct BackupConfigViewModel {
 
     var wifiOnly: () -> AnyPublisher<Bool, Never>
     var automatic: () -> AnyPublisher<Bool, Never>
-    var lastBackup: () -> AnyPublisher<Backup?, Never>
+    var lastBackup: () -> AnyPublisher<BackupModel?, Never>
     var actionState: () -> AnyPublisher<BackupActionState, Never>
     var enabledService: () -> AnyPublisher<CloudService?, Never>
     var connectedServices: () -> AnyPublisher<Set<CloudService>, Never>
@@ -49,17 +52,25 @@ extension BackupConfigViewModel {
             didChooseAutomatic: context.service.setBackupAutomatically(_:),
             didToggleService: { controller, service, enabling in
                 guard enabling == true else {
-                    context.service.toggle(service: service, enabling: enabling)
+                    context.service.toggle(service: service, enabling: false)
+                    if let manager = context.service.manager {
+                        if manager.isRunning() {
+                            try! manager.stop()
+                        }
+
+                        context.service.manager = nil
+                    }
+
                     return
                 }
 
                 context.coordinator.toPassphrase(from: controller, cancelClosure: {
                     context.service.toggle(service: service, enabling: false)
                 }, passphraseClosure: { passphrase in
-                    context.service.passphrase = passphrase
                     context.hud.update(with: .onTitle("Initializing and securing your backup file will take few seconds, please keep the app open."))
                     DispatchQueue.global().async {
                         context.service.toggle(service: service, enabling: enabling)
+                        context.service.initializeBackup(passphrase: passphrase)
 
                         DispatchQueue.main.async {
                             context.hud.update(with: .none)

@@ -32,10 +32,11 @@ public final class CreateGroupController: UIViewController {
             attString.addAttribute(.foregroundColor, value: Asset.neutralActive.color)
             attString.addAttributes(attributes: [
                 .foregroundColor: Asset.neutralDisabled.color,
-                .font: Fonts.Mulish.regular.font(size: 15.0) as Any
+                .font: Fonts.Mulish.regular.font(size: 14.0) as Any
             ], betweenCharacters: "#")
 
             titleLabel.attributedText = attString
+            titleLabel.sizeToFit()
         }
     }
 
