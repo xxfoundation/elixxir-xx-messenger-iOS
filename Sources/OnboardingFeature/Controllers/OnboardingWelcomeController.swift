@@ -1,9 +1,9 @@
-import DrawerFeature
 import Theme
 import UIKit
 import Shared
 import Combine
 import Defaults
+import DrawerFeature
 import DependencyInjection
 
 public final class OnboardingWelcomeController: UIViewController {

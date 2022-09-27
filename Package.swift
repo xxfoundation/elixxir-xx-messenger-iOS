@@ -115,9 +115,9 @@ let package = Package(
             .upToNextMajor(from: "1.6.0")
         ),
         .package(
-            path: "../elixxir-dapps-sdk-swift"
-//            url: "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
-//            branch: "feature/messenger-restore-from-backup"
+//            path: "../elixxir-dapps-sdk-swift"
+            url: "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
+            branch: "development"
         ),
         .package(
             url: "https://git.xx.network/elixxir/client-ios-db.git",

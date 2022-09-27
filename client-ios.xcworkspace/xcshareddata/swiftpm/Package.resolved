@@ -50,8 +50,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ekazaev/ChatLayout",
       "state" : {
-        "revision" : "5c448c6b14a4c2755b96341b709352654e3d2115",
-        "version" : "1.2.6"
+        "revision" : "b7fe23d3ab6c174da6fad66383bfc359c212f465",
+        "version" : "1.2.7"
       }
     },
     {
@@ -59,8 +59,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://git.xx.network/elixxir/client-ios-db.git",
       "state" : {
-        "revision" : "f8e3e0088de8301d6c4816e12f0aca1d6f02a280",
-        "version" : "1.1.0"
+        "revision" : "16480177beaa6bc80a1c6be25812abd9bcb850ea",
+        "version" : "1.2.0"
       }
     },
     {
@@ -97,6 +97,15 @@
       "state" : {
         "revision" : "073b9671ce2b9b5b96398611427a1f929927e428",
         "version" : "1.3.0"
+      }
+    },
+    {
+      "identity" : "elixxir-dapps-sdk-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
+      "state" : {
+        "branch" : "development",
+        "revision" : "d011281416542b38e302f3ac59b6c658d6438caa"
       }
     },
     {
@@ -158,8 +167,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/google/GoogleUtilities.git",
       "state" : {
-        "revision" : "22907832079d808e82f1182b21af58ef3880666f",
-        "version" : "7.8.0"
+        "revision" : "68ea347bdb1a69e2d2ae2e25cd085b6ef92f64cb",
+        "version" : "7.9.0"
       }
     },
     {
@@ -167,8 +176,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/groue/GRDB.swift",
       "state" : {
-        "revision" : "dd7e7f39e8e4d7a22d258d9809a882f914690b01",
-        "version" : "5.26.1"
+        "revision" : "0ac435744a4c67c4ec23a4a671c0d53ce1fee7c6",
+        "version" : "6.0.0"
       }
     },
     {
@@ -346,8 +355,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-protobuf",
       "state" : {
-        "revision" : "b8230909dedc640294d7324d37f4c91ad3dcf177",
-        "version" : "1.20.1"
+        "revision" : "88c7d15e1242fdb6ecbafbc7926426a19be1e98a",
+        "version" : "1.20.2"
       }
     },
     {

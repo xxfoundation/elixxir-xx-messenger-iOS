@@ -68,14 +68,9 @@ extension BackupConfigViewModel {
                     context.service.toggle(service: service, enabling: false)
                 }, passphraseClosure: { passphrase in
                     context.hud.update(with: .onTitle("Initializing and securing your backup file will take few seconds, please keep the app open."))
-                    DispatchQueue.global().async {
-                        context.service.toggle(service: service, enabling: enabling)
-                        context.service.initializeBackup(passphrase: passphrase)
-
-                        DispatchQueue.main.async {
-                            context.hud.update(with: .none)
-                        }
-                    }
+                  context.service.toggle(service: service, enabling: enabling)
+                  context.service.initializeBackup(passphrase: passphrase)
+                  context.hud.update(with: .none)
                 })
             },
             didTapService: context.service.authorize,

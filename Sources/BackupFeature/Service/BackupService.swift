@@ -86,10 +86,10 @@ extension BackupService {
                 )
             )
 
+          print(">>> Will addJSON: \(String(data: currentFacts, encoding: .utf8)!)")
             manager.addJSON(String(data: currentFacts, encoding: .utf8)!)
         }
 
-        guard settings.value.automaticBackups == true else { return }
         performBackup()
     }
 
@@ -99,6 +99,8 @@ extension BackupService {
     }
 
     public func performBackup() {
+      print(">>> Did call performBackup()")
+
         guard let directoryUrl = try? FileManager.default.url(
             for: .applicationSupportDirectory,
             in: .userDomainMask,
@@ -119,6 +121,8 @@ extension BackupService {
     }
 
     public func updateBackup(data: Data) {
+      print(">>> Did call updateBackup(data)")
+
         guard let directoryUrl = try? FileManager.default.url(
             for: .applicationSupportDirectory,
             in: .userDomainMask,
@@ -306,6 +310,8 @@ extension BackupService {
     }
 
     private func performBackup(data: Data) {
+      print(">>> Did call performBackup(data)")
+
         guard let enabledService = settings.value.enabledService else {
             fatalError("Trying to backup but nothing is enabled")
         }
@@ -316,7 +322,7 @@ extension BackupService {
         do {
             try data.write(to: url, options: .atomic)
         } catch {
-            print("Couldn't write to temp: \(error.localizedDescription)")
+            print(">>> Couldn't write to temp: \(error.localizedDescription)")
             return
         }
 

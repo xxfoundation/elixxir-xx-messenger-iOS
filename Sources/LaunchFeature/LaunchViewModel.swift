@@ -140,6 +140,7 @@ final class LaunchViewModel {
                     hudSubject.send(.none)
                     routeSubject.send(.chats)
                 } else {
+                    dropboxService.unlink()
                     hudSubject.send(.none)
                     routeSubject.send(.onboarding)
                 }
@@ -159,7 +160,6 @@ final class LaunchViewModel {
     private func cleanUp() {
 //        try? cMixManager.remove()
 //        try? keychainHandler.clear()
-//        dropboxService.unlink()
     }
 
     private func presentOnboardingFlow() {
@@ -534,7 +534,7 @@ extension LaunchViewModel {
             return
         }
 
-        guard let members = try? group.getMembership(), let leader = members.first else {
+        guard var members = try? group.getMembership(), let leader = members.first else {
             fatalError("Failed to get group membership/leader")
         }
 
@@ -560,13 +560,42 @@ extension LaunchViewModel {
             ))
         }
 
-        let friends = try! database.fetchContacts(.init(id: Set(members.map(\.id))))
-        let strangers = members.filter { !friends.map(\.id).contains($0.id) }
+        print(">>> All members in the arrived group request:")
+        members.forEach { print(">>> \($0.id.base64EncodedString().prefix(10))...") }
+        print(">>> My ud.id is: \(try! messenger.ud.get()!.getContact().getId().base64EncodedString().prefix(10))...")
+        print(">>> My e2e.id is: \(try! messenger.e2e.get()!.getContact().getId().base64EncodedString().prefix(10))...")
 
-        members.forEach {
-            if strangers.map(\.id).contains($0.id) {
+        let friends = try! database.fetchContacts(.init(
+            id: Set(members.map(\.id)),
+            authStatus: [
+                .friend,
+                .hidden,
+                .requesting,
+                .confirming,
+                .verificationInProgress,
+                .verified,
+                .requested,
+                .requestFailed,
+                .verificationFailed,
+                .confirmationFailed
+            ]
+        ))
+
+        print(">>> These people I already know:")
+        friends.forEach {
+            print(">>> Username: \($0.username), authStatus: \($0.authStatus.rawValue), id: \($0.id.base64EncodedString().prefix(10))...")
+        }
+
+        let strangers = Set(members.map(\.id)).subtracting(Set(friends.map(\.id)))
+
+        strangers.forEach {
+            if let stranger = try? database.fetchContacts(.init(id: [$0])).first {
+                print(">>> This is a stranger, but I already knew about his/her existance: \(stranger.id.base64EncodedString().prefix(10))...")
+            } else {
+                print(">>> This is a complete stranger. Storing on the db: \($0.base64EncodedString().prefix(10))...")
+
                 try! database.saveContact(.init(
-                    id: $0.id,
+                    id: $0,
                     marshaled: nil,
                     username: "Fetching...",
                     email: nil,
@@ -588,30 +617,27 @@ extension LaunchViewModel {
         }
 
         print(">>> Performing a multi-lookup for group strangers:")
-        strangers.enumerated().forEach {
-            print("- Stranger N\($0.offset): \($0.element.id.base64EncodedString().prefix(10))...")
-        }
 
         do {
-            let multiLookup = try messenger.lookupContacts(ids: strangers.map(\.id))
+            let multiLookup = try messenger.lookupContacts(ids: strangers.map { $0 })
 
             for user in multiLookup.contacts {
-                print("+ Found stranger w/ id: \(try! user.getId().base64EncodedString().prefix(10))...")
+                print(">>> Found stranger w/ id: \(try! user.getId().base64EncodedString().prefix(10))...")
 
                 if var foo = try? self.database.fetchContacts(.init(id: [user.getId()])).first,
                    let username = try? user.getFact(.username)?.value {
                     foo.username = username
-                    print("+ Set username: \(username) for \(try! user.getId().base64EncodedString().prefix(10))...")
+                    print(">>> Set username: \(username) for \(try! user.getId().base64EncodedString().prefix(10))...")
                     _ = try? self.database.saveContact(foo)
                 }
             }
 
             for error in multiLookup.errors {
-                print("+ Failure on Multilookup: \(error.localizedDescription)")
+                print(">>> Failure on Multilookup: \(error.localizedDescription)")
             }
 
             for failedId in multiLookup.failedIds {
-                print("+ Failed id: \(failedId.base64EncodedString().prefix(10))...")
+                print(">>> Failed id: \(failedId.base64EncodedString().prefix(10))...")
             }
         } catch {
             print(">>> Exception on multilookup: \(error.localizedDescription)")
