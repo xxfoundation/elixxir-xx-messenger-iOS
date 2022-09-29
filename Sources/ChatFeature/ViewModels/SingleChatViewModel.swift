@@ -105,13 +105,13 @@ final class SingleChatViewModel: NSObject {
         updateRecentState(contact)
 
         database.fetchContactsPublisher(Contact.Query(id: [contact.id]))
-            .assertNoFailure()
+        .replaceError(with: [])
             .compactMap { $0.first }
             .sink { [unowned self] in contactSubject.send($0) }
             .store(in: &cancellables)
 
         database.fetchMessagesPublisher(.init(chat: .direct(myId, contact.id)))
-            .assertNoFailure()
+        .replaceError(with: [])
             .map {
                 let groupedByDate = Dictionary(grouping: $0) { domainModel -> Date in
                     let components = Calendar.current.dateComponents([.day, .month, .year], from: domainModel.date)

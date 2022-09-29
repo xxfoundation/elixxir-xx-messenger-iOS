@@ -668,6 +668,10 @@
 = "Set password and continue";
 "backup.passphrase.cancel"
 = "Cancel";
+"backup.restore.passphrase.title"
+= "Backup password";
+"backup.restore.passphrase.subtitle"
+= "Please enter your backup password that you used when you did the backup setup";
 
 "backup.iCloud"
 = "iCloud";

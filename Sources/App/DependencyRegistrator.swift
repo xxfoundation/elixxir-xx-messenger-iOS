@@ -192,7 +192,7 @@ struct DependencyRegistrator {
                 successFactory: RestoreSuccessController.init,
                 chatListFactory: ChatListController.init,
                 restoreFactory: RestoreController.init(_:),
-                passphraseFactory: RestorePassphraseController.init(_:)
+                passphraseFactory: RestorePassphraseController.init(_:_:)
             ) as RestoreCoordinating)
 
         container.register(

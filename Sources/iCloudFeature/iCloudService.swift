@@ -18,8 +18,7 @@ public struct iCloudService: iCloudInterface {
 
     public func downloadMetadata(_ completion: @escaping (Result<iCloudMetadata?, Error>) -> Void) {
         guard let documentsProvider = documentsProvider else {
-            // TODO: Use some generic error
-            fatalError()
+            fatalError("ICloud wasn't set properly, force crashed due to lack of fallback")
         }
 
         documentsProvider.contentsOfDirectory(path: "/", completionHandler: { contents, error in

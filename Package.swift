@@ -115,9 +115,9 @@ let package = Package(
             .upToNextMajor(from: "1.6.0")
         ),
         .package(
-//            path: "../elixxir-dapps-sdk-swift"
-            url: "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
-            branch: "development"
+            path: "../elixxir-dapps-sdk-swift"
+//            url: "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
+//            branch: "development"
         ),
         .package(
             url: "https://git.xx.network/elixxir/client-ios-db.git",
@@ -414,6 +414,7 @@ let package = Package(
                 .target(name: "DropboxFeature"),
                 .target(name: "GoogleDriveFeature"),
                 .target(name: "DependencyInjection"),
+                .product(name: "XXDatabase", package: "client-ios-db"),
                 .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
             ]
         ),
@@ -446,6 +447,7 @@ let package = Package(
                 .target(name: "Defaults"),
                 .target(name: "Keychain"),
                 .target(name: "Voxophone"),
+                .target(name: "Models"),
                 .target(name: "Permissions"),
                 .target(name: "Presentation"),
                 .target(name: "DrawerFeature"),
@@ -501,6 +503,7 @@ let package = Package(
                 .target(name: "Defaults"),
                 .target(name: "PushFeature"),
                 .target(name: "Permissions"),
+                .target(name: "BackupFeature"),
                 .target(name: "DropboxFeature"),
                 .target(name: "VersionChecking"),
                 .target(name: "ReportingFeature"),

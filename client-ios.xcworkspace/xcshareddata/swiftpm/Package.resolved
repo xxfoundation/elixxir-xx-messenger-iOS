@@ -100,15 +100,6 @@
       }
     },
     {
-      "identity" : "elixxir-dapps-sdk-swift",
-      "kind" : "remoteSourceControl",
-      "location" : "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
-      "state" : {
-        "branch" : "development",
-        "revision" : "d011281416542b38e302f3ac59b6c658d6438caa"
-      }
-    },
-    {
       "identity" : "fileprovider",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/amosavian/FileProvider.git",

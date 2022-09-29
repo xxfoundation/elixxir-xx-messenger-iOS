@@ -62,7 +62,7 @@ final class CreateGroupViewModel {
         )
 
         database.fetchContactsPublisher(query)
-            .assertNoFailure()
+        .replaceError(with: [])
             .map { $0.filter { $0.id != self.myId }}
             .map { $0.sorted(by: { $0.username! < $1.username! })}
             .sink { [unowned self] in

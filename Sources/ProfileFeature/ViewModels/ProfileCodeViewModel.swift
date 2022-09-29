@@ -7,9 +7,8 @@ import XXClient
 import Foundation
 import InputField
 import CombineSchedulers
-import DependencyInjection
 import XXMessengerClient
-import BackupFeature
+import DependencyInjection
 
 struct ProfileCodeViewState: Equatable {
     var input: String = ""
@@ -19,7 +18,6 @@ struct ProfileCodeViewState: Equatable {
 
 final class ProfileCodeViewModel {
     @Dependency var messenger: Messenger
-    @Dependency var backupService: BackupService
 
     @KeyObject(.email, defaultValue: nil) var email: String?
     @KeyObject(.phone, defaultValue: nil) var phone: String?
@@ -81,8 +79,6 @@ final class ProfileCodeViewModel {
                 } else {
                     self.phone = self.confirmation.content
                 }
-
-                self.backupService.didUpdateFacts()
 
                 self.timer?.invalidate()
                 self.hudRelay.send(.none)

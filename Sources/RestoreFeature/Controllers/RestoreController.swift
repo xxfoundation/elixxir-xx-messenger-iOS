@@ -1,8 +1,8 @@
 import UIKit
 import Models
 import Shared
-import DrawerFeature
 import Combine
+import DrawerFeature
 import DependencyInjection
 
 public final class RestoreController: UIViewController {
@@ -56,9 +56,13 @@ public final class RestoreController: UIViewController {
                 screenView.updateFor(step: $0)
 
                 if $0 == .wrongPass {
-                    coordinator.toPassphrase(from: self) { pass in
-                        self.viewModel.retryWith(passphrase: pass)
+                  coordinator.toPassphrase(
+                    from: self,
+                    cancelClosure: { self.dismiss(animated: true) },
+                    passphraseClosure: { pwd in
+                      self.viewModel.retryWith(passphrase: pwd)
                     }
+                  )
 
                     return
                 }
@@ -81,9 +85,13 @@ public final class RestoreController: UIViewController {
         screenView.restoreButton
             .publisher(for: .touchUpInside)
             .sink { [unowned self] in
-                coordinator.toPassphrase(from: self) { passphrase in
-                    self.viewModel.didTapRestore(passphrase: passphrase)
+              coordinator.toPassphrase(
+                from: self,
+                cancelClosure: { self.dismiss(animated: true) },
+                passphraseClosure: { pwd in
+                  self.viewModel.didTapRestore(passphrase: pwd)
                 }
+              )
             }.store(in: &cancellables)
     }
 

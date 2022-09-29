@@ -290,6 +290,14 @@ public enum Localized {
         public static let title = Localized.tr("Localizable", "backup.passphrase.input.title")
       }
     }
+    public enum Restore {
+      public enum Passphrase {
+        /// Please enter your backup password that you used when you did the backup setup
+        public static let subtitle = Localized.tr("Localizable", "backup.restore.passphrase.subtitle")
+        /// Backup password
+        public static let title = Localized.tr("Localizable", "backup.restore.passphrase.title")
+      }
+    }
     public enum Setup {
       /// Setup your #backup service#.
       public static let title = Localized.tr("Localizable", "backup.setup.title")

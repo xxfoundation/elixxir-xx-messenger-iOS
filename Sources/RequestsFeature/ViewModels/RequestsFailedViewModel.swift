@@ -33,7 +33,7 @@ final class RequestsFailedViewModel {
 
     init() {
         database.fetchContactsPublisher(.init(authStatus: [.requestFailed, .confirmationFailed]))
-            .assertNoFailure()
+        .replaceError(with: [])
             .map { data -> NSDiffableDataSourceSnapshot<Section, Request> in
                 var snapshot = NSDiffableDataSourceSnapshot<Section, Request>()
                 snapshot.appendSections([.appearing])

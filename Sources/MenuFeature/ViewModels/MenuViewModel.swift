@@ -33,8 +33,10 @@ final class MenuViewModel {
         )
 
         return Publishers.CombineLatest(
-            database.fetchContactsPublisher(contactsQuery).assertNoFailure(),
-            database.fetchGroupsPublisher(groupQuery).assertNoFailure()
+          database.fetchContactsPublisher(contactsQuery)
+            .replaceError(with: []),
+          database.fetchGroupsPublisher(groupQuery)
+            .replaceError(with: [])
         )
         .map { $0.0.count + $0.1.count }
         .eraseToAnyPublisher()

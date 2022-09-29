@@ -57,7 +57,7 @@ final class ChatListViewModel {
         )
 
         return database.fetchContactsPublisher(query)
-            .assertNoFailure()
+        .replaceError(with: [])
             .map {
                 let section = SectionId()
                 var snapshot = RecentsSnapshot()
@@ -75,7 +75,7 @@ final class ChatListViewModel {
 
         return Publishers.CombineLatest3(
             database.fetchContactsPublisher(contactsQuery)
-                .assertNoFailure()
+              .replaceError(with: [])
                 .map { $0.filter { $0.id != self.myId }},
             chatsPublisher,
             searchSubject
@@ -140,8 +140,8 @@ final class ChatListViewModel {
         )
 
         return Publishers.CombineLatest(
-            database.fetchContactsPublisher(contactsQuery).assertNoFailure(),
-            database.fetchGroupsPublisher(groupQuery).assertNoFailure()
+            database.fetchContactsPublisher(contactsQuery).replaceError(with: []),
+            database.fetchGroupsPublisher(groupQuery).replaceError(with: [])
         )
         .map { $0.0.count + $0.1.count }
         .eraseToAnyPublisher()
@@ -170,7 +170,7 @@ final class ChatListViewModel {
                     authStatus: [.participating]
                 )
             ))
-        .assertNoFailure()
+        .replaceError(with: [])
         .sink { [unowned self] in chatsSubject.send($0) }
         .store(in: &cancellables)
     }

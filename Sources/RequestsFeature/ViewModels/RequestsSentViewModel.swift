@@ -53,7 +53,7 @@ final class RequestsSentViewModel {
         )
 
         database.fetchContactsPublisher(query)
-            .assertNoFailure()
+        .replaceError(with: [])
             .removeDuplicates()
             .map { data -> NSDiffableDataSourceSnapshot<Section, RequestSent> in
                 var snapshot = NSDiffableDataSourceSnapshot<Section, RequestSent>()

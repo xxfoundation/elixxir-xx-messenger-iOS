@@ -80,8 +80,13 @@ final class RequestsReceivedViewModel {
             isBanned: reportingStatus.isEnabled() ? false : nil
         )
 
-        let groupStream = database.fetchGroupsPublisher(groupsQuery).assertNoFailure()
-        let contactsStream = database.fetchContactsPublisher(contactsQuery).assertNoFailure()
+        let groupStream = database
+        .fetchGroupsPublisher(groupsQuery)
+        .replaceError(with: [])
+
+      let contactsStream = database
+        .fetchContactsPublisher(contactsQuery)
+        .replaceError(with: [])
 
         Publishers.CombineLatest3(
             groupStream,
@@ -212,7 +217,7 @@ final class RequestsReceivedViewModel {
     ) {
         if let info = try? database.fetchGroupInfos(.init(groupId: group.id)).first {
             database.fetchContactsPublisher(.init(id: Set(info.members.map(\.id))))
-                .assertNoFailure()
+            .replaceError(with: [])
                 .sink { members in
                     let withUsername = members
                         .filter { $0.username != nil }

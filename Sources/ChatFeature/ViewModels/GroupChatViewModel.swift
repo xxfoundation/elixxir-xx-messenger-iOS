@@ -60,7 +60,7 @@ final class GroupChatViewModel {
 
     var messages: AnyPublisher<[ArraySection<ChatSection, Message>], Never> {
         database.fetchMessagesPublisher(.init(chat: .group(info.group.id)))
-            .assertNoFailure()
+        .replaceError(with: [])
             .map { messages -> [ArraySection<ChatSection, Message>] in
                 let groupedByDate = Dictionary(grouping: messages) { domainModel -> Date in
                     let components = Calendar.current.dateComponents([.day, .month, .year], from: domainModel.date)
