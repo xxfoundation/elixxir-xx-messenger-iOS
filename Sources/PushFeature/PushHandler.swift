@@ -12,8 +12,6 @@ public final class PushHandler: PushHandling {
         static let usernamesSetting = "isShowingUsernames"
     }
 
-    @Dependency var reportingStatus: ReportingStatus
-
     @KeyObject(.pushNotifications, defaultValue: false) var isPushEnabled: Bool
 
     let checkAuth: CheckAuth
@@ -129,9 +127,9 @@ public final class PushHandler: PushHandling {
                 return ($0.type.unknownSenderContent!, $0)
             }
 
-            if reportingStatus.isEnabled(), (contact.isBlocked || contact.isBanned) {
-                return nil
-            }
+          if ReportingStatus.live().isEnabled(), (contact.isBlocked || contact.isBanned) {
+            return nil
+          }
 
             if let showSender = defaults.value(forKey: Constants.usernamesSetting) as? Bool, showSender == true {
                 let name = (contact.nickname ?? contact.username) ?? ""
