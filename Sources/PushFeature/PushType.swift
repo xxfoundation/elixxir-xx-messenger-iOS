@@ -47,7 +47,7 @@ public enum PushType: String {
         case .confirm:
             return { String(format: "%@ confirmed your contact request", $0) }
         case .request:
-            return { String(format: "%@ sent you a contact request", $0) }
+            return { _ in "Request received" }
         }
     }
 }
