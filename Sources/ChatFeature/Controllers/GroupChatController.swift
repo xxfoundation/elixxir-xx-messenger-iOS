@@ -439,6 +439,35 @@ extension GroupChatController: UICollectionViewDataSource {
 
                 return cell
             }
+        } else if item.status == .sendingTimedOut {
+          if let replyMessageId = item.replyMessageId {
+            let cell: OutgoingFailedGroupReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
+
+            Bubbler.buildReplyGroup(
+              bubble: cell.rightView,
+              with: item,
+              reply: replyContent(replyMessageId),
+              sender: name(item.senderId)
+            )
+
+            cell.canReply = false
+            cell.performReply = performReply
+
+            return cell
+          } else {
+            let cell: OutgoingFailedGroupTextCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
+
+            Bubbler.buildGroup(
+              bubble: cell.rightView,
+              with: item,
+              with: name(item.senderId)
+            )
+
+            cell.canReply = false
+            cell.performReply = performReply
+
+            return cell
+          }
         } else {
             if let replyMessageId = item.replyMessageId {
                 let cell: OutgoingGroupReplyCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)

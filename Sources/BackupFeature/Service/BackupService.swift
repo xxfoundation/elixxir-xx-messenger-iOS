@@ -22,24 +22,17 @@ public final class BackupService {
   @Dependency var driveService: GoogleDriveInterface
 
   @KeyObject(.username, defaultValue: nil) var username: String?
-  @KeyObject(.backupSettings, defaultValue: Data()) private var storedSettings: Data
+  @KeyObject(.backupSettings, defaultValue: nil) var storedSettings: Data?
 
   public var settingsPublisher: AnyPublisher<BackupSettings, Never> {
     settings.handleEvents(receiveSubscription: { [weak self] _ in
       guard let self = self else { return }
-
-      let lastRefreshDate = self.settingsLastRefreshedDate ?? Date.distantPast
-
-      if Date().timeIntervalSince(lastRefreshDate) < 10 { return }
-
-      self.settingsLastRefreshedDate = Date()
       self.refreshConnections()
       self.refreshBackups()
     }).eraseToAnyPublisher()
   }
 
   private var connType: ConnectionType = .wifi
-  private var settingsLastRefreshedDate: Date?
   private var cancellables = Set<AnyCancellable>()
   private lazy var settings = CurrentValueSubject<BackupSettings, Never>(.init(fromData: storedSettings))
 
@@ -140,6 +133,8 @@ extension BackupService {
     if isAutomaticEnabled && hasEnabledService {
       performBackup()
     }
+
+    refreshBackups()
   }
 
   public func setBackupOnlyOnWifi(_ enabled: Bool) {
@@ -226,7 +221,11 @@ extension BackupService {
   }
 
   private func refreshBackups() {
+    print(">>> Refreshing backups...")
+
     if icloudService.isAuthorized() {
+      print(">>> Refreshing icloud backup...")
+
       icloudService.downloadMetadata { [weak settings] in
         guard let settings = settings else { return }
 
@@ -244,6 +243,8 @@ extension BackupService {
     }
 
     if sftpService.isAuthorized() {
+      print(">>> Refreshing sftp backup...")
+
       sftpService.fetchMetadata { [weak settings] in
         guard let settings = settings else { return }
 
@@ -261,6 +262,8 @@ extension BackupService {
     }
 
     if dropboxService.isAuthorized() {
+      print(">>> Refreshing dropbox backup...")
+
       dropboxService.downloadMetadata { [weak settings] in
         guard let settings = settings else { return }
 
@@ -278,6 +281,7 @@ extension BackupService {
     }
 
     driveService.isAuthorized { [weak settings] isAuthorized  in
+      print(">>> Refreshing drive backup...")
       guard let settings = settings else { return }
 
       if isAuthorized {
@@ -315,6 +319,7 @@ extension BackupService {
 
     switch enabledService {
     case .drive:
+      print(">>> Performing upload on drive")
       driveService.uploadBackup(url) {
         switch $0 {
         case .success(let metadata):
@@ -328,6 +333,7 @@ extension BackupService {
         }
       }
     case .icloud:
+      print(">>> Performing upload on iCloud")
       icloudService.uploadBackup(url) {
         switch $0 {
         case .success(let metadata):
@@ -341,19 +347,25 @@ extension BackupService {
         }
       }
     case .dropbox:
+      print(">>> Performing upload on dropbox")
       dropboxService.uploadBackup(url) {
         switch $0 {
         case .success(let metadata):
+          print(">>> Performed upload on dropbox: \(metadata)")
+
           self.settings.value.backups[.dropbox] = .init(
             id: metadata.path,
             date: metadata.modifiedDate,
             size: metadata.size
           )
+
+          self.refreshBackups()
         case .failure(let error):
           print(error.localizedDescription)
         }
       }
     case .sftp:
+      print(">>> Performing upload on sftp")
       sftpService.uploadBackup(url: url) {
         switch $0 {
         case .success(let backup):

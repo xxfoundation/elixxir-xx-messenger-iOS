@@ -25,15 +25,24 @@ public struct BackupSettings: Equatable, Codable {
         (try? PropertyListEncoder().encode(self)) ?? Data()
     }
 
-    public init(fromData data: Data) {
-        let settings = try? PropertyListDecoder().decode(BackupSettings.self, from: data)
+    public init(fromData data: Data?) {
+      if let data = data, let settings = try? PropertyListDecoder().decode(BackupSettings.self, from: data) {
         self.init(
-            wifiOnlyBackup: settings?.wifiOnlyBackup ?? false,
-            automaticBackups: settings?.automaticBackups ?? true,
-            enabledService: settings?.enabledService,
-            connectedServices: settings?.connectedServices ?? [],
-            backups: settings?.backups ?? [:]
+          wifiOnlyBackup: settings.wifiOnlyBackup,
+          automaticBackups: settings.automaticBackups,
+          enabledService: settings.enabledService,
+          connectedServices: settings.connectedServices,
+          backups: settings.backups
         )
+      } else {
+        self.init(
+          wifiOnlyBackup: false,
+          automaticBackups: true,
+          enabledService: nil,
+          connectedServices: [],
+          backups: [:]
+        )
+      }
     }
 }
 

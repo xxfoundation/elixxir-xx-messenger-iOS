@@ -235,7 +235,15 @@ final class Bubbler {
             bubble.replyView.space.backgroundColor = Asset.brandPrimary.color
             bubble.lockerImageView.removeFromSuperview()
             bubble.revertBottomStackOrder()
-        case .sendingFailed, .sendingTimedOut:
+        case .sendingTimedOut:
+          bubble.senderLabel.removeFromSuperview()
+          bubble.backgroundColor = Asset.accentWarning.color
+          bubble.textView.textColor = Asset.neutralWhite.color
+          bubble.dateLabel.textColor = Asset.neutralWhite.color
+          roundButtonColor = Asset.neutralWhite.color
+          bubble.replyView.space.backgroundColor = Asset.neutralWhite.color
+          bubble.replyView.container.backgroundColor = Asset.brandLight.color
+        case .sendingFailed:
             bubble.senderLabel.removeFromSuperview()
             bubble.backgroundColor = Asset.accentDanger.color
             bubble.textView.textColor = Asset.neutralWhite.color
@@ -293,7 +301,13 @@ final class Bubbler {
             roundButtonColor = Asset.neutralDisabled.color
             bubble.lockerImageView.removeFromSuperview()
             bubble.revertBottomStackOrder()
-        case .sendingFailed, .sendingTimedOut:
+        case .sendingTimedOut:
+          bubble.senderLabel.removeFromSuperview()
+          bubble.backgroundColor = Asset.accentWarning.color
+          bubble.textView.textColor = Asset.neutralWhite.color
+          bubble.dateLabel.textColor = Asset.neutralWhite.color
+          roundButtonColor = Asset.neutralWhite.color
+        case .sendingFailed:
             bubble.senderLabel.removeFromSuperview()
             bubble.backgroundColor = Asset.accentDanger.color
             bubble.textView.textColor = Asset.neutralWhite.color

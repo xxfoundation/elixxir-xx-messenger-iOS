@@ -8,9 +8,10 @@ import XXClient
 import Countries
 import Foundation
 import Permissions
+import BackupFeature
+import XXMessengerClient
 import CombineSchedulers
 import DependencyInjection
-import XXMessengerClient
 
 enum ProfileNavigationRoutes {
   case none
@@ -33,7 +34,8 @@ final class ProfileViewModel {
   @KeyObject(.sharingPhone, defaultValue: false) var isPhoneSharing: Bool
 
   @Dependency var messenger: Messenger
-  @Dependency private var permissions: PermissionHandling
+  @Dependency var backupService: BackupService
+  @Dependency var permissions: PermissionHandling
 
   var name: String { username! }
 
@@ -106,6 +108,7 @@ final class ProfileViewModel {
           self.isPhoneSharing = false
         }
 
+        self.backupService.performBackup()
         self.hudRelay.send(.none)
         self.refresh()
       } catch {

@@ -79,6 +79,7 @@ extension BackupConfigViewModel {
       },
       lastBackup: {
         context.service.settingsPublisher
+          .print(">>> lastBackup updated!")
           .map {
             guard let enabledService = $0.enabledService else { return nil }
             return $0.backups[enabledService]
