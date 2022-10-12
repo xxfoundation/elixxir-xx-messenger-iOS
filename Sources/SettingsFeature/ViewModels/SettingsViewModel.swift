@@ -137,6 +137,12 @@ final class SettingsViewModel {
                 }
             }
         } else {
+            if let defaults = UserDefaults(suiteName: "group.elixxir.messenger"),
+               let isShowingUsernames = defaults.value(forKey: "isShowingUsernames") as? Bool,
+                isShowingUsernames {
+                defaults.set(false, forKey: "isShowingUsernames")
+            }
+
             backgroundScheduler.schedule { [weak self] in
                 guard let self = self else { return }
 

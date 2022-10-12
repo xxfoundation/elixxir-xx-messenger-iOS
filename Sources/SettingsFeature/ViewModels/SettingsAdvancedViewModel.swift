@@ -12,11 +12,13 @@ struct AdvancedViewState: Equatable {
     var isShowingUsernames = false
     var isReportingEnabled = false
     var isReportingOptional = false
+    var isShowingUsernamesEnabled = false
 }
 
 final class SettingsAdvancedViewModel {
     @KeyObject(.recordingLogs, defaultValue: true) var isRecordingLogs: Bool
     @KeyObject(.crashReporting, defaultValue: true) var isCrashReporting: Bool
+    @KeyObject(.pushNotifications, defaultValue: false) var pushNotifications
 
     private var cancellables = Set<AnyCancellable>()
     private let isShowingUsernamesKey = "isShowingUsernames"
@@ -35,6 +37,7 @@ final class SettingsAdvancedViewModel {
         stateRelay.value.isRecordingLogs = isRecordingLogs
         stateRelay.value.isCrashReporting = isCrashReporting
         stateRelay.value.isReportingOptional = reportingStatus.isOptional()
+        stateRelay.value.isShowingUsernamesEnabled = pushNotifications
 
         reportingStatus
             .isEnabledPublisher()

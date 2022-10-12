@@ -189,6 +189,7 @@ public final class SettingsController: UIViewController {
                 screenView.inAppNotifications.switcherView.setOn(state.isInAppNotification, animated: true)
                 screenView.remoteNotifications.switcherView.setOn(state.isPushNotification, animated: true)
                 screenView.dummyTraffic.switcherView.setOn(state.isDummyTrafficOn, animated: true)
+                screenView.remoteNotifications.switcherView.isEnabled = state.isPushNotificationsEnabled
             }.store(in: &cancellables)
     }
 

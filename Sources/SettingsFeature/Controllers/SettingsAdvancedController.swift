@@ -85,6 +85,7 @@ public final class SettingsAdvancedController: UIViewController {
                 screenView.crashReportingSwitcher.switcherView.setOn(state.isCrashReporting, animated: true)
                 screenView.showUsernamesSwitcher.switcherView.setOn(state.isShowingUsernames, animated: true)
                 screenView.reportingSwitcher.switcherView.setOn(state.isReportingEnabled, animated: true)
+                screenView.showUsernamesSwitcher.switcherView.isEnabled = state.isShowingUsernamesEnabled
             }.store(in: &cancellables)
     }
 }
