@@ -153,9 +153,7 @@ extension Session {
             /// If its not failed, lets make sure that
             /// this is an actual new contact
             ///
-            if let _ = try? dbManager.fetchContacts(.init(id: [contact.id])).first {
-                /// Found a user w/ that id already stored
-                ///
+          if let existent = try? dbManager.fetchContacts(.init(id: [contact.id], authStatus: [.requested, .requesting, .requestFailed])).first {
                 throw NSError.create("This user has already been requested")
             }
 
