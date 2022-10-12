@@ -67,4 +67,14 @@ public protocol PushHandling {
         _ userInfo: [AnyHashable: Any],
         _ completion: @escaping () -> Void
     )
+
+    /// Checks authorization status for push notifications
+    /// with the system
+    ///
+    /// - Parameters:
+    ///   - completion: Async closure containing a boolean if its authorized
+    ///
+    func checkAuthorization(
+      _ completion: @escaping (Bool) -> Void
+    )
 }

@@ -18,6 +18,8 @@ struct SettingsViewState: Equatable {
     var isBiometricsEnabled: Bool = false
     var isBiometricsPossible: Bool = false
     var isDummyTrafficOn = false
+
+    var isPushNotificationsEnabled: Bool = false
 }
 
 final class SettingsViewModel {
@@ -48,6 +50,11 @@ final class SettingsViewModel {
         stateRelay.value.isInAppNotification = inAppNotifications
         stateRelay.value.isBiometricsPossible = permissions.isBiometricsAvailable
         stateRelay.value.isDummyTrafficOn = isDummyTrafficOn
+
+        pushHandler.checkAuthorization { [weak self] in
+            guard let self else { return }
+            self.stateRelay.value.isPushNotificationsEnabled = $0
+        }
     }
 
     func didToggleBiometrics() {

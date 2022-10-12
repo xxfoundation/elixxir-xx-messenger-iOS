@@ -16,20 +16,27 @@ public final class PushHandler: PushHandling {
 
     @KeyObject(.pushNotifications, defaultValue: false) var isPushEnabled: Bool
 
+    let checkAuth: CheckAuth
     let requestAuth: RequestAuth
+
     public static let defaultRequestAuth = UNUserNotificationCenter.current().requestAuthorization
+    public static let defaultCheckAuth = UNUserNotificationCenter.current().getNotificationSettings
+
     public typealias RequestAuth = (UNAuthorizationOptions, @escaping (Bool, Error?) -> Void) -> Void
+    public typealias CheckAuth = (@escaping (UNNotificationSettings) -> Void) -> Void
 
     public var pushExtractor: PushExtractor
     public var contentsBuilder: ContentsBuilder
     public var applicationState: () -> UIApplication.State
 
     public init(
+        checkAuth: @escaping CheckAuth = defaultCheckAuth,
         requestAuth: @escaping RequestAuth = defaultRequestAuth,
         pushExtractor: PushExtractor = .live,
         contentsBuilder: ContentsBuilder = .live,
         applicationState: @escaping () -> UIApplication.State = { UIApplication.shared.applicationState }
     ) {
+        self.checkAuth = checkAuth
         self.requestAuth = requestAuth
         self.pushExtractor = pushExtractor
         self.contentsBuilder = contentsBuilder
@@ -42,6 +49,17 @@ public final class PushHandler: PushHandling {
             try session.registerNotifications(token)
         } catch {
             isPushEnabled = false
+        }
+    }
+
+    public func checkAuthorization(_ completion: @escaping (Bool) -> Void) {
+        checkAuth {
+          guard $0.authorizationStatus == .authorized else {
+            completion(false)
+            return
+          }
+
+          completion(true)
         }
     }
 

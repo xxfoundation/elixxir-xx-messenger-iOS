@@ -36,4 +36,10 @@ public struct MockPushHandler: PushHandling {
     ) {
         completion()
     }
+
+    public func checkAuthorization(
+      _ completion: @escaping (Bool) -> Void
+    ) {
+        completion(true)
+    }
 }
