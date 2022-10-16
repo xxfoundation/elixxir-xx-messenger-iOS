@@ -122,8 +122,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/google/google-api-objectivec-client-for-rest",
       "state" : {
-        "revision" : "3228334d0584cb9174796fecbe628a723be70452",
-        "version" : "1.7.0"
+        "revision" : "0078161fcc2900ca06213a192bdfa5ece8ee58f1",
+        "version" : "2.0.1"
       }
     },
     {
@@ -342,6 +342,15 @@
       }
     },
     {
+      "identity" : "swift-log",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/apple/swift-log.git",
+      "state" : {
+        "revision" : "6fe203dc33195667ce1759bf0182975e4653ba1c",
+        "version" : "1.4.4"
+      }
+    },
+    {
       "identity" : "swift-protobuf",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/apple/swift-protobuf",
@@ -373,8 +382,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/dropbox/SwiftyDropbox.git",
       "state" : {
-        "revision" : "9df3d4997127f1f17ed295e5f373ab676419df08",
-        "version" : "8.3.0"
+        "revision" : "ff2da46242267837818b40ea1062a045840bc944",
+        "version" : "9.1.0"
       }
     },
     {
