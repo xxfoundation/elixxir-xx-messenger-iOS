@@ -1,5 +1,4 @@
 import UIKit
-import Models
 import Shared
 import Combine
 import DrawerFeature
@@ -14,8 +13,8 @@ public final class RestoreController: UIViewController {
     private var cancellables = Set<AnyCancellable>()
     private var drawerCancellables = Set<AnyCancellable>()
 
-    public init(_ settings: RestoreSettings) {
-        viewModel = .init(settings: settings)
+    public init(_ details: RestorationDetails) {
+        viewModel = .init(details: details)
         super.init(nibName: nil, bundle: nil)
     }
 
@@ -29,7 +28,7 @@ public final class RestoreController: UIViewController {
     public override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         navigationItem.backButtonTitle = ""
-        navigationController?.navigationBar.customize()
+        navigationController?.navigationBar.customize(translucent: true)
     }
 
     public override func viewDidLoad() {
@@ -43,56 +42,55 @@ public final class RestoreController: UIViewController {
         title.text = Localized.AccountRestore.header
         title.textColor = Asset.neutralActive.color
         title.font = Fonts.Mulish.semiBold.font(size: 18.0)
-
         navigationItem.leftBarButtonItem = UIBarButtonItem(customView: title)
         navigationItem.leftItemsSupplementBackButton = true
     }
 
     private func setupBindings() {
-        viewModel.step
-            .receive(on: DispatchQueue.main)
-            .removeDuplicates()
-            .sink { [unowned self] in
-                screenView.updateFor(step: $0)
+      viewModel.stepPublisher
+        .receive(on: DispatchQueue.main)
+        .removeDuplicates()
+        .sink { [unowned self] in
+          screenView.updateFor(step: $0)
 
-                if $0 == .wrongPass {
-                  coordinator.toPassphrase(
-                    from: self,
-                    cancelClosure: { self.dismiss(animated: true) },
-                    passphraseClosure: { pwd in
-                      self.viewModel.retryWith(passphrase: pwd)
-                    }
-                  )
+          if $0 == .wrongPass {
+            coordinator.toPassphrase(
+              from: self,
+              cancelClosure: { self.dismiss(animated: true) },
+              passphraseClosure: { pwd in
+                self.viewModel.retryWith(passphrase: pwd)
+              }
+            )
 
-                    return
-                }
+            return
+          }
 
-                if $0 == .done {
-                    coordinator.toSuccess(from: self)
-                }
-            }.store(in: &cancellables)
+          if $0 == .done {
+            coordinator.toSuccess(from: self)
+          }
+        }.store(in: &cancellables)
 
-        screenView.backButton
-            .publisher(for: .touchUpInside)
-            .sink { [unowned self] in didTapBack() }
-            .store(in: &cancellables)
+      screenView.backButton
+        .publisher(for: .touchUpInside)
+        .sink { [unowned self] in didTapBack() }
+        .store(in: &cancellables)
 
-        screenView.cancelButton
-            .publisher(for: .touchUpInside)
-            .sink { [unowned self] in didTapBack() }
-            .store(in: &cancellables)
+      screenView.cancelButton
+        .publisher(for: .touchUpInside)
+        .sink { [unowned self] in didTapBack() }
+        .store(in: &cancellables)
 
-        screenView.restoreButton
-            .publisher(for: .touchUpInside)
-            .sink { [unowned self] in
-              coordinator.toPassphrase(
-                from: self,
-                cancelClosure: { self.dismiss(animated: true) },
-                passphraseClosure: { pwd in
-                  self.viewModel.didTapRestore(passphrase: pwd)
-                }
-              )
-            }.store(in: &cancellables)
+      screenView.restoreButton
+        .publisher(for: .touchUpInside)
+        .sink { [unowned self] in
+          coordinator.toPassphrase(
+            from: self,
+            cancelClosure: { self.dismiss(animated: true) },
+            passphraseClosure: { pwd in
+              self.viewModel.didTapRestore(passphrase: pwd)
+            }
+          )
+        }.store(in: &cancellables)
     }
 
     @objc private func didTapBack() {

@@ -345,10 +345,13 @@ let package = Package(
         .target(name: "HUD"),
         .target(name: "Shared"),
         .target(name: "Presentation"),
-        .target(name: "BackupFeature"),
         .target(name: "DependencyInjection"),
         .product(name: "XXDatabase", package: "client-ios-db"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
+        .product(name: "CloudFilesDrive", package: "xxm-cloud-providers"),
+        .product(name: "CloudFilesDropbox", package: "xxm-cloud-providers"),
+        .product(name: "CloudFilesSFTP", package: "xxm-cloud-providers"),
+        .product(name: "CloudFilesICloud", package: "xxm-cloud-providers"),
       ]
     ),
     .target(
@@ -441,9 +444,11 @@ let package = Package(
         .target(name: "ReportingFeature"),
         .target(name: "DependencyInjection"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
-        .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
+        .product(name: "CloudFilesSFTP", package: "xxm-cloud-providers"),
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
+        .product(name: "CloudFilesDropbox", package: "xxm-cloud-providers"),
         .product(name: "XXLegacyDatabaseMigrator", package: "client-ios-db"),
+        .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
       ]
     ),
     .target(
@@ -580,7 +585,14 @@ let package = Package(
         .target(name: "InputField"),
         .target(name: "Presentation"),
         .target(name: "DrawerFeature"),
+        .target(name: "NetworkMonitor"),
         .target(name: "DependencyInjection"),
+        .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
+        .product(name: "CloudFilesSFTP", package: "xxm-cloud-providers"),
+        .product(name: "CloudFilesDrive", package: "xxm-cloud-providers"),
+        .product(name: "CloudFilesICloud", package: "xxm-cloud-providers"),
+        .product(name: "CloudFilesDropbox", package: "xxm-cloud-providers"),
+        .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
       ]
     ),
     .target(

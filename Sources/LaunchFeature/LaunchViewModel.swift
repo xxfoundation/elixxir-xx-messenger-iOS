@@ -24,6 +24,10 @@ import XXLegacyDatabaseMigrator
 import XXMessengerClient
 import NetworkMonitor
 
+import CloudFiles
+import CloudFilesSFTP
+import CloudFilesDropbox
+
 struct Update {
   let content: String
   let urlString: String
@@ -42,7 +46,6 @@ final class LaunchViewModel {
   @Dependency var database: Database
   @Dependency var backupService: BackupService
   @Dependency var versionChecker: VersionChecker
-  @Dependency var dropboxService: DropboxInterface
   @Dependency var fetchBannedList: FetchBannedList
   @Dependency var reportingStatus: ReportingStatus
   @Dependency var toastController: ToastController
@@ -71,6 +74,18 @@ final class LaunchViewModel {
   var backgroundScheduler: AnySchedulerOf<DispatchQueue> = {
     DispatchQueue.global().eraseToAnyScheduler()
   }()
+
+  private let dropboxManager = CloudFilesManager.dropbox(
+    appKey: "ppx0de5f16p9aq2",
+    path: "/backup/backup.xxm"
+  )
+
+  private let sftpManager = CloudFilesManager.sftp(
+    host: "",
+    username: "",
+    password: "",
+    fileName: ""
+  )
 
   private var cancellables = Set<AnyCancellable>()
   private let routeSubject = PassthroughSubject<LaunchRoute, Never>()
@@ -139,7 +154,8 @@ final class LaunchViewModel {
           hudSubject.send(.none)
           routeSubject.send(.chats)
         } else {
-          dropboxService.unlink()
+          try? sftpManager.unlink()
+          try? dropboxManager.unlink()
           hudSubject.send(.none)
           routeSubject.send(.onboarding)
         }
@@ -161,8 +177,8 @@ final class LaunchViewModel {
   }
 
   private func cleanUp() {
-    //        try? cMixManager.remove()
-    //        try? keychainHandler.clear()
+    // try? cMixManager.remove()
+    // try? keychainHandler.clear()
   }
 
   private func presentOnboardingFlow() {
@@ -699,13 +715,13 @@ extension LaunchViewModel {
           })
         )
       } else {
-        //                print(DependencyInjection.Container.shared.dependencies)
+        //print(DependencyInjection.Container.shared.dependencies)
       }
     }
   }
 
   private func setupLogWriter() {
-    _ = try! SetLogLevel.live(.debug)
+    _ = try! SetLogLevel.live(.fatal)
     RegisterLogWriter.live(.init(handle: { XXLogger.live().debug($0) }))
   }
 

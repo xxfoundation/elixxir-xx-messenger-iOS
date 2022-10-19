@@ -1,149 +1,119 @@
 import HUD
 import UIKit
-import Models
-import Shared
 import Combine
-import BackupFeature
+
+import CloudFiles
+import CloudFilesSFTP
+import CloudFilesDrive
+import CloudFilesICloud
+import CloudFilesDropbox
+
 import DependencyInjection
 
+enum RestorationProvider: String, Equatable, Hashable {
+  case sftp
+  case drive
+  case icloud
+  case dropbox
+}
+
+public struct RestorationDetails {
+  var provider: RestorationProvider
+  var metadata: Fetch.Metadata?
+}
+
 final class RestoreListViewModel {
-    @Dependency private var sftpService: SFTPService
-    @Dependency private var icloudService: iCloudInterface
-    @Dependency private var dropboxService: DropboxInterface
-    @Dependency private var googleDriveService: GoogleDriveInterface
+  var sftpPublisher: AnyPublisher<Void, Never> {
+    sftpSubject.eraseToAnyPublisher()
+  }
 
-    var hudPublisher: AnyPublisher<HUDStatus, Never> {
-        hudSubject.eraseToAnyPublisher()
+  var hudPublisher: AnyPublisher<HUDStatus, Never> {
+    hudSubject.eraseToAnyPublisher()
+  }
+
+  var detailsPublisher: AnyPublisher<RestorationDetails, Never> {
+    detailsSubject.eraseToAnyPublisher()
+  }
+
+  private var managers: [RestorationProvider: CloudFilesManager] = [
+    .icloud: .iCloud(
+      fileName: "backup.xxm"
+    ),
+    .dropbox: .dropbox(
+      appKey: PlistSecrets.dropboxAppKey,
+      path: "/backup/backup.xxm"
+    ),
+    .drive: .drive(
+      apiKey: PlistSecrets.googleAPIKey,
+      clientId: PlistSecrets.googleClientId,
+      fileName: "backup.xxm"
+    )
+  ]
+
+  private let sftpSubject = PassthroughSubject<Void, Never>()
+  private let hudSubject = PassthroughSubject<HUDStatus, Never>()
+  private let detailsSubject = PassthroughSubject<RestorationDetails, Never>()
+
+  func setupSFTP(host: String, username: String, password: String) {
+    managers[.sftp] = .sftp(
+      host: host,
+      username: username,
+      password: password,
+      fileName: "backup.xxm"
+    )
+    fetch(provider: .sftp)
+  }
+
+  func link(
+    provider: RestorationProvider,
+    from controller: UIViewController,
+    onSuccess: @escaping () -> Void
+  ) {
+    if provider == .sftp {
+      sftpSubject.send(())
+      return
     }
-
-    var backupPublisher: AnyPublisher<RestoreSettings, Never> {
-        backupSubject.eraseToAnyPublisher()
+    guard let manager = managers[provider] else {
+      return
     }
+    do {
+      try manager.link(controller) { [weak self] in
+        guard let self else {return }
 
-    private var dropboxAuthCancellable: AnyCancellable?
-    private let hudSubject = PassthroughSubject<HUDStatus, Never>()
-    private let backupSubject = PassthroughSubject<RestoreSettings, Never>()
-
-    func didTapCloud(_ cloudService: CloudService, from parent: UIViewController) {
-        switch cloudService {
-        case .drive:
-            didRequestDriveAuthorization(from: parent)
-        case .icloud:
-            didRequestICloudAuthorization()
-        case .dropbox:
-            didRequestDropboxAuthorization(from: parent)
-        case .sftp:
-            didRequestSFTPAuthorization(from: parent)
+        switch $0 {
+        case .success:
+          onSuccess()
+        case .failure(let error):
+          self.hudSubject.send(.error(.init(with: error)))
         }
+      }
+    } catch {
+      hudSubject.send(.error(.init(with: error)))
     }
+  }
 
-    private func didRequestSFTPAuthorization(from controller: UIViewController) {
-        let params = SFTPAuthorizationParams(controller, { [weak self] in
-            guard let self = self else { return }
-            controller.navigationController?.popViewController(animated: true)
-
-            self.hudSubject.send(.on)
-
-            self.sftpService.fetchMetadata{ result in
-                switch result {
-                case .success(let settings):
-                    self.hudSubject.send(.none)
-
-                    if let settings = settings {
-                        self.backupSubject.send(settings)
-                    } else {
-                        self.backupSubject.send(.init(cloudService: .sftp))
-                    }
-                case .failure(let error):
-                    self.hudSubject.send(.error(.init(with: error)))
-                }
-            }
-        })
-
-        sftpService.authorizeFlow(params)
+  func fetch(provider: RestorationProvider) {
+    guard let manager = managers[provider] else {
+      return
     }
+    do {
+      try manager.fetch { [weak self] in
+        guard let self else { return }
 
-    private func didRequestDriveAuthorization(from controller: UIViewController) {
-        googleDriveService.authorize(presenting: controller) { authResult in
-            switch authResult {
-            case .success:
-                self.hudSubject.send(.on)
-                self.googleDriveService.downloadMetadata { downloadResult in
-                    switch downloadResult {
-                    case .success(let metadata):
-                        var backup: BackupModel?
+        switch $0 {
+        case .success(let metadata):
+          DependencyInjection.Container.shared.register(manager)
 
-                        if let metadata = metadata {
-                            backup = .init(id: metadata.identifier, date: metadata.modifiedDate, size: metadata.size)
-                        }
-
-                        self.hudSubject.send(.none)
-                        self.backupSubject.send(RestoreSettings(backup: backup, cloudService: .drive))
-
-                    case .failure(let error):
-                        self.hudSubject.send(.error(.init(with: error)))
-                    }
-                }
-            case .failure(let error):
-                self.hudSubject.send(.error(.init(with: error)))
-            }
+          self.detailsSubject.send(.init(
+            provider: provider,
+            metadata: metadata
+          ))
+        case .failure(let error):
+          self.hudSubject.send(.error(.init(with: error)))
         }
+      }
+    } catch {
+      hudSubject.send(.error(.init(with: error)))
     }
-
-    private func didRequestICloudAuthorization() {
-        if icloudService.isAuthorized() {
-            self.hudSubject.send(.on)
-
-            icloudService.downloadMetadata { result in
-                switch result {
-                case .success(let metadata):
-                    var backup: BackupModel?
-
-                    if let metadata = metadata {
-                        backup = .init(id: metadata.path, date: metadata.modifiedDate, size: metadata.size)
-                    }
-
-                    self.hudSubject.send(.none)
-                    self.backupSubject.send(RestoreSettings(backup: backup, cloudService: .icloud))
-                case .failure(let error):
-                    self.hudSubject.send(.error(.init(with: error)))
-                }
-            }
-        } else {
-            /// This could be an alert controller asking if user wants to enable/deeplink
-            ///
-            icloudService.openSettings()
-        }
-    }
-
-    private func didRequestDropboxAuthorization(from controller: UIViewController) {
-        dropboxAuthCancellable = dropboxService.authorize(presenting: controller)
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] authResult in
-                switch authResult {
-                case .success(let bool):
-                    guard bool == true else { return }
-
-                    self.hudSubject.send(.on)
-                    dropboxService.downloadMetadata { metadataResult in
-                        switch metadataResult {
-                        case .success(let metadata):
-                            var backup: BackupModel?
-
-                            if let metadata = metadata {
-                                backup = .init(id: metadata.path, date: metadata.modifiedDate, size: metadata.size)
-                            }
-
-                            self.hudSubject.send(.none)
-                            self.backupSubject.send(RestoreSettings(backup: backup, cloudService: .dropbox))
-
-                        case .failure(let error):
-                            self.hudSubject.send(.error(.init(with: error)))
-                        }
-                    }
-                case .failure(let error):
-                    self.hudSubject.send(.error(.init(with: error)))
-                }
-            }
-    }
+  }
 }

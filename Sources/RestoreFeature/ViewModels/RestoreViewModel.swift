@@ -3,27 +3,25 @@ import Models
 import Shared
 import Combine
 import Defaults
-import Foundation
-import BackupFeature
+import CloudFiles
 import DependencyInjection
 
+import XXClient
 import XXModels
 import XXDatabase
-
-import XXClient
 import XXMessengerClient
 
-enum RestorationStep {
-  case idle(CloudService, BackupModel?)
-  case downloading(Float, Float)
-  case failDownload(Error)
+enum Step {
+  case done
   case wrongPass
   case parsingData
-  case done
+  case failDownload(Error)
+  case downloading(Float, Float)
+  case idle(RestorationProvider, CloudFiles.Fetch.Metadata?)
 }
 
-extension RestorationStep: Equatable {
-  static func ==(lhs: RestorationStep, rhs: RestorationStep) -> Bool {
+extension Step: Equatable {
+  static func ==(lhs: Step, rhs: Step) -> Bool {
     switch (lhs, rhs) {
     case (.done, .done), (.wrongPass, .wrongPass):
       return true
@@ -41,30 +39,27 @@ extension RestorationStep: Equatable {
 final class RestoreViewModel {
   @Dependency var database: Database
   @Dependency var messenger: Messenger
-  @Dependency var sftpService: SFTPService
-  @Dependency var iCloudService: iCloudInterface
-  @Dependency var dropboxService: DropboxInterface
-  @Dependency var googleService: GoogleDriveInterface
+  @Dependency var manager: CloudFilesManager
 
-  @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.phone, defaultValue: nil) var phone: String?
   @KeyObject(.email, defaultValue: nil) var email: String?
+  @KeyObject(.username, defaultValue: nil) var username: String?
 
-  var step: AnyPublisher<RestorationStep, Never> {
-    stepRelay.eraseToAnyPublisher()
+  var stepPublisher: AnyPublisher<Step, Never> {
+    stepSubject.eraseToAnyPublisher()
   }
 
-  // TO REFACTOR:
-  //
   private var pendingData: Data?
-
   private var passphrase: String!
-  private let settings: RestoreSettings
-  private let stepRelay: CurrentValueSubject<RestorationStep, Never>
+  private let details: RestorationDetails
+  private let stepSubject: CurrentValueSubject<Step, Never>
 
-  init(settings: RestoreSettings) {
-    self.settings = settings
-    self.stepRelay = .init(.idle(settings.cloudService, settings.backup))
+  init(details: RestorationDetails) {
+    self.details = details
+    self.stepSubject = .init(.idle(
+      details.provider,
+      details.metadata
+    ))
   }
 
   func retryWith(passphrase: String) {
@@ -75,83 +70,33 @@ final class RestoreViewModel {
   func didTapRestore(passphrase: String) {
     self.passphrase = passphrase
 
-    guard let backup = settings.backup else { fatalError() }
-
-    stepRelay.send(.downloading(0.0, backup.size))
-
-    switch settings.cloudService {
-    case .drive:
-      downloadBackupForDrive(backup)
-    case .dropbox:
-      downloadBackupForDropbox(backup)
-    case .icloud:
-      downloadBackupForiCloud(backup)
-    case .sftp:
-      downloadBackupForSFTP(backup)
+    guard let metadata = details.metadata else {
+      fatalError()
     }
-  }
 
-  private func downloadBackupForSFTP(_ backup: BackupModel) {
-    sftpService.downloadBackup(path: backup.id) { [weak self] in
-      guard let self = self else { return }
-      self.stepRelay.send(.downloading(backup.size, backup.size))
+    stepSubject.send(.downloading(0.0, metadata.size))
 
-      switch $0 {
-      case .success(let data):
-        self.continueRestoring(data: data)
-      case .failure(let error):
-        self.stepRelay.send(.failDownload(error))
+    do {
+      try manager.download { [weak self] in
+        guard let self else { return }
+
+        switch $0 {
+        case .success(let data):
+          guard let data else {
+            fatalError("There was metadata, but not data.")
+          }
+          self.continueRestoring(data: data)
+        case .failure(let error):
+          self.stepSubject.send(.failDownload(error))
+        }
       }
-    }
-  }
-
-  private func downloadBackupForDropbox(_ backup: BackupModel) {
-    dropboxService.downloadBackup(backup.id) { [weak self] in
-      guard let self = self else { return }
-      self.stepRelay.send(.downloading(backup.size, backup.size))
-
-      switch $0 {
-      case .success(let data):
-        self.continueRestoring(data: data)
-      case .failure(let error):
-        self.stepRelay.send(.failDownload(error))
-      }
-    }
-  }
-
-  private func downloadBackupForiCloud(_ backup: BackupModel) {
-    iCloudService.downloadBackup(backup.id) { [weak self] in
-      guard let self = self else { return }
-      self.stepRelay.send(.downloading(backup.size, backup.size))
-
-      switch $0 {
-      case .success(let data):
-        self.continueRestoring(data: data)
-      case .failure(let error):
-        self.stepRelay.send(.failDownload(error))
-      }
-    }
-  }
-
-  private func downloadBackupForDrive(_ backup: BackupModel) {
-    googleService.downloadBackup(backup.id) { [weak self] in
-      if let stepRelay = self?.stepRelay {
-        stepRelay.send(.downloading($0, backup.size))
-      }
-    } _: { [weak self] in
-      guard let self = self else { return }
-
-      switch $0 {
-      case .success(let data):
-        self.continueRestoring(data: data)
-      case .failure(let error):
-        self.stepRelay.send(.failDownload(error))
-      }
+    } catch {
+      stepSubject.send(.failDownload(error))
     }
   }
 
   private func continueRestoring(data: Data) {
-    stepRelay.send(.parsingData)
+    stepSubject.send(.parsingData)
 
     DispatchQueue.global().async { [weak self] in
       guard let self = self else { return }
@@ -208,11 +153,11 @@ final class RestoreViewModel {
           print(">>> Error: \($0.localizedDescription)")
         }
 
-        self.stepRelay.send(.done)
+        self.stepSubject.send(.done)
       } catch {
         print(">>> Error on restoration: \(error.localizedDescription)")
         self.pendingData = data
-        self.stepRelay.send(.wrongPass)
+        self.stepSubject.send(.wrongPass)
       }
     }
   }

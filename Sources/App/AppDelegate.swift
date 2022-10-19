@@ -14,11 +14,14 @@ import DependencyInjection
 import XXClient
 import XXMessengerClient
 
+import CloudFiles
+import CloudFilesDrive
+import CloudFilesDropbox
+
 public class AppDelegate: UIResponder, UIApplicationDelegate {
   @Dependency private var pushRouter: PushRouter
   @Dependency private var pushHandler: PushHandling
   @Dependency private var crashReporter: CrashReporter
-  @Dependency private var dropboxService: DropboxInterface
 
   @KeyObject(.hideAppList, defaultValue: false) var hideAppList: Bool
   @KeyObject(.recordingLogs, defaultValue: true) var recordingLogs: Bool
@@ -61,6 +64,7 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
       PushRouter.live(navigationController: navController)
     )
 
+    restoreIfPossible()
     return true
   }
 
@@ -148,7 +152,7 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     open url: URL,
     options: [UIApplication.OpenURLOptionsKey : Any] = [:]
   ) -> Bool {
-    dropboxService.handleOpenUrl(url)
+    handleRedirectURL(url)
   }
 
   public func application(

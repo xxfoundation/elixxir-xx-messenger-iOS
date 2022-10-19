@@ -1,14 +1,20 @@
 import UIKit
-import Models
 import Shared
 import Presentation
 import ScrollViewController
+
+public typealias SFTPDetailsClosure = (String, String, String) -> Void
 
 public protocol RestoreCoordinating {
   func toChats(from: UIViewController)
   func toSuccess(from: UIViewController)
   func toDrawer(_: UIViewController, from: UIViewController)
-  func toRestore(with: RestoreSettings, from: UIViewController)
+  func toRestore(with: RestorationDetails, from: UIViewController)
+
+  func toSFTP(
+    from: UIViewController,
+    detailsClosure: @escaping SFTPDetailsClosure
+  )
 
   func toPassphrase(
     from: UIViewController,
@@ -25,7 +31,8 @@ public struct RestoreCoordinator: RestoreCoordinating {
 
   var successFactory: () -> UIViewController
   var chatListFactory: () -> UIViewController
-  var restoreFactory: (RestoreSettings) -> UIViewController
+  var restoreFactory: (RestorationDetails) -> UIViewController
+  var sftpFactory: (@escaping SFTPDetailsClosure) -> UIViewController
 
   var passphraseFactory: (
     @escaping EmptyClosure,
@@ -35,12 +42,16 @@ public struct RestoreCoordinator: RestoreCoordinating {
   public init(
     successFactory: @escaping () -> UIViewController,
     chatListFactory: @escaping () -> UIViewController,
-    restoreFactory: @escaping (RestoreSettings) -> UIViewController,
+    restoreFactory: @escaping (RestorationDetails) -> UIViewController,
+    sftpFactory: @escaping (
+      @escaping SFTPDetailsClosure
+    ) -> UIViewController,
     passphraseFactory: @escaping (
       @escaping EmptyClosure,
       @escaping StringClosure
     ) -> UIViewController
   ) {
+    self.sftpFactory = sftpFactory
     self.successFactory = successFactory
     self.restoreFactory = restoreFactory
     self.chatListFactory = chatListFactory
@@ -49,11 +60,19 @@ public struct RestoreCoordinator: RestoreCoordinating {
 }
 
 public extension RestoreCoordinator {
+  func toSFTP(
+    from parent: UIViewController,
+    detailsClosure: @escaping SFTPDetailsClosure
+  ) {
+    let screen = sftpFactory(detailsClosure)
+    pushPresenter.present(screen, from: parent)
+  }
+
   func toRestore(
-    with settings: RestoreSettings,
+    with details: RestorationDetails,
     from parent: UIViewController
   ) {
-    let screen = restoreFactory(settings)
+    let screen = restoreFactory(details)
     pushPresenter.present(screen, from: parent)
   }
 

@@ -9,6 +9,8 @@ import Foundation
 
 import DependencyInjection
 
+import CloudFiles
+
 enum BackupActionState {
   case backupFinished
   case backupAllowed(Bool)
@@ -19,15 +21,15 @@ struct BackupConfigViewModel {
   var didTapBackupNow: () -> Void
   var didChooseWifiOnly: (Bool) -> Void
   var didChooseAutomatic: (Bool) -> Void
-  var didToggleService: (UIViewController, CloudService, Bool) -> Void
-  var didTapService: (CloudService, UIViewController) -> Void
+  var didToggleService: (UIViewController, BackupProvider, Bool) -> Void
+  var didTapService: (BackupProvider, UIViewController) -> Void
 
   var wifiOnly: () -> AnyPublisher<Bool, Never>
   var automatic: () -> AnyPublisher<Bool, Never>
-  var lastBackup: () -> AnyPublisher<BackupModel?, Never>
+  var lastBackup: () -> AnyPublisher<Fetch.Metadata?, Never>
   var actionState: () -> AnyPublisher<BackupActionState, Never>
-  var enabledService: () -> AnyPublisher<CloudService?, Never>
-  var connectedServices: () -> AnyPublisher<Set<CloudService>, Never>
+  var enabledService: () -> AnyPublisher<BackupProvider?, Never>
+  var connectedServices: () -> AnyPublisher<Set<BackupProvider>, Never>
 }
 
 extension BackupConfigViewModel {
@@ -56,7 +58,6 @@ extension BackupConfigViewModel {
           context.service.stopBackups()
           return
         }
-
         context.coordinator.toPassphrase(from: controller, cancelClosure: {
           context.service.toggle(service: service, enabling: false)
         }, passphraseClosure: { passphrase in
@@ -66,7 +67,16 @@ extension BackupConfigViewModel {
           context.hud.update(with: .none)
         })
       },
-      didTapService: context.service.authorize,
+      didTapService: { service, controller in
+        if service == .sftp {
+          context.coordinator.toSFTP(from: controller) { host, username, password in
+            context.service.setupSFTP(host: host, username: username, password: password)
+          }
+          return
+        }
+
+        context.service.authorize(service: service, presenting: controller)
+      },
       wifiOnly: {
         context.service.settingsPublisher
           .map(\.wifiOnlyBackup)
@@ -79,7 +89,6 @@ extension BackupConfigViewModel {
       },
       lastBackup: {
         context.service.settingsPublisher
-          .print(">>> lastBackup updated!")
           .map {
             guard let enabledService = $0.enabledService else { return nil }
             return $0.backups[enabledService]

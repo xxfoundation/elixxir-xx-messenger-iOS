@@ -72,7 +72,7 @@ final class BackupConfigController: UIViewController {
                     return
                 }
 
-                screenView.latestBackupDetailView.subtitleLabel.text = backup.date.backupStyle()
+                screenView.latestBackupDetailView.subtitleLabel.text = backup.lastModified.backupStyle()
             }.store(in: &cancellables)
 
         screenView.actionView.backupNowButton
@@ -131,7 +131,7 @@ final class BackupConfigController: UIViewController {
             .store(in: &cancellables)
     }
 
-    private func decorate(enabledService: CloudService?) {
+    private func decorate(enabledService: BackupProvider?) {
         var button: BackupSwitcherButton?
 
         switch enabledService {
@@ -188,7 +188,7 @@ final class BackupConfigController: UIViewController {
         }
     }
 
-    private func decorate(connectedServices: Set<CloudService>) {
+    private func decorate(connectedServices: Set<BackupProvider>) {
         if connectedServices.contains(.icloud) {
             screenView.iCloudButton.showSwitcher(enabled: false)
         } else {

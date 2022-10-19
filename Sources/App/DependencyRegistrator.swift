@@ -63,13 +63,6 @@ struct DependencyRegistrator {
         container.register(MockKeychainHandler() as KeychainHandling)
         container.register(MockPermissionHandler() as PermissionHandling)
 
-        /// Restore / Backup
-
-        container.register(SFTPService.mock)
-        container.register(iCloudServiceMock() as iCloudInterface)
-        container.register(DropboxServiceMock() as DropboxInterface)
-        container.register(GoogleDriveServiceMock() as GoogleDriveInterface)
-
         registerCommonDependencies()
     }
 
@@ -93,13 +86,6 @@ struct DependencyRegistrator {
         container.register(PushHandler() as PushHandling)
         container.register(KeychainHandler() as KeychainHandling)
         container.register(PermissionHandler() as PermissionHandling)
-
-        /// Restore / Backup
-
-        container.register(SFTPService.live)
-        container.register(iCloudService() as iCloudInterface)
-        container.register(DropboxService() as DropboxInterface)
-        container.register(GoogleDriveService() as GoogleDriveInterface)
 
         registerCommonDependencies()
     }
@@ -143,6 +129,7 @@ struct DependencyRegistrator {
 
         container.register(
             BackupCoordinator(
+                sftpFactory: BackupSFTPController.init(_:),
                 passphraseFactory: BackupPassphraseController.init(_:_:)
             ) as BackupCoordinating)
 
@@ -188,6 +175,7 @@ struct DependencyRegistrator {
                 successFactory: RestoreSuccessController.init,
                 chatListFactory: ChatListController.init,
                 restoreFactory: RestoreController.init(_:),
+                sftpFactory: RestoreSFTPController.init(_:),
                 passphraseFactory: RestorePassphraseController.init(_:_:)
             ) as RestoreCoordinating)
 

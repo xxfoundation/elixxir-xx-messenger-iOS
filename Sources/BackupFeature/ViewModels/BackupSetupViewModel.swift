@@ -5,7 +5,7 @@ import Combine
 import DependencyInjection
 
 struct BackupSetupViewModel {
-    var didTapService: (CloudService, UIViewController) -> Void
+    var didTapService: (BackupProvider, UIViewController) -> Void
 }
 
 extension BackupSetupViewModel {
