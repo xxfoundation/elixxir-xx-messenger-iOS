@@ -127,6 +127,21 @@ final class RestoreViewModel {
           onProgress: { print(">>> \($0)") }
         )
 
+        try self.database.saveContact(.init(
+          id: self.messenger.e2e.get()!.getContact().getId(),
+          marshaled: self.messenger.e2e.get()!.getContact().data,
+          username: self.username!,
+          email: self.email,
+          phone: self.phone,
+          nickname: nil,
+          photo: nil,
+          authStatus: .friend,
+          isRecent: false,
+          isBlocked: false,
+          isBanned: false,
+          createdAt: Date()
+        ))
+
         print(">>> Calling multilookup")
         let multilookup = try self.messenger.lookupContacts(ids: result.restoredContacts)
 
@@ -147,7 +162,11 @@ final class RestoreViewModel {
             isBanned: false,
             createdAt: Date()
           ))
+
+          let _ = try! self.messenger.e2e.get()!.resetAuthenticatedChannel(partner: $0)
         }
+
+        try self.messenger.start()
 
         multilookup.errors.forEach {
           print(">>> Error: \($0.localizedDescription)")

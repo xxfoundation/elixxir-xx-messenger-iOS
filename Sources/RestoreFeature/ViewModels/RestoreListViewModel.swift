@@ -96,6 +96,7 @@ final class RestoreListViewModel {
     guard let manager = managers[provider] else {
       return
     }
+    hudSubject.send(.on)
     do {
       try manager.fetch { [weak self] in
         guard let self else { return }
@@ -108,6 +109,7 @@ final class RestoreListViewModel {
             provider: provider,
             metadata: metadata
           ))
+          self.hudSubject.send(.none)
         case .failure(let error):
           self.hudSubject.send(.error(.init(with: error)))
         }

@@ -26,6 +26,8 @@ public final class BackupService {
   @Dependency var messenger: Messenger
   @Dependency var networkManager: NetworkMonitoring
 
+  @KeyObject(.email, defaultValue: nil) var email: String?
+  @KeyObject(.phone, defaultValue: nil) var phone: String?
   @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.backupSettings, defaultValue: nil) var storedSettings: Data?
 
@@ -76,7 +78,11 @@ extension BackupService {
   public func initializeBackup(passphrase: String) {
     try! messenger.startBackup(
       password: passphrase,
-      params: .init(username: username!)
+      params: .init(
+        username: username!,
+        email: email,
+        phone: phone
+      )
     )
   }
 

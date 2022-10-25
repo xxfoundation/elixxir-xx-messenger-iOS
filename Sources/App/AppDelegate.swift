@@ -15,7 +15,6 @@ import XXClient
 import XXMessengerClient
 
 import CloudFiles
-import CloudFilesDrive
 import CloudFilesDropbox
 
 public class AppDelegate: UIResponder, UIApplicationDelegate {
@@ -64,7 +63,6 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
       PushRouter.live(navigationController: navController)
     )
 
-    restoreIfPossible()
     return true
   }
 
