@@ -15,6 +15,8 @@ import XXClient
 import XXMessengerClient
 
 import CloudFiles
+import CloudFilesDrive
+import CloudFilesICloud
 import CloudFilesDropbox
 
 public class AppDelegate: UIResponder, UIApplicationDelegate {

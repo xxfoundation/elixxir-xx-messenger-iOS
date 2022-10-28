@@ -448,21 +448,21 @@ extension LaunchViewModel {
   }
 
   private func generateTransferManager(_ messenger: Messenger) throws {
-    let manager = try InitFileTransfer.live(
-      e2eId: messenger.e2e()!.getId(),
-      callback: .init(handle: { [weak self] in
-        guard let self = self else { return }
-
-        switch $0 {
-        case .success(let receivedFile):
-          self.handleIncomingTransfer(receivedFile, messenger: messenger)
-        case .failure(let error):
-          print(error.localizedDescription)
-        }
-      })
-    )
-
-    DependencyInjection.Container.shared.register(manager)
+    //    let manager = try InitFileTransfer.live(
+    //      e2eId: messenger.e2e()!.getId(),
+    //      callback: .init(handle: { [weak self] in
+    //        guard let self = self else { return }
+    //
+    //        switch $0 {
+    //        case .success(let receivedFile):
+    //          self.handleIncomingTransfer(receivedFile, messenger: messenger)
+    //        case .failure(let error):
+    //          print(error.localizedDescription)
+    //        }
+    //      })
+    //    )
+    //
+    //    DependencyInjection.Container.shared.register(manager)
   }
 
   private func generateTrafficManager(_ messenger: Messenger) throws {
@@ -728,8 +728,9 @@ extension LaunchViewModel {
   private func makeMessenger() -> Messenger {
     var environment: MessengerEnvironment = .live()
     environment.ndfEnvironment = .mainnet
-    environment.udAddress = "46.101.98.49:18001"
-    environment.udCert = """
+    environment.udEnvironment = .init(
+      address: "46.101.98.49:18001",
+      cert: """
             -----BEGIN CERTIFICATE-----
             MIIDbDCCAlSgAwIBAgIJAOUNtZneIYECMA0GCSqGSIb3DQEBBQUAMGgxCzAJBgNV
             BAYTAlVTMRMwEQYDVQQIDApDYWxpZm9ybmlhMRIwEAYDVQQHDAlDbGFyZW1vbnQx
@@ -751,10 +752,11 @@ extension LaunchViewModel {
             tgH4rdEXuVe9+31oJhmXOE9ux2jCop9tEJMgWg7HStrJ5plPbb+HmjoX3nBO04E5
             6m52PyzMNV+2N21IPppKwA==
             -----END CERTIFICATE-----
-            """.data(using: .utf8)!
-    environment.udContact = """
+            """.data(using: .utf8)!,
+      contact: """
       <xxc(2)7mbKFLE201WzH4SGxAOpHjjehwztIV+KGifi5L/PYPcDkAZiB9kZo+Dl3Vc7dD2SdZCFMOJVgwqGzfYRDkjc8RGEllBqNxq2sRRX09iQVef0kJQUgJCHNCOcvm6Ki0JJwvjLceyFh36iwK8oLbhLgqEZY86UScdACTyBCzBIab3ob5mBthYc3mheV88yq5PGF2DQ+dEvueUm+QhOSfwzppAJA/rpW9Wq9xzYcQzaqc3ztAGYfm2BBAHS7HVmkCbvZ/K07Xrl4EBPGHJYq12tWAN/C3mcbbBYUOQXyEzbSl/mO7sL3ORr0B4FMuqCi8EdlD6RO52pVhY+Cg6roRH1t5Ng1JxPt8Mv1yyjbifPhZ5fLKwxBz8UiFORfk0/jnhwgm25LRHqtNRRUlYXLvhv0HhqyYTUt17WNtCLATSVbqLrFGdy2EGadn8mP+kQNHp93f27d/uHgBNNe7LpuYCJMdWpoG6bOqmHEftxt0/MIQA8fTtTm3jJzv+7/QjZJDvQIv0SNdp8HFogpuwde+GuS4BcY7v5xz+ArGWcRR63ct2z83MqQEn9ODr1/gAAAgA7szRpDDQIdFUQo9mkWg8xBA==xxc>
-      """.data(using: .utf8)
+      """.data(using: .utf8)!
+    )
 
     return Messenger.live(environment)
   }
@@ -777,7 +779,7 @@ extension LaunchViewModel {
   private func setupBackupCallback(_ messenger: Messenger) {
     backupCallbackCancellable = messenger.registerBackupCallback(.init(handle: { [weak self] in
       print(">>> Backup callback from bindings got called")
-      self?.backupService.updateBackup(data: $0)
+      self?.backupService.updateLocalBackup($0)
     }))
   }
 

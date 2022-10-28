@@ -17,7 +17,7 @@ enum Step {
   case parsingData
   case failDownload(Error)
   case downloading(Float, Float)
-  case idle(RestorationProvider, CloudFiles.Fetch.Metadata?)
+  case idle(CloudService, CloudFiles.Fetch.Metadata?)
 }
 
 extension Step: Equatable {
@@ -39,7 +39,6 @@ extension Step: Equatable {
 final class RestoreViewModel {
   @Dependency var database: Database
   @Dependency var messenger: Messenger
-  @Dependency var manager: CloudFilesManager
 
   @KeyObject(.phone, defaultValue: nil) var phone: String?
   @KeyObject(.email, defaultValue: nil) var email: String?
@@ -77,7 +76,7 @@ final class RestoreViewModel {
     stepSubject.send(.downloading(0.0, metadata.size))
 
     do {
-      try manager.download { [weak self] in
+      try CloudFilesManager.all[details.provider]!.download { [weak self] in
         guard let self else { return }
 
         switch $0 {

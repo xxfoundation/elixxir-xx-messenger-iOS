@@ -1,5 +1,6 @@
 import UIKit
 import Shared
+import CloudFiles
 
 final class RestoreView: UIView {
   let titleLabel = UILabel()
@@ -104,7 +105,7 @@ final class RestoreView: UIView {
   }
 
   private func displayDetailsFrom(
-    _ provider: RestorationProvider,
+    _ provider: CloudService,
     size: Float,
     lastDate: Date
   ) {
@@ -132,7 +133,7 @@ final class RestoreView: UIView {
     progressView.isHidden = true
   }
 
-  private func missingMetadataFor(_ provider: RestorationProvider) {
+  private func missingMetadataFor(_ provider: CloudService) {
     titleLabel.text = Localized.AccountRestore.NotFound.title
     subtitleLabel.text = Localized.AccountRestore.NotFound.subtitle(provider.name())
 
@@ -144,7 +145,7 @@ final class RestoreView: UIView {
   }
 }
 
-private extension RestorationProvider {
+private extension CloudService {
   func name() -> String {
     switch self {
     case .drive:

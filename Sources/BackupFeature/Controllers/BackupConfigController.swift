@@ -2,6 +2,7 @@ import UIKit
 import Models
 import Shared
 import Combine
+import CloudFiles
 import DrawerFeature
 import DependencyInjection
 
@@ -131,7 +132,7 @@ final class BackupConfigController: UIViewController {
             .store(in: &cancellables)
     }
 
-    private func decorate(enabledService: BackupProvider?) {
+    private func decorate(enabledService: CloudService?) {
         var button: BackupSwitcherButton?
 
         switch enabledService {
@@ -188,7 +189,7 @@ final class BackupConfigController: UIViewController {
         }
     }
 
-    private func decorate(connectedServices: Set<BackupProvider>) {
+    private func decorate(connectedServices: Set<CloudService>) {
         if connectedServices.contains(.icloud) {
             screenView.iCloudButton.showSwitcher(enabled: false)
         } else {

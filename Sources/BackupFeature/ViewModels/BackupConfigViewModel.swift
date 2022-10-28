@@ -21,15 +21,15 @@ struct BackupConfigViewModel {
   var didTapBackupNow: () -> Void
   var didChooseWifiOnly: (Bool) -> Void
   var didChooseAutomatic: (Bool) -> Void
-  var didToggleService: (UIViewController, BackupProvider, Bool) -> Void
-  var didTapService: (BackupProvider, UIViewController) -> Void
+  var didToggleService: (UIViewController, CloudService, Bool) -> Void
+  var didTapService: (CloudService, UIViewController) -> Void
 
   var wifiOnly: () -> AnyPublisher<Bool, Never>
   var automatic: () -> AnyPublisher<Bool, Never>
   var lastBackup: () -> AnyPublisher<Fetch.Metadata?, Never>
   var actionState: () -> AnyPublisher<BackupActionState, Never>
-  var enabledService: () -> AnyPublisher<BackupProvider?, Never>
-  var connectedServices: () -> AnyPublisher<Set<BackupProvider>, Never>
+  var enabledService: () -> AnyPublisher<CloudService?, Never>
+  var connectedServices: () -> AnyPublisher<Set<CloudService>, Never>
 }
 
 extension BackupConfigViewModel {
@@ -44,14 +44,14 @@ extension BackupConfigViewModel {
 
     return .init(
       didTapBackupNow: {
-        context.service.performBackup()
+        context.service.didForceBackup()
         context.hud.update(with: .on)
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
           context.hud.update(with: .none)
         }
       },
-      didChooseWifiOnly: context.service.setBackupOnlyOnWifi(_:),
-      didChooseAutomatic: context.service.setBackupAutomatically(_:),
+      didChooseWifiOnly: context.service.didSetWiFiOnly(enabled:),
+      didChooseAutomatic: context.service.didSetAutomaticBackup(enabled:),
       didToggleService: { controller, service, enabling in
         guard enabling == true else {
           context.service.toggle(service: service, enabling: false)

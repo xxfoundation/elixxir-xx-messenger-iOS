@@ -86,7 +86,7 @@ final class ProfileCodeViewModel {
         self.hudRelay.send(.none)
         self.completionRelay.send(self.confirmation)
 
-        self.backupService.performBackup()
+        self.backupService.didUpdateFacts()
       } catch {
         self.hudRelay.send(.error(.init(with: error)))
       }

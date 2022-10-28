@@ -108,7 +108,7 @@ final class ProfileViewModel {
           self.isPhoneSharing = false
         }
 
-        self.backupService.performBackup()
+        self.backupService.didUpdateFacts()
         self.hudRelay.send(.none)
         self.refresh()
       } catch {

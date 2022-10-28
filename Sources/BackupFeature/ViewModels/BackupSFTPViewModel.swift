@@ -1,5 +1,8 @@
-import HUD
 import UIKit
+
+import HUD
+import Shout
+import Socket
 import Combine
 import Foundation
 import CloudFiles
@@ -12,7 +15,7 @@ struct SFTPViewState {
   var isButtonEnabled: Bool = false
 }
 
-final class RestoreSFTPViewModel {
+final class BackupSFTPViewModel {
   var hudPublisher: AnyPublisher<HUDStatus, Never> {
     hudSubject.eraseToAnyPublisher()
   }
@@ -67,7 +70,21 @@ final class RestoreSFTPViewModel {
             self.hudSubject.send(.none)
             self.authSubject.send((host, username, password))
           case .failure(let error):
-            self.hudSubject.send(.error(.init(with: error)))
+            var message = "An error occurred while trying to link SFTP: "
+
+            if case let CloudFilesSFTP.SFTP.SFTPError.link(linkError) = error {
+              if let sshError = linkError as? SSHError {
+                message.append(sshError.message)
+              } else if let socketError = linkError as? Socket.Error, let reason = socketError.errorReason {
+                message.append(reason)
+              } else {
+                message.append(error.localizedDescription)
+              }
+            } else {
+              message.append(error.localizedDescription)
+            }
+
+            self.hudSubject.send(.error(.init(content: message)))
           }
         }
       } catch {

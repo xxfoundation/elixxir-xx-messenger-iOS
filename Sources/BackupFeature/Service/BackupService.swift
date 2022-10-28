@@ -3,24 +3,12 @@ import Models
 import Combine
 import XXClient
 import Defaults
-import NetworkMonitor
-import XXMessengerClient
-import DependencyInjection
-
 import CloudFiles
 import CloudFilesSFTP
-import CloudFilesDrive
-import CloudFilesICloud
-import CloudFilesDropbox
-
+import NetworkMonitor
 import KeychainAccess
-
-public enum BackupProvider: Equatable, Codable {
-  case sftp
-  case drive
-  case icloud
-  case dropbox
-}
+import XXMessengerClient
+import DependencyInjection
 
 public final class BackupService {
   @Dependency var messenger: Messenger
@@ -31,17 +19,20 @@ public final class BackupService {
   @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.backupSettings, defaultValue: nil) var storedSettings: Data?
 
-  public var settingsPublisher: AnyPublisher<BackupSettings, Never> {
+  public var settingsPublisher: AnyPublisher<CloudSettings, Never> {
     settings.handleEvents(receiveSubscription: { [weak self] _ in
       guard let self = self else { return }
-      self.refreshConnections()
-      self.refreshBackups()
+      self.settings.value.connectedServices = CloudFilesManager.all.linkedServices()
+      CloudFilesManager.all.lastBackups { [weak self] in
+        guard let self else { return }
+        self.settings.value.backups = $0
+      }
     }).eraseToAnyPublisher()
   }
 
   private var connType: ConnectionType = .wifi
   private var cancellables = Set<AnyCancellable>()
-  private lazy var settings = CurrentValueSubject<BackupSettings, Never>(.init(fromData: storedSettings))
+  private lazy var settings = CurrentValueSubject<CloudSettings, Never>(.init(fromData: storedSettings))
 
   public init() {
     settings
@@ -56,173 +47,160 @@ public final class BackupService {
       .store(in: &cancellables)
   }
 
-  public func setupSFTP(host: String, username: String, password: String) {
-    managers[.sftp] = .sftp(
+  func didSetWiFiOnly(enabled: Bool) {
+    settings.value.wifiOnlyBackup = enabled
+  }
+
+  func didSetAutomaticBackup(enabled: Bool) {
+    settings.value.automaticBackups = enabled
+    shouldBackupIfSetAutomatic()
+  }
+
+  func toggle(service: CloudService, enabling: Bool) {
+    settings.value.enabledService = enabling ? service : nil
+  }
+
+  func didForceBackup() {
+    if let lastBackup = try? Data(contentsOf: getBackupURL()) {
+      performUpload(of: lastBackup)
+    }
+  }
+
+  public func didUpdateFacts() {
+    storeFacts()
+  }
+
+  public func updateLocalBackup(_ data: Data) {
+    do {
+      try data.write(to: getBackupURL())
+      shouldBackupIfSetAutomatic()
+    } catch {
+      fatalError("Couldn't write backup to fileurl")
+    }
+  }
+
+  private func shouldBackupIfSetAutomatic() {
+    guard let lastBackup = try? Data(contentsOf: getBackupURL()) else {
+      print(">>> No stored backup so won't upload anything.")
+      return
+    }
+    guard settings.value.automaticBackups else {
+      print(">>> Backups are not set to automatic")
+      return
+    }
+    guard settings.value.enabledService != nil else {
+      print(">>> No service enabled to upload")
+      return
+    }
+    if settings.value.wifiOnlyBackup {
+      guard connType == .wifi else {
+        print(">>> WiFi only backups, and connType != Wifi")
+        return
+      }
+    } else {
+      guard connType != .unknown else {
+        print(">>> Connectivity is unknown")
+        return
+      }
+    }
+    performUpload(of: lastBackup)
+  }
+
+  // MARK: - Messenger
+
+  func initializeBackup(passphrase: String) {
+    do {
+      try messenger.startBackup(
+        password: passphrase,
+        params: .init(
+          username: username!,
+          email: email,
+          phone: phone
+        )
+      )
+    } catch {
+      print(">>> Exception when calling `messenger.startBackup`: \(error.localizedDescription)")
+    }
+  }
+
+  func stopBackups() {
+    if messenger.isBackupRunning() == true {
+      do {
+        try messenger.stopBackup()
+      } catch {
+        print(">>> Exception when calling `messenger.stopBackup`: \(error.localizedDescription)")
+      }
+    }
+  }
+
+  func storeFacts() {
+    var facts: [String: String] = [:]
+    facts["username"] = username!
+    facts["email"] = email
+    facts["phone"] = phone
+    facts["timestamp"] = "\(Date.asTimestamp)"
+    guard let backupManager = messenger.backup.get() else {
+      print(">>> Tried to store facts in JSON but there's no backup manager instance")
+      return
+    }
+    guard let data = try? JSONSerialization.data(withJSONObject: facts) else {
+      print(">>> Tried to generate data with json dictionary but failed")
+      return
+    }
+    guard let string = String(data: data, encoding: .utf8) else {
+      print(">>> Tried to extract string from json dict object but failed")
+      return
+    }
+    backupManager.addJSON(string)
+  }
+
+  // MARK: - CloudProviders
+
+  func setupSFTP(host: String, username: String, password: String) {
+    let sftpManager = CloudFilesManager.sftp(
       host: host,
       username: username,
       password: password,
       fileName: "backup.xxm"
     )
-    refreshBackups()
-    refreshConnections()
-  }
-}
 
-extension BackupService {
-  public func stopBackups() {
-    if messenger.isBackupRunning() == true {
-      try! messenger.stopBackup()
-    }
-  }
-
-  public func initializeBackup(passphrase: String) {
-    try! messenger.startBackup(
-      password: passphrase,
-      params: .init(
-        username: username!,
-        email: email,
-        phone: phone
-      )
-    )
-  }
-
-  public func performBackupIfAutomaticIsEnabled() {
-    guard settings.value.automaticBackups == true else { return }
-    performBackup()
-  }
-
-  public func performBackup() {
-    guard let directoryUrl = try? FileManager.default.url(
-      for: .applicationSupportDirectory,
-      in: .userDomainMask,
-      appropriateFor: nil,
-      create: true
-    ) else { fatalError("Couldn't generate the URL to persist the backup") }
-
-    let fileUrl = directoryUrl
-      .appendingPathComponent("backup")
-      .appendingPathExtension("xxm")
-
-    guard let data = try? Data(contentsOf: fileUrl) else { return }
-    performBackup(data: data)
-  }
-
-  public func updateBackup(data: Data) {
-    guard let directoryUrl = try? FileManager.default.url(
-      for: .applicationSupportDirectory,
-      in: .userDomainMask,
-      appropriateFor: nil,
-      create: true
-    ) else { fatalError("Couldn't generate the URL to persist the backup") }
-
-    let fileUrl = directoryUrl
-      .appendingPathComponent("backup")
-      .appendingPathExtension("xxm")
+    CloudFilesManager.all[.sftp] = sftpManager
 
     do {
-      try data.write(to: fileUrl)
+      try sftpManager.fetch {
+        switch $0 {
+        case .success(let metadata):
+          self.settings.value.backups[.sftp] = metadata
+        case .failure(let error):
+          print(">>> Error fetching sftp: \(error.localizedDescription)")
+        }
+      }
     } catch {
-      fatalError("Couldn't write backup to fileurl")
+      print(">>> Exception fetching sftp: \(error.localizedDescription)")
     }
-
-    let isWifiOnly = settings.value.wifiOnlyBackup
-    let isAutomaticEnabled = settings.value.automaticBackups
-    let hasEnabledService = settings.value.enabledService != nil
-
-    if isWifiOnly {
-      guard connType == .wifi else { return }
-    } else {
-      guard connType != .unknown else { return }
-    }
-
-    if isAutomaticEnabled && hasEnabledService {
-      performBackup()
-    }
-
-    refreshBackups()
   }
 
-  public func setBackupOnlyOnWifi(_ enabled: Bool) {
-    settings.value.wifiOnlyBackup = enabled
-  }
-
-  public func setBackupAutomatically(_ enabled: Bool) {
-    settings.value.automaticBackups = enabled
-
-    guard enabled else { return }
-    performBackup()
-  }
-
-  public func toggle(service: BackupProvider, enabling: Bool) {
-    settings.value.enabledService = enabling ? service : nil
-  }
-
-  public func authorize(
-    service: BackupProvider,
+  func authorize(
+    service: CloudService,
     presenting screen: UIViewController
   ) {
-    do {
-      try managers[service]?.link(screen) { [weak self] in
-        guard let self else { return }
-        switch $0 {
-        case .success:
-          self.refreshConnections()
-          self.refreshBackups()
-        case .failure(let error):
-          print(error.localizedDescription)
+    service.authorize(presenting: screen) {
+      switch $0 {
+      case .success:
+        self.settings.value.connectedServices = CloudFilesManager.all.linkedServices()
+        CloudFilesManager.all.lastBackups { [weak self] in
+          guard let self else { return }
+          self.settings.value.backups = $0
         }
-      }
-    } catch {
-      print(error.localizedDescription)
-    }
-  }
-}
-
-extension BackupService {
-  private func refreshConnections() {
-    managers.forEach { provider, manager in
-      if manager.isLinked() && !settings.value.connectedServices.contains(provider) {
-        settings.value.connectedServices.insert(provider)
-      } else if !manager.isLinked() && settings.value.connectedServices.contains(provider) {
-        settings.value.connectedServices.remove(provider)
+      case .failure(let error):
+        print(">>> Tried to authorize \(service) but failed: \(error.localizedDescription)")
       }
     }
   }
 
-  private func refreshBackups() {
-    managers.forEach { provider, manager in
-      if manager.isLinked() {
-        do {
-          try manager.fetch { [weak self] in
-            guard let self else { return }
-
-            switch $0 {
-            case .success(let metadata):
-              self.settings.value.backups[provider] = metadata
-            case .failure(let error):
-              print(error.localizedDescription)
-            }
-          }
-        } catch {
-          print(error.localizedDescription)
-        }
-      }
-    }
-  }
-
-  private func performBackup(data: Data) {
+  func performUpload(of data: Data) {
     guard let enabledService = settings.value.enabledService else {
-      fatalError("Trying to backup but nothing is enabled")
-    }
-
-    let url = URL(fileURLWithPath: NSTemporaryDirectory())
-      .appendingPathComponent(UUID().uuidString)
-
-    do {
-      try data.write(to: url, options: .atomic)
-    } catch {
-      print(">>> Couldn't write to temp: \(error.localizedDescription)")
-      return
+      fatalError(">>> Trying to backup but nothing is enabled")
     }
 
     if enabledService == .sftp {
@@ -230,10 +208,10 @@ extension BackupService {
       guard let host = try? keychain.get("host"),
             let password = try? keychain.get("pwd"),
             let username = try? keychain.get("username") else {
-        fatalError("Tried to perform an sftp backup but its not configured")
+        fatalError(">>> Tried to perform an sftp backup but its not configured")
       }
 
-      managers[.sftp] = .sftp(
+      CloudFilesManager.all[.sftp] = .sftp(
         host: host,
         username: username,
         password: password,
@@ -241,24 +219,29 @@ extension BackupService {
       )
     }
 
-    if let manager = managers[enabledService] {
-      do {
-        try manager.upload(data) { [weak self] in
-          guard let self else { return }
-
-          switch $0 {
-          case .success(let metadata):
-            self.settings.value.backups[enabledService] = .init(
-              size: metadata.size,
-              lastModified: metadata.lastModified
-            )
-          case .failure(let error):
-            print(error.localizedDescription)
-          }
-        }
-      } catch {
-        print(error.localizedDescription)
+    enabledService.backup(data: data) {
+      switch $0 {
+      case .success(let metadata):
+        self.settings.value.backups[enabledService] = .init(
+          size: metadata.size,
+          lastModified: metadata.lastModified
+        )
+      case .failure(let error):
+        print(">>> Failed to perform a backup upload: \(error.localizedDescription)")
       }
     }
+  }
+
+  private func getBackupURL() -> URL {
+    guard let folderURL = try? FileManager.default.url(
+      for: .applicationSupportDirectory,
+      in: .userDomainMask,
+      appropriateFor: nil,
+      create: true
+    ) else { fatalError(">>> Couldn't generate the URL for backup") }
+
+    return folderURL
+      .appendingPathComponent("backup")
+      .appendingPathExtension("xxm")
   }
 }
