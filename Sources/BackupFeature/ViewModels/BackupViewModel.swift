@@ -25,8 +25,7 @@ extension BackupViewModel {
             setupViewModel: { BackupSetupViewModel.live() },
             configViewModel: { BackupConfigViewModel.live() },
             state: {
-                context.service.settingsPublisher
-                    .map(\.connectedServices)
+                context.service.connectedServicesPublisher
                     .map { $0.isEmpty ? BackupViewState.setup : .config }
                     .eraseToAnyPublisher()
             }

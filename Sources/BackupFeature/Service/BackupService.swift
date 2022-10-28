@@ -19,19 +19,26 @@ public final class BackupService {
   @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.backupSettings, defaultValue: nil) var storedSettings: Data?
 
+  public var backupsPublisher: AnyPublisher<[CloudService: Fetch.Metadata], Never> {
+    backupSubject.eraseToAnyPublisher()
+  }
+
+  public var connectedServicesPublisher: AnyPublisher<Set<CloudService>, Never> {
+    connectedServicesSubject.eraseToAnyPublisher()
+  }
+
   public var settingsPublisher: AnyPublisher<CloudSettings, Never> {
     settings.handleEvents(receiveSubscription: { [weak self] _ in
       guard let self = self else { return }
-      self.settings.value.connectedServices = CloudFilesManager.all.linkedServices()
-      CloudFilesManager.all.lastBackups { [weak self] in
-        guard let self else { return }
-        self.settings.value.backups = $0
-      }
+      self.connectedServicesSubject.send(CloudFilesManager.all.linkedServices())
+      self.fetchBackupOnAllProviders()
     }).eraseToAnyPublisher()
   }
 
   private var connType: ConnectionType = .wifi
   private var cancellables = Set<AnyCancellable>()
+  private let connectedServicesSubject = CurrentValueSubject<Set<CloudService>, Never>([])
+  private let backupSubject = CurrentValueSubject<[CloudService: Fetch.Metadata], Never>([:])
   private lazy var settings = CurrentValueSubject<CloudSettings, Never>(.init(fromData: storedSettings))
 
   public init() {
@@ -167,10 +174,11 @@ public final class BackupService {
     CloudFilesManager.all[.sftp] = sftpManager
 
     do {
-      try sftpManager.fetch {
+      try sftpManager.fetch { [weak self] in
+        guard let self else { return }
         switch $0 {
         case .success(let metadata):
-          self.settings.value.backups[.sftp] = metadata
+          self.backupSubject.value[.sftp] = metadata
         case .failure(let error):
           print(">>> Error fetching sftp: \(error.localizedDescription)")
         }
@@ -184,17 +192,31 @@ public final class BackupService {
     service: CloudService,
     presenting screen: UIViewController
   ) {
-    service.authorize(presenting: screen) {
-      switch $0 {
-      case .success:
-        self.settings.value.connectedServices = CloudFilesManager.all.linkedServices()
-        CloudFilesManager.all.lastBackups { [weak self] in
-          guard let self else { return }
-          self.settings.value.backups = $0
+    guard let manager = CloudFilesManager.all[service] else {
+      print(">>> Tried to link/auth but the enabled service is not set")
+      return
+    }
+    do {
+      try manager.link(screen) { [weak self] in
+        guard let self else { return }
+        switch $0 {
+        case .success:
+          self.connectedServicesSubject.value.insert(service)
+          self.fetchBackupOnAllProviders()
+        case .failure(let error):
+          self.connectedServicesSubject.value.remove(service)
+          print(">>> Failed to link/auth \(service): \(error.localizedDescription)")
         }
-      case .failure(let error):
-        print(">>> Tried to authorize \(service) but failed: \(error.localizedDescription)")
       }
+    } catch {
+      print(">>> Exception trying to link/auth \(service): \(error.localizedDescription)")
+    }
+  }
+
+  func fetchBackupOnAllProviders() {
+    CloudFilesManager.all.lastBackups { [weak self] in
+      guard let self else { return }
+      self.backupSubject.send($0)
     }
   }
 
@@ -202,7 +224,6 @@ public final class BackupService {
     guard let enabledService = settings.value.enabledService else {
       fatalError(">>> Trying to backup but nothing is enabled")
     }
-
     if enabledService == .sftp {
       let keychain = Keychain(service: "SFTP-XXM")
       guard let host = try? keychain.get("host"),
@@ -210,7 +231,6 @@ public final class BackupService {
             let username = try? keychain.get("username") else {
         fatalError(">>> Tried to perform an sftp backup but its not configured")
       }
-
       CloudFilesManager.all[.sftp] = .sftp(
         host: host,
         username: username,
@@ -218,17 +238,26 @@ public final class BackupService {
         fileName: "backup.xxm"
       )
     }
+    guard let manager = CloudFilesManager.all[enabledService] else {
+      print(">>> Tried to upload but the enabled service is not set")
+      return
+    }
+    do {
+      try manager.upload(data) { [weak self] in
+        guard let self else { return }
 
-    enabledService.backup(data: data) {
-      switch $0 {
-      case .success(let metadata):
-        self.settings.value.backups[enabledService] = .init(
-          size: metadata.size,
-          lastModified: metadata.lastModified
-        )
-      case .failure(let error):
-        print(">>> Failed to perform a backup upload: \(error.localizedDescription)")
+        switch $0 {
+        case .success(let metadata):
+          self.backupSubject.value[enabledService] = .init(
+            size: metadata.size,
+            lastModified: metadata.lastModified
+          )
+        case .failure(let error):
+          print(">>> Failed to perform a backup upload: \(error.localizedDescription)")
+        }
       }
+    } catch {
+      print(">>> Exception performing a backup upload: \(error.localizedDescription)")
     }
   }
 

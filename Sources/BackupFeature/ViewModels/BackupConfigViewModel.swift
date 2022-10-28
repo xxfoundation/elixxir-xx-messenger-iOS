@@ -89,9 +89,10 @@ extension BackupConfigViewModel {
       },
       lastBackup: {
         context.service.settingsPublisher
-          .map {
-            guard let enabledService = $0.enabledService else { return nil }
-            return $0.backups[enabledService]
+          .combineLatest(context.service.backupsPublisher)
+          .map { settings, backups in
+            guard let enabled = settings.enabledService else { return nil }
+            return backups[enabled]
           }.eraseToAnyPublisher()
       },
       actionState: {
@@ -106,8 +107,7 @@ extension BackupConfigViewModel {
           .eraseToAnyPublisher()
       },
       connectedServices: {
-        context.service.settingsPublisher
-          .map(\.connectedServices)
+        context.service.connectedServicesPublisher
           .removeDuplicates()
           .eraseToAnyPublisher()
       }
