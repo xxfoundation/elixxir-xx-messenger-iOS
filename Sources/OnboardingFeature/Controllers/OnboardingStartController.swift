@@ -1,6 +1,5 @@
 import HUD
 import UIKit
-import Theme
 import Shared
 import Combine
 import DependencyInjection

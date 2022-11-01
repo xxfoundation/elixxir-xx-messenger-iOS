@@ -8,7 +8,6 @@ import MobileCoreServices
 // MARK: Isolated features
 
 import HUD
-import Theme
 import Bindings
 import XXLogger
 import Keychain
@@ -18,7 +17,6 @@ import Voxophone
 import Permissions
 import PushFeature
 import CrashService
-import ToastFeature
 import CrashReporting
 import NetworkMonitor
 import VersionChecking
@@ -44,10 +42,20 @@ import OnboardingFeature
 import ContactListFeature
 
 import XXClient
+import Navigation
 import KeychainAccess
+import Shared
 
 struct DependencyRegistrator {
   static private let container = DependencyInjection.Container.shared
+
+  static func registerDependencies() {
+    #if DEBUG
+    DependencyRegistrator.registerForMock()
+    #else
+    DependencyRegistrator.registerForLive()
+    #endif
+  }
 
   // MARK: MOCK
 
@@ -103,9 +111,8 @@ struct DependencyRegistrator {
     // MARK: Isolated
 
     container.register(HUD())
-    container.register(ThemeController() as ThemeControlling)
     container.register(ToastController())
-    container.register(StatusBarController() as StatusBarStyleControlling)
+    container.register(StatusBarStylist())
 
     // MARK: Coordinators
 

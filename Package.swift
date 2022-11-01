@@ -10,7 +10,6 @@ let package = Package(
   products: [
     .library(name: "App", targets: ["App"]),
     .library(name: "HUD", targets: ["HUD"]),
-    .library(name: "Theme", targets: ["Theme"]),
     .library(name: "Shared", targets: ["Shared"]),
     .library(name: "Models", targets: ["Models"]),
     .library(name: "XXLogger", targets: ["XXLogger"]),
@@ -28,7 +27,6 @@ let package = Package(
     .library(name: "CrashService", targets: ["CrashService"]),
     .library(name: "TermsFeature", targets: ["TermsFeature"]),
     .library(name: "Presentation", targets: ["Presentation"]),
-    .library(name: "ToastFeature", targets: ["ToastFeature"]),
     .library(name: "BackupFeature", targets: ["BackupFeature"]),
     .library(name: "LaunchFeature", targets: ["LaunchFeature"]),
     .library(name: "SearchFeature", targets: ["SearchFeature"]),
@@ -96,11 +94,14 @@ let package = Package(
     ),
     .package(
       path: "../elixxir-dapps-sdk-swift"
-      //            url: "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
-      //            branch: "development"
+      //url: "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
+      //branch: "development"
     ),
     .package(
       path: "../xxm-cloud-providers"
+    ),
+    .package(
+      path: "../Router-PoC/Navigation"
     ),
     .package(
       url: "https://git.xx.network/elixxir/client-ios-db.git",
@@ -139,7 +140,6 @@ let package = Package(
         .target(name: "MenuFeature"),
         .target(name: "PushFeature"),
         .target(name: "TermsFeature"),
-        .target(name: "ToastFeature"),
         .target(name: "CrashService"),
         .target(name: "BackupFeature"),
         .target(name: "SearchFeature"),
@@ -154,6 +154,7 @@ let package = Package(
         .target(name: "ReportingFeature"),
         .target(name: "OnboardingFeature"),
         .target(name: "ContactListFeature"),
+        .product(name: "Navigation", package: "Navigation"),
       ]
     ),
     .testTarget(
@@ -192,7 +193,6 @@ let package = Package(
     .target(
       name: "Permissions",
       dependencies: [
-        .target(name: "Theme"),
         .target(name: "Shared"),
         .target(name: "DependencyInjection"),
       ]
@@ -242,12 +242,6 @@ let package = Package(
       ]
     ),
     .target(
-      name: "ToastFeature",
-      dependencies: [
-        .target(name: "Shared"),
-      ]
-    ),
-    .target(
       name: "CrashService",
       dependencies: [
         .target(name: "CrashReporting"),
@@ -257,27 +251,11 @@ let package = Package(
     .target(
       name: "Countries",
       dependencies: [
-        .target(name: "Theme"),
         .target(name: "Shared"),
         .target(name: "DependencyInjection"),
       ],
       resources: [
         .process("Resources"),
-      ]
-    ),
-    .target(
-      name: "Theme",
-      dependencies: [
-        .target(name: "Defaults"),
-        .target(name: "DependencyInjection"),
-      ]
-    ),
-    .testTarget(
-      name: "ThemeTests",
-      dependencies: [
-        .target(name: "Theme"),
-        .product(name: "Quick", package: "Quick"),
-        .product(name: "Nimble", package: "Nimble"),
       ]
     ),
     .target(
@@ -291,7 +269,6 @@ let package = Package(
     .target(
       name: "HUD",
       dependencies: [
-        .target(name: "Theme"),
         .target(name: "Shared"),
         .product(name: "SnapKit", package: "SnapKit"),
       ]
@@ -319,7 +296,6 @@ let package = Package(
     .target(
       name: "Presentation",
       dependencies: [
-        .target(name: "Theme"),
         .target(name: "Shared"),
         .product(name: "SnapKit", package: "SnapKit"),
       ]
@@ -378,7 +354,6 @@ let package = Package(
       name: "ChatFeature",
       dependencies: [
         .target(name: "HUD"),
-        .target(name: "Theme"),
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "Keychain"),
@@ -434,7 +409,6 @@ let package = Package(
       name: "LaunchFeature",
       dependencies: [
         .target(name: "HUD"),
-        .target(name: "Theme"),
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "PushFeature"),
@@ -454,7 +428,6 @@ let package = Package(
     .target(
       name: "TermsFeature",
       dependencies: [
-        .target(name: "Theme"),
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "Presentation"),
@@ -463,9 +436,7 @@ let package = Package(
     .target(
       name: "RequestsFeature",
       dependencies: [
-        .target(name: "Theme"),
         .target(name: "Shared"),
-        .target(name: "ToastFeature"),
         .target(name: "ContactFeature"),
         .target(name: "DependencyInjection"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
@@ -484,7 +455,6 @@ let package = Package(
       name: "ProfileFeature",
       dependencies: [
         .target(name: "HUD"),
-        .target(name: "Theme"),
         .target(name: "Shared"),
         .target(name: "Keychain"),
         .target(name: "Defaults"),
@@ -514,7 +484,6 @@ let package = Package(
     .target(
       name: "ChatListFeature",
       dependencies: [
-        .target(name: "Theme"),
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "MenuFeature"),
@@ -566,7 +535,6 @@ let package = Package(
     .target(
       name: "MenuFeature",
       dependencies: [
-        .target(name: "Theme"),
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "Presentation"),
@@ -598,7 +566,6 @@ let package = Package(
     .target(
       name: "ScanFeature",
       dependencies: [
-        .target(name: "Theme"),
         .target(name: "Shared"),
         .target(name: "Countries"),
         .target(name: "Permissions"),
@@ -621,7 +588,6 @@ let package = Package(
     .target(
       name: "ContactListFeature",
       dependencies: [
-        .target(name: "Theme"),
         .target(name: "Shared"),
         .target(name: "Presentation"),
         .target(name: "ContactFeature"),
@@ -642,7 +608,6 @@ let package = Package(
       name: "SettingsFeature",
       dependencies: [
         .target(name: "HUD"),
-        .target(name: "Theme"),
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "Keychain"),

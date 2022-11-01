@@ -1,6 +1,5 @@
 import UIKit
 import Quick
-import Theme
 import Nimble
 import Combine
 import TestHelpers

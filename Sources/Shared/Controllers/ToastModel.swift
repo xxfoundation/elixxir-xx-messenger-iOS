@@ -1,5 +1,4 @@
 import UIKit
-import Shared
 
 public struct ToastModel {
     let id: UUID

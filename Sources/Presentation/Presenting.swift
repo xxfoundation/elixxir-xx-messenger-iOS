@@ -1,5 +1,5 @@
 import UIKit
-import Theme
+import Shared
 
 public protocol Presenting {
     func present(_ target: UIViewController..., from parent: UIViewController)
@@ -24,7 +24,7 @@ public struct ModalPresenter: Presenting {
     public init() {}
 
     public func present(_ target: UIViewController..., from parent: UIViewController) {
-        let statusBarVC = StatusBarViewController(target.first!)
+        let statusBarVC = RootViewController(target.first!)
         statusBarVC.modalPresentationStyle = .fullScreen
         parent.present(statusBarVC, animated: true)
     }

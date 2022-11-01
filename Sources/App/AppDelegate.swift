@@ -1,12 +1,12 @@
 import UIKit
+import Navigation
 import BackgroundTasks
 
-import Theme
+import Shared
 import XXModels
 import XXLogger
 import Defaults
 import PushFeature
-import ToastFeature
 import LaunchFeature
 import CrashReporting
 import DependencyInjection
@@ -20,9 +20,9 @@ import CloudFilesICloud
 import CloudFilesDropbox
 
 public class AppDelegate: UIResponder, UIApplicationDelegate {
-  @Dependency private var pushRouter: PushRouter
-  @Dependency private var pushHandler: PushHandling
-  @Dependency private var crashReporter: CrashReporter
+  @Dependency var navigator: Navigator
+  @Dependency var pushHandler: PushHandling
+  @Dependency var crashReporter: CrashReporter
 
   @KeyObject(.hideAppList, defaultValue: false) var hideAppList: Bool
   @KeyObject(.recordingLogs, defaultValue: true) var recordingLogs: Bool
@@ -39,32 +39,15 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
-#if DEBUG
-    DependencyRegistrator.registerForMock()
-#else
-    DependencyRegistrator.registerForLive()
-#endif
-
-    if recordingLogs {
-      XXLogger.start()
-    }
-
-    crashReporter.configure()
-    crashReporter.setEnabled(isCrashReportingEnabled)
-
     UNUserNotificationCenter.current().delegate = self
+    DependencyRegistrator.registerDependencies()
+    setupCloudFilesManagers()
+    setupCrashReporting()
+    setupLogging()
 
-    let window = Window()
-    let navController = UINavigationController(rootViewController: LaunchController())
-    window.rootViewController = StatusBarViewController(ToastViewController(navController))
-    window.backgroundColor = UIColor.white
-    window.makeKeyAndVisible()
-    self.window = window
-
-    DependencyInjection.Container.shared.register(
-      PushRouter.live(navigationController: navController)
-    )
-
+    window = UIWindow(frame: UIScreen.main.bounds)
+    window?.rootViewController = RootViewController(UINavigationController(rootViewController: LaunchController()))
+    window?.makeKeyAndVisible()
     return true
   }
 
@@ -172,21 +155,6 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
   }
 }
 
-func getUsernameFromInvitationDeepLink(_ url: URL) -> String? {
-  if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
-     components.scheme == "https",
-     components.host == "elixxir.io",
-     components.path == "/connect",
-     let queryItem = components.queryItems?.first(where: { $0.name == "username" }),
-     let username = queryItem.value {
-    return username
-  }
-
-  return nil
-}
-
-// MARK: Notifications
-
 extension AppDelegate: UNUserNotificationCenterDelegate {
   public func userNotificationCenter(
     _ center: UNUserNotificationCenter,
@@ -194,7 +162,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     withCompletionHandler completionHandler: @escaping () -> Void
   ) {
     let userInfo = response.notification.request.content.userInfo
-    pushHandler.handleAction(pushRouter, userInfo, completionHandler)
+    //pushHandler.handleAction(pushRouter, userInfo, completionHandler)
   }
 
   public func application(
@@ -211,4 +179,40 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
   ) {
     pushHandler.registerToken(deviceToken)
   }
+}
+
+extension AppDelegate {
+  private func setupCrashReporting() {
+    crashReporter.configure()
+    crashReporter.setEnabled(isCrashReportingEnabled)
+  }
+
+  private func setupCloudFilesManagers() {
+    CloudFilesManager.all[.icloud] = .iCloud(fileName: "backup.xxm")
+    CloudFilesManager.all[.dropbox] = .dropbox(appKey: "ppx0de5f16p9aq2", path: "/backup/backup.xxm")
+    CloudFilesManager.all[.drive] = .drive(
+      apiKey: "AIzaSyCbI2yQ7pbuVSRvraqanjGcS9CDrjD7lNU",
+      clientId: "662236151640-herpu89qikpfs9m4kvbi9bs5fpdji5de.apps.googleusercontent.com",
+      fileName: "backup.xxm"
+    )
+  }
+
+  private func setupLogging() {
+    if recordingLogs {
+      XXLogger.start()
+    }
+  }
+}
+
+func getUsernameFromInvitationDeepLink(_ url: URL) -> String? {
+  if let components = URLComponents(url: url, resolvingAgainstBaseURL: false),
+     components.scheme == "https",
+     components.host == "elixxir.io",
+     components.path == "/connect",
+     let queryItem = components.queryItems?.first(where: { $0.name == "username" }),
+     let username = queryItem.value {
+    return username
+  }
+
+  return nil
 }
