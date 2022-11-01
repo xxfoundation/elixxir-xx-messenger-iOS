@@ -1,4 +1,3 @@
-import HUD
 import UIKit
 import Shared
 import Combine
@@ -7,7 +6,6 @@ import PushFeature
 import DependencyInjection
 
 public final class LaunchController: UIViewController {
-  @Dependency var hud: HUD
   @Dependency var coordinator: LaunchCoordinating
 
   @KeyObject(.acceptedTerms, defaultValue: false) var didAcceptTerms: Bool
@@ -41,12 +39,7 @@ public final class LaunchController: UIViewController {
 
   public override func viewDidLoad() {
     super.viewDidLoad()
-
-    viewModel.hudPublisher
-      .receive(on: DispatchQueue.main)
-      .sink { [hud] in hud.update(with: $0) }
-      .store(in: &cancellables)
-
+  
     viewModel.routePublisher
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
@@ -136,26 +129,26 @@ public final class LaunchController: UIViewController {
       title: model.positiveActionTitle
     )
 
-    if let negativeTitle = model.negativeActionTitle {
-      let negativeButton = CapsuleButton()
-      negativeButton.set(style: .simplestColoredRed, title: negativeTitle)
-
-      negativeButton.publisher(for: .touchUpInside)
-        .sink { [unowned self] in
-          blocker.hideWindow()
-          viewModel.continueWithInitialization()
-        }.store(in: &cancellables)
-
-      vStack.addArrangedSubview(negativeButton)
-    }
-
-    blocker.window?.addSubview(drawerView)
-    drawerView.snp.makeConstraints {
-      $0.left.equalToSuperview().offset(18)
-      $0.center.equalToSuperview()
-      $0.right.equalToSuperview().offset(-18)
-    }
-
-    blocker.showWindow()
+//    if let negativeTitle = model.negativeActionTitle {
+//      let negativeButton = CapsuleButton()
+//      negativeButton.set(style: .simplestColoredRed, title: negativeTitle)
+//
+//      negativeButton.publisher(for: .touchUpInside)
+//        .sink { [unowned self] in
+//          blocker.hideWindow()
+//          viewModel.continueWithInitialization()
+//        }.store(in: &cancellables)
+//
+//      vStack.addArrangedSubview(negativeButton)
+//    }
+//
+//    blocker.window?.addSubview(drawerView)
+//    drawerView.snp.makeConstraints {
+//      $0.left.equalToSuperview().offset(18)
+//      $0.center.equalToSuperview()
+//      $0.right.equalToSuperview().offset(-18)
+//    }
+//
+//    blocker.showWindow()
   }
 }

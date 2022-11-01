@@ -1,4 +1,3 @@
-import HUD
 import UIKit
 import Shared
 import Models
@@ -6,8 +5,6 @@ import Combine
 import DependencyInjection
 
 public final class BackupController: UIViewController {
-    @Dependency var hud: HUD
-
     private let viewModel = BackupViewModel.live()
     private var cancellables = Set<AnyCancellable>()
 
@@ -21,8 +18,6 @@ public final class BackupController: UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
         view.backgroundColor = Asset.neutralWhite.color
-        hud.update(with: .on)
-
         setupNavigationBar()
         setupBindings()
     }
@@ -41,8 +36,6 @@ public final class BackupController: UIViewController {
             .receive(on: DispatchQueue.main)
             .removeDuplicates()
             .sink { [unowned self] in
-                hud.update(with: .none)
-
                 switch $0 {
                 case .setup:
                     contentViewController = BackupSetupController(viewModel.setupViewModel())

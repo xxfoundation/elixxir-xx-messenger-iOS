@@ -1,4 +1,3 @@
-import HUD
 import UIKit
 import Shared
 import Combine
@@ -7,7 +6,6 @@ import DependencyInjection
 import ScrollViewController
 
 public final class OnboardingPhoneController: UIViewController {
-  @Dependency var hud: HUD
   @Dependency var barStylist: StatusBarStylist
   @Dependency var coordinator: OnboardingCoordinating
 
@@ -50,11 +48,6 @@ public final class OnboardingPhoneController: UIViewController {
   }
 
   private func setupBindings() {
-    viewModel.hud
-      .receive(on: DispatchQueue.main)
-      .sink { [hud] in hud.update(with: $0) }
-      .store(in: &cancellables)
-
     screenView.inputField.textPublisher
       .sink { [unowned self] in viewModel.didInput($0) }
       .store(in: &cancellables)

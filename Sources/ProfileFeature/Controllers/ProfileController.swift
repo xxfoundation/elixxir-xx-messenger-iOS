@@ -1,4 +1,3 @@
-import HUD
 import UIKit
 import Shared
 import Combine
@@ -6,7 +5,6 @@ import DrawerFeature
 import DependencyInjection
 
 public final class ProfileController: UIViewController {
-  @Dependency var hud: HUD
   @Dependency var barStylist: StatusBarStylist
   @Dependency var coordinator: ProfileCoordinating
 
@@ -48,11 +46,6 @@ public final class ProfileController: UIViewController {
   }
 
   private func setupBindings() {
-    viewModel.hud
-      .receive(on: DispatchQueue.main)
-      .sink { [hud] in hud.update(with: $0) }
-      .store(in: &cancellables)
-
     screenView.emailView.actionButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)

@@ -4,12 +4,14 @@ import DependencyInjection
 
 public final class RootViewController: UIViewController {
   @Dependency var barStylist: StatusBarStylist
+  @Dependency var hudDispatcher: HUDController
   @Dependency var toastDispatcher: ToastController
 
-  var toastTimer: Timer?
   let content: UIViewController?
-  let toastTopPadding: CGFloat = 10
   var cancellables = Set<AnyCancellable>()
+
+  var toastTimer: Timer?
+  let toastTopPadding: CGFloat = 10
   var topToastConstraint: NSLayoutConstraint?
 
   public init(_ content: UIViewController?) {
@@ -45,15 +47,31 @@ public final class RootViewController: UIViewController {
         }
       }.store(in: &cancellables)
 
-    toastDispatcher.currentToast
+    toastDispatcher
+      .currentToast
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] model in
         let toastView = ToastView(model: model)
         add(toastView: toastView)
         present(toastView: toastView)
       }.store(in: &cancellables)
-  }
 
+    hudDispatcher
+      .modelPublisher
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] model in
+        guard model != nil else {
+          // REMOVE FROM SUPERVIEW
+          return
+        }
+        // ADD TO SUPERVIEW
+      }.store(in: &cancellables)
+  }
+}
+
+// MARK: - Toaster
+
+extension RootViewController {
   @objc private func didPanToast(_ sender: UIPanGestureRecognizer) {
     guard let toastView = sender.view else { return }
 
@@ -143,4 +161,128 @@ public final class RootViewController: UIViewController {
       }
     }
   }
+}
+
+// MARK: - HUD
+
+extension RootViewController {
+  //  private func showWindow() {
+  //    if let animation = animation {
+  //      window?.addSubview(animation)
+  //      animation.setColor(.white)
+  //      animation.snp.makeConstraints { $0.center.equalToSuperview() }
+  //    }
+  //
+  //    if let titleLabel = titleLabel {
+  //      window?.addSubview(titleLabel)
+  //      titleLabel.textAlignment = .center
+  //      titleLabel.numberOfLines = 0
+  //      titleLabel.snp.makeConstraints { make in
+  //        make.left.equalToSuperview().offset(18)
+  //        make.center.equalToSuperview().offset(50)
+  //        make.right.equalToSuperview().offset(-18)
+  //      }
+  //    }
+  //
+  //    if let actionButton = actionButton {
+  //      window?.addSubview(actionButton)
+  //      actionButton.snp.makeConstraints {
+  //        $0.left.equalToSuperview().offset(18)
+  //        $0.right.equalToSuperview().offset(-18)
+  //        $0.bottom.equalToSuperview().offset(-50)
+  //      }
+  //    }
+  //
+  //    if let errorView = errorView {
+  //      window?.addSubview(errorView)
+  //      errorView.snp.makeConstraints { make in
+  //        make.left.equalToSuperview().offset(18)
+  //        make.center.equalToSuperview()
+  //        make.right.equalToSuperview().offset(-18)
+  //      }
+  //
+  //      errorView.button
+  //        .publisher(for: .touchUpInside)
+  //        .receive(on: DispatchQueue.main)
+  //        .sink { [unowned self] in hideWindow() }
+  //        .store(in: &cancellables)
+  //    }
+  //
+  //    window?.alpha = 0.0
+  //    window?.makeKeyAndVisible()
+  //
+  //    UIView.animate(withDuration: 0.3) { self.window?.alpha = 1.0 }
+  //  }
+  //
+  //  private func hideWindow() {
+  //    UIView.animate(withDuration: 0.3) {
+  //      self.window?.alpha = 0.0
+  //    } completion: { _ in
+  //      self.cancellables.removeAll()
+  //      self.errorView = nil
+  //      self.animation = nil
+  //      self.actionButton = nil
+  //      self.titleLabel = nil
+  //      self.window = nil
+  //    }
+  //  }
+
+
+  //    if statusSubject.value.isPresented == true && status.isPresented == true {
+  //      self.errorView = nil
+  //      self.animation = nil
+  //      self.window = nil
+  //      self.actionButton = nil
+  //      self.titleLabel = nil
+  //
+  //      switch status {
+  //      case .on:
+  //        animation = DotAnimation()
+  //
+  //      case .onTitle(let text):
+  //        animation = DotAnimation()
+  //        titleLabel = UILabel()
+  //        titleLabel!.text = text
+  //
+  //      case .onAction(let title):
+  //        animation = DotAnimation()
+  //        actionButton = CapsuleButton()
+  //        actionButton!.set(style: .seeThroughWhite, title: title)
+  //
+  //      case .error(let error):
+  //        errorView = ErrorView(with: error)
+  //      case .none:
+  //        break
+  //      }
+  //
+  //      showWindow()
+  //    }
+
+  //    if statusSubject.value.isPresented == false && status.isPresented == true {
+  //        switch status {
+  //        case .on:
+  //          animation = DotAnimation()
+  //
+  //        case .onTitle(let text):
+  //          animation = DotAnimation()
+  //          titleLabel = UILabel()
+  //          titleLabel!.text = text
+  //
+  //        case .onAction(let title):
+  //          animation = DotAnimation()
+  //          actionButton = CapsuleButton()
+  //          actionButton!.set(style: .seeThroughWhite, title: title)
+  //
+  //        case .error(let error):
+  //          errorView = ErrorView(with: error)
+  //        case .none:
+  //          break
+  //        }
+  //
+  //        showWindow()
+  //    }
+
+  //    if statusSubject.value.isPresented == true && status.isPresented == false {
+  //        hideWindow()
+  //    }
 }

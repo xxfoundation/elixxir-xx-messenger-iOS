@@ -1,4 +1,3 @@
-import HUD
 import UIKit
 import Shared
 import Combine
@@ -6,7 +5,6 @@ import DrawerFeature
 import DependencyInjection
 
 public final class RestoreListController: UIViewController {
-  @Dependency var hud: HUD
   @Dependency var coordinator: RestoreCoordinating
 
   lazy private var screenView = RestoreListView()
@@ -41,11 +39,6 @@ public final class RestoreListController: UIViewController {
           )
         }
       }.store(in: &cancellables)
-
-    viewModel.hudPublisher
-      .receive(on: DispatchQueue.main)
-      .sink { [hud] in hud.update(with: $0) }
-      .store(in: &cancellables)
 
     viewModel.detailsPublisher
       .receive(on: DispatchQueue.main)

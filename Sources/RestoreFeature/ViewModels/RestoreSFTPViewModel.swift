@@ -1,9 +1,10 @@
-import HUD
 import UIKit
+import Shared
 import Combine
 import Foundation
 import CloudFiles
 import CloudFilesSFTP
+import DependencyInjection
 
 struct SFTPViewState {
   var host: String = ""
@@ -13,9 +14,7 @@ struct SFTPViewState {
 }
 
 final class RestoreSFTPViewModel {
-  var hudPublisher: AnyPublisher<HUDStatus, Never> {
-    hudSubject.eraseToAnyPublisher()
-  }
+  @Dependency var hudController: HUDController
 
   var statePublisher: AnyPublisher<SFTPViewState, Never> {
     stateSubject.eraseToAnyPublisher()
@@ -25,7 +24,6 @@ final class RestoreSFTPViewModel {
     authSubject.eraseToAnyPublisher()
   }
 
-  private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
   private let stateSubject = CurrentValueSubject<SFTPViewState, Never>(.init())
   private let authSubject = PassthroughSubject<(String, String, String), Never>()
 
@@ -45,7 +43,7 @@ final class RestoreSFTPViewModel {
   }
 
   func didTapLogin() {
-    hudSubject.send(.on)
+    hudController.show()
 
     let host = stateSubject.value.host
     let username = stateSubject.value.username
@@ -64,14 +62,14 @@ final class RestoreSFTPViewModel {
         ).link(anyController) {
           switch $0 {
           case .success:
-            self.hudSubject.send(.none)
+            self.hudController.dismiss()
             self.authSubject.send((host, username, password))
           case .failure(let error):
-            self.hudSubject.send(.error(.init(with: error)))
+            self.hudController.show(.init(error: error))
           }
         }
       } catch {
-        self.hudSubject.send(.error(.init(with: error)))
+        self.hudController.show(.init(error: error))
       }
     }
   }

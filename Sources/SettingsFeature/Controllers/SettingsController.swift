@@ -1,4 +1,3 @@
-import HUD
 import UIKit
 import Shared
 import Combine
@@ -7,7 +6,6 @@ import DependencyInjection
 import ScrollViewController
 
 public final class SettingsController: UIViewController {
-  @Dependency var hud: HUD
   @Dependency var barStylist: StatusBarStylist
   @Dependency var coordinator: SettingsCoordinating
 
@@ -92,11 +90,6 @@ public final class SettingsController: UIViewController {
   }
 
   private func setupBindings() {
-    viewModel.hud
-      .receive(on: DispatchQueue.main)
-      .sink { [hud] in hud.update(with: $0) }
-      .store(in: &cancellables)
-
     screenView.inAppNotifications.switcherView
       .publisher(for: .valueChanged)
       .sink { [weak viewModel] in viewModel?.didToggleInAppNotifications() }

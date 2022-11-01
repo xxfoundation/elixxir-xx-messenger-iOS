@@ -1,4 +1,3 @@
-import HUD
 import UIKit
 import Models
 import Shared
@@ -10,8 +9,6 @@ import ScrollViewController
 public typealias ControllerClosure = (UIViewController, AttributeConfirmation) -> Void
 
 public final class ProfileCodeController: UIViewController {
-    @Dependency private var hud: HUD
-
     lazy private var screenView = ProfileCodeView()
     lazy private var scrollViewController = ScrollViewController()
 
@@ -55,11 +52,6 @@ public final class ProfileCodeController: UIViewController {
     }
 
     private func setupBindings() {
-        viewModel.hud
-            .receive(on: DispatchQueue.main)
-            .sink { [hud] in hud.update(with: $0) }
-            .store(in: &cancellables)
-
         screenView.inputField.textPublisher
             .sink { [unowned self] in viewModel.didInput($0) }
             .store(in: &cancellables)

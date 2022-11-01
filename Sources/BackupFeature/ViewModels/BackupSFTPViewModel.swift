@@ -1,12 +1,12 @@
 import UIKit
-
-import HUD
 import Shout
 import Socket
+import Shared
 import Combine
 import Foundation
 import CloudFiles
 import CloudFilesSFTP
+import DependencyInjection
 
 struct SFTPViewState {
   var host: String = ""
@@ -16,9 +16,7 @@ struct SFTPViewState {
 }
 
 final class BackupSFTPViewModel {
-  var hudPublisher: AnyPublisher<HUDStatus, Never> {
-    hudSubject.eraseToAnyPublisher()
-  }
+  @Dependency var hudController: HUDController
 
   var statePublisher: AnyPublisher<SFTPViewState, Never> {
     stateSubject.eraseToAnyPublisher()
@@ -28,7 +26,6 @@ final class BackupSFTPViewModel {
     authSubject.eraseToAnyPublisher()
   }
 
-  private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
   private let stateSubject = CurrentValueSubject<SFTPViewState, Never>(.init())
   private let authSubject = PassthroughSubject<(String, String, String), Never>()
 
@@ -48,7 +45,7 @@ final class BackupSFTPViewModel {
   }
 
   func didTapLogin() {
-    hudSubject.send(.on)
+    hudController.show()
 
     let host = stateSubject.value.host
     let username = stateSubject.value.username
@@ -67,7 +64,7 @@ final class BackupSFTPViewModel {
         ).link(anyController) {
           switch $0 {
           case .success:
-            self.hudSubject.send(.none)
+            self.hudController.dismiss()
             self.authSubject.send((host, username, password))
           case .failure(let error):
             var message = "An error occurred while trying to link SFTP: "
@@ -84,11 +81,11 @@ final class BackupSFTPViewModel {
               message.append(error.localizedDescription)
             }
 
-            self.hudSubject.send(.error(.init(content: message)))
+            self.hudController.show(.init(content: message))
           }
         }
       } catch {
-        self.hudSubject.send(.error(.init(with: error)))
+        self.hudController.show(.init(error: error))
       }
     }
   }

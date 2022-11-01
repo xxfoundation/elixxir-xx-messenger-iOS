@@ -1,4 +1,3 @@
-import HUD
 import UIKit
 import Models
 import Shared
@@ -35,8 +34,8 @@ struct BackupConfigViewModel {
 extension BackupConfigViewModel {
   static func live() -> Self {
     class Context {
-      @Dependency var hud: HUD
       @Dependency var service: BackupService
+      @Dependency var hudController: HUDController
       @Dependency var coordinator: BackupCoordinating
     }
 
@@ -45,9 +44,9 @@ extension BackupConfigViewModel {
     return .init(
       didTapBackupNow: {
         context.service.didForceBackup()
-        context.hud.update(with: .on)
+        context.hudController.show()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-          context.hud.update(with: .none)
+          context.hudController.dismiss()
         }
       },
       didChooseWifiOnly: context.service.didSetWiFiOnly(enabled:),
@@ -61,10 +60,12 @@ extension BackupConfigViewModel {
         context.coordinator.toPassphrase(from: controller, cancelClosure: {
           context.service.toggle(service: service, enabling: false)
         }, passphraseClosure: { passphrase in
-          context.hud.update(with: .onTitle("Initializing and securing your backup file will take few seconds, please keep the app open."))
+          context.hudController.show(.init(
+            content: "Initializing and securing your backup file will take few seconds, please keep the app open."
+          ))
           context.service.toggle(service: service, enabling: enabling)
           context.service.initializeBackup(passphrase: passphrase)
-          context.hud.update(with: .none)
+          context.hudController.dismiss()
         })
       },
       didTapService: { service, controller in

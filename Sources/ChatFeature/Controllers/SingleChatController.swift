@@ -1,4 +1,3 @@
-import HUD
 import UIKit
 import Models
 import Shared
@@ -24,7 +23,6 @@ extension Message: Differentiable {
 }
 
 public final class SingleChatController: UIViewController {
-  @Dependency var hud: HUD
   @Dependency var logger: XXLogger
   @Dependency var voxophone: Voxophone
   @Dependency var barStylist: StatusBarStylist
@@ -240,11 +238,6 @@ public final class SingleChatController: UIViewController {
   }
 
   private func setupBindings() {
-    viewModel.hud
-      .receive(on: DispatchQueue.main)
-      .sink { [hud] in hud.update(with: $0) }
-      .store(in: &cancellables)
-
     sheet.actionPublisher
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in

@@ -1,5 +1,5 @@
-import HUD
 import UIKit
+import Shared
 import Combine
 import CloudFiles
 import CloudFilesSFTP
@@ -11,12 +11,10 @@ public struct RestorationDetails {
 }
 
 final class RestoreListViewModel {
+  @Dependency var hudController: HUDController
+
   var sftpPublisher: AnyPublisher<Void, Never> {
     sftpSubject.eraseToAnyPublisher()
-  }
-
-  var hudPublisher: AnyPublisher<HUDStatus, Never> {
-    hudSubject.eraseToAnyPublisher()
   }
 
   var detailsPublisher: AnyPublisher<RestorationDetails, Never> {
@@ -24,7 +22,6 @@ final class RestoreListViewModel {
   }
 
   private let sftpSubject = PassthroughSubject<Void, Never>()
-  private let hudSubject = PassthroughSubject<HUDStatus, Never>()
   private let detailsSubject = PassthroughSubject<RestorationDetails, Never>()
 
   func setupSFTP(host: String, username: String, password: String) {
@@ -54,33 +51,33 @@ final class RestoreListViewModel {
         case .success:
           onSuccess()
         case .failure(let error):
-          self.hudSubject.send(.error(.init(with: error)))
+          self.hudController.show(.init(error: error))
         }
       }
     } catch {
-      hudSubject.send(.error(.init(with: error)))
+      hudController.show(.init(error: error))
     }
   }
 
   func fetch(provider: CloudService) {
-    hudSubject.send(.on)
+    hudController.show()
     do {
       try CloudFilesManager.all[provider]!.fetch { [weak self] in
         guard let self else { return }
 
         switch $0 {
         case .success(let metadata):
-          self.hudSubject.send(.none)
+          self.hudController.dismiss()
           self.detailsSubject.send(.init(
             provider: provider,
             metadata: metadata
           ))
         case .failure(let error):
-          self.hudSubject.send(.error(.init(with: error)))
+          self.hudController.show(.init(error: error))
         }
       }
     } catch {
-      hudSubject.send(.error(.init(with: error)))
+      hudController.show(.init(error: error))
     }
   }
 }

@@ -1,4 +1,3 @@
-import HUD
 import UIKit
 import Shared
 import Models
@@ -9,7 +8,6 @@ import DependencyInjection
 import ScrollViewController
 
 public final class ContactController: UIViewController {
-  @Dependency var hud: HUD
   @Dependency var barStylist: StatusBarStylist
   @Dependency var coordinator: ContactCoordinating
 
@@ -75,11 +73,6 @@ public final class ContactController: UIViewController {
   }
 
   private func setupBindings() {
-    viewModel.hudPublisher
-      .receive(on: DispatchQueue.main)
-      .sink { [hud] in hud.update(with: $0) }
-      .store(in: &cancellables)
-
     screenView.cardComponent.avatarView.editButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)

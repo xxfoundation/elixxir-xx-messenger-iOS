@@ -1,12 +1,8 @@
-import HUD
 import UIKit
 import Combine
-import DependencyInjection
 import ScrollViewController
 
 public final class BackupSFTPController: UIViewController {
-  @Dependency private var hud: HUD
-
   lazy private var screenView = BackupSFTPView()
   lazy private var scrollViewController = ScrollViewController()
 
@@ -44,11 +40,6 @@ public final class BackupSFTPController: UIViewController {
   }
 
   private func setupBindings() {
-    viewModel.hudPublisher
-      .receive(on: DispatchQueue.main)
-      .sink { [hud] in hud.update(with: $0) }
-      .store(in: &cancellables)
-
     viewModel.authPublisher
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] params in

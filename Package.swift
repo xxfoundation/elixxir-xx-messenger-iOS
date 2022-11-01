@@ -9,7 +9,6 @@ let package = Package(
   ],
   products: [
     .library(name: "App", targets: ["App"]),
-    .library(name: "HUD", targets: ["HUD"]),
     .library(name: "Shared", targets: ["Shared"]),
     .library(name: "Models", targets: ["Models"]),
     .library(name: "XXLogger", targets: ["XXLogger"]),
@@ -267,13 +266,6 @@ let package = Package(
       ]
     ),
     .target(
-      name: "HUD",
-      dependencies: [
-        .target(name: "Shared"),
-        .product(name: "SnapKit", package: "SnapKit"),
-      ]
-    ),
-    .target(
       name: "XXLogger",
       dependencies: [
         .product(name: "SwiftyBeaver", package: "SwiftyBeaver"),
@@ -318,7 +310,6 @@ let package = Package(
     .target(
       name: "RestoreFeature",
       dependencies: [
-        .target(name: "HUD"),
         .target(name: "Shared"),
         .target(name: "Presentation"),
         .target(name: "DependencyInjection"),
@@ -353,7 +344,6 @@ let package = Package(
     .target(
       name: "ChatFeature",
       dependencies: [
-        .target(name: "HUD"),
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "Keychain"),
@@ -384,7 +374,6 @@ let package = Package(
     .target(
       name: "SearchFeature",
       dependencies: [
-        .target(name: "HUD"),
         .target(name: "Shared"),
         .target(name: "Countries"),
         .target(name: "PushFeature"),
@@ -408,7 +397,6 @@ let package = Package(
     .target(
       name: "LaunchFeature",
       dependencies: [
-        .target(name: "HUD"),
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "PushFeature"),
@@ -454,7 +442,6 @@ let package = Package(
     .target(
       name: "ProfileFeature",
       dependencies: [
-        .target(name: "HUD"),
         .target(name: "Shared"),
         .target(name: "Keychain"),
         .target(name: "Defaults"),
@@ -507,7 +494,6 @@ let package = Package(
     .target(
       name: "OnboardingFeature",
       dependencies: [
-        .target(name: "HUD"),
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "Keychain"),
@@ -547,7 +533,6 @@ let package = Package(
     .target(
       name: "BackupFeature",
       dependencies: [
-        .target(name: "HUD"),
         .target(name: "Shared"),
         .target(name: "Models"),
         .target(name: "InputField"),
@@ -607,7 +592,6 @@ let package = Package(
     .target(
       name: "SettingsFeature",
       dependencies: [
-        .target(name: "HUD"),
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "Keychain"),

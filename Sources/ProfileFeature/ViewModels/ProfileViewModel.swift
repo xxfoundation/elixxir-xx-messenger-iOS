@@ -1,4 +1,3 @@
-import HUD
 import UIKit
 import Shared
 import Models
@@ -35,15 +34,13 @@ final class ProfileViewModel {
 
   @Dependency var messenger: Messenger
   @Dependency var backupService: BackupService
+  @Dependency var hudController: HUDController
   @Dependency var permissions: PermissionHandling
 
   var name: String { username! }
 
   var state: AnyPublisher<ProfileViewState, Never> { stateRelay.eraseToAnyPublisher() }
   private let stateRelay = CurrentValueSubject<ProfileViewState, Never>(.init())
-
-  var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
-  private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
 
   var navigation: AnyPublisher<ProfileNavigationRoutes, Never> { navigationRoutes.eraseToAnyPublisher() }
   private let navigationRoutes = PassthroughSubject<ProfileNavigationRoutes, Never>()
@@ -87,7 +84,7 @@ final class ProfileViewModel {
   }
 
   func didTapDelete(isEmail: Bool) {
-    hudRelay.send(.on)
+    hudController.show()
 
     backgroundScheduler.schedule { [weak self] in
       guard let self = self else { return }
@@ -109,11 +106,11 @@ final class ProfileViewModel {
         }
 
         self.backupService.didUpdateFacts()
-        self.hudRelay.send(.none)
+        self.hudController.dismiss()
         self.refresh()
       } catch {
         let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
-        self.hudRelay.send(.error(.init(content: xxError)))
+        self.hudController.show(.init(content: xxError))
       }
     }
   }

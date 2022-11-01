@@ -1,4 +1,3 @@
-import HUD
 import Shared
 import Models
 import Combine
@@ -43,6 +42,7 @@ enum LaunchRoute {
 
 final class LaunchViewModel {
   @Dependency var database: Database
+  @Dependency var hudController: HUDController
   @Dependency var backupService: BackupService
   @Dependency var versionChecker: VersionChecker
   @Dependency var fetchBannedList: FetchBannedList
@@ -56,10 +56,6 @@ final class LaunchViewModel {
   @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.biometrics, defaultValue: false) var isBiometricsOn: Bool
   @KeyObject(.dummyTrafficOn, defaultValue: false) var dummyTrafficOn: Bool
-
-  var hudPublisher: AnyPublisher<HUDStatus, Never> {
-    hudSubject.eraseToAnyPublisher()
-  }
 
   var authCallbacksCancellable: Cancellable?
   var backupCallbackCancellable: Cancellable?
@@ -88,13 +84,12 @@ final class LaunchViewModel {
 
   private var cancellables = Set<AnyCancellable>()
   private let routeSubject = PassthroughSubject<LaunchRoute, Never>()
-  private let hudSubject = CurrentValueSubject<HUDStatus, Never>(.none)
 
   func viewDidAppear() {
     backgroundScheduler.schedule(after: .init(.now() + 1)) { [weak self] in
       guard let self = self else { return }
 
-      self.hudSubject.send(.on)
+      self.hudController.show()
 
       self.versionChecker().sink { [unowned self] in
         switch $0 {
@@ -150,16 +145,16 @@ final class LaunchViewModel {
       if messenger.isLoggedIn() == false {
         if try messenger.isRegistered() {
           try messenger.logIn()
-          hudSubject.send(.none)
+          hudController.dismiss()
           routeSubject.send(.chats)
         } else {
           try? sftpManager.unlink()
           try? dropboxManager.unlink()
-          hudSubject.send(.none)
+          hudController.dismiss()
           routeSubject.send(.onboarding)
         }
       } else {
-        hudSubject.send(.none)
+        hudController.dismiss()
         routeSubject.send(.chats)
       }
 
@@ -171,7 +166,7 @@ final class LaunchViewModel {
 
     } catch {
       let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
-      hudSubject.send(.error(.init(content: xxError)))
+      hudController.show(.init(content: xxError))
     }
   }
 
@@ -181,7 +176,7 @@ final class LaunchViewModel {
   }
 
   private func presentOnboardingFlow() {
-    hudSubject.send(.none)
+    hudController.dismiss()
     routeSubject.send(.onboarding)
   }
 
@@ -254,15 +249,15 @@ final class LaunchViewModel {
   }
 
   private func versionFailed(error: Error) {
-    let title = Localized.Launch.Version.failed
-    let content = error.localizedDescription
-    let hudError = HUDError(content: content, title: title, dismissable: false)
-
-    hudSubject.send(.error(hudError))
+    hudController.show(.init(
+      title: Localized.Launch.Version.failed,
+      content: error.localizedDescription,
+      isDismissable: false
+    ))
   }
 
   private func versionUpdateRequired(_ info: DappVersionInformation) {
-    hudSubject.send(.none)
+    hudController.dismiss()
 
     let model = Update(
       content: info.minimumMessage,
@@ -276,7 +271,7 @@ final class LaunchViewModel {
   }
 
   private func versionUpdateRecommended(_ info: DappVersionInformation) {
-    hudSubject.send(.none)
+    hudController.dismiss()
 
     let model = Update(
       content: Localized.Launch.Version.Recommended.title,

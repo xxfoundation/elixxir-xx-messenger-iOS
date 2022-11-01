@@ -1,4 +1,3 @@
-import HUD
 import UIKit
 import Models
 import Shared
@@ -20,7 +19,6 @@ typealias OutgoingFailedGroupTextCell = CollectionCell<FlexibleSpace, StackMessa
 typealias OutgoingFailedGroupReplyCell = CollectionCell<FlexibleSpace, ReplyStackMessageView>
 
 public final class GroupChatController: UIViewController {
-  @Dependency var hud: HUD
   @Dependency var database: Database
   @Dependency var barStylist: StatusBarStylist
   @Dependency var coordinator: ChatCoordinating
@@ -180,11 +178,6 @@ public final class GroupChatController: UIViewController {
           coordinator.toWebview(with: urlString, from: self)
         }
       }.store(in: &cancellables)
-
-    viewModel.hudPublisher
-      .receive(on: DispatchQueue.main)
-      .sink { [hud] in hud.update(with: $0) }
-      .store(in: &cancellables)
 
     viewModel.reportPopupPublisher
       .receive(on: DispatchQueue.main)

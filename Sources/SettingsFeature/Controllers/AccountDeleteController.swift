@@ -1,17 +1,15 @@
-import HUD
 import UIKit
-import DrawerFeature
 import Shared
 import Combine
 import Defaults
+import DrawerFeature
 import ScrollViewController
 import DependencyInjection
 
 public final class AccountDeleteController: UIViewController {
     @KeyObject(.username, defaultValue: "") var username: String
 
-    @Dependency private var hud: HUD
-    @Dependency private var coordinator: SettingsCoordinating
+    @Dependency var coordinator: SettingsCoordinating
 
     lazy private var screenView = AccountDeleteView()
     lazy private var scrollViewController = ScrollViewController()
@@ -51,11 +49,6 @@ public final class AccountDeleteController: UIViewController {
     }
 
     private func setupBindings() {
-        viewModel.hudPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [hud] in hud.update(with: $0) }
-            .store(in: &cancellables)
-
         screenView.cancelButton.publisher(for: .touchUpInside)
             .receive(on: DispatchQueue.main)
             .sink { [unowned self] in dismiss(animated: true) }

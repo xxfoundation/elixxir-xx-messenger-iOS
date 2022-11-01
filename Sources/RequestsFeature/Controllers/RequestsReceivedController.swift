@@ -1,4 +1,3 @@
-import HUD
 import UIKit
 import Models
 import Shared
@@ -9,9 +8,8 @@ import DrawerFeature
 import DependencyInjection
 
 final class RequestsReceivedController: UIViewController {
-    @Dependency private var hud: HUD
-    @Dependency private var toaster: ToastController
-    @Dependency private var coordinator: RequestsCoordinating
+    @Dependency var toaster: ToastController
+    @Dependency var coordinator: RequestsCoordinating
 
     lazy private var screenView = RequestsReceivedView()
     private var cancellables = Set<AnyCancellable>()
@@ -76,11 +74,6 @@ final class RequestsReceivedController: UIViewController {
 
             return cell
         }
-
-        viewModel.hudPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [hud] in hud.update(with: $0) }
-            .store(in: &cancellables)
 
         viewModel.verifyingPublisher
             .receive(on: DispatchQueue.main)

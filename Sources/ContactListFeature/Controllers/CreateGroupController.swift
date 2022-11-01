@@ -1,4 +1,3 @@
-import HUD
 import UIKit
 import Models
 import Shared
@@ -7,7 +6,6 @@ import XXModels
 import DependencyInjection
 
 public final class CreateGroupController: UIViewController {
-    @Dependency private var hud: HUD
     @Dependency private var coordinator: ContactListCoordinating
 
     lazy private var titleLabel = UILabel()
@@ -111,11 +109,6 @@ public final class CreateGroupController: UIViewController {
     }
 
     private func setupBindings() {
-        viewModel.hud
-            .receive(on: DispatchQueue.main)
-            .sink { [hud] in hud.update(with: $0) }
-            .store(in: &cancellables)
-
         let selected = viewModel.selected.share()
 
         selected

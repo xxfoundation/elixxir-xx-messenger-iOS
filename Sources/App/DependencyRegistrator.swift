@@ -7,7 +7,6 @@ import MobileCoreServices
 
 // MARK: Isolated features
 
-import HUD
 import Bindings
 import XXLogger
 import Keychain
@@ -110,7 +109,7 @@ struct DependencyRegistrator {
 
     // MARK: Isolated
 
-    container.register(HUD())
+    container.register(HUDController())
     container.register(ToastController())
     container.register(StatusBarStylist())
 

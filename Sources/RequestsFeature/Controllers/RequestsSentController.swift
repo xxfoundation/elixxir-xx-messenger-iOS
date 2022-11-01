@@ -1,12 +1,8 @@
-import HUD
 import UIKit
-import Shared
 import Combine
 import DependencyInjection
 
 final class RequestsSentController: UIViewController {
-    @Dependency private var hud: HUD
-
     var connectionsPublisher: AnyPublisher<Void, Never> {
         connectionSubject.eraseToAnyPublisher()
     }
@@ -45,11 +41,6 @@ final class RequestsSentController: UIViewController {
                 dataSource?.apply($0, animatingDifferences: false)
                 screenView.collectionView.isHidden = $0.numberOfItems == 0
             }.store(in: &cancellables)
-
-        viewModel.hudPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [hud] in hud.update(with: $0) }
-            .store(in: &cancellables)
 
         screenView.connectionsButton
             .publisher(for: .touchUpInside)

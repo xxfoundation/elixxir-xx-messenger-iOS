@@ -1,4 +1,3 @@
-import HUD
 import Shared
 import Models
 import Combine
@@ -19,6 +18,7 @@ struct ProfileCodeViewState: Equatable {
 
 final class ProfileCodeViewModel {
   @Dependency var messenger: Messenger
+  @Dependency var hudController: HUDController
   @Dependency var backupService: BackupService
 
   @KeyObject(.email, defaultValue: nil) var email: String?
@@ -30,9 +30,6 @@ final class ProfileCodeViewModel {
 
   var completionPublisher: AnyPublisher<AttributeConfirmation, Never> { completionRelay.eraseToAnyPublisher() }
   private let completionRelay = PassthroughSubject<AttributeConfirmation, Never>()
-
-  var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
-  private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
 
   var state: AnyPublisher<ProfileCodeViewState, Never> { stateRelay.eraseToAnyPublisher() }
   private let stateRelay = CurrentValueSubject<ProfileCodeViewState, Never>(.init())
@@ -65,7 +62,7 @@ final class ProfileCodeViewModel {
   }
 
   func didTapNext() {
-    hudRelay.send(.on)
+    hudController.show()
 
     backgroundScheduler.schedule { [weak self] in
       guard let self = self else { return }
@@ -83,12 +80,12 @@ final class ProfileCodeViewModel {
         }
 
         self.timer?.invalidate()
-        self.hudRelay.send(.none)
+        self.hudController.dismiss()
         self.completionRelay.send(self.confirmation)
 
         self.backupService.didUpdateFacts()
       } catch {
-        self.hudRelay.send(.error(.init(with: error)))
+        self.hudController.show(.init(error: error))
       }
     }
   }

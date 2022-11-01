@@ -1,4 +1,3 @@
-import HUD
 import UIKit
 import Shared
 import Combine
@@ -9,8 +8,7 @@ import DrawerFeature
 import DependencyInjection
 
 final class SearchLeftController: UIViewController {
-    @Dependency private var hud: HUD
-    @Dependency private var coordinator: SearchCoordinating
+    @Dependency var coordinator: SearchCoordinating
 
     @KeyObject(.email, defaultValue: nil) var email: String?
     @KeyObject(.phone, defaultValue: nil) var phone: String?
@@ -110,24 +108,23 @@ final class SearchLeftController: UIViewController {
     }
 
     private func setupBindings() {
-        viewModel.hudPublisher
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in
-                hud.update(with: $0)
-
-                if case .onAction = $0, let hudBtn = hud.actionButton {
-                    hudBtn.publisher(for: .touchUpInside)
-                        .receive(on: DispatchQueue.main)
-                        .sink { [unowned self] in viewModel.didTapCancelSearch() }
-                        .store(in: &self.hudCancellables)
-                } else {
-                    hudCancellables.forEach { $0.cancel() }
-                    hudCancellables.removeAll()
-                }
-            }
-            .store(in: &cancellables)
-
+//        viewModel.hudPublisher
+//            .removeDuplicates()
+//            .receive(on: DispatchQueue.main)
+//            .sink { [unowned self] in
+//                hud.update(with: $0)
+//
+//                if case .onAction = $0, let hudBtn = hud.actionButton {
+//                    hudBtn.publisher(for: .touchUpInside)
+//                        .receive(on: DispatchQueue.main)
+//                        .sink { [unowned self] in viewModel.didTapCancelSearch() }
+//                        .store(in: &self.hudCancellables)
+//                } else {
+//                    hudCancellables.forEach { $0.cancel() }
+//                    hudCancellables.removeAll()
+//                }
+//            }
+//            .store(in: &cancellables)
 
         viewModel.statePublisher
             .map(\.item)

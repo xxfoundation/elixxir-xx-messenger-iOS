@@ -1,11 +1,8 @@
-import HUD
 import UIKit
-import Shared
 import Combine
 import DependencyInjection
 
 public final class OnboardingStartController: UIViewController {
-    @Dependency private var hud: HUD
     @Dependency private var coordinator: OnboardingCoordinating
 
     lazy private var screenView = OnboardingStartView()
@@ -43,7 +40,9 @@ public final class OnboardingStartController: UIViewController {
     public override func viewDidLoad() {
         super.viewDidLoad()
 
-        screenView.startButton.publisher(for: .touchUpInside)
+        screenView
+        .startButton
+        .publisher(for: .touchUpInside)
             .sink { [unowned self] in coordinator.toTerms(from: self) }
             .store(in: &cancellables)
     }
