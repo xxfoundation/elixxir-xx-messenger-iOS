@@ -251,8 +251,7 @@ final class LaunchViewModel {
   private func versionFailed(error: Error) {
     hudController.show(.init(
       title: Localized.Launch.Version.failed,
-      content: error.localizedDescription,
-      isDismissable: false
+      content: error.localizedDescription
     ))
   }
 

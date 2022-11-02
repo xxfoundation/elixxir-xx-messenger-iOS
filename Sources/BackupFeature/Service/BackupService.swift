@@ -120,9 +120,7 @@ public final class BackupService {
       try messenger.startBackup(
         password: passphrase,
         params: .init(
-          username: username!,
-          email: email,
-          phone: phone
+          username: username!
         )
       )
     } catch {

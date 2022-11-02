@@ -7,6 +7,7 @@ public final class RootViewController: UIViewController {
   @Dependency var hudDispatcher: HUDController
   @Dependency var toastDispatcher: ToastController
 
+  var hud: HUDView?
   let content: UIViewController?
   var cancellables = Set<AnyCancellable>()
 
@@ -60,11 +61,17 @@ public final class RootViewController: UIViewController {
       .modelPublisher
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] model in
-        guard model != nil else {
-          // REMOVE FROM SUPERVIEW
+        guard let model else {
+          guard let hud else { return }
+          UIView.animate(withDuration: 0.2) {
+            hud.alpha = 0.0
+          } completion: { _ in
+            hud.removeFromSuperview()
+            self.hud = nil
+          }
           return
         }
-        // ADD TO SUPERVIEW
+        add(hudView: HUDView().setup(model: model))
       }.store(in: &cancellables)
   }
 }
@@ -166,67 +173,32 @@ extension RootViewController {
 // MARK: - HUD
 
 extension RootViewController {
-  //  private func showWindow() {
-  //    if let animation = animation {
-  //      window?.addSubview(animation)
-  //      animation.setColor(.white)
-  //      animation.snp.makeConstraints { $0.center.equalToSuperview() }
-  //    }
-  //
-  //    if let titleLabel = titleLabel {
-  //      window?.addSubview(titleLabel)
-  //      titleLabel.textAlignment = .center
-  //      titleLabel.numberOfLines = 0
-  //      titleLabel.snp.makeConstraints { make in
-  //        make.left.equalToSuperview().offset(18)
-  //        make.center.equalToSuperview().offset(50)
-  //        make.right.equalToSuperview().offset(-18)
-  //      }
-  //    }
-  //
-  //    if let actionButton = actionButton {
-  //      window?.addSubview(actionButton)
-  //      actionButton.snp.makeConstraints {
-  //        $0.left.equalToSuperview().offset(18)
-  //        $0.right.equalToSuperview().offset(-18)
-  //        $0.bottom.equalToSuperview().offset(-50)
-  //      }
-  //    }
-  //
-  //    if let errorView = errorView {
-  //      window?.addSubview(errorView)
-  //      errorView.snp.makeConstraints { make in
-  //        make.left.equalToSuperview().offset(18)
-  //        make.center.equalToSuperview()
-  //        make.right.equalToSuperview().offset(-18)
-  //      }
-  //
-  //      errorView.button
-  //        .publisher(for: .touchUpInside)
-  //        .receive(on: DispatchQueue.main)
-  //        .sink { [unowned self] in hideWindow() }
-  //        .store(in: &cancellables)
-  //    }
-  //
-  //    window?.alpha = 0.0
-  //    window?.makeKeyAndVisible()
-  //
-  //    UIView.animate(withDuration: 0.3) { self.window?.alpha = 1.0 }
-  //  }
-  //
-  //  private func hideWindow() {
-  //    UIView.animate(withDuration: 0.3) {
-  //      self.window?.alpha = 0.0
-  //    } completion: { _ in
-  //      self.cancellables.removeAll()
-  //      self.errorView = nil
-  //      self.animation = nil
-  //      self.actionButton = nil
-  //      self.titleLabel = nil
-  //      self.window = nil
-  //    }
-  //  }
+  private func add(hudView: HUDView) {
+    if let hud {
+      hud.removeFromSuperview()
+      self.hud = nil
+    }
 
+    hudView.alpha = 0.0
+    hudView.translatesAutoresizingMaskIntoConstraints = false
+    view.addSubview(hudView)
+
+    NSLayoutConstraint.activate([
+      hudView.topAnchor.constraint(equalTo: view.topAnchor),
+      hudView.leftAnchor.constraint(equalTo: view.leftAnchor),
+      hudView.rightAnchor.constraint(equalTo: view.rightAnchor),
+      hudView.bottomAnchor.constraint(equalTo: view.bottomAnchor)
+    ])
+
+    view.setNeedsLayout()
+    view.layoutIfNeeded()
+
+    UIView.animate(withDuration: 0.2) {
+      hudView.alpha = 1.0
+    }
+
+    hud = hudView
+  }
 
   //    if statusSubject.value.isPresented == true && status.isPresented == true {
   //      self.errorView = nil

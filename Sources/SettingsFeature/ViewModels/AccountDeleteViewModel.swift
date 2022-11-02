@@ -48,8 +48,7 @@ final class AccountDeleteViewModel {
       
       hudController.show(.init(
         title: "Account deleted",
-        content: "Now kill the app and re-open",
-        isDismissable: false
+        content: "Now kill the app and re-open"
       ))
     } catch {
       DispatchQueue.main.async { [weak self] in

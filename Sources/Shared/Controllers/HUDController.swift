@@ -14,6 +14,11 @@ public final class HUDController {
   }
 
   public func show(_ model: HUDModel? = nil) {
+    guard let model else {
+      modelSubject.send(.init(hasDotAnimation: true))
+      return
+    }
+
     modelSubject.send(model)
   }
 }
