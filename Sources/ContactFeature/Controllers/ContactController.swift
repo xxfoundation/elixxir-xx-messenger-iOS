@@ -277,7 +277,7 @@ public final class ContactController: UIViewController {
     cancelButton.setStyle(.seeThrough)
     cancelButton.setTitle(Localized.Contact.Clear.cancel, for: .normal)
 
-    let drawer = DrawerController(with: [
+    let drawer = DrawerController([
       DrawerImage(
         image: Asset.drawerNegative.image
       ),
@@ -360,7 +360,7 @@ extension ContactController {
       title: Localized.Settings.InfoDrawer.action
     )
 
-    let drawer = DrawerController(with: [
+    let drawer = DrawerController([
       DrawerText(
         font: Fonts.Mulish.bold.font(size: 26.0),
         text: title,
@@ -397,7 +397,7 @@ extension ContactController {
       style: .red
     ))
 
-    let drawer = DrawerController(with: [
+    let drawer = DrawerController([
       DrawerText(
         font: Fonts.Mulish.bold.font(size: 26.0),
         text: Localized.Contact.Delete.Drawer.title,

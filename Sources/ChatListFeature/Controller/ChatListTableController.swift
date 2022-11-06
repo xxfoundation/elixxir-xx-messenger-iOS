@@ -174,7 +174,7 @@ extension ChatListTableController {
 
         let actionButton = DrawerCapsuleButton(model: .init(title: actionTitle, style: .red))
 
-        let drawer = DrawerController(with: [
+        let drawer = DrawerController([
             DrawerText(
                 font: Fonts.Mulish.bold.font(size: 26.0),
                 text: title,

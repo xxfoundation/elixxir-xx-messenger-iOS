@@ -59,40 +59,40 @@ public final class OnboardingWelcomeController: UIViewController {
     subtitle: String,
     urlString: String = ""
   ) {
-    let actionButton = CapsuleButton()
-    actionButton.set(
-      style: .seeThrough,
-      title: Localized.Settings.InfoDrawer.action
-    )
-
-    let drawer = DrawerController(with: [
-      DrawerText(
-        font: Fonts.Mulish.bold.font(size: 26.0),
-        text: title,
-        color: Asset.neutralActive.color,
-        alignment: .left,
-        spacingAfter: 19
-      ),
-      DrawerLinkText(
-        text: subtitle,
-        urlString: urlString,
-        spacingAfter: 37
-      ),
-      DrawerStack(views: [
-        actionButton,
-        FlexibleSpace()
-      ])
-    ])
-
-    actionButton.publisher(for: .touchUpInside)
-      .receive(on: DispatchQueue.main)
-      .sink {
-        drawer.dismiss(animated: true) { [weak self] in
-          guard let self = self else { return }
-          self.drawerCancellables.removeAll()
-        }
-      }.store(in: &drawerCancellables)
-
-    navigator.perform(PresentDrawer())
+//    let actionButton = CapsuleButton()
+//    actionButton.set(
+//      style: .seeThrough,
+//      title: Localized.Settings.InfoDrawer.action
+//    )
+//
+//    let drawer = DrawerController([
+//      DrawerText(
+//        font: Fonts.Mulish.bold.font(size: 26.0),
+//        text: title,
+//        color: Asset.neutralActive.color,
+//        alignment: .left,
+//        spacingAfter: 19
+//      ),
+//      DrawerLinkText(
+//        text: subtitle,
+//        urlString: urlString,
+//        spacingAfter: 37
+//      ),
+//      DrawerStack(views: [
+//        actionButton,
+//        FlexibleSpace()
+//      ])
+//    ])
+//
+//    actionButton.publisher(for: .touchUpInside)
+//      .receive(on: DispatchQueue.main)
+//      .sink {
+//        drawer.dismiss(animated: true) { [weak self] in
+//          guard let self = self else { return }
+//          self.drawerCancellables.removeAll()
+//        }
+//      }.store(in: &drawerCancellables)
+//
+//    navigator.perform(PresentDrawer())
   }
 }

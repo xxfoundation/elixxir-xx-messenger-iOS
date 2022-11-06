@@ -166,7 +166,7 @@ extension RequestsReceivedController {
             drawerLaterButton
         ])
 
-        let drawer = DrawerController(with: items)
+        let drawer = DrawerController(items)
 
         drawerSendButton.action
             .receive(on: DispatchQueue.main)
@@ -240,7 +240,7 @@ extension RequestsReceivedController {
             drawerLaterButton
         ])
 
-        let drawer = DrawerController(with: items)
+        let drawer = DrawerController(items)
 
         drawerSendButton.action
             .receive(on: DispatchQueue.main)
@@ -344,7 +344,7 @@ extension RequestsReceivedController {
 
         items.append(contentsOf: [drawerAcceptButton, drawerHideButton])
 
-        let drawer = DrawerController(with: items)
+        let drawer = DrawerController(items)
 
         drawerAcceptButton.action
             .receive(on: DispatchQueue.main)
@@ -471,7 +471,7 @@ extension RequestsReceivedController {
 
         items.append(contentsOf: [drawerAcceptButton, drawerHideButton])
 
-        let drawer = DrawerController(with: items)
+        let drawer = DrawerController(items)
 
         var nickname: String?
         var allowsSave = true
@@ -551,7 +551,7 @@ extension RequestsReceivedController {
 
         items.append(drawerDoneButton)
 
-        let drawer = DrawerController(with: items)
+        let drawer = DrawerController(items)
 
         drawerDoneButton.action
             .receive(on: DispatchQueue.main)

@@ -264,7 +264,7 @@ public final class GroupChatController: UIViewController {
       style: .brandColored
     ))
 
-    let drawer = DrawerController(with: [text, button])
+    let drawer = DrawerController([text, button])
 
     button.action
       .receive(on: DispatchQueue.main)

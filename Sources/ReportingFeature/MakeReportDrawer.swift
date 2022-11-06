@@ -34,7 +34,7 @@ extension MakeReportDrawer {
         reportButton.setStyle(.red)
         reportButton.setTitle(Localized.Chat.Report.action, for: .normal)
 
-        let drawer = DrawerController(with: [
+        let drawer = DrawerController([
             DrawerImage(
                 image: Asset.drawerNegative.image
             ),

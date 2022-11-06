@@ -47,22 +47,20 @@ extension LaunchViewModel {
     _ = try? database.bulkUpdateContacts(.init(authStatus: [.verificationInProgress]), .init(authStatus: .verificationFailed))
   }
 
+  func getContactWith(userId: Data) -> XXModels.Contact? {
+    let query = Contact.Query(
+      id: [userId],
+      isBlocked: reportingStatus.isEnabled() ? false : nil,
+      isBanned: reportingStatus.isEnabled() ? false : nil
+    )
 
-  //  func getContactWith(userId: Data) -> XXModels.Contact? {
-  //    let query = Contact.Query(
-  //      id: [userId],
-  //      isBlocked: reportingStatus.isEnabled() ? false : nil,
-  //      isBanned: reportingStatus.isEnabled() ? false : nil
-  //    )
-  //
-  //    guard let database: Database = try? DependencyInjection.Container.shared.resolve(),
-  //          let contact = try? database.fetchContacts(query).first else {
-  //      return nil
-  //    }
-  //
-  //    return contact
-  //  }
+    guard let database: Database = try? DependencyInjection.Container.shared.resolve(),
+          let contact = try? database.fetchContacts(query).first else {
+      return nil
+    }
 
+    return contact
+  }
 
   func getGroupInfoWith(groupId: Data) -> GroupInfo? {
     let query = GroupInfo.Query(groupId: groupId)

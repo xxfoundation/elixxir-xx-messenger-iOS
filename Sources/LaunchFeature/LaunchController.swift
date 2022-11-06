@@ -3,17 +3,18 @@ import Shared
 import Combine
 import Navigation
 import PushFeature
+import XXNavigation
+import DrawerFeature
 import DependencyInjection
 
 public final class LaunchController: UIViewController {
   @Dependency var navigator: Navigator
 
-  // TO REMOVE:
-  public var pendingPushRoute: PushRouter.Route?
-
   private let viewModel = LaunchViewModel()
   private lazy var screenView = LaunchView()
+  public var pendingPushRoute: PushRouter.Route?
   private var cancellables = Set<AnyCancellable>()
+  private var drawerCancellables = Set<AnyCancellable>()
 
   public override func viewDidAppear(_ animated: Bool) {
     super.viewDidAppear(animated)
@@ -38,75 +39,118 @@ public final class LaunchController: UIViewController {
       UIColor(red: 63/255, green: 186/255, blue: 253/255, alpha: 1).cgColor,
       UIColor(red: 98/255, green: 163/255, blue: 255/255, alpha: 1).cgColor
     ]
-
     gradient.frame = screenView.bounds
     gradient.startPoint = CGPoint(x: 1, y: 0)
     gradient.endPoint = CGPoint(x: 0, y: 1)
     screenView.layer.insertSublayer(gradient, at: 0)
   }
 
-  private func offerUpdate(model: Update) {
-    let drawerView = UIView()
-    drawerView.backgroundColor = Asset.neutralSecondary.color
-    drawerView.layer.cornerRadius = 5
+  public override func viewDidLoad() {
+    super.viewDidLoad()
 
-    let vStack = UIStackView()
-    vStack.axis = .vertical
-    vStack.spacing = 10
-    drawerView.addSubview(vStack)
+    viewModel
+      .statePublisher
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        guard $0.shouldPushChats == false else {
+          guard $0.shouldShowTerms == false else {
+            navigator.perform(PresentTermsAndConditions(popAllowed: false))
+            return
+          }
+          if let route = pendingPushRoute {
+            hasPendingPushRoute(route)
+            return
+          }
+          navigator.perform(PresentChatList())
+          return
+        }
+        guard $0.shouldPushOnboarding == false else {
+          navigator.perform(PresentOnboardingStart())
+          return
+        }
+        if let update = $0.shouldOfferUpdate {
+          offerUpdate(model: update)
+        }
+      }.store(in: &cancellables)
+  }
 
-    vStack.snp.makeConstraints {
-      $0.top.equalToSuperview().offset(18)
-      $0.left.equalToSuperview().offset(18)
-      $0.right.equalToSuperview().offset(-18)
-      $0.bottom.equalToSuperview().offset(-18)
+  private func hasPendingPushRoute(_ route: PushRouter.Route) {
+    switch route {
+    case .requests:
+      navigator.perform(PresentRequests())
+    case .search(username: let username):
+      navigator.perform(PresentSearch(searching: username))
+    case .groupChat(id: let groupId):
+      if let info = viewModel.getGroupInfoWith(groupId: groupId) {
+        navigator.perform(PresentGroupChat(model: info))
+        return
+      }
+      navigator.perform(PresentChatList())
+    case .contactChat(id: let userId):
+      if let model = viewModel.getContactWith(userId: userId) {
+        navigator.perform(PresentChat(contact: model))
+        return
+      }
+      navigator.perform(PresentChatList())
     }
+  }
 
-    let title = UILabel()
-    title.text = "App Update"
-    title.textAlignment = .center
-    title.textColor = Asset.neutralDark.color
-
-    let body = UILabel()
-    body.numberOfLines = 0
-    body.textAlignment = .center
-    body.textColor = Asset.neutralDark.color
-
-    let update = CapsuleButton()
-    update.publisher(for: .touchUpInside)
-      .sink { UIApplication.shared.open(.init(string: model.urlString)!, options: [:]) }
-      .store(in: &cancellables)
-
-    vStack.addArrangedSubview(title)
-    vStack.addArrangedSubview(body)
-    vStack.addArrangedSubview(update)
-
-    body.text = model.content
-    update.set(
-      style: model.actionStyle,
+  private func offerUpdate(model: LaunchViewModel.UpdateModel) {
+    let updateButton = CapsuleButton()
+    updateButton.set(
+      style: .brandColored,
       title: model.positiveActionTitle
     )
+    let notNowButton = CapsuleButton()
+    if let negativeTitle = model.negativeActionTitle {
+      notNowButton.set(
+        style: .red,
+        title: negativeTitle
+      )
+    }
+    updateButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) {
+          self.drawerCancellables.removeAll()
+          UIApplication.shared.open(.init(string: model.urlString)!)
+        }
+      }.store(in: &drawerCancellables)
 
-    //    if let negativeTitle = model.negativeActionTitle {
-    //      let negativeButton = CapsuleButton()
-    //      negativeButton.set(style: .simplestColoredRed, title: negativeTitle)
-    //
-    //      negativeButton.publisher(for: .touchUpInside)
-    //        .sink { [unowned self] in
-    //          blocker.hideWindow()
-    //          viewModel.continueWithInitialization()
-    //        }.store(in: &cancellables)
-    //
-    //      vStack.addArrangedSubview(negativeButton)
-    //    }
-    //
-    //    blocker.window?.addSubview(drawerView)
-    //    drawerView.snp.makeConstraints {
-    //      $0.left.equalToSuperview().offset(18)
-    //      $0.center.equalToSuperview()
-    //      $0.right.equalToSuperview().offset(-18)
-    //    }
-    //
-    //    blocker.showWindow()
+    notNowButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) {
+          self.viewModel.didRefuseUpdating()
+        }
+      }.store(in: &drawerCancellables)
+
+    var actions: [UIView] = [updateButton]
+    if model.negativeActionTitle != nil {
+      actions.append(notNowButton)
+    }
+
+    navigator.perform(PresentDrawer(items: [
+      DrawerText(
+        font: Fonts.Mulish.bold.font(size: 26.0),
+        text: "App Update",
+        color: Asset.neutralActive.color,
+        alignment: .center,
+        spacingAfter: 19
+      ),
+      DrawerText(
+        font: Fonts.Mulish.regular.font(size: 16.0),
+        text: model.content,
+        color: Asset.neutralBody.color,
+        alignment: .center,
+        spacingAfter: 19
+      ),
+      DrawerStack(
+        axis: .vertical,
+        views: actions
+      )
+    ], dismissable: false))
   }
 }

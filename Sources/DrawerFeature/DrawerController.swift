@@ -6,8 +6,8 @@ public final class DrawerController: UIViewController {
     private let content: [DrawerItem]
     public var cancellables = Set<AnyCancellable>()
 
-    public init(with content: [DrawerItem]) {
-        self.content = content
+    public init(_ items: [DrawerItem]) {
+        self.content = items
         super.init(nibName: nil, bundle: nil)
 
         let views = content.map { $0.makeView() }

@@ -208,7 +208,7 @@ final class SearchLeftController: UIViewController {
             title: Localized.Ud.Placeholder.Drawer.action
         )
 
-        let drawer = DrawerController(with: [
+        let drawer = DrawerController([
             DrawerText(
                 font: Fonts.Mulish.bold.font(size: 26.0),
                 text: Localized.Ud.Placeholder.Drawer.title,
@@ -282,7 +282,7 @@ final class SearchLeftController: UIViewController {
 
         items.append(drawerSaveButton)
 
-        let drawer = DrawerController(with: items)
+        let drawer = DrawerController(items)
         var nickname: String?
         var allowsSave = true
 
@@ -402,7 +402,7 @@ final class SearchLeftController: UIViewController {
         )
 
         items.append(contentsOf: [drawerSendButton, drawerCancelButton])
-        let drawer = DrawerController(with: items)
+        let drawer = DrawerController(items)
 
         drawerSendButton.action
             .receive(on: DispatchQueue.main)

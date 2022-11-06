@@ -231,7 +231,7 @@ final class BackupConfigController: UIViewController {
             spacingAfter: 40
         )
 
-        let drawer = DrawerController(with: [
+        let drawer = DrawerController([
             DrawerText(
                 font: Fonts.Mulish.extraBold.font(size: 28.0),
                 text: Localized.Backup.Config.infrastructure,
@@ -290,7 +290,7 @@ final class BackupConfigController: UIViewController {
             spacingAfter: 40
         )
 
-        let drawer = DrawerController(with: [
+        let drawer = DrawerController([
             DrawerText(
                 font: Fonts.Mulish.extraBold.font(size: 28.0),
                 text: Localized.Backup.Config.frequency(serviceName),

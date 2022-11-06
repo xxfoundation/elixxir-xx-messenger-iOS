@@ -373,7 +373,7 @@ public final class SingleChatController: UIViewController {
       style: .brandColored
     ))
 
-    let drawer = DrawerController(with: [text, button])
+    let drawer = DrawerController([text, button])
 
     button.action
       .receive(on: DispatchQueue.main)
@@ -406,7 +406,7 @@ public final class SingleChatController: UIViewController {
     cancelButton.setStyle(.seeThrough)
     cancelButton.setTitle(Localized.Chat.Clear.cancel, for: .normal)
 
-    let drawer = DrawerController(with: [
+    let drawer = DrawerController([
       DrawerImage(
         image: Asset.drawerNegative.image
       ),

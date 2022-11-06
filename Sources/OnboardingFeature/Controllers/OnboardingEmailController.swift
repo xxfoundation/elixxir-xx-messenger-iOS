@@ -115,44 +115,42 @@ public final class OnboardingEmailController: UIViewController {
       title: Localized.Settings.InfoDrawer.action
     )
 
-    let drawer = DrawerController(with: [
-      DrawerText(
-        font: Fonts.Mulish.bold.font(size: 26.0),
-        text: title,
-        color: Asset.neutralActive.color,
-        alignment: .left,
-        spacingAfter: 19
-      ),
-      DrawerLinkText(
-        text: subtitle,
-        urlString: urlString,
-        spacingAfter: 37
-      ),
-      DrawerStack(views: [
-        actionButton,
-        FlexibleSpace()
-      ])
-    ])
+//    navigator.perform(PresentDrawer([
+//      DrawerText(
+//        font: Fonts.Mulish.bold.font(size: 26.0),
+//        text: title,
+//        color: Asset.neutralActive.color,
+//        alignment: .left,
+//        spacingAfter: 19
+//      ),
+//      DrawerLinkText(
+//        text: subtitle,
+//        urlString: urlString,
+//        spacingAfter: 37
+//      ),
+//      DrawerStack(views: [
+//        actionButton,
+//        FlexibleSpace()
+//      ])
+//    ]))
 
     actionButton.publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink {
-        drawer.dismiss(animated: true) { [weak self] in
-          guard let self = self else { return }
-          self.drawerCancellables.removeAll()
-        }
+        //        drawer.dismiss(animated: true) { [weak self] in
+        //          guard let self = self else { return }
+        //          self.drawerCancellables.removeAll()
+        //      }
       }.store(in: &drawerCancellables)
-
-    navigator.perform(PresentDrawer())
   }
 }
 
-//        coordinator.toEmailConfirmation(with: $0, from: self) { controller in
-//          let successModel = OnboardingSuccessModel(
-//            title: Localized.Onboarding.Success.Email.title,
-//            subtitle: nil,
-//            nextController: self.coordinator.toPhone(from:)
-//          )
-//
-//          self.coordinator.toSuccess(with: successModel, from: controller)
-//        }
+  //        coordinator.toEmailConfirmation(with: $0, from: self) { controller in
+  //          let successModel = OnboardingSuccessModel(
+  //            title: Localized.Onboarding.Success.Email.title,
+  //            subtitle: nil,
+  //            nextController: self.coordinator.toPhone(from:)
+  //          )
+  //
+  //          self.coordinator.toSuccess(with: successModel, from: controller)
+  //        }

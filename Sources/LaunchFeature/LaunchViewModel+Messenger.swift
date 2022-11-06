@@ -1,3 +1,4 @@
+import Shared
 import XXClient
 import XXModels
 import XXLogger
@@ -392,5 +393,53 @@ extension LaunchViewModel {
 
     DependencyInjection.Container.shared.register(manager)
     try! manager.setStatus(dummyTrafficOn)
+  }
+
+  func setupMessenger() throws {
+    setupLogWriter()
+    setupAuthCallback()
+    setupBackupCallback()
+    setupMessageCallback()
+
+    if messenger.isLoaded() == false {
+      if messenger.isCreated() == false {
+        try messenger.create()
+      }
+
+      try messenger.load()
+    }
+
+    try messenger.start()
+
+    if messenger.isConnected() == false {
+      try messenger.connect()
+      try messenger.listenForMessages()
+    }
+
+    try generateGroupManager()
+    try generateTrafficManager()
+    try generateTransferManager()
+    listenToNetworkUpdates()
+
+    if messenger.isLoggedIn() == false {
+      if try messenger.isRegistered() {
+        try messenger.logIn()
+        hudController.dismiss()
+        stateSubject.value.shouldPushChats = true
+      } else {
+        try? sftpManager.unlink()
+        try? dropboxManager.unlink()
+        hudController.dismiss()
+        stateSubject.value.shouldPushOnboarding = true
+      }
+    } else {
+      hudController.dismiss()
+      stateSubject.value.shouldPushChats = true
+    }
+    if !messenger.isBackupRunning() {
+      try? messenger.resumeBackup()
+    }
+    // TODO: Biometric auth
+
   }
 }

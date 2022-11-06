@@ -43,7 +43,6 @@ extension LaunchViewModel {
           DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
             self.updateBannedList(completion: completion)
           }
-
         case .success(_):
           completion()
         }

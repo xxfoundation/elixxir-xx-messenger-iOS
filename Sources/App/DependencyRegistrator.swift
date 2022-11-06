@@ -29,6 +29,7 @@ import ChatFeature
 import MenuFeature
 import TermsFeature
 import BackupFeature
+import DrawerFeature
 import SearchFeature
 import LaunchFeature
 import RestoreFeature
@@ -62,8 +63,8 @@ struct DependencyRegistrator {
 
   static func registerForMock() {
     container.register(XXLogger.noop)
+    container.register(VersionCheck.mock)
     container.register(CrashReporter.noop)
-    container.register(VersionChecker.mock)
     container.register(ReportingStatus.mock())
     container.register(SendReport.mock())
     container.register(MockNetworkMonitor() as NetworkMonitoring)
@@ -86,8 +87,8 @@ struct DependencyRegistrator {
 
     container.register(KeyObjectStore.userDefaults)
     container.register(XXLogger.live())
+    container.register(VersionCheck.live)
     container.register(CrashReporter.live)
-    container.register(VersionChecker.live())
     container.register(ReportingStatus.live())
     container.register(SendReport.live)
 
@@ -109,6 +110,8 @@ struct DependencyRegistrator {
       PopToRootNavigator(),
       PopToNavigator(),
       SetStackNavigator(),
+
+      OpenUpNavigator(),
 
       PresentOnboardingStartNavigator(
         screen: OnboardingStartController.init,
@@ -160,6 +163,10 @@ struct DependencyRegistrator {
       ),
       PresentOnboardingCodeNavigator(
         screen: OnboardingCodeController.init(_:_:_:),
+        navigationController: { navController }
+      ),
+      PresentDrawerNavigator(
+        screen: DrawerController.init(_:),
         navigationController: { navController }
       )
       //        searchFactory: SearchContainerController.init,

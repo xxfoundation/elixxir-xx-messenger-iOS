@@ -198,7 +198,7 @@ public final class SettingsController: UIViewController {
     cancelButton.setStyle(.seeThrough)
     cancelButton.setTitle(Localized.ChatList.Dashboard.cancel, for: .normal)
 
-    let drawer = DrawerController(with: [
+    let drawer = DrawerController([
       DrawerImage(
         image: Asset.drawerNegative.image
       ),
@@ -259,7 +259,7 @@ extension SettingsController {
       title: Localized.Settings.InfoDrawer.action
     )
 
-    let drawer = DrawerController(with: [
+    let drawer = DrawerController([
       DrawerText(
         font: Fonts.Mulish.bold.font(size: 26.0),
         text: title,

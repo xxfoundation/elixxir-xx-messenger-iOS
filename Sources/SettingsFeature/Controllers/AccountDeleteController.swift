@@ -77,7 +77,7 @@ public final class AccountDeleteController: UIViewController {
             title: Localized.Settings.InfoDrawer.action
         )
 
-        let drawer = DrawerController(with: [
+        let drawer = DrawerController([
             DrawerText(
                 font: Fonts.Mulish.bold.font(size: 26.0),
                 text: title,

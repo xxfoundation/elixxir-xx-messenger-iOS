@@ -105,7 +105,7 @@ extension RestoreController {
             style: .brandColored
         ))
 
-        let drawer = DrawerController(with: [
+        let drawer = DrawerController([
             DrawerText(
                 font: Fonts.Mulish.bold.font(size: 26.0),
                 text: Localized.AccountRestore.Warning.title,
