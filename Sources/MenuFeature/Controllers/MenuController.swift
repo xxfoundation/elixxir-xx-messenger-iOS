@@ -20,7 +20,7 @@ public final class MenuController: UIViewController {
   @Dependency var barStylist: StatusBarStylist
   @Dependency var coordinator: MenuCoordinating
 
-  lazy private var screenView = MenuView()
+  private lazy var screenView = MenuView()
 
   private let previousItem: MenuItem
   private let viewModel = MenuViewModel()

@@ -7,8 +7,8 @@ public final class ContactListController: UIViewController {
   @Dependency var barStylist: StatusBarStylist
   @Dependency var coordinator: ContactListCoordinating
 
-  lazy private var screenView = ContactListView()
-  lazy private var tableController = ContactListTableController(viewModel)
+  private lazy var screenView = ContactListView()
+  private lazy var tableController = ContactListTableController(viewModel)
 
   private let viewModel = ContactListViewModel()
   private var cancellables = Set<AnyCancellable>()

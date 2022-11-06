@@ -11,8 +11,8 @@ public final class AccountDeleteController: UIViewController {
 
     @Dependency var coordinator: SettingsCoordinating
 
-    lazy private var screenView = AccountDeleteView()
-    lazy private var scrollViewController = ScrollViewController()
+    private lazy var screenView = AccountDeleteView()
+    private lazy var scrollViewController = ScrollViewController()
 
     private let viewModel = AccountDeleteViewModel()
     private var cancellables = Set<AnyCancellable>()

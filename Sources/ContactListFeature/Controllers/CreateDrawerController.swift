@@ -3,7 +3,7 @@ import Shared
 import Combine
 
 public final class CreateDrawerController: UIViewController {
-    lazy private var screenView = CreateDrawerView()
+    private lazy var screenView = CreateDrawerView()
 
     private let selectedCount: Int
     private let viewModel = CreateDrawerViewModel()

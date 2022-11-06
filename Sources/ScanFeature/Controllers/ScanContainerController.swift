@@ -8,7 +8,7 @@ public final class ScanContainerController: UIViewController {
   @Dependency var barStylist: StatusBarStylist
   @Dependency var coordinator: ScanCoordinating
 
-  lazy private var screenView = ScanContainerView()
+  private lazy var screenView = ScanContainerView()
 
   private let scanController = ScanController()
   private var cancellables = Set<AnyCancellable>()

@@ -1,5 +1,4 @@
 import UIKit
-import Models
 import Shared
 import Combine
 import XXModels
@@ -10,11 +9,11 @@ public final class ChatListController: UIViewController {
   @Dependency var barStylist: StatusBarStylist
   @Dependency var coordinator: ChatListCoordinating
 
-  lazy private var screenView = ChatListView()
-  lazy private var topLeftView = ChatListTopLeftNavView()
-  lazy private var topRightView = ChatListTopRightNavView()
-  lazy private var tableController = ChatListTableController(viewModel)
-  lazy private var searchTableController = ChatSearchTableController(viewModel)
+  private lazy var screenView = ChatListView()
+  private lazy var topLeftView = ChatListTopLeftNavView()
+  private lazy var topRightView = ChatListTopRightNavView()
+  private lazy var tableController = ChatListTableController(viewModel)
+  private lazy var searchTableController = ChatSearchTableController(viewModel)
   private var collectionDataSource: UICollectionViewDiffableDataSource<SectionId, Contact>!
 
   private let viewModel = ChatListViewModel()

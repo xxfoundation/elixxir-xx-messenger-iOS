@@ -7,7 +7,7 @@ public final class RestoreSuccessController: UIViewController {
   @Dependency var barStylist: StatusBarStylist
   @Dependency var coordinator: RestoreCoordinating
 
-  lazy private var screenView = RestoreSuccessView()
+  private lazy var screenView = RestoreSuccessView()
   private var cancellables = Set<AnyCancellable>()
 
   public override func loadView() {

@@ -8,7 +8,7 @@ public final class ProfileController: UIViewController {
   @Dependency var barStylist: StatusBarStylist
   @Dependency var coordinator: ProfileCoordinating
 
-  lazy private var screenView = ProfileView()
+  private lazy var screenView = ProfileView()
 
   private let viewModel = ProfileViewModel()
   private var cancellables = Set<AnyCancellable>()

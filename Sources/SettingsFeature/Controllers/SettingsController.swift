@@ -9,8 +9,8 @@ public final class SettingsController: UIViewController {
   @Dependency var barStylist: StatusBarStylist
   @Dependency var coordinator: SettingsCoordinating
 
-  lazy private var scrollViewController = ScrollViewController()
-  lazy private var screenView = SettingsView {
+  private lazy var scrollViewController = ScrollViewController()
+  private lazy var screenView = SettingsView {
     switch $0 {
     case .icognitoKeyboard:
       self.presentInfo(

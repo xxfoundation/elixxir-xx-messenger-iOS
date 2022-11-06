@@ -1,63 +1,59 @@
 import Shared
-import Models
 import Combine
 import XXClient
 import Countries
 import InputField
 import Foundation
 import CombineSchedulers
-import DependencyInjection
 import XXMessengerClient
-
-struct ProfilePhoneViewState: Equatable {
-  var input: String = ""
-  var confirmation: AttributeConfirmation? = nil
-  var status: InputField.ValidationStatus = .unknown(nil)
-  var country: Country = .fromMyPhone()
-}
+import DependencyInjection
 
 final class ProfilePhoneViewModel {
+  struct ViewState: Equatable {
+    var input: String = ""
+    var content: String?
+    var confirmationId: String?
+    var status: InputField.ValidationStatus = .unknown(nil)
+    var country: Country = .fromMyPhone()
+  }
+
   @Dependency var messenger: Messenger
   @Dependency var hudController: HUDController
 
-  var state: AnyPublisher<ProfilePhoneViewState, Never> { stateRelay.eraseToAnyPublisher() }
-  private let stateRelay = CurrentValueSubject<ProfilePhoneViewState, Never>(.init())
+  var statePublisher: AnyPublisher<ViewState, Never> {
+    stateSubject.eraseToAnyPublisher()
+  }
 
-  var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
+  private let stateSubject = CurrentValueSubject<ViewState, Never>(.init())
+  private var scheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
   func didInput(_ string: String) {
-    stateRelay.value.input = string
+    stateSubject.value.input = string
     validate()
   }
 
   func clearUp() {
-    stateRelay.value.confirmation = nil
+    stateSubject.value.confirmationId = nil
   }
 
   func didChooseCountry(_ country: Country) {
-    stateRelay.value.country = country
+    stateSubject.value.country = country
     validate()
   }
 
   func didTapNext() {
     hudController.show()
-
-    backgroundScheduler.schedule { [weak self] in
+    scheduler.schedule { [weak self] in
       guard let self = self else { return }
-
-      let content = "\(self.stateRelay.value.input)\(self.stateRelay.value.country.code)"
-
+      let content = "\(self.stateSubject.value.input)\(self.stateSubject.value.country.code)"
       do {
         let confirmationId = try self.messenger.ud.get()!.sendRegisterFact(
           .init(type: .phone, value: content)
         )
 
         self.hudController.dismiss()
-        self.stateRelay.value.confirmation = .init(
-          content: content,
-          confirmationId: confirmationId
-        )
-
+        self.stateSubject.value.content = content
+        self.stateSubject.value.confirmationId = confirmationId
       } catch {
         let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
         self.hudController.show(.init(content: xxError))
@@ -66,11 +62,11 @@ final class ProfilePhoneViewModel {
   }
 
   private func validate() {
-    switch Validator.phone.validate((stateRelay.value.country.regex, stateRelay.value.input)) {
+    switch Validator.phone.validate((stateSubject.value.country.regex, stateSubject.value.input)) {
     case .success:
-      stateRelay.value.status = .valid(nil)
+      stateSubject.value.status = .valid(nil)
     case .failure(let error):
-      stateRelay.value.status = .invalid(error)
+      stateSubject.value.status = .invalid(error)
     }
   }
 }

@@ -1,5 +1,4 @@
 import UIKit
-import Models
 import Defaults
 import XXClient
 import XXModels

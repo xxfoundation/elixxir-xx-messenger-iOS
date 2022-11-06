@@ -7,7 +7,7 @@ import DependencyInjection
 public final class CountryListController: UIViewController {
   @Dependency var barStylist: StatusBarStylist
 
-  lazy private var screenView = CountryListView()
+  private lazy var screenView = CountryListView()
 
   private var didChoose: ((Country) -> Void)!
   private let viewModel = CountryListViewModel()

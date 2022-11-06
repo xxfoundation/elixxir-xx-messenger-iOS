@@ -9,7 +9,7 @@ final class ScanController: UIViewController {
     @Dependency private var coordinator: ScanCoordinating
     @Dependency private var permissions: PermissionHandling
 
-    lazy private var screenView = ScanView()
+    private lazy var screenView = ScanView()
 
     var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 

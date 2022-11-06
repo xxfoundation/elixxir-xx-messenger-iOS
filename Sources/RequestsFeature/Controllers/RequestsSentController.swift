@@ -7,7 +7,7 @@ final class RequestsSentController: UIViewController {
         connectionSubject.eraseToAnyPublisher()
     }
 
-    lazy private var screenView = RequestsSentView()
+    private lazy var screenView = RequestsSentView()
     private let viewModel = RequestsSentViewModel()
     private var cancellables = Set<AnyCancellable>()
     private let tapSubject = PassthroughSubject<Request, Never>()

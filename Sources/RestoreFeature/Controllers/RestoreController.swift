@@ -7,7 +7,7 @@ import DependencyInjection
 public final class RestoreController: UIViewController {
     @Dependency private var coordinator: RestoreCoordinating
 
-    lazy private var screenView = RestoreView()
+    private lazy var screenView = RestoreView()
 
     private let viewModel: RestoreViewModel
     private var cancellables = Set<AnyCancellable>()

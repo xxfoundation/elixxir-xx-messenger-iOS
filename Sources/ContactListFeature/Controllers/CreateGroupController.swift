@@ -1,5 +1,4 @@
 import UIKit
-import Models
 import Shared
 import Combine
 import XXModels
@@ -8,9 +7,9 @@ import DependencyInjection
 public final class CreateGroupController: UIViewController {
     @Dependency private var coordinator: ContactListCoordinating
 
-    lazy private var titleLabel = UILabel()
-    lazy private var createButton = UIButton()
-    lazy private var screenView = CreateGroupView()
+    private lazy var titleLabel = UILabel()
+    private lazy var createButton = UIButton()
+    private lazy var screenView = CreateGroupView()
 
     private var selectedElements = [Contact]() {
         didSet { screenView.tableView.reloadData() }

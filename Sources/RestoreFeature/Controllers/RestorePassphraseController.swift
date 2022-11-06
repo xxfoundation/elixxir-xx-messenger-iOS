@@ -4,7 +4,7 @@ import Combine
 import InputField
 
 public final class RestorePassphraseController: UIViewController {
-  lazy private var screenView = RestorePassphraseView()
+  private lazy var screenView = RestorePassphraseView()
 
   private var passphrase = "" {
     didSet {

@@ -1,5 +1,4 @@
 import UIKit
-import Models
 import Shared
 import Combine
 import XXModels
@@ -28,7 +27,7 @@ public final class GroupChatController: UIViewController {
 
   private let members: MembersController
   private var collectionView: UICollectionView!
-  lazy private var header = GroupHeaderView()
+  private lazy var header = GroupHeaderView()
   private let inputComponent: ChatInputView
 
   private var animator: ManualAnimator?

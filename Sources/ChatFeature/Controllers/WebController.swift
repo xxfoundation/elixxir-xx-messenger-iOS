@@ -2,68 +2,61 @@ import UIKit
 import WebKit
 
 public final class WebScreen: UIViewController {
-    lazy private(set) var webView = WebView()
+  private let url: URL
+  private lazy var screenView = WebView()
 
-    private var url: String!
+  public init(_ urlString: String) {
+    self.url = .init(string: urlString)!
+    super.init(nibName: nil, bundle: nil)
+  }
 
-    public init(url: String) {
-        self.url = url
-        super.init(nibName: nil, bundle: nil)
-    }
+  required init?(coder: NSCoder) { nil }
 
-    public required init?(coder: NSCoder) { nil }
+  public override func loadView() {
+    view = screenView
+  }
 
-    public override func viewDidLoad() {
-        super.viewDidLoad()
-        setupScreen()
-    }
+  public override func viewDidLoad() {
+    super.viewDidLoad()
+    screenView.webView.load(URLRequest(url: url))
+    screenView.closeButton = UIBarButtonItem(
+      title: "Close",
+      style: .done,
+      target: self,
+      action: #selector(didTappedClose))
+  }
 
-    private func setupScreen() {
-        view.addSubview(webView)
-        webView.snp.makeConstraints { $0.edges.equalToSuperview() }
-
-        webView.webView.load(URLRequest(url: URL(string: url)!))
-        webView.closeButton = UIBarButtonItem(title: "Close", style: .done, target: self,
-                                              action: #selector(didTappedClose))
-    }
-
-    @objc private func didTappedClose() {
-        dismiss(animated: true)
-    }
+  @objc private func didTappedClose() {
+    dismiss(animated: true)
+  }
 }
 
 final class WebView: UIView {
+  let webView = WKWebView()
+  let navBar = UINavigationBar()
+  var closeButton: UIBarButtonItem! {
+    didSet { navBar.topItem?.leftBarButtonItem = closeButton }
+  }
 
-    let webView = WKWebView()
-    let navBar = UINavigationBar()
-    var closeButton: UIBarButtonItem! {
-        didSet { navBar.topItem?.leftBarButtonItem = closeButton }
+  init() {
+    super.init(frame: .zero)
+    backgroundColor = .white
+    navBar.items = [UINavigationItem(title: "")]
+    addSubview(webView)
+    addSubview(navBar)
+
+    navBar.snp.makeConstraints {
+      $0.top.equalTo(safeAreaLayoutGuide)
+      $0.left.equalToSuperview()
+      $0.right.equalToSuperview()
     }
-
-    init() {
-        super.init(frame: .zero)
-        setupLayout()
+    webView.snp.makeConstraints {
+      $0.bottom.equalToSuperview()
+      $0.left.equalToSuperview()
+      $0.right.equalToSuperview()
+      $0.top.equalTo(navBar.snp.bottom)
     }
+  }
 
-    required init?(coder: NSCoder) { nil }
-
-    private func setupLayout() {
-        backgroundColor = .white
-        navBar.items = [UINavigationItem(title: "")]
-        addSubview(webView)
-        addSubview(navBar)
-
-        navBar.snp.makeConstraints { make -> Void in
-            make.top.equalTo(safeAreaLayoutGuide)
-            make.left.equalToSuperview()
-            make.right.equalToSuperview()
-        }
-
-        webView.snp.makeConstraints { make -> Void in
-            make.bottom.equalToSuperview()
-            make.left.equalToSuperview()
-            make.right.equalToSuperview()
-            make.top.equalTo(navBar.snp.bottom)
-        }
-    }
+  required init?(coder: NSCoder) { nil }
 }

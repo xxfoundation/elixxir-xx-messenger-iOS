@@ -1,5 +1,4 @@
 import UIKit
-import Models
 import Shared
 import Combine
 import XXLogger
@@ -31,13 +30,13 @@ public final class SingleChatController: UIViewController {
   @Dependency var makeReportDrawer: MakeReportDrawer
   @Dependency var makeAppScreenshot: MakeAppScreenshot
 
-  lazy private var infoView = UIControl()
-  lazy private var nameLabel = UILabel()
-  lazy private var avatarView = AvatarView()
+  private lazy var infoView = UIControl()
+  private lazy var nameLabel = UILabel()
+  private lazy var avatarView = AvatarView()
 
-  lazy private var moreButton = UIButton()
-  lazy private var screenView = ChatView()
-  lazy private var sheet = SheetController()
+  private lazy var moreButton = UIButton()
+  private lazy var screenView = ChatView()
+  private lazy var sheet = SheetController()
 
   private let inputComponent: ChatInputView
   private var collectionView: UICollectionView!

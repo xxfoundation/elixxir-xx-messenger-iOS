@@ -3,7 +3,7 @@ import Combine
 import DependencyInjection
 
 final class RequestsFailedController: UIViewController {
-    lazy private var screenView = RequestsFailedView()
+    private lazy var screenView = RequestsFailedView()
     private var cancellables = Set<AnyCancellable>()
     private let viewModel = RequestsFailedViewModel()
     private var dataSource: UICollectionViewDiffableDataSource<Section, Request>?

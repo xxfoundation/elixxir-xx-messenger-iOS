@@ -8,15 +8,15 @@ public final class RootViewController: UIViewController {
   @Dependency var toastDispatcher: ToastController
 
   var hud: HUDView?
-  let content: UIViewController?
   var cancellables = Set<AnyCancellable>()
+  public let navController: UINavigationController
 
   var toastTimer: Timer?
   let toastTopPadding: CGFloat = 10
   var topToastConstraint: NSLayoutConstraint?
 
-  public init(_ content: UIViewController?) {
-    self.content = content
+  public init(_ content: UINavigationController) {
+    self.navController = content
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -29,15 +29,11 @@ public final class RootViewController: UIViewController {
   public override func viewDidLoad() {
     super.viewDidLoad()
 
-    if let content {
-      addChild(content)
-      view.addSubview(content.view)
-      content.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-      content.view.frame = view.bounds
-      content.didMove(toParent: self)
-    } else {
-      view.isUserInteractionEnabled = false
-    }
+    addChild(navController)
+    view.addSubview(navController.view)
+    navController.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+    navController.view.frame = view.bounds
+    navController.didMove(toParent: self)
 
     barStylist
       .styleSubject

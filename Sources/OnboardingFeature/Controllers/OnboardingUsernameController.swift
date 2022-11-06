@@ -1,16 +1,18 @@
 import UIKit
 import Shared
 import Combine
+import Navigation
+import XXNavigation
 import DrawerFeature
 import DependencyInjection
 import ScrollViewController
 
 public final class OnboardingUsernameController: UIViewController {
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: OnboardingCoordinating
 
-  lazy private var screenView = OnboardingUsernameView()
-  lazy private var scrollViewController = ScrollViewController()
+  private lazy var screenView = OnboardingUsernameView()
+  private lazy var scrollViewController = ScrollViewController()
 
   private var cancellables = Set<AnyCancellable>()
   private let viewModel = OnboardingUsernameViewModel()
@@ -27,9 +29,9 @@ public final class OnboardingUsernameController: UIViewController {
     super.viewDidLoad()
     setupScrollView()
     setupBindings()
-
     screenView.didTapInfo = { [weak self] in
-      self?.presentInfo(
+      guard let self else { return }
+      self.presentInfo(
         title: Localized.Onboarding.Username.Info.title,
         subtitle: Localized.Onboarding.Username.Info.subtitle,
         urlString: "https://links.xx.network/ud"
@@ -39,28 +41,37 @@ public final class OnboardingUsernameController: UIViewController {
 
   private func setupScrollView() {
     scrollViewController.scrollView.backgroundColor = .white
-
     addChild(scrollViewController)
     view.addSubview(scrollViewController.view)
-    scrollViewController.view.snp.makeConstraints { $0.edges.equalToSuperview() }
+    scrollViewController.view.snp.makeConstraints {
+      $0.edges.equalToSuperview()
+    }
     scrollViewController.didMove(toParent: self)
     scrollViewController.contentView = screenView
   }
 
   private func setupBindings() {
-    screenView.inputField.textPublisher
+    screenView
+      .inputField
+      .textPublisher
       .removeDuplicates()
       .compactMap { $0 }
-      .sink { [unowned self] in viewModel.didInput($0) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        viewModel.didInput($0)
+      }.store(in: &cancellables)
 
-    screenView.restoreView.restoreButton
+    screenView
+      .restoreView
+      .restoreButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in coordinator.toRestoreList(from: self) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigator.perform(PresentRestoreList())
+      }.store(in: &cancellables)
 
-    screenView.inputField.returnPublisher
+    screenView
+      .inputField
+      .returnPublisher
       .sink { [unowned self] in
         if screenView.nextButton.isEnabled {
           viewModel.didTapRegister()
@@ -69,21 +80,29 @@ public final class OnboardingUsernameController: UIViewController {
         }
       }.store(in: &cancellables)
 
-    screenView.nextButton.publisher(for: .touchUpInside)
-      .sink { [unowned self] in viewModel.didTapRegister() }
-      .store(in: &cancellables)
+    screenView
+      .nextButton
+      .publisher(for: .touchUpInside)
+      .sink { [unowned self] in
+        viewModel.didTapRegister()
+      }.store(in: &cancellables)
 
-    viewModel.greenPublisher
+    viewModel
+      .statePublisher
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in coordinator.toWelcome(from: self) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        guard $0.didConfirm == true else { return }
+        navigator.perform(PresentOnboardingWelcome())
+      }.store(in: &cancellables)
 
-    viewModel.state
+    viewModel
+      .statePublisher
       .map(\.status)
       .removeDuplicates()
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in screenView.update(status: $0) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        screenView.update(status: $0)
+      }.store(in: &cancellables)
   }
 
   private func presentInfo(
@@ -125,6 +144,6 @@ public final class OnboardingUsernameController: UIViewController {
         }
       }.store(in: &drawerCancellables)
 
-    coordinator.toDrawer(drawer, from: self)
+    navigator.perform(PresentDrawer())
   }
 }

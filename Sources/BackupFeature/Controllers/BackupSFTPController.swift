@@ -3,8 +3,8 @@ import Combine
 import ScrollViewController
 
 public final class BackupSFTPController: UIViewController {
-  lazy private var screenView = BackupSFTPView()
-  lazy private var scrollViewController = ScrollViewController()
+  private lazy var screenView = BackupSFTPView()
+  private lazy var scrollViewController = ScrollViewController()
 
   private let completion: (String, String, String) -> Void
   private let viewModel = BackupSFTPViewModel()

@@ -9,7 +9,7 @@ public final class SearchContainerController: UIViewController {
   @Dependency var barStylist: StatusBarStylist
   @Dependency var coordinator: SearchCoordinating
 
-  lazy private var screenView = SearchContainerView()
+  private lazy var screenView = SearchContainerView()
 
   private var contentOffset: CGPoint?
   private var cancellables = Set<AnyCancellable>()

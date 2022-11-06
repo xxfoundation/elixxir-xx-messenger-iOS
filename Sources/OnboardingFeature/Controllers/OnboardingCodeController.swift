@@ -1,29 +1,37 @@
 import UIKit
 import Shared
-import Models
 import Combine
+import Navigation
+import XXNavigation
 import DrawerFeature
 import DependencyInjection
 import ScrollViewController
 
-public final class OnboardingEmailConfirmationController: UIViewController {
+public final class OnboardingCodeController: UIViewController {
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: OnboardingCoordinating
 
-  lazy private var screenView = OnboardingEmailConfirmationView()
-  lazy private var scrollViewController = ScrollViewController()
+  private lazy var screenView = OnboardingCodeView()
+  private lazy var scrollViewController = ScrollViewController()
 
+  private let isEmail: Bool
+  private let content: String
+  private let viewModel: OnboardingCodeViewModel
   private var cancellables = Set<AnyCancellable>()
-  private let completion: (UIViewController) -> Void
   private var drawerCancellables = Set<AnyCancellable>()
-  private let viewModel: OnboardingEmailConfirmationViewModel
 
   public init(
-    _ confirmation: AttributeConfirmation,
-    _ completion: @escaping (UIViewController) -> Void
+    _ isEmail: Bool,
+    _ content: String,
+    _ confirmationId: String
   ) {
-    self.completion = completion
-    self.viewModel = OnboardingEmailConfirmationViewModel(confirmation)
+    self.viewModel = .init(
+      isEmail: isEmail,
+      content: content,
+      confirmationId: confirmationId
+    )
+    self.isEmail = isEmail
+    self.content = content
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -42,14 +50,24 @@ public final class OnboardingEmailConfirmationController: UIViewController {
     setupBindings()
 
     screenView.setupSubtitle(
-      Localized.Onboarding.EmailConfirmation.subtitle(viewModel.confirmation.content)
+      isEmail ?
+      Localized.Onboarding.EmailConfirmation.subtitle(content) :
+      Localized.Onboarding.PhoneConfirmation.subtitle(content)
     )
 
     screenView.didTapInfo = { [weak self] in
-      self?.presentInfo(
-        title: Localized.Onboarding.EmailConfirmation.Info.title,
-        subtitle: Localized.Onboarding.EmailConfirmation.Info.subtitle
-      )
+      guard let self else { return }
+      if self.isEmail {
+        self.presentInfo(
+          title: Localized.Onboarding.EmailConfirmation.Info.title,
+          subtitle: Localized.Onboarding.EmailConfirmation.Info.subtitle
+        )
+      } else {
+        self.presentInfo(
+          title: Localized.Onboarding.PhoneConfirmation.Info.title,
+          subtitle: Localized.Onboarding.PhoneConfirmation.Info.subtitle
+        )
+      }
     }
   }
 
@@ -63,40 +81,57 @@ public final class OnboardingEmailConfirmationController: UIViewController {
   }
 
   private func setupBindings() {
-    screenView.inputField.textPublisher
-      .sink { [unowned self] in viewModel.didInput($0) }
-      .store(in: &cancellables)
+    screenView
+      .inputField
+      .textPublisher
+      .sink { [unowned self] in
+        viewModel.didInput($0)
+      }.store(in: &cancellables)
 
-    viewModel.state
+    viewModel
+      .statePublisher
       .map(\.status)
       .removeDuplicates()
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in screenView.update(status: $0) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        screenView.update(status: $0)
+      }.store(in: &cancellables)
 
-    screenView.nextButton
+    viewModel
+      .statePublisher
+      .map(\.didConfirm)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        guard $0 == true else { return }
+        if isEmail {
+          navigator.perform(PresentOnboardingPhone())
+        } else {
+          navigator.perform(PresentChatList())
+        }
+      }.store(in: &cancellables)
+
+    screenView
+      .nextButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in viewModel.didTapNext() }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        viewModel.didTapNext()
+      }.store(in: &cancellables)
 
-    viewModel.completionPublisher
-      .receive(on: DispatchQueue.main)
-      .sink { [unowned self] _ in completion(self) }
-      .store(in: &cancellables)
-
-    screenView.resendButton
+    screenView
+      .resendButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in viewModel.didTapResend() }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        viewModel.didTapResend()
+      }.store(in: &cancellables)
 
-    viewModel.state
+    viewModel
+      .statePublisher
       .map(\.resendDebouncer)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
         screenView.resendButton.isEnabled = $0 == 0
-
         if $0 == 0 {
           screenView.resendButton.setTitle(Localized.Profile.Code.resend(""), for: .normal)
         } else {
@@ -140,6 +175,6 @@ public final class OnboardingEmailConfirmationController: UIViewController {
         }
       }.store(in: &drawerCancellables)
 
-    coordinator.toDrawer(drawer, from: self)
+    navigator.perform(PresentDrawer())
   }
 }

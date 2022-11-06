@@ -1,16 +1,18 @@
 import UIKit
 import Shared
 import Combine
+import Navigation
+import XXNavigation
 import DrawerFeature
 import DependencyInjection
 import ScrollViewController
 
 public final class OnboardingPhoneController: UIViewController {
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: OnboardingCoordinating
 
-  lazy private var screenView = OnboardingPhoneView()
-  lazy private var scrollViewController = ScrollViewController()
+  private lazy var screenView = OnboardingPhoneView()
+  private lazy var scrollViewController = ScrollViewController()
 
   private var cancellables = Set<AnyCancellable>()
   private let viewModel = OnboardingPhoneViewModel()
@@ -25,12 +27,11 @@ public final class OnboardingPhoneController: UIViewController {
   public override func viewDidLoad() {
     super.viewDidLoad()
     navigationItem.backButtonTitle = " "
-
     setupScrollView()
     setupBindings()
-
     screenView.didTapInfo = { [weak self] in
-      self?.presentInfo(
+      guard let self else { return }
+      self.presentInfo(
         title: Localized.Onboarding.Phone.Info.title,
         subtitle: Localized.Onboarding.Phone.Info.subtitle,
         urlString: "https://links.xx.network/ud"
@@ -41,58 +42,78 @@ public final class OnboardingPhoneController: UIViewController {
   private func setupScrollView() {
     addChild(scrollViewController)
     view.addSubview(scrollViewController.view)
-    scrollViewController.view.snp.makeConstraints { $0.edges.equalToSuperview() }
+    scrollViewController.view.snp.makeConstraints {
+      $0.edges.equalToSuperview()
+    }
     scrollViewController.didMove(toParent: self)
     scrollViewController.contentView = screenView
     scrollViewController.scrollView.backgroundColor = Asset.neutralWhite.color
   }
 
   private func setupBindings() {
-    screenView.inputField.textPublisher
-      .sink { [unowned self] in viewModel.didInput($0) }
-      .store(in: &cancellables)
+    screenView
+      .inputField
+      .textPublisher
+      .sink { [unowned self] in
+        viewModel.didInput($0)
+      }.store(in: &cancellables)
 
-    screenView.inputField.returnPublisher
-      .sink { [unowned self] in screenView.inputField.endEditing(true) }
-      .store(in: &cancellables)
+    screenView
+      .inputField
+      .returnPublisher
+      .sink { [unowned self] in
+        screenView.inputField.endEditing(true)
+      }.store(in: &cancellables)
 
-    viewModel.state.map(\.status)
+    viewModel
+      .statePublisher
+      .map(\.status)
       .removeDuplicates()
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in screenView.update(status: $0) }
-      .store(in: &cancellables)
-
-    screenView.nextButton.publisher(for: .touchUpInside)
-      .sink { [unowned self] in viewModel.didTapNext() }
-      .store(in: &cancellables)
-
-    screenView.skipButton.publisher(for: .touchUpInside)
-      .sink { [unowned self] in coordinator.toChats(from: self) }
-      .store(in: &cancellables)
-
-    screenView.inputField.codePublisher
-      .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        coordinator.toCountries(from: self) { self.viewModel.didChooseCountry($0) }
+        screenView.update(status: $0)
       }.store(in: &cancellables)
 
-    viewModel.state.map(\.confirmation)
-      .receive(on: DispatchQueue.main)
-      .compactMap { $0 }
+    screenView
+      .nextButton
+      .publisher(for: .touchUpInside)
       .sink { [unowned self] in
+        viewModel.didTapNext()
+      }.store(in: &cancellables)
+
+    screenView
+      .skipButton
+      .publisher(for: .touchUpInside)
+      .sink { [unowned self] in
+        navigator.perform(PresentChatList())
+      }.store(in: &cancellables)
+
+    screenView
+      .inputField
+      .codePublisher
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(PresentCountryList())
+      }.store(in: &cancellables)
+
+    viewModel
+      .statePublisher
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        guard let id = $0.confirmationId, let content = $0.content else { return }
         viewModel.clearUp()
-        coordinator.toPhoneConfirmation(with: $0, from: self) { controller in
-          let successModel = OnboardingSuccessModel(
-            title: Localized.Onboarding.Success.Phone.title,
-            subtitle: nil,
-            nextController: self.coordinator.toChats(from:)
+        navigator.perform(
+          PresentOnboardingCode(
+            isEmail: false,
+            content: content,
+            confirmationId: id
           )
-
-          self.coordinator.toSuccess(with: successModel, from: controller)
-        }
+        )
       }.store(in: &cancellables)
 
-    viewModel.state.map(\.country)
+    viewModel
+      .statePublisher
+      .map(\.country)
       .removeDuplicates()
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
@@ -140,6 +161,16 @@ public final class OnboardingPhoneController: UIViewController {
         }
       }.store(in: &drawerCancellables)
 
-    coordinator.toDrawer(drawer, from: self)
+    navigator.perform(PresentDrawer())
   }
 }
+
+//        coordinator.toPhoneConfirmation(with: $0, from: self) { controller in
+//          let successModel = OnboardingSuccessModel(
+//            title: Localized.Onboarding.Success.Phone.title,
+//            subtitle: nil,
+//            nextController: self.coordinator.toChats(from:)
+//          )
+//
+//          self.coordinator.toSuccess(with: successModel, from: controller)
+//        }

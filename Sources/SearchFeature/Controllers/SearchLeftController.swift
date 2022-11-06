@@ -15,7 +15,7 @@ final class SearchLeftController: UIViewController {
     @KeyObject(.sharingEmail, defaultValue: false) var isSharingEmail: Bool
     @KeyObject(.sharingPhone, defaultValue: false) var isSharingPhone: Bool
 
-    lazy private var screenView = SearchLeftView()
+    private lazy var screenView = SearchLeftView()
 
     let viewModel: SearchLeftViewModel
     private var dataSource: SearchDiffableDataSource!

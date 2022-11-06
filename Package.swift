@@ -10,14 +10,12 @@ let package = Package(
   products: [
     .library(name: "App", targets: ["App"]),
     .library(name: "Shared", targets: ["Shared"]),
-    .library(name: "Models", targets: ["Models"]),
     .library(name: "XXLogger", targets: ["XXLogger"]),
     .library(name: "Defaults", targets: ["Defaults"]),
     .library(name: "Keychain", targets: ["Keychain"]),
     .library(name: "Voxophone", targets: ["Voxophone"]),
     .library(name: "Countries", targets: ["Countries"]),
     .library(name: "InputField", targets: ["InputField"]),
-    .library(name: "TestHelpers", targets: ["TestHelpers"]),
     .library(name: "ScanFeature", targets: ["ScanFeature"]),
     .library(name: "Permissions", targets: ["Permissions"]),
     .library(name: "MenuFeature", targets: ["MenuFeature"]),
@@ -25,6 +23,7 @@ let package = Package(
     .library(name: "PushFeature", targets: ["PushFeature"]),
     .library(name: "CrashService", targets: ["CrashService"]),
     .library(name: "TermsFeature", targets: ["TermsFeature"]),
+    .library(name: "XXNavigation", targets: ["XXNavigation"]),
     .library(name: "Presentation", targets: ["Presentation"]),
     .library(name: "BackupFeature", targets: ["BackupFeature"]),
     .library(name: "LaunchFeature", targets: ["LaunchFeature"]),
@@ -153,6 +152,7 @@ let package = Package(
         .target(name: "ReportingFeature"),
         .target(name: "OnboardingFeature"),
         .target(name: "ContactListFeature"),
+        .target(name: "XXNavigation"),
         .product(name: "Navigation", package: "Navigation"),
       ]
     ),
@@ -197,22 +197,22 @@ let package = Package(
       ]
     ),
     .target(
+      name: "XXNavigation",
+      dependencies: [
+        .target(name: "DependencyInjection"),
+        .product(name: "Navigation", package: "Navigation"),
+        .product(name: "XXModels", package: "client-ios-db"),
+      ]
+    ),
+    .target(
       name: "PushFeature",
       dependencies: [
-        .target(name: "Models"),
         .target(name: "Defaults"),
         .target(name: "ReportingFeature"),
         .target(name: "DependencyInjection"),
         .product(name: "XXDatabase", package: "client-ios-db"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
         .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
-      ]
-    ),
-    .target(
-      name: "TestHelpers",
-      dependencies: [
-        .target(name: "Models"),
-        .target(name: "Presentation"),
       ]
     ),
     .target(
@@ -225,13 +225,6 @@ let package = Package(
       name: "Voxophone",
       dependencies: [
         .target(name: "Shared"),
-      ]
-    ),
-    .target(
-      name: "Models",
-      dependencies: [
-        .product(name: "DifferenceKit", package: "DifferenceKit"),
-        .product(name: "SwiftProtobuf", package: "swift-protobuf"),
       ]
     ),
     .target(
@@ -277,6 +270,7 @@ let package = Package(
         .product(name: "SnapKit", package: "SnapKit"),
         .product(name: "ChatLayout", package: "ChatLayout"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
+        .product(name: "SwiftProtobuf", package: "swift-protobuf"),
       ],
       exclude: [
         "swiftgen.yml",
@@ -335,7 +329,6 @@ let package = Package(
     .testTarget(
       name: "ContactFeatureTests",
       dependencies: [
-        .target(name: "TestHelpers"),
         .target(name: "ContactFeature"),
         .product(name: "Quick", package: "Quick"),
         .product(name: "Nimble", package: "Nimble"),
@@ -348,7 +341,6 @@ let package = Package(
         .target(name: "Defaults"),
         .target(name: "Keychain"),
         .target(name: "Voxophone"),
-        .target(name: "Models"),
         .target(name: "Permissions"),
         .target(name: "Presentation"),
         .target(name: "DrawerFeature"),
@@ -366,7 +358,6 @@ let package = Package(
       name: "ChatFeatureTests",
       dependencies: [
         .target(name: "ChatFeature"),
-        .target(name: "TestHelpers"),
         .product(name: "Quick", package: "Quick"),
         .product(name: "Nimble", package: "Nimble"),
       ]
@@ -388,7 +379,6 @@ let package = Package(
     .testTarget(
       name: "SearchFeatureTests",
       dependencies: [
-        .target(name: "TestHelpers"),
         .target(name: "SearchFeature"),
         .product(name: "Quick", package: "Quick"),
         .product(name: "Nimble", package: "Nimble"),
@@ -433,7 +423,6 @@ let package = Package(
     .testTarget(
       name: "RequestsFeatureTests",
       dependencies: [
-        .target(name: "TestHelpers"),
         .target(name: "RequestsFeature"),
         .product(name: "Quick", package: "Quick"),
         .product(name: "Nimble", package: "Nimble"),
@@ -462,7 +451,6 @@ let package = Package(
     .testTarget(
       name: "ProfileFeatureTests",
       dependencies: [
-        .target(name: "TestHelpers"),
         .target(name: "ProfileFeature"),
         .product(name: "Quick", package: "Quick"),
         .product(name: "Nimble", package: "Nimble"),
@@ -485,7 +473,6 @@ let package = Package(
     .testTarget(
       name: "ChatListFeatureTests",
       dependencies: [
-        .target(name: "TestHelpers"),
         .target(name: "ChatListFeature"),
         .product(name: "Quick", package: "Quick"),
         .product(name: "Nimble", package: "Nimble"),
@@ -512,7 +499,6 @@ let package = Package(
     .testTarget(
       name: "OnboardingFeatureTests",
       dependencies: [
-        .target(name: "TestHelpers"),
         .target(name: "OnboardingFeature"),
         .product(name: "Quick", package: "Quick"),
         .product(name: "Nimble", package: "Nimble"),
@@ -534,7 +520,6 @@ let package = Package(
       name: "BackupFeature",
       dependencies: [
         .target(name: "Shared"),
-        .target(name: "Models"),
         .target(name: "InputField"),
         .target(name: "Presentation"),
         .target(name: "DrawerFeature"),
@@ -565,7 +550,6 @@ let package = Package(
       name: "ScanFeatureTests",
       dependencies: [
         .target(name: "ScanFeature"),
-        .target(name: "TestHelpers"),
         .product(name: "Quick", package: "Quick"),
         .product(name: "Nimble", package: "Nimble"),
       ]
@@ -583,7 +567,6 @@ let package = Package(
     .testTarget(
       name: "ContactListFeatureTests",
       dependencies: [
-        .target(name: "TestHelpers"),
         .target(name: "ContactListFeature"),
         .product(name: "Quick", package: "Quick"),
         .product(name: "Nimble", package: "Nimble"),
@@ -610,7 +593,6 @@ let package = Package(
     .testTarget(
       name: "SettingsFeatureTests",
       dependencies: [
-        .target(name: "TestHelpers"),
         .target(name: "SettingsFeature"),
         .product(name: "Quick", package: "Quick"),
         .product(name: "Nimble", package: "Nimble"),

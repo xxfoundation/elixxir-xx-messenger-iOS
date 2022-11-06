@@ -11,7 +11,7 @@ public final class TermsConditionsController: UIViewController {
   @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.acceptedTerms, defaultValue: false) var didAcceptTerms: Bool
 
-  lazy private var screenView = TermsConditionsView()
+  private lazy var screenView = TermsConditionsView()
 
   private var cancellables = Set<AnyCancellable>()
 

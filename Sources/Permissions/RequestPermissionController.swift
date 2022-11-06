@@ -13,7 +13,7 @@ public final class RequestPermissionController: UIViewController {
   @Dependency var barStylist: StatusBarStylist
   @Dependency var permissions: PermissionHandling
 
-  lazy private var screenView = RequestPermissionView()
+  private lazy var screenView = RequestPermissionView()
 
   private var type: PermissionType!
   private var cancellables = Set<AnyCancellable>()

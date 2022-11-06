@@ -1,16 +1,18 @@
 import UIKit
 import Shared
 import Combine
+import Navigation
+import XXNavigation
 import DrawerFeature
 import DependencyInjection
 import ScrollViewController
 
 public final class OnboardingEmailController: UIViewController {
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: OnboardingCoordinating
 
-  lazy private var screenView = OnboardingEmailView()
-  lazy private var scrollViewController = ScrollViewController()
+  private lazy var screenView = OnboardingEmailView()
+  private lazy var scrollViewController = ScrollViewController()
 
   private var cancellables = Set<AnyCancellable>()
   private let viewModel = OnboardingEmailViewModel()
@@ -25,12 +27,11 @@ public final class OnboardingEmailController: UIViewController {
   public override func viewDidLoad() {
     super.viewDidLoad()
     navigationItem.backButtonTitle = " "
-
     setupScrollView()
     setupBindings()
-
     screenView.didTapInfo = { [weak self] in
-      self?.presentInfo(
+      guard let self else { return }
+      self.presentInfo(
         title: Localized.Onboarding.Email.Info.title,
         subtitle: Localized.Onboarding.Email.Info.subtitle,
         urlString: "https://links.xx.network/ud"
@@ -41,52 +42,66 @@ public final class OnboardingEmailController: UIViewController {
   private func setupScrollView() {
     addChild(scrollViewController)
     view.addSubview(scrollViewController.view)
-    scrollViewController.view.snp.makeConstraints { $0.edges.equalToSuperview() }
+    scrollViewController.view.snp.makeConstraints {
+      $0.edges.equalToSuperview()
+    }
     scrollViewController.didMove(toParent: self)
     scrollViewController.contentView = screenView
     scrollViewController.scrollView.backgroundColor = Asset.neutralWhite.color
   }
 
   private func setupBindings() {
-    screenView.inputField.textPublisher
-      .sink { [unowned self] in viewModel.didInput($0) }
-      .store(in: &cancellables)
-
-    screenView.inputField.returnPublisher
-      .sink { [unowned self] in screenView.inputField.endEditing(true) }
-      .store(in: &cancellables)
-
-    viewModel.state
-      .map(\.confirmation)
-      .receive(on: DispatchQueue.main)
-      .compactMap { $0 }
+    screenView
+      .inputField
+      .textPublisher
       .sink { [unowned self] in
-        viewModel.clearUp()
-        coordinator.toEmailConfirmation(with: $0, from: self) { controller in
-          let successModel = OnboardingSuccessModel(
-            title: Localized.Onboarding.Success.Email.title,
-            subtitle: nil,
-            nextController: self.coordinator.toPhone(from:)
-          )
-
-          self.coordinator.toSuccess(with: successModel, from: controller)
-        }
+        viewModel.didInput($0)
       }.store(in: &cancellables)
 
-    viewModel.state
+    screenView
+      .inputField
+      .returnPublisher
+      .sink { [unowned self] in
+        screenView.inputField.endEditing(true)
+      }.store(in: &cancellables)
+
+    viewModel
+      .statePublisher
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        guard let id = $0.confirmationId else { return }
+        viewModel.clearUp()
+        navigator.perform(
+          PresentOnboardingCode(
+            isEmail: true,
+            content: $0.input,
+            confirmationId: id
+          )
+        )
+      }.store(in: &cancellables)
+
+    viewModel
+      .statePublisher
       .map(\.status)
       .removeDuplicates()
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in screenView.update(status: $0) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        screenView.update(status: $0)
+      }.store(in: &cancellables)
 
-    screenView.nextButton.publisher(for: .touchUpInside)
-      .sink { [unowned self] in viewModel.didTapNext() }
-      .store(in: &cancellables)
+    screenView
+      .nextButton
+      .publisher(for: .touchUpInside)
+      .sink { [unowned self] in
+        viewModel.didTapNext()
+      }.store(in: &cancellables)
 
-    screenView.skipButton.publisher(for: .touchUpInside)
-      .sink { [unowned self] in coordinator.toPhone(from: self) }
-      .store(in: &cancellables)
+    screenView
+      .skipButton
+      .publisher(for: .touchUpInside)
+      .sink { [unowned self] in
+        navigator.perform(PresentOnboardingPhone())
+      }.store(in: &cancellables)
   }
 
   private func presentInfo(
@@ -128,6 +143,16 @@ public final class OnboardingEmailController: UIViewController {
         }
       }.store(in: &drawerCancellables)
 
-    coordinator.toDrawer(drawer, from: self)
+    navigator.perform(PresentDrawer())
   }
 }
+
+//        coordinator.toEmailConfirmation(with: $0, from: self) { controller in
+//          let successModel = OnboardingSuccessModel(
+//            title: Localized.Onboarding.Success.Email.title,
+//            subtitle: nil,
+//            nextController: self.coordinator.toPhone(from:)
+//          )
+//
+//          self.coordinator.toSuccess(with: successModel, from: controller)
+//        }

@@ -2,7 +2,7 @@ import UIKit
 import Combine
 
 final class ScanDisplayController: UIViewController {
-    lazy private var screenView = ScanDisplayView()
+    private lazy var screenView = ScanDisplayView()
 
     private let viewModel = ScanDisplayViewModel()
     private var cancellables = Set<AnyCancellable>()

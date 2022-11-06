@@ -8,7 +8,7 @@ public final class RequestsContainerController: UIViewController {
   @Dependency var barStylist: StatusBarStylist
   @Dependency var coordinator: RequestsCoordinating
 
-  lazy private var screenView = RequestsContainerView()
+  private lazy var screenView = RequestsContainerView()
   private var cancellables = Set<AnyCancellable>()
 
   public override func loadView() {

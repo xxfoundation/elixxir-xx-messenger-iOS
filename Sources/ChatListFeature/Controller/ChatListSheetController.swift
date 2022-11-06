@@ -7,7 +7,7 @@ public final class ChatListSheetController: UIViewController {
         case deleteAll
     }
 
-    lazy private var screenView = ChatListMenuView()
+    private lazy var screenView = ChatListMenuView()
 
     var didChooseAction: (Action) -> Void
     private var cancellables = Set<AnyCancellable>()

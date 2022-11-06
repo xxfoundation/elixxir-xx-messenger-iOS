@@ -1,6 +1,5 @@
 import UIKit
 import Shared
-import Models
 import XXModels
 
 final class ContactView: UIView {

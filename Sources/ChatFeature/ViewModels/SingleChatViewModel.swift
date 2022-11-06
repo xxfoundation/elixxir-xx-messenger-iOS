@@ -1,5 +1,4 @@
 import UIKit
-import Models
 import Shared
 import Combine
 import XXLogger
@@ -12,7 +11,6 @@ import DifferenceKit
 import ReportingFeature
 import DependencyInjection
 import XXMessengerClient
-import XXClient
 
 import struct XXModels.Message
 import struct XXModels.FileTransfer
@@ -138,33 +136,33 @@ final class SingleChatViewModel: NSObject {
   }
   
   func didSendAudio(url: URL) {
-    do {
-      let _ = try transferManager.send(
-        params: .init(
-          payload: .init(
-            name: "",
-            type: "",
-            preview: Data(),
-            contents: Data()
-          ),
-          recipientId: contact.id,
-          retry: 1,
-          period: 1_000
-        ),
-        callback: .init(handle: {
-          switch $0 {
-          case .success(let progressCallback):
-            print(progressCallback.progress.total)
-          case .failure(let error):
-            print(error.localizedDescription)
-          }
-        })
-      )
-      
-      // transferId
-    } catch {
-      
-    }
+//    do {
+//      let _ = try transferManager.send(
+//        params: .init(
+//          payload: .init(
+//            name: "",
+//            type: "",
+//            preview: Data(),
+//            contents: Data()
+//          ),
+//          recipientId: contact.id,
+//          retry: 1,
+//          period: 1_000
+//        ),
+//        callback: .init(handle: {
+//          switch $0 {
+//          case .success(let progressCallback):
+//            print(progressCallback.progress.total)
+//          case .failure(let error):
+//            print(error.localizedDescription)
+//          }
+//        })
+//      )
+//
+//      // transferId
+//    } catch {
+//
+//    }
   }
   
   func didSend(image: UIImage) {
@@ -174,62 +172,62 @@ final class SingleChatViewModel: NSObject {
     let transferName = UUID().uuidString
     
     do {
-      let tid = try transferManager.send(
-        params: .init(
-          payload: .init(
-            name: transferName,
-            type: "jpeg",
-            preview: Data(),
-            contents: imageData
-          ),
-          recipientId: contact.id,
-          retry: 10,
-          period: 1_000
-        ),
-        callback: .init(handle: {
-          switch $0 {
-          case .success(let progressCallback):
-            
-            if progressCallback.progress.completed {
-              print(">>> Outgoing transfer finished successfully")
-            } else {
-              print(">>> Outgoing transfer. (\(progressCallback.progress.transmitted)/\(progressCallback.progress.total))")
-            }
-            
-            /// THIS IS TOO COMPLEX, NEEDS HELP FROM DARIUSZ
-            
-          case .failure(let error):
-            print(">>> Transfer.error: \(error.localizedDescription)")
-          }
-        })
-      )
-      
-      let transferModel = FileTransfer(
-        id: tid,
-        contactId: contact.id,
-        name: transferName,
-        type: "jpeg",
-        data: imageData,
-        progress: 0.0,
-        isIncoming: false,
-        createdAt: Date()
-      )
-      
-      let transferMessage = Message(
-        senderId: myId,
-        recipientId: contact.id,
-        groupId: nil,
-        date: Date(),
-        status: .sending,
-        isUnread: false,
-        text: "",
-        replyMessageId: nil,
-        roundURL: nil,
-        fileTransferId: tid
-      )
-      
-      try database.saveFileTransfer(transferModel)
-      try database.saveMessage(transferMessage)
+//      let tid = try transferManager.send(
+//        params: .init(
+//          payload: .init(
+//            name: transferName,
+//            type: "jpeg",
+//            preview: Data(),
+//            contents: imageData
+//          ),
+//          recipientId: contact.id,
+//          retry: 10,
+//          period: 1_000
+//        ),
+//        callback: .init(handle: {
+//          switch $0 {
+//          case .success(let progressCallback):
+//
+//            if progressCallback.progress.completed {
+//              print(">>> Outgoing transfer finished successfully")
+//            } else {
+//              print(">>> Outgoing transfer. (\(progressCallback.progress.transmitted)/\(progressCallback.progress.total))")
+//            }
+//
+//            /// THIS IS TOO COMPLEX, NEEDS HELP FROM DARIUSZ
+//
+//          case .failure(let error):
+//            print(">>> Transfer.error: \(error.localizedDescription)")
+//          }
+//        })
+////      )
+//      
+//      let transferModel = FileTransfer(
+//        id: tid,
+//        contactId: contact.id,
+//        name: transferName,
+//        type: "jpeg",
+//        data: imageData,
+//        progress: 0.0,
+//        isIncoming: false,
+//        createdAt: Date()
+//      )
+//      
+//      let transferMessage = Message(
+//        senderId: myId,
+//        recipientId: contact.id,
+//        groupId: nil,
+//        date: Date(),
+//        status: .sending,
+//        isUnread: false,
+//        text: "",
+//        replyMessageId: nil,
+//        roundURL: nil,
+//        fileTransferId: tid
+//      )
+//      
+//      try database.saveFileTransfer(transferModel)
+//      try database.saveMessage(transferMessage)
       
       hudController.dismiss()
     } catch {

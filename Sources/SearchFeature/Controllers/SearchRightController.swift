@@ -5,7 +5,7 @@ import DependencyInjection
 final class SearchRightController: UIViewController {
     @Dependency var coordinator: SearchCoordinating
 
-    lazy private var screenView = SearchRightView()
+    private lazy var screenView = SearchRightView()
 
     private var cancellables = Set<AnyCancellable>()
     private let cameraController = CameraController()

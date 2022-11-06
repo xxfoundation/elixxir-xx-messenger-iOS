@@ -1,5 +1,4 @@
 import UIKit
-import Models
 import Shared
 import Combine
 import CloudFiles
@@ -9,7 +8,7 @@ import DependencyInjection
 final class BackupConfigController: UIViewController {
     @Dependency private var coordinator: BackupCoordinating
 
-    lazy private var screenView = BackupConfigView()
+    private lazy var screenView = BackupConfigView()
 
     private let viewModel: BackupConfigViewModel
     private var cancellables = Set<AnyCancellable>()

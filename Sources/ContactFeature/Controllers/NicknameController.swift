@@ -5,7 +5,7 @@ import InputField
 import ScrollViewController
 
 public final class NicknameController: UIViewController {
-    lazy private var screenView = NicknameView()
+    private lazy var screenView = NicknameView()
 
     private let prefilled: String
     private let completion: StringClosure

@@ -1,6 +1,5 @@
 import UIKit
 import Shared
-import Models
 import Countries
 import Permissions
 import MenuFeature
@@ -13,12 +12,6 @@ public protocol ProfileCoordinating {
     func toSideMenu(from: UIViewController)
     func toDrawer(_: UIViewController, from: UIViewController)
     func toPermission(type: PermissionType, from: UIViewController)
-
-    func toCode(
-        with: AttributeConfirmation,
-        from: UIViewController,
-        _: @escaping ControllerClosure
-    )
 
     func toCountries(
         from: UIViewController,
@@ -38,7 +31,6 @@ public struct ProfileCoordinator: ProfileCoordinating {
     var permissionFactory: () -> RequestPermissionController
     var sideMenuFactory: (MenuItem, UIViewController) -> UIViewController
     var countriesFactory: (@escaping (Country) -> Void) -> UIViewController
-    var codeFactory: (AttributeConfirmation, @escaping ControllerClosure) -> UIViewController
 
     public init(
         emailFactory: @escaping () -> UIViewController,
@@ -46,10 +38,8 @@ public struct ProfileCoordinator: ProfileCoordinating {
         imagePickerFactory: @escaping () -> UIImagePickerController,
         permissionFactory: @escaping () -> RequestPermissionController, // ⚠️
         sideMenuFactory: @escaping (MenuItem, UIViewController) -> UIViewController,
-        countriesFactory: @escaping (@escaping (Country) -> Void) -> UIViewController,
-        codeFactory: @escaping (AttributeConfirmation, @escaping ControllerClosure) -> UIViewController
+        countriesFactory: @escaping (@escaping (Country) -> Void) -> UIViewController
     ) {
-        self.codeFactory = codeFactory
         self.emailFactory = emailFactory
         self.phoneFactory = phoneFactory
         self.sideMenuFactory = sideMenuFactory
@@ -67,15 +57,6 @@ public extension ProfileCoordinator {
 
     func toPhone(from parent: UIViewController) {
         let screen = phoneFactory()
-        pushPresenter.present(screen, from: parent)
-    }
-
-    func toCode(
-        with confirmation: AttributeConfirmation,
-        from parent: UIViewController,
-        _ completion: @escaping ControllerClosure
-    ) {
-        let screen = codeFactory(confirmation, completion)
         pushPresenter.present(screen, from: parent)
     }
 

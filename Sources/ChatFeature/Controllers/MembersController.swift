@@ -1,10 +1,9 @@
 import UIKit
-import Models
 import Shared
 import XXModels
 
 final class MembersController: UIViewController {
-    lazy private var stackView = UIStackView()
+    private lazy var stackView = UIStackView()
 
     private let members: [Contact]
 

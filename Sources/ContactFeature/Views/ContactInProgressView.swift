@@ -1,70 +1,53 @@
 import UIKit
 import Shared
-import Models
 import XXModels
 
 final class ContactAlmostView: UIView {
-    // MARK: UI
+  let stack = UIStackView()
+  let feedback = BottomFeedbackComponent()
 
-    let stack = UIStackView()
-    let feedback = BottomFeedbackComponent()
+  init() {
+    super.init(frame: .zero)
+    stack.axis = .vertical
+    stack.spacing = 25
 
-    // MARK: Lifecycle
+    addSubview(stack)
+    addSubview(feedback)
 
-    init() {
-        super.init(frame: .zero)
-        setup()
+    stack.snp.makeConstraints {
+      $0.top.equalToSuperview().offset(24)
+      $0.left.equalToSuperview().offset(24)
+      $0.right.equalToSuperview().offset(-24)
     }
 
-    required init?(coder: NSCoder) { nil }
-
-    // MARK: Public
-
-    func set(status: Contact.AuthStatus) {
-        switch status {
-        case .requestFailed, .confirmationFailed:
-            feedback.set(
-                icon: Asset.contactRequestExclamation.image,
-                title: Localized.Contact.Inprogress.failed,
-                style: .danger,
-                actionTitle: Localized.Contact.Inprogress.resend
-            )
-
-        case .confirming, .requested, .requesting:
-            feedback.set(
-                icon: Asset.contactRequestExclamation.image,
-                title: Localized.Contact.Inprogress.pending,
-                style: .chill
-            )
-        default:
-            break
-        }
+    feedback.snp.makeConstraints {
+      $0.top.greaterThanOrEqualTo(stack.snp.bottom).offset(24)
+      $0.left.equalToSuperview()
+      $0.right.equalToSuperview()
+      $0.bottom.equalToSuperview()
     }
+  }
 
-    // MARK: Properties
+  required init?(coder: NSCoder) { nil }
 
-    private func setup() {
-        stack.axis = .vertical
-        stack.spacing = 25
+  func set(status: Contact.AuthStatus) {
+    switch status {
+    case .requestFailed, .confirmationFailed:
+      feedback.set(
+        icon: Asset.contactRequestExclamation.image,
+        title: Localized.Contact.Inprogress.failed,
+        style: .danger,
+        actionTitle: Localized.Contact.Inprogress.resend
+      )
 
-        addSubview(stack)
-        addSubview(feedback)
-
-        setupConstraints()
+    case .confirming, .requested, .requesting:
+      feedback.set(
+        icon: Asset.contactRequestExclamation.image,
+        title: Localized.Contact.Inprogress.pending,
+        style: .chill
+      )
+    default:
+      break
     }
-
-    private func setupConstraints() {
-        stack.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(24)
-            make.left.equalToSuperview().offset(24)
-            make.right.equalToSuperview().offset(-24)
-        }
-
-        feedback.snp.makeConstraints { make in
-            make.top.greaterThanOrEqualTo(stack.snp.bottom).offset(24)
-            make.left.equalToSuperview()
-            make.right.equalToSuperview()
-            make.bottom.equalToSuperview()
-        }
-    }
+  }
 }

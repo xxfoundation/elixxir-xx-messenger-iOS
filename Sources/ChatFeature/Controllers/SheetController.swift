@@ -8,7 +8,7 @@ final class SheetController: UIViewController {
         case report
     }
 
-    lazy private var screenView = SheetView()
+    private lazy var screenView = SheetView()
 
     var actionPublisher: AnyPublisher<Action, Never> {
         actionRelay.eraseToAnyPublisher()

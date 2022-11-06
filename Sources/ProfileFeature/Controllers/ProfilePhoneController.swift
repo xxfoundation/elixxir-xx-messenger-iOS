@@ -8,8 +8,8 @@ public final class ProfilePhoneController: UIViewController {
   @Dependency var barStylist: StatusBarStylist
   @Dependency var coordinator: ProfileCoordinating
 
-  lazy private var screenView = ProfilePhoneView()
-  lazy private var scrollViewController = ScrollViewController()
+  private lazy var screenView = ProfilePhoneView()
+  private lazy var scrollViewController = ScrollViewController()
 
   private let viewModel = ProfilePhoneViewModel()
   private var cancellables = Set<AnyCancellable>()
@@ -52,23 +52,23 @@ public final class ProfilePhoneController: UIViewController {
         coordinator.toCountries(from: self) { self.viewModel.didChooseCountry($0) }
       }.store(in: &cancellables)
 
-    viewModel.state
-      .map(\.confirmation)
+    viewModel.statePublisher
+      .map(\.confirmationId)
       .receive(on: DispatchQueue.main)
       .compactMap { $0 }
       .sink { [unowned self] in
         viewModel.clearUp()
-        coordinator.toCode(with: $0, from: self) { _, _ in
-          if let viewControllers = self.navigationController?.viewControllers {
-            self.navigationController?.popToViewController(
-              viewControllers[viewControllers.count - 3],
-              animated: true
-            )
-          }
-        }
+//        coordinator.toCode(with: $0, from: self) { _, _ in
+//          if let viewControllers = self.navigationController?.viewControllers {
+//            self.navigationController?.popToViewController(
+//              viewControllers[viewControllers.count - 3],
+//              animated: true
+//            )
+//          }
+//        }
       }.store(in: &cancellables)
 
-    viewModel.state
+    viewModel.statePublisher
       .map(\.country)
       .removeDuplicates()
       .receive(on: DispatchQueue.main)
@@ -78,7 +78,7 @@ public final class ProfilePhoneController: UIViewController {
       }
       .store(in: &cancellables)
 
-    viewModel.state
+    viewModel.statePublisher
       .map(\.status)
       .removeDuplicates()
       .receive(on: DispatchQueue.main)

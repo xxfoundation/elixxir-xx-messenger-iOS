@@ -6,7 +6,7 @@ import DependencyInjection
 public final class SettingsAdvancedController: UIViewController {
     @Dependency private var coordinator: SettingsCoordinating
 
-    lazy private var screenView = SettingsAdvancedView()
+    private lazy var screenView = SettingsAdvancedView()
 
     private var cancellables = Set<AnyCancellable>()
     private let viewModel = SettingsAdvancedViewModel()

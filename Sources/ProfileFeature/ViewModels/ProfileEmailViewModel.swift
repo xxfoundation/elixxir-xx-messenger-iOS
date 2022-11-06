@@ -1,4 +1,3 @@
-import Models
 import Shared
 import Combine
 import XXClient
@@ -8,47 +7,44 @@ import CombineSchedulers
 import XXMessengerClient
 import DependencyInjection
 
-struct ProfileEmailViewState: Equatable {
-  var input: String = ""
-  var confirmation: AttributeConfirmation? = nil
-  var status: InputField.ValidationStatus = .unknown(nil)
-}
-
 final class ProfileEmailViewModel {
+  struct ViewState: Equatable {
+    var input: String = ""
+    var content: String?
+    var confirmationId: String?
+    var status: InputField.ValidationStatus = .unknown(nil)
+  }
+  
   @Dependency var messenger: Messenger
   @Dependency var hudController: HUDController
 
-  var state: AnyPublisher<ProfileEmailViewState, Never> { stateRelay.eraseToAnyPublisher() }
-  private let stateRelay = CurrentValueSubject<ProfileEmailViewState, Never>(.init())
+  var statePublisher: AnyPublisher<ViewState, Never> {
+    stateSubject.eraseToAnyPublisher()
+  }
 
-  var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
+  private let stateSubject = CurrentValueSubject<ViewState, Never>(.init())
+  private var scheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
   func didInput(_ string: String) {
-    stateRelay.value.input = string
+    stateSubject.value.input = string
     validate()
   }
 
   func clearUp() {
-    stateRelay.value.confirmation = nil
+    stateSubject.value.confirmationId = nil
   }
 
   func didTapNext() {
     hudController.show()
-
-    backgroundScheduler.schedule { [weak self] in
+    scheduler.schedule { [weak self] in
       guard let self = self else { return }
-
       do {
         let confirmationId = try self.messenger.ud.get()!.sendRegisterFact(
-          .init(type: .email, value: self.stateRelay.value.input)
+          .init(type: .email, value: self.stateSubject.value.input)
         )
-
         self.hudController.dismiss()
-        self.stateRelay.value.confirmation = .init(
-          content: self.stateRelay.value.input,
-          isEmail: true,
-          confirmationId: confirmationId
-        )
+        self.stateSubject.value.confirmationId = confirmationId
+        self.stateSubject.value.content = self.stateSubject.value.input
       } catch {
         let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
         self.hudController.show(.init(content: xxError))
@@ -57,11 +53,11 @@ final class ProfileEmailViewModel {
   }
 
   private func validate() {
-    switch Validator.email.validate(stateRelay.value.input) {
+    switch Validator.email.validate(stateSubject.value.input) {
     case .success:
-      stateRelay.value.status = .valid(nil)
+      stateSubject.value.status = .valid(nil)
     case .failure(let error):
-      stateRelay.value.status = .invalid(error)
+      stateSubject.value.status = .invalid(error)
     }
   }
 }

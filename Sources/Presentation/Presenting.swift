@@ -24,7 +24,7 @@ public struct ModalPresenter: Presenting {
     public init() {}
 
     public func present(_ target: UIViewController..., from parent: UIViewController) {
-        let statusBarVC = RootViewController(target.first!)
+      let statusBarVC = RootViewController(UINavigationController(rootViewController: target.first!))
         statusBarVC.modalPresentationStyle = .fullScreen
         parent.present(statusBarVC, animated: true)
     }

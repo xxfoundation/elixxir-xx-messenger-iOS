@@ -45,9 +45,13 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     setupCrashReporting()
     setupLogging()
 
+    let navController = UINavigationController(rootViewController: LaunchController())
+    let rootViewController = RootViewController(navController)
     window = UIWindow(frame: UIScreen.main.bounds)
-    window?.rootViewController = RootViewController(UINavigationController(rootViewController: LaunchController()))
+    window?.rootViewController = rootViewController
     window?.makeKeyAndVisible()
+
+    DependencyRegistrator.registerNavigators(navController)
     return true
   }
 

@@ -1,101 +1,95 @@
 import Shared
-import Models
 import Combine
 import Defaults
 import XXClient
-import Foundation
 import InputField
-import BackupFeature
+import Foundation
 import CombineSchedulers
 import XXMessengerClient
 import DependencyInjection
 
-struct ProfileCodeViewState: Equatable {
-  var input: String = ""
-  var status: InputField.ValidationStatus = .unknown(nil)
-  var resendDebouncer: Int = 0
-}
-
 final class ProfileCodeViewModel {
+  struct ViewState: Equatable {
+    var input: String = ""
+    var status: InputField.ValidationStatus = .unknown(nil)
+    var resendDebouncer: Int = 0
+    var didConfirm: Bool = false
+  }
+
+  var statePublisher: AnyPublisher<ViewState, Never> {
+    stateSubject.eraseToAnyPublisher()
+  }
+
   @Dependency var messenger: Messenger
   @Dependency var hudController: HUDController
-  @Dependency var backupService: BackupService
-
   @KeyObject(.email, defaultValue: nil) var email: String?
   @KeyObject(.phone, defaultValue: nil) var phone: String?
 
-  let confirmation: AttributeConfirmation
+  private var timer: Timer?
+  private let isEmail: Bool
+  private let content: String
+  private let confirmationId: String
+  private let stateSubject = CurrentValueSubject<ViewState, Never>(.init())
+  private var scheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
-  var timer: Timer?
-
-  var completionPublisher: AnyPublisher<AttributeConfirmation, Never> { completionRelay.eraseToAnyPublisher() }
-  private let completionRelay = PassthroughSubject<AttributeConfirmation, Never>()
-
-  var state: AnyPublisher<ProfileCodeViewState, Never> { stateRelay.eraseToAnyPublisher() }
-  private let stateRelay = CurrentValueSubject<ProfileCodeViewState, Never>(.init())
-
-  var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
-
-  init(_ confirmation: AttributeConfirmation) {
-    self.confirmation = confirmation
+  init(
+    isEmail: Bool,
+    content: String,
+    confirmationId: String
+  ) {
+    self.isEmail = isEmail
+    self.content = content
+    self.confirmationId = confirmationId
     didTapResend()
   }
 
   func didInput(_ string: String) {
-    stateRelay.value.input = string
+    stateSubject.value.input = string
     validate()
   }
 
   func didTapResend() {
-    guard stateRelay.value.resendDebouncer == 0 else { return }
-
-    stateRelay.value.resendDebouncer = 60
-
+    guard stateSubject.value.resendDebouncer == 0 else { return }
+    stateSubject.value.resendDebouncer = 60
     timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {  [weak self] in
-      guard let self = self, self.stateRelay.value.resendDebouncer > 0 else {
+      guard let self = self, self.stateSubject.value.resendDebouncer > 0 else {
         $0.invalidate()
         return
       }
-
-      self.stateRelay.value.resendDebouncer -= 1
+      self.stateSubject.value.resendDebouncer -= 1
     }
   }
 
   func didTapNext() {
     hudController.show()
-
-    backgroundScheduler.schedule { [weak self] in
-      guard let self = self else { return }
-
+    scheduler.schedule { [weak self] in
+      guard let self else { return }
       do {
         try self.messenger.ud.get()!.confirmFact(
-          confirmationId: self.confirmation.confirmationId!,
-          code: self.stateRelay.value.input
+          confirmationId: self.confirmationId,
+          code: self.stateSubject.value.input
         )
-
-        if self.confirmation.isEmail {
-          self.email = self.confirmation.content
+        if self.isEmail {
+          self.email = self.content
         } else {
-          self.phone = self.confirmation.content
+          self.phone = self.content
         }
-
         self.timer?.invalidate()
         self.hudController.dismiss()
-        self.completionRelay.send(self.confirmation)
-
-        self.backupService.didUpdateFacts()
+        self.stateSubject.value.didConfirm = true
       } catch {
-        self.hudController.show(.init(error: error))
+        let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
+        self.hudController.show(.init(content: xxError))
       }
     }
   }
 
   private func validate() {
-    switch Validator.code.validate(stateRelay.value.input) {
+    switch Validator.code.validate(stateSubject.value.input) {
     case .success:
-      stateRelay.value.status = .valid(nil)
+      stateSubject.value.status = .valid(nil)
     case .failure(let error):
-      stateRelay.value.status = .invalid(error)
+      stateSubject.value.status = .invalid(error)
     }
   }
 }

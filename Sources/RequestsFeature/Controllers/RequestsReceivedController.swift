@@ -1,5 +1,4 @@
 import UIKit
-import Models
 import Shared
 import Combine
 import XXModels
@@ -11,7 +10,7 @@ final class RequestsReceivedController: UIViewController {
     @Dependency var toaster: ToastController
     @Dependency var coordinator: RequestsCoordinating
 
-    lazy private var screenView = RequestsReceivedView()
+    private lazy var screenView = RequestsReceivedView()
     private var cancellables = Set<AnyCancellable>()
     private let viewModel = RequestsReceivedViewModel()
     private var drawerCancellables = Set<AnyCancellable>()

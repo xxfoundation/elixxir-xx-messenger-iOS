@@ -1,6 +1,5 @@
 import UIKit
 import Shared
-import Models
 import Combine
 import XXModels
 import DrawerFeature
@@ -11,8 +10,8 @@ public final class ContactController: UIViewController {
   @Dependency var barStylist: StatusBarStylist
   @Dependency var coordinator: ContactCoordinating
 
-  lazy private var screenView = ContactView()
-  lazy private var scrollViewController = ScrollViewController()
+  private lazy var screenView = ContactView()
+  private lazy var scrollViewController = ScrollViewController()
 
   private let viewModel: ContactViewModel
   private var cancellables = Set<AnyCancellable>()

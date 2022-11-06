@@ -2,16 +2,17 @@ import UIKit
 import Shared
 import Combine
 import Defaults
+import Navigation
+import XXNavigation
 import DrawerFeature
 import DependencyInjection
 
 public final class OnboardingWelcomeController: UIViewController {
+  @Dependency var navigator: Navigator
+  @Dependency var barStylist: StatusBarStylist
   @KeyObject(.username, defaultValue: "") var username: String
 
-  @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: OnboardingCoordinating
-
-  lazy private var screenView = OnboardingWelcomeView()
+  private lazy var screenView = OnboardingWelcomeView()
 
   private var cancellables = Set<AnyCancellable>()
   private var drawerCancellables = Set<AnyCancellable>()
@@ -43,12 +44,14 @@ public final class OnboardingWelcomeController: UIViewController {
 
   private func setupBindings() {
     screenView.continueButton.publisher(for: .touchUpInside)
-      .sink { [unowned self] in coordinator.toEmail(from: self) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigator.perform(PresentOnboardingEmail())
+      }.store(in: &cancellables)
 
     screenView.skipButton.publisher(for: .touchUpInside)
-      .sink { [unowned self] in coordinator.toChats(from: self) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigator.perform(PresentChatList())
+      }.store(in: &cancellables)
   }
 
   private func presentInfo(
@@ -90,6 +93,6 @@ public final class OnboardingWelcomeController: UIViewController {
         }
       }.store(in: &drawerCancellables)
 
-    coordinator.toDrawer(drawer, from: self)
+    navigator.perform(PresentDrawer())
   }
 }

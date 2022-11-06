@@ -1,19 +1,18 @@
 import UIKit
 import Shared
 import Combine
-import Defaults
+import Navigation
 import PushFeature
 import DependencyInjection
 
 public final class LaunchController: UIViewController {
-  @Dependency var coordinator: LaunchCoordinating
+  @Dependency var navigator: Navigator
 
-  @KeyObject(.acceptedTerms, defaultValue: false) var didAcceptTerms: Bool
-
-  lazy private var screenView = LaunchView()
+  // TO REMOVE:
+  public var pendingPushRoute: PushRouter.Route?
 
   private let viewModel = LaunchViewModel()
-  public var pendingPushRoute: PushRouter.Route?
+  private lazy var screenView = LaunchView()
   private var cancellables = Set<AnyCancellable>()
 
   public override func viewDidAppear(_ animated: Bool) {
@@ -27,64 +26,23 @@ public final class LaunchController: UIViewController {
 
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    navigationController?
-      .navigationBar
-      .customize(translucent: true)
+    navigationController?.navigationBar.customize(translucent: true)
   }
 
   public override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
-    screenView.setupGradient()
-  }
+    let gradient = CAGradientLayer()
+    gradient.colors = [
+      UIColor(red: 122/255, green: 235/255, blue: 239/255, alpha: 1).cgColor,
+      UIColor(red: 56/255, green: 204/255, blue: 232/255, alpha: 1).cgColor,
+      UIColor(red: 63/255, green: 186/255, blue: 253/255, alpha: 1).cgColor,
+      UIColor(red: 98/255, green: 163/255, blue: 255/255, alpha: 1).cgColor
+    ]
 
-  public override func viewDidLoad() {
-    super.viewDidLoad()
-  
-    viewModel.routePublisher
-      .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in
-        switch $0 {
-        case .chats:
-          guard didAcceptTerms == true else {
-            coordinator.toTerms(from: self)
-            return
-          }
-
-          if let pushRoute = pendingPushRoute {
-            switch pushRoute {
-            case .requests:
-              coordinator.toRequests(from: self)
-
-            case .search(username: let username):
-              coordinator.toSearch(searching: username, from: self)
-
-            case .groupChat(id: let groupId):
-              if let groupInfo = viewModel.getGroupInfoWith(groupId: groupId) {
-                coordinator.toGroupChat(with: groupInfo, from: self)
-                return
-              }
-              coordinator.toChats(from: self)
-
-            case .contactChat(id: let userId):
-              if let contact = viewModel.getContactWith(userId: userId) {
-                coordinator.toSingleChat(with: contact, from: self)
-                return
-              }
-              coordinator.toChats(from: self)
-            }
-
-            return
-          }
-
-          coordinator.toChats(from: self)
-
-        case .onboarding:
-          coordinator.toOnboarding(from: self)
-
-        case .update(let model):
-          offerUpdate(model: model)
-        }
-      }.store(in: &cancellables)
+    gradient.frame = screenView.bounds
+    gradient.startPoint = CGPoint(x: 1, y: 0)
+    gradient.endPoint = CGPoint(x: 0, y: 1)
+    screenView.layer.insertSublayer(gradient, at: 0)
   }
 
   private func offerUpdate(model: Update) {
@@ -129,26 +87,26 @@ public final class LaunchController: UIViewController {
       title: model.positiveActionTitle
     )
 
-//    if let negativeTitle = model.negativeActionTitle {
-//      let negativeButton = CapsuleButton()
-//      negativeButton.set(style: .simplestColoredRed, title: negativeTitle)
-//
-//      negativeButton.publisher(for: .touchUpInside)
-//        .sink { [unowned self] in
-//          blocker.hideWindow()
-//          viewModel.continueWithInitialization()
-//        }.store(in: &cancellables)
-//
-//      vStack.addArrangedSubview(negativeButton)
-//    }
-//
-//    blocker.window?.addSubview(drawerView)
-//    drawerView.snp.makeConstraints {
-//      $0.left.equalToSuperview().offset(18)
-//      $0.center.equalToSuperview()
-//      $0.right.equalToSuperview().offset(-18)
-//    }
-//
-//    blocker.showWindow()
+    //    if let negativeTitle = model.negativeActionTitle {
+    //      let negativeButton = CapsuleButton()
+    //      negativeButton.set(style: .simplestColoredRed, title: negativeTitle)
+    //
+    //      negativeButton.publisher(for: .touchUpInside)
+    //        .sink { [unowned self] in
+    //          blocker.hideWindow()
+    //          viewModel.continueWithInitialization()
+    //        }.store(in: &cancellables)
+    //
+    //      vStack.addArrangedSubview(negativeButton)
+    //    }
+    //
+    //    blocker.window?.addSubview(drawerView)
+    //    drawerView.snp.makeConstraints {
+    //      $0.left.equalToSuperview().offset(18)
+    //      $0.center.equalToSuperview()
+    //      $0.right.equalToSuperview().offset(-18)
+    //    }
+    //
+    //    blocker.showWindow()
   }
 }

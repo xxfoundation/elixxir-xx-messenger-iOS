@@ -1,10 +1,9 @@
 import UIKit
-import Models
 import Shared
+import XXModels
 import QuickLook
 import Permissions
 import Presentation
-import XXModels
 
 public protocol ChatCoordinating {
     func toCamera(from: UIViewController)
