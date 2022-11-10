@@ -1,5 +1,5 @@
-import Shared
 import Retry
+import Shared
 import Combine
 import Defaults
 import Keychain
@@ -51,7 +51,7 @@ final class AccountDeleteViewModel {
       ))
     } catch {
       DispatchQueue.main.async { [weak self] in
-        guard let self = self else { return }
+        guard let self else { return }
         self.hudController.show(.init(error: error))
       }
     }

@@ -44,7 +44,7 @@ final class SearchLeftPlaceholderView: UIView {
                 .font: Fonts.Mulish.regular.font(size: 16.0)
             ],
             didTapInfo: { [weak self] in
-                guard let self = self else { return }
+                guard let self else { return }
                 self.infoSubject.send(())
             }
         )

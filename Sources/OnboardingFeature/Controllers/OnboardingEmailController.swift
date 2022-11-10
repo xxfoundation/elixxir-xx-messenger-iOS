@@ -1,7 +1,6 @@
 import UIKit
 import Shared
 import Combine
-import Navigation
 import XXNavigation
 import DrawerFeature
 import DependencyInjection
@@ -20,13 +19,13 @@ public final class OnboardingEmailController: UIViewController {
 
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
+    navigationItem.backButtonTitle = " "
     barStylist.styleSubject.send(.darkContent)
     navigationController?.navigationBar.customize(translucent: true)
   }
 
   public override func viewDidLoad() {
     super.viewDidLoad()
-    navigationItem.backButtonTitle = " "
     setupScrollView()
     setupBindings()
     screenView.didTapInfo = { [weak self] in
@@ -114,43 +113,32 @@ public final class OnboardingEmailController: UIViewController {
       style: .seeThrough,
       title: Localized.Settings.InfoDrawer.action
     )
-
-//    navigator.perform(PresentDrawer([
-//      DrawerText(
-//        font: Fonts.Mulish.bold.font(size: 26.0),
-//        text: title,
-//        color: Asset.neutralActive.color,
-//        alignment: .left,
-//        spacingAfter: 19
-//      ),
-//      DrawerLinkText(
-//        text: subtitle,
-//        urlString: urlString,
-//        spacingAfter: 37
-//      ),
-//      DrawerStack(views: [
-//        actionButton,
-//        FlexibleSpace()
-//      ])
-//    ]))
-
-    actionButton.publisher(for: .touchUpInside)
+    actionButton
+      .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
-      .sink {
-        //        drawer.dismiss(animated: true) { [weak self] in
-        //          guard let self = self else { return }
-        //          self.drawerCancellables.removeAll()
-        //      }
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) {
+          self.drawerCancellables.removeAll()
+        }
       }.store(in: &drawerCancellables)
+
+    navigator.perform(PresentDrawer(items: [
+      DrawerText(
+        font: Fonts.Mulish.bold.font(size: 26.0),
+        text: title,
+        color: Asset.neutralActive.color,
+        alignment: .left,
+        spacingAfter: 19
+      ),
+      DrawerLinkText(
+        text: subtitle,
+        urlString: urlString,
+        spacingAfter: 37
+      ),
+      DrawerStack(views: [
+        actionButton,
+        FlexibleSpace()
+      ])
+    ]))
   }
 }
-
-  //        coordinator.toEmailConfirmation(with: $0, from: self) { controller in
-  //          let successModel = OnboardingSuccessModel(
-  //            title: Localized.Onboarding.Success.Email.title,
-  //            subtitle: nil,
-  //            nextController: self.coordinator.toPhone(from:)
-  //          )
-  //
-  //          self.coordinator.toSuccess(with: successModel, from: controller)
-  //        }

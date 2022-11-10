@@ -147,7 +147,7 @@ final class RequestsReceivedViewModel {
     
     if request.status == .failedToVerify {
       backgroundScheduler.schedule { [weak self] in
-        guard let self = self else { return }
+        guard let self else { return }
         
         do {
           contact.authStatus = .verificationInProgress
@@ -188,7 +188,7 @@ final class RequestsReceivedViewModel {
     hudController.show()
     
     backgroundScheduler.schedule { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
       
       do {
         try self.groupManager.joinGroup(serializedGroupData: group.serialized)
@@ -257,7 +257,7 @@ final class RequestsReceivedViewModel {
     contact.nickname = nickname ?? contact.username
     
     backgroundScheduler.schedule { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
       
       do {
         try self.database.saveContact(contact)

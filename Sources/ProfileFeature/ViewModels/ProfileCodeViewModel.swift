@@ -52,7 +52,7 @@ final class ProfileCodeViewModel {
     guard stateSubject.value.resendDebouncer == 0 else { return }
     stateSubject.value.resendDebouncer = 60
     timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {  [weak self] in
-      guard let self = self, self.stateSubject.value.resendDebouncer > 0 else {
+      guard let self, self.stateSubject.value.resendDebouncer > 0 else {
         $0.invalidate()
         return
       }

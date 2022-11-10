@@ -120,7 +120,7 @@ final class SingleChatViewModel: NSObject {
       .store(in: &cancellables)
     
     healthCancellable = messenger.cMix.get()!.addHealthCallback(.init(handle: { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
       self.networkMonitor.update($0)
     }))
   }
@@ -362,7 +362,7 @@ final class SingleChatViewModel: NSObject {
     )
     
     DispatchQueue.global().async { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
       
       do {
         message = try self.database.saveMessage(message)

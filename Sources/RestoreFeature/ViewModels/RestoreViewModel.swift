@@ -97,7 +97,7 @@ final class RestoreViewModel {
     stepSubject.send(.parsingData)
 
     DispatchQueue.global().async { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
 
       do {
         print(">>> Calling messenger destroy")
@@ -109,8 +109,8 @@ final class RestoreViewModel {
           backupPassphrase: self.passphrase
         )
 
-        self.username = result.restoredParams.username
         let facts = try self.messenger.ud.tryGet().getFacts()
+        self.username = facts.get(.username)!.value
         self.email = facts.get(.email)?.value
         self.phone = facts.get(.phone)?.value
 

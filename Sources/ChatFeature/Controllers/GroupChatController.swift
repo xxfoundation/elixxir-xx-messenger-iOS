@@ -4,6 +4,7 @@ import Combine
 import XXModels
 import Voxophone
 import ChatLayout
+import XXNavigation
 import DrawerFeature
 import DifferenceKit
 import ReportingFeature
@@ -19,13 +20,12 @@ typealias OutgoingFailedGroupReplyCell = CollectionCell<FlexibleSpace, ReplyStac
 
 public final class GroupChatController: UIViewController {
   @Dependency var database: Database
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: ChatCoordinating
   @Dependency var reportingStatus: ReportingStatus
   @Dependency var makeReportDrawer: MakeReportDrawer
   @Dependency var makeAppScreenshot: MakeAppScreenshot
 
-  private let members: MembersController
   private var collectionView: UICollectionView!
   private lazy var header = GroupHeaderView()
   private let inputComponent: ChatInputView
@@ -34,6 +34,7 @@ public final class GroupChatController: UIViewController {
   private let viewModel: GroupChatViewModel
   private let layoutDelegate = LayoutDelegate()
   private var cancellables = Set<AnyCancellable>()
+  private var drawerCancellables = Set<AnyCancellable>()
   private let chatLayout = CollectionViewChatLayout()
   private var sections = [ArraySection<ChatSection, Message>]()
   private var currentInterfaceActions = SetActor<Set<InterfaceActions>, ReactionTypes>()
@@ -44,7 +45,6 @@ public final class GroupChatController: UIViewController {
   public init(_ info: GroupInfo) {
     let viewModel = GroupChatViewModel(info)
     self.viewModel = viewModel
-    self.members = .init(with: info.members)
 
     self.inputComponent = ChatInputView(store: .init(
       initialState: .init(canAddAttachments: false),
@@ -148,7 +148,7 @@ public final class GroupChatController: UIViewController {
 
   private func setupInputController() {
     inputComponent.setMaxHeight { [weak self] in
-      guard let self = self else { return 150 }
+      guard let self else { return 150 }
 
       let maxHeight = self.collectionView.frame.height
       - self.collectionView.adjustedContentInset.top
@@ -167,24 +167,104 @@ public final class GroupChatController: UIViewController {
   }
 
   private func setupBindings() {
-    viewModel.routesPublisher
+    viewModel
+      .routesPublisher
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
         switch $0 {
         case .waitingRound:
-          coordinator.toDrawer(makeWaitingRoundDrawer(), from: self)
+          let button = DrawerCapsuleButton(model: .init(
+            title: Localized.Chat.RoundDrawer.action,
+            style: .brandColored
+          ))
+
+          button
+            .action
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+              navigator.perform(DismissModal(from: self)) { [weak self] in
+                guard let self else { return }
+                self.drawerCancellables.removeAll()
+              }
+            }.store(in: &drawerCancellables)
+
+          navigator.perform(PresentDrawer(items: [
+            DrawerText(
+              font: Fonts.Mulish.semiBold.font(size: 14.0),
+              text: Localized.Chat.RoundDrawer.title,
+              color: Asset.neutralWeak.color,
+              lineHeightMultiple: 1.35,
+              spacingAfter: 25
+            ), button
+          ]))
+
         case .webview(let urlString):
-          coordinator.toWebview(with: urlString, from: self)
+          navigator.perform(PresentWebsite(url: URL(string: urlString)!))
         }
       }.store(in: &cancellables)
 
-    viewModel.reportPopupPublisher
+    viewModel
+      .reportPopupPublisher
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] contact in
-        presentReportDrawer(contact)
+        let cancelButton = CapsuleButton()
+        cancelButton.setStyle(.seeThrough)
+        cancelButton.setTitle(Localized.Chat.Report.cancel, for: .normal)
+
+        let reportButton = CapsuleButton()
+        reportButton.setStyle(.red)
+        reportButton.setTitle(Localized.Chat.Report.action, for: .normal)
+
+        reportButton
+          .publisher(for: .touchUpInside)
+          .receive(on: DispatchQueue.main)
+          .sink { [unowned self] in
+            navigator.perform(DismissModal(from: self)) { [weak self] in
+              guard let self else { return }
+              self.drawerCancellables.removeAll()
+              let screenshot = try! self.makeAppScreenshot()
+              self.viewModel.report(contact: contact, screenshot: screenshot) {
+                self.collectionView.reloadData()
+              }
+            }
+          }.store(in: &drawerCancellables)
+
+        cancelButton
+          .publisher(for: .touchUpInside)
+          .receive(on: DispatchQueue.main)
+          .sink { [unowned self] in
+            navigator.perform(DismissModal(from: self)) { [weak self] in
+              guard let self else { return }
+              self.drawerCancellables.removeAll()
+            }
+          }.store(in: &drawerCancellables)
+
+        navigator.perform(PresentDrawer(items: [
+          DrawerImage(
+            image: Asset.drawerNegative.image
+          ),
+          DrawerText(
+            font: Fonts.Mulish.semiBold.font(size: 18.0),
+            text: Localized.Chat.Report.title,
+            color: Asset.neutralActive.color
+          ),
+          DrawerText(
+            font: Fonts.Mulish.semiBold.font(size: 14.0),
+            text: Localized.Chat.Report.subtitle,
+            color: Asset.neutralWeak.color,
+            lineHeightMultiple: 1.35,
+            spacingAfter: 25
+          ),
+          DrawerStack(
+            axis: .vertical,
+            spacing: 20.0,
+            views: [reportButton, cancelButton]
+          )
+        ]))
       }.store(in: &cancellables)
 
-    viewModel.messages
+    viewModel
+      .messages
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] sections in
         func process() {
@@ -234,45 +314,7 @@ public final class GroupChatController: UIViewController {
   }
 
   @objc private func didTapDots() {
-    coordinator.toMembersList(members, from: self)
-  }
-
-  private func presentReportDrawer(_ contact: Contact) {
-    var config = MakeReportDrawer.Config()
-    config.onReport = { [weak self] in
-      guard let self = self else { return }
-      let screenshot = try! self.makeAppScreenshot()
-      self.viewModel.report(contact: contact, screenshot: screenshot) {
-        self.collectionView.reloadData()
-      }
-    }
-    let drawer = makeReportDrawer(config)
-    coordinator.toDrawer(drawer, from: self)
-  }
-
-  private func makeWaitingRoundDrawer() -> UIViewController {
-    let text = DrawerText(
-      font: Fonts.Mulish.semiBold.font(size: 14.0),
-      text: Localized.Chat.RoundDrawer.title,
-      color: Asset.neutralWeak.color,
-      lineHeightMultiple: 1.35,
-      spacingAfter: 25
-    )
-
-    let button = DrawerCapsuleButton(model: .init(
-      title: Localized.Chat.RoundDrawer.action,
-      style: .brandColored
-    ))
-
-    let drawer = DrawerController([text, button])
-
-    button.action
-      .receive(on: DispatchQueue.main)
-      .sink { [weak drawer] in
-        drawer?.dismiss(animated: true)
-      }.store(in: &drawer.cancellables)
-
-    return drawer
+    navigator.perform(PresentMemberList(members: viewModel.info.members))
   }
 
   func scrollToBottom(completion: (() -> Void)? = nil) {
@@ -290,7 +332,7 @@ public final class GroupChatController: UIViewController {
     if abs(delta) > chatLayout.visibleBounds.height {
       animator = ManualAnimator()
       animator?.animate(duration: TimeInterval(0.25), curve: .easeInOut) { [weak self] percentage in
-        guard let self = self else { return }
+        guard let self else { return }
 
         self.collectionView.contentOffset = CGPoint(x: self.collectionView.contentOffset.x, y: initialOffset + (delta * percentage))
         if percentage == 1.0 {
@@ -598,7 +640,7 @@ extension GroupChatController: UICollectionViewDelegate {
       previewProvider: nil
     ) { [weak self] suggestedActions in
 
-      guard let self = self else { return nil }
+      guard let self else { return nil }
 
       let item = self.sections[indexPath.section].elements[indexPath.item]
 

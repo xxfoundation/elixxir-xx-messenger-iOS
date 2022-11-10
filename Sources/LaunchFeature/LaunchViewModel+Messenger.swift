@@ -440,6 +440,5 @@ extension LaunchViewModel {
       try? messenger.resumeBackup()
     }
     // TODO: Biometric auth
-
   }
 }

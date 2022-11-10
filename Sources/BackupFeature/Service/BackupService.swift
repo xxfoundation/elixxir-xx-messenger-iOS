@@ -28,7 +28,7 @@ public final class BackupService {
 
   public var settingsPublisher: AnyPublisher<CloudSettings, Never> {
     settings.handleEvents(receiveSubscription: { [weak self] _ in
-      guard let self = self else { return }
+      guard let self else { return }
       self.connectedServicesSubject.send(CloudFilesManager.all.linkedServices())
       self.fetchBackupOnAllProviders()
     }).eraseToAnyPublisher()
@@ -117,10 +117,7 @@ public final class BackupService {
   func initializeBackup(passphrase: String) {
     do {
       try messenger.startBackup(
-        password: passphrase,
-        params: .init(
-          username: username!
-        )
+        password: passphrase
       )
     } catch {
       print(">>> Exception when calling `messenger.startBackup`: \(error.localizedDescription)")

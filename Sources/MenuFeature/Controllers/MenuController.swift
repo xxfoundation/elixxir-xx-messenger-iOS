@@ -1,39 +1,23 @@
 import UIKit
 import Shared
 import Combine
+import XXNavigation
 import DrawerFeature
 import DependencyInjection
 
-public enum MenuItem {
-  case join
-  case scan
-  case chats
-  case share
-  case profile
-  case contacts
-  case requests
-  case settings
-  case dashboard
-}
-
 public final class MenuController: UIViewController {
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: MenuCoordinating
 
   private lazy var screenView = MenuView()
 
-  private let previousItem: MenuItem
+  private let currentItem: MenuItem
   private let viewModel = MenuViewModel()
-  private let previousController: UIViewController
   private var cancellables = Set<AnyCancellable>()
   private var drawerCancellables = Set<AnyCancellable>()
 
-  public init(
-    _ previousItem: MenuItem,
-    _ previousController: UIViewController
-  ) {
-    self.previousItem = previousItem
-    self.previousController = previousController
+  public init(_ currentItem: MenuItem) {
+    self.currentItem = currentItem
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -45,13 +29,11 @@ public final class MenuController: UIViewController {
 
   public override func viewDidLoad() {
     super.viewDidLoad()
-
     screenView.headerView.set(
       username: viewModel.username,
       image: viewModel.avatar
     )
-
-    screenView.select(item: previousItem)
+    screenView.select(item: currentItem)
     screenView.xxdkVersionLabel.text = "XXDK \(viewModel.xxdk)"
     screenView.buildLabel.text = Localized.Menu.build(viewModel.build)
     screenView.versionLabel.text = Localized.Menu.version(viewModel.version)
@@ -69,72 +51,81 @@ public final class MenuController: UIViewController {
   }
 
   private func setupBindings() {
-    screenView.headerView.scanButton
+    screenView
+      .headerView
+      .scanButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        dismiss(animated: true) { [weak self] in
-          guard let self = self, self.previousItem != .scan else { return }
-          self.coordinator.toFlow(.scan, from: self.previousController)
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self, self.currentItem != .scan else { return }
+          self.navigator.perform(PresentScan())
         }
       }.store(in: &cancellables)
 
-    screenView.headerView.nameButton
+    screenView
+      .headerView
+      .nameButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        dismiss(animated: true) { [weak self] in
-          guard let self = self, self.previousItem != .profile else { return }
-          self.coordinator.toFlow(.profile, from: self.previousController)
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self, self.currentItem != .profile else { return }
+          self.navigator.perform(PresentProfile())
         }
       }.store(in: &cancellables)
 
-    screenView.scanButton
+    screenView
+      .scanButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        dismiss(animated: true) { [weak self] in
-          guard let self = self, self.previousItem != .scan else { return }
-          self.coordinator.toFlow(.scan, from: self.previousController)
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self, self.currentItem != .scan else { return }
+          self.navigator.perform(PresentScan())
         }
       }.store(in: &cancellables)
 
-    screenView.chatsButton
+    screenView
+      .chatsButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        dismiss(animated: true) { [weak self] in
-          guard let self = self, self.previousItem != .chats else { return }
-          self.coordinator.toFlow(.chats, from: self.previousController)
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self, self.currentItem != .chats else { return }
+          self.navigator.perform(PresentChatList())
         }
       }.store(in: &cancellables)
 
-    screenView.contactsButton
+    screenView
+      .contactsButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        dismiss(animated: true) { [weak self] in
-          guard let self = self, self.previousItem != .contacts else { return }
-          self.coordinator.toFlow(.contacts, from: self.previousController)
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self, self.currentItem != .contacts else { return }
+          self.navigator.perform(PresentContactList())
         }
       }.store(in: &cancellables)
 
-    screenView.settingsButton
+    screenView
+      .settingsButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        dismiss(animated: true) { [weak self] in
-          guard let self = self, self.previousItem != .settings else { return }
-          self.coordinator.toFlow(.settings, from: self.previousController)
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self, self.currentItem != .settings else { return }
+          self.navigator.perform(PresentSettings())
         }
       }.store(in: &cancellables)
 
-    screenView.dashboardButton
+    screenView
+      .dashboardButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        dismiss(animated: true) { [weak self] in
-          guard let self = self, self.previousItem != .dashboard else { return }
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self, self.currentItem != .dashboard else { return }
           self.presentDrawer(
             title: Localized.ChatList.Dashboard.title,
             subtitle: Localized.ChatList.Dashboard.subtitle,
@@ -145,22 +136,24 @@ public final class MenuController: UIViewController {
         }
       }.store(in: &cancellables)
 
-    screenView.requestsButton
+    screenView
+      .requestsButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        dismiss(animated: true) { [weak self] in
-          guard let self = self, self.previousItem != .requests else { return }
-          self.coordinator.toFlow(.requests, from: self.previousController)
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self, self.currentItem != .requests else { return }
+          self.navigator.perform(PresentRequests())
         }
       }.store(in: &cancellables)
 
-    screenView.joinButton
+    screenView
+      .joinButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        dismiss(animated: true) { [weak self] in
-          guard let self = self, self.previousItem != .join else { return }
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self, self.currentItem != .join else { return }
           self.presentDrawer(
             title: Localized.ChatList.Join.title,
             subtitle: Localized.ChatList.Join.subtitle,
@@ -171,23 +164,25 @@ public final class MenuController: UIViewController {
         }
       }.store(in: &cancellables)
 
-    screenView.shareButton
+    screenView
+      .shareButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        dismiss(animated: true) { [weak self] in
-          guard let self = self, self.previousItem != .share else { return }
-          self.coordinator.toActivityController(
-            with: [Localized.Menu.shareContent(self.viewModel.referralDeeplink)],
-            from: self.previousController
-          )
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self, self.currentItem != .share else { return }
+          self.navigator.perform(PresentActivitySheet(items: [
+            Localized.Menu.shareContent(self.viewModel.referralDeeplink)
+          ]))
         }
       }.store(in: &cancellables)
 
-    viewModel.requestCount
+    viewModel
+      .requestCount
       .receive(on: DispatchQueue.main)
-      .sink { [weak screenView] in screenView?.requestsButton.updateNotification($0) }
-      .store(in: &cancellables)
+      .sink { [weak screenView] in
+        screenView?.requestsButton.updateNotification($0)
+      }.store(in: &cancellables)
   }
 
   private func presentDrawer(
@@ -201,7 +196,18 @@ public final class MenuController: UIViewController {
       style: .red
     ))
 
-    let drawer = DrawerController([
+    actionButton
+      .action
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+          action()
+        }
+      }.store(in: &drawerCancellables)
+
+    navigator.perform(PresentDrawer(items: [
       DrawerText(
         font: Fonts.Mulish.bold.font(size: 26.0),
         text: title,
@@ -218,17 +224,6 @@ public final class MenuController: UIViewController {
         spacingAfter: 39
       ),
       actionButton
-    ])
-
-    actionButton.action.receive(on: DispatchQueue.main)
-      .sink {
-        drawer.dismiss(animated: true) { [weak self] in
-          guard let self = self else { return }
-          self.drawerCancellables.removeAll()
-          action()
-        }
-      }.store(in: &drawerCancellables)
-
-    coordinator.toDrawer(drawer, from: previousController)
+    ]))
   }
 }

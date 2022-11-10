@@ -1,17 +1,17 @@
 import UIKit
-import Navigation
 import BackgroundTasks
 
 import Shared
-import XXModels
-import XXLogger
 import Defaults
 import PushFeature
 import LaunchFeature
 import CrashReporting
 import DependencyInjection
 
+import XXModels
+import XXLogger
 import XXClient
+import XXNavigation
 import XXMessengerClient
 
 import CloudFiles

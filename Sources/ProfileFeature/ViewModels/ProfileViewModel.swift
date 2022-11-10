@@ -86,7 +86,7 @@ final class ProfileViewModel {
     hudController.show()
 
     backgroundScheduler.schedule { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
 
       do {
         try self.messenger.ud.get()!.removeFact(

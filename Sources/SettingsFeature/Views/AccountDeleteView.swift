@@ -3,118 +3,114 @@ import Shared
 import InputField
 
 final class AccountDeleteView: UIView {
-    let titleLabel = UILabel()
-    let subtitleView = TextWithInfoView()
-    let iconImageView = UIImageView()
-    let inputField = InputField()
+  let titleLabel = UILabel()
+  let subtitleView = TextWithInfoView()
+  let iconImageView = UIImageView()
+  let inputField = InputField()
 
-    let stackView = UIStackView()
-    let confirmButton = CapsuleButton()
-    let cancelButton = CapsuleButton()
+  let stackView = UIStackView()
+  let confirmButton = CapsuleButton()
+  let cancelButton = CapsuleButton()
 
-    var didTapInfo: (() -> Void)?
+  var didTapInfo: (() -> Void)?
 
-    init() {
-        super.init(frame: .zero)
-        backgroundColor = Asset.neutralWhite.color
-        iconImageView.image = Asset.settingsDeleteLarge.image
+  init() {
+    super.init(frame: .zero)
+    backgroundColor = Asset.neutralWhite.color
+    iconImageView.image = Asset.settingsDeleteLarge.image
 
-        iconImageView.contentMode = .center
+    iconImageView.contentMode = .center
 
-        inputField.setup(
-            style: .regular,
-            title: Localized.Settings.Delete.input,
-            placeholder: "",
-            leftView: .image(Asset.personGray.image),
-            subtitleColor: Asset.neutralDisabled.color,
-            allowsEmptySpace: false,
-            autocapitalization: .none
-        )
+    inputField.setup(
+      style: .regular,
+      title: Localized.Settings.Delete.input,
+      placeholder: "",
+      leftView: .image(Asset.personGray.image),
+      subtitleColor: Asset.neutralDisabled.color,
+      allowsEmptySpace: false,
+      autocapitalization: .none
+    )
 
-        titleLabel.text = Localized.Settings.Delete.title
-        titleLabel.textAlignment = .center
-        titleLabel.textColor = Asset.neutralActive.color
-        titleLabel.font = Fonts.Mulish.bold.font(size: 32.0)
+    titleLabel.text = Localized.Settings.Delete.title
+    titleLabel.textAlignment = .center
+    titleLabel.textColor = Asset.neutralActive.color
+    titleLabel.font = Fonts.Mulish.bold.font(size: 32.0)
 
-        let paragraph = NSMutableParagraphStyle()
-        paragraph.alignment = .center
-        paragraph.lineHeightMultiple = 1.1
+    let paragraph = NSMutableParagraphStyle()
+    paragraph.alignment = .center
+    paragraph.lineHeightMultiple = 1.1
 
-        subtitleView.setup(
-            text: Localized.Settings.Delete.subtitle,
-            attributes: [
-                .foregroundColor: Asset.neutralActive.color,
-                .font: Fonts.Mulish.regular.font(size: 16.0),
-                .paragraphStyle: paragraph
-            ],
-            didTapInfo: { self.didTapInfo?() }
-        )
+    subtitleView.setup(
+      text: Localized.Settings.Delete.subtitle,
+      attributes: [
+        .foregroundColor: Asset.neutralActive.color,
+        .font: Fonts.Mulish.regular.font(size: 16.0),
+        .paragraphStyle: paragraph
+      ],
+      didTapInfo: { self.didTapInfo?() }
+    )
 
-        confirmButton.setStyle(.red)
-        confirmButton.isEnabled = false
-        confirmButton.setTitle(Localized.Settings.Delete.delete, for: .normal)
-        cancelButton.setStyle(.simplestColoredRed)
-        cancelButton.setTitle(Localized.Settings.Delete.cancel, for: .normal)
+    confirmButton.setStyle(.red)
+    confirmButton.isEnabled = false
+    confirmButton.setTitle(Localized.Settings.Delete.delete, for: .normal)
+    cancelButton.setStyle(.simplestColoredRed)
+    cancelButton.setTitle(Localized.Settings.Delete.cancel, for: .normal)
 
-        stackView.spacing = 12
-        stackView.axis = .vertical
-        stackView.addArrangedSubview(confirmButton)
-        stackView.addArrangedSubview(cancelButton)
+    stackView.spacing = 12
+    stackView.axis = .vertical
+    stackView.addArrangedSubview(confirmButton)
+    stackView.addArrangedSubview(cancelButton)
 
-        addSubview(iconImageView)
-        addSubview(inputField)
-        addSubview(titleLabel)
-        addSubview(subtitleView)
-        addSubview(stackView)
+    addSubview(iconImageView)
+    addSubview(inputField)
+    addSubview(titleLabel)
+    addSubview(subtitleView)
+    addSubview(stackView)
 
-        iconImageView.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(30)
-            make.centerX.equalToSuperview()
-        }
-
-        titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(iconImageView.snp.bottom).offset(34)
-            make.centerX.equalToSuperview()
-        }
-
-        subtitleView.snp.makeConstraints { make in
-            make.top.equalTo(titleLabel.snp.bottom).offset(20)
-            make.left.equalToSuperview().offset(50)
-            make.right.equalToSuperview().offset(-50)
-        }
-
-        inputField.snp.makeConstraints { make in
-            make.top.equalTo(subtitleView.snp.bottom).offset(50)
-            make.left.equalToSuperview().offset(24)
-            make.right.equalToSuperview().offset(-24)
-        }
-
-        stackView.snp.makeConstraints { make in
-            make.top.greaterThanOrEqualTo(inputField.snp.bottom).offset(20)
-            make.left.equalToSuperview().offset(50)
-            make.right.equalToSuperview().offset(-50)
-            make.bottom.equalToSuperview().offset(-44)
-        }
+    iconImageView.snp.makeConstraints {
+      $0.top.equalToSuperview().offset(30)
+      $0.centerX.equalToSuperview()
     }
-
-    required init?(coder: NSCoder) { nil }
-
-    func setInfoClosure(_ closure: @escaping () -> Void) {
-        didTapInfo = closure
+    titleLabel.snp.makeConstraints {
+      $0.top.equalTo(iconImageView.snp.bottom).offset(34)
+      $0.centerX.equalToSuperview()
     }
-
-    func update(username: String) {
-        inputField.update(placeholder: username)
+    subtitleView.snp.makeConstraints {
+      $0.top.equalTo(titleLabel.snp.bottom).offset(20)
+      $0.left.equalToSuperview().offset(50)
+      $0.right.equalToSuperview().offset(-50)
     }
-
-    func update(status: InputField.ValidationStatus) {
-        inputField.update(status: status)
-
-        switch status {
-        case .valid:
-            confirmButton.isEnabled = true
-        case .invalid, .unknown:
-            confirmButton.isEnabled = false
-        }
+    inputField.snp.makeConstraints {
+      $0.top.equalTo(subtitleView.snp.bottom).offset(50)
+      $0.left.equalToSuperview().offset(24)
+      $0.right.equalToSuperview().offset(-24)
     }
+    stackView.snp.makeConstraints {
+      $0.top.greaterThanOrEqualTo(inputField.snp.bottom).offset(20)
+      $0.left.equalToSuperview().offset(50)
+      $0.right.equalToSuperview().offset(-50)
+      $0.bottom.equalToSuperview().offset(-44)
+    }
+  }
+
+  required init?(coder: NSCoder) { nil }
+
+  func setInfoClosure(_ closure: @escaping () -> Void) {
+    didTapInfo = closure
+  }
+
+  func update(username: String) {
+    inputField.update(placeholder: username)
+  }
+
+  func update(status: InputField.ValidationStatus) {
+    inputField.update(status: status)
+
+    switch status {
+    case .valid:
+      confirmButton.isEnabled = true
+    case .invalid, .unknown:
+      confirmButton.isEnabled = false
+    }
+  }
 }

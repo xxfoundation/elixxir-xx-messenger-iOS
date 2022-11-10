@@ -6,6 +6,7 @@ import QuickLook
 import XXModels
 import Voxophone
 import ChatLayout
+import XXNavigation
 import DrawerFeature
 import DifferenceKit
 import ChatInputFeature
@@ -23,9 +24,9 @@ extension Message: Differentiable {
 
 public final class SingleChatController: UIViewController {
   @Dependency var logger: XXLogger
+  @Dependency var navigator: Navigator
   @Dependency var voxophone: Voxophone
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: ChatCoordinating
   @Dependency var reportingStatus: ReportingStatus
   @Dependency var makeReportDrawer: MakeReportDrawer
   @Dependency var makeAppScreenshot: MakeAppScreenshot
@@ -45,6 +46,7 @@ public final class SingleChatController: UIViewController {
   private let viewModel: SingleChatViewModel
   private let layoutDelegate = LayoutDelegate()
   private var cancellables = Set<AnyCancellable>()
+  private var drawerCancellables = Set<AnyCancellable>()
   private let chatLayout = CollectionViewChatLayout()
   private var sections = [ArraySection<ChatSection, Message>]()
   private var currentInterfaceActions: SetActor<Set<InterfaceActions>, ReactionTypes> = SetActor()
@@ -134,8 +136,6 @@ public final class SingleChatController: UIViewController {
     screenView.bringSubviewToFront(screenView.snackBar)
   }
 
-  // MARK: Private
-
   private func setupCollectionView() {
     chatLayout.configure(layoutDelegate)
     collectionView = .init(on: screenView, with: chatLayout)
@@ -192,7 +192,7 @@ public final class SingleChatController: UIViewController {
 
   private func setupInputController() {
     inputComponent.setMaxHeight { [weak self] in
-      guard let self = self else { return 150 }
+      guard let self else { return 150 }
 
       let maxHeight = self.collectionView.frame.height
       - self.collectionView.adjustedContentInset.top
@@ -215,19 +215,43 @@ public final class SingleChatController: UIViewController {
       .sink { [unowned self] in
         switch $0 {
         case .library:
-          coordinator.toLibrary(from: self)
+          navigator.perform(PresentPhotoLibrary())
         case .camera:
-          coordinator.toCamera(from: self)
+          navigator.perform(PresentCamera())
         case .cameraPermission:
-          coordinator.toPermission(type: .camera, from: self)
+          navigator.perform(PresentPermissionRequest(type: .camera))
         case .microphonePermission:
-          coordinator.toPermission(type: .microphone, from: self)
+          navigator.perform(PresentPermissionRequest(type: .microphone))
         case .libraryPermission:
-          coordinator.toPermission(type: .library, from: self)
+          navigator.perform(PresentPermissionRequest(type: .library))
         case .webview(let urlString):
-          coordinator.toWebview(with: urlString, from: self)
+          navigator.perform(PresentWebsite(url: URL(string: urlString)!))
         case .waitingRound:
-          coordinator.toDrawer(makeWaitingRoundDrawer(), from: self)
+          let button = DrawerCapsuleButton(model: .init(
+            title: Localized.Chat.RoundDrawer.action,
+            style: .brandColored
+          ))
+
+          button
+            .action
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+              navigator.perform(DismissModal(from: self)) { [weak self] in
+                guard let self else { return }
+                self.drawerCancellables.removeAll()
+              }
+            }.store(in: &drawerCancellables)
+
+          navigator.perform(PresentDrawer(items: [
+            DrawerText(
+              font: Fonts.Mulish.semiBold.font(size: 14.0),
+              text: Localized.Chat.RoundDrawer.title,
+              color: Asset.neutralWeak.color,
+              lineHeightMultiple: 1.35,
+              spacingAfter: 25
+            ),
+            button
+          ]))
         case .none:
           break
         }
@@ -237,14 +261,15 @@ public final class SingleChatController: UIViewController {
   }
 
   private func setupBindings() {
-    sheet.actionPublisher
+    sheet
+      .actionPublisher
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
         switch $0 {
         case .clear:
           presentDeleteAllDrawer()
         case .details:
-          coordinator.toContact(viewModel.contact, from: self)
+          navigator.perform(PresentContact(contact: viewModel.contact))
         case .report:
           presentReportDrawer()
         }
@@ -261,19 +286,23 @@ public final class SingleChatController: UIViewController {
         }
       }.store(in: &cancellables)
 
-    viewModel.reportPopupPublisher
+    viewModel
+      .reportPopupPublisher
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
         presentReportDrawer()
       }.store(in: &cancellables)
 
-    viewModel.isOnline
+    viewModel
+      .isOnline
       .removeDuplicates()
       .receive(on: DispatchQueue.main)
-      .sink { [weak screenView] in screenView?.displayNetworkIssue(!$0) }
-      .store(in: &cancellables)
+      .sink { [weak screenView] in
+        screenView?.displayNetworkIssue(!$0)
+      }.store(in: &cancellables)
 
-    viewModel.messages
+    viewModel
+      .messages
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] sections in
         func process() {
@@ -337,7 +366,7 @@ public final class SingleChatController: UIViewController {
     if abs(delta) > chatLayout.visibleBounds.height {
       animator = ManualAnimator()
       animator?.animate(duration: TimeInterval(0.25), curve: .easeInOut) { [weak self] percentage in
-        guard let self = self else { return }
+        guard let self else { return }
 
         self.collectionView.contentOffset = CGPoint(x: self.collectionView.contentOffset.x, y: initialOffset + (delta * percentage))
         if percentage == 1.0 {
@@ -359,42 +388,62 @@ public final class SingleChatController: UIViewController {
     }
   }
 
-  private func makeWaitingRoundDrawer() -> UIViewController {
-    let text = DrawerText(
-      font: Fonts.Mulish.semiBold.font(size: 14.0),
-      text: Localized.Chat.RoundDrawer.title,
-      color: Asset.neutralWeak.color,
-      lineHeightMultiple: 1.35,
-      spacingAfter: 25
-    )
-
-    let button = DrawerCapsuleButton(model: .init(
-      title: Localized.Chat.RoundDrawer.action,
-      style: .brandColored
-    ))
-
-    let drawer = DrawerController([text, button])
-
-    button.action
-      .receive(on: DispatchQueue.main)
-      .sink { [unowned drawer] in drawer.dismiss(animated: true) }
-      .store(in: &drawer.cancellables)
-
-    return drawer
-  }
-
   private func presentReportDrawer() {
-    var config = MakeReportDrawer.Config()
-    config.onReport = { [weak self] in
-      guard let self = self else { return }
-      let screenshot = try! self.makeAppScreenshot()
-      self.viewModel.report(screenshot: screenshot) { success in
-        guard success else { return }
-        self.navigationController?.popViewController(animated: true)
-      }
-    }
-    let drawer = makeReportDrawer(config)
-    coordinator.toDrawer(drawer, from: self)
+    let cancelButton = CapsuleButton()
+    cancelButton.setStyle(.seeThrough)
+    cancelButton.setTitle(Localized.Chat.Report.cancel, for: .normal)
+
+    let reportButton = CapsuleButton()
+    reportButton.setStyle(.red)
+    reportButton.setTitle(Localized.Chat.Report.action, for: .normal)
+
+    reportButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+          let screenshot = try! self.makeAppScreenshot()
+          self.viewModel.report(screenshot: screenshot) { success in
+            guard success else { return }
+            self.navigationController?.popViewController(animated: true)
+          }
+        }
+      }.store(in: &drawerCancellables)
+
+    cancelButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+        }
+      }.store(in: &drawerCancellables)
+
+    navigator.perform(PresentDrawer(items: [
+      DrawerImage(
+        image: Asset.drawerNegative.image
+      ),
+      DrawerText(
+        font: Fonts.Mulish.semiBold.font(size: 18.0),
+        text: Localized.Chat.Report.title,
+        color: Asset.neutralActive.color
+      ),
+      DrawerText(
+        font: Fonts.Mulish.semiBold.font(size: 14.0),
+        text: Localized.Chat.Report.subtitle,
+        color: Asset.neutralWeak.color,
+        lineHeightMultiple: 1.35,
+        spacingAfter: 25
+      ),
+      DrawerStack(
+        axis: .vertical,
+        spacing: 20.0,
+        views: [reportButton, cancelButton]
+      )
+    ]))
   }
 
   private func presentDeleteAllDrawer() {
@@ -406,7 +455,28 @@ public final class SingleChatController: UIViewController {
     cancelButton.setStyle(.seeThrough)
     cancelButton.setTitle(Localized.Chat.Clear.cancel, for: .normal)
 
-    let drawer = DrawerController([
+    clearButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+          self.viewModel.didRequestDeleteAll()
+        }
+      }.store(in: &drawerCancellables)
+
+    cancelButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+        }
+      }.store(in: &drawerCancellables)
+
+    navigator.perform(PresentDrawer(items: [
       DrawerImage(
         image: Asset.drawerNegative.image
       ),
@@ -426,23 +496,7 @@ public final class SingleChatController: UIViewController {
         spacing: 20.0,
         views: [clearButton, cancelButton]
       )
-    ])
-
-    clearButton.publisher(for: .touchUpInside)
-      .receive(on: DispatchQueue.main)
-      .sink { [unowned drawer, weak self] in
-        drawer.dismiss(animated: true) {
-          self?.viewModel.didRequestDeleteAll()
-        }
-      }
-      .store(in: &drawer.cancellables)
-
-    cancelButton.publisher(for: .touchUpInside)
-      .receive(on: DispatchQueue.main)
-      .sink { [unowned drawer] in drawer.dismiss(animated: true) }
-      .store(in: &drawer.cancellables)
-
-    coordinator.toDrawer(drawer, from: self)
+    ]))
   }
 
   private func previewItemAt(_ indexPath: IndexPath) {
@@ -453,17 +507,15 @@ public final class SingleChatController: UIViewController {
 
     let ft = viewModel.getFileTransferWith(id: ftid)
     fileURL = FileManager.url(for: "\(ft.name).\(ft.type)")
-    coordinator.toPreview(from: self)
+    //coordinator.toPreview(from: self)
   }
 
-  // MARK: Selectors
-
   @objc private func didTapDots() {
-    coordinator.toMenuSheet(sheet, from: self)
+    //coordinator.toMenuSheet(sheet, from: self)
   }
 
   @objc private func didTapInfo() {
-    coordinator.toContact(viewModel.contact, from: self)
+    navigator.perform(PresentContact(contact: viewModel.contact))
   }
 }
 
@@ -638,7 +690,7 @@ extension SingleChatController: UICollectionViewDelegate {
       previewProvider: nil
     ) { [weak self] _ in
 
-      guard let self = self else { return nil }
+      guard let self else { return nil }
       let item = self.sections[indexPath.section].elements[indexPath.item]
 
       var children = [

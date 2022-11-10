@@ -1,12 +1,13 @@
 import UIKit
 import Shared
 import Combine
+import XXNavigation
 import DrawerFeature
 import DependencyInjection
 
 public final class ScanContainerController: UIViewController {
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: ScanCoordinating
 
   private lazy var screenView = ScanContainerView()
 
@@ -30,7 +31,6 @@ public final class ScanContainerController: UIViewController {
       $0.right.equalToSuperview()
       $0.bottom.equalTo(screenView)
     }
-
     pageController.delegate = self
     pageController.dataSource = self
     pageController.didMove(toParent: self)
@@ -50,20 +50,19 @@ public final class ScanContainerController: UIViewController {
     setupBindings()
 
     displayController.didTapInfo = { [weak self] in
-      self?.presentInfo(
+      guard let self else { return }
+      self.presentInfo(
         title: Localized.Scan.Info.title,
         subtitle: Localized.Scan.Info.subtitle
       )
     }
-
     displayController.didTapAddEmail = { [weak self] in
-      guard let self = self else { return }
-      self.coordinator.toEmail(from: self)
+      guard let self else { return }
+      self.navigator.perform(PresentProfileEmail())
     }
-
     displayController.didTapAddPhone = { [weak self] in
-      guard let self = self else { return }
-      self.coordinator.toPhone(from: self)
+      guard let self else { return }
+      self.navigator.perform(PresentProfilePhone())
     }
   }
 
@@ -87,7 +86,8 @@ public final class ScanContainerController: UIViewController {
   }
 
   private func setupBindings() {
-    screenView.leftButton
+    screenView
+      .leftButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] _ in
         screenView.leftButton.set(selected: true)
@@ -95,7 +95,8 @@ public final class ScanContainerController: UIViewController {
         pageController.setViewControllers([scanController], direction: .reverse, animated: true, completion: nil)
       }.store(in: &cancellables)
 
-    screenView.rightButton
+    screenView
+      .rightButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] _ in
         screenView.leftButton.set(selected: false)
@@ -105,7 +106,7 @@ public final class ScanContainerController: UIViewController {
   }
 
   @objc private func didTapMenu() {
-    coordinator.toSideMenu(from: self)
+    navigator.perform(PresentMenu(currentItem: .scan))
   }
 
   private func presentInfo(title: String, subtitle: String) {
@@ -115,7 +116,17 @@ public final class ScanContainerController: UIViewController {
       title: Localized.Settings.InfoDrawer.action
     )
 
-    let drawer = DrawerController([
+    actionButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+        }
+      }.store(in: &drawerCancellables)
+
+    navigator.perform(PresentDrawer(items: [
       DrawerText(
         font: Fonts.Mulish.bold.font(size: 26.0),
         text: title,
@@ -135,18 +146,7 @@ public final class ScanContainerController: UIViewController {
         actionButton,
         FlexibleSpace()
       ])
-    ])
-
-    actionButton.publisher(for: .touchUpInside)
-      .receive(on: DispatchQueue.main)
-      .sink {
-        drawer.dismiss(animated: true) { [weak self] in
-          guard let self = self else { return }
-          self.drawerCancellables.removeAll()
-        }
-      }.store(in: &drawerCancellables)
-
-    coordinator.toDrawer(drawer, from: self)
+    ]))
   }
 }
 

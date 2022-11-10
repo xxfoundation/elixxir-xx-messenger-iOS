@@ -47,7 +47,7 @@ final class RequestsFailedViewModel {
     
     hudController.show()
     backgroundScheduler.schedule { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
       
       do {
         if request.status == .failedToRequest {

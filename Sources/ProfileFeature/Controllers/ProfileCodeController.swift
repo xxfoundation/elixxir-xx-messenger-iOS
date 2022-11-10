@@ -1,7 +1,6 @@
 import UIKit
 import Shared
 import Combine
-import Navigation
 import XXNavigation
 import DependencyInjection
 import ScrollViewController
@@ -17,13 +16,6 @@ public final class ProfileCodeController: UIViewController {
   private let content: String
   private let viewModel: ProfileCodeViewModel
   private var cancellables = Set<AnyCancellable>()
-
-  public override func viewWillAppear(_ animated: Bool) {
-    super.viewWillAppear(animated)
-    navigationItem.backButtonTitle = ""
-    navigationController?.navigationBar
-      .customize(backgroundColor: Asset.neutralWhite.color)
-  }
 
   public init(
     _ isEmail: Bool,
@@ -42,38 +34,50 @@ public final class ProfileCodeController: UIViewController {
 
   required init?(coder: NSCoder) { nil }
 
+  public override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+    navigationItem.backButtonTitle = ""
+    navigationController?.navigationBar
+      .customize(backgroundColor: Asset.neutralWhite.color)
+  }
+
   public override func viewDidLoad() {
     super.viewDidLoad()
     setupScrollView()
     setupBindings()
 
-//    var content: String!
-//
-//    if confirmation.isEmail {
-//      content = confirmation.content
-//    } else {
-//      let country = Country.findFrom(confirmation.content)
-//      content = "\(country.prefix)\(confirmation.content.dropLast(2))"
-//    }
-//
-//    screenView.set(content, isEmail: confirmation.isEmail)
+    if isEmail {
+      screenView.set(content, isEmail: true)
+    } else {
+      let country = Country.findFrom(content)
+      screenView.set(
+        "\(country.prefix)\(content.dropLast(2))",
+        isEmail: false
+      )
+    }
   }
 
   private func setupScrollView() {
     addChild(scrollViewController)
     view.addSubview(scrollViewController.view)
-    scrollViewController.view.snp.makeConstraints { $0.edges.equalToSuperview() }
+    scrollViewController.view.snp.makeConstraints {
+      $0.edges.equalToSuperview()
+    }
     scrollViewController.didMove(toParent: self)
     scrollViewController.contentView = screenView
     scrollViewController.scrollView.backgroundColor = Asset.neutralWhite.color
   }
 
   private func setupBindings() {
-    screenView.inputField.textPublisher
-      .sink { [unowned self] in viewModel.didInput($0) }
-      .store(in: &cancellables)
+    screenView
+      .inputField
+      .textPublisher
+      .sink { [unowned self] in
+        viewModel.didInput($0)
+      }.store(in: &cancellables)
 
-    viewModel.statePublisher
+    viewModel
+      .statePublisher
       .map(\.status)
       .removeDuplicates()
       .receive(on: DispatchQueue.main)
@@ -86,29 +90,46 @@ public final class ProfileCodeController: UIViewController {
         }
       }.store(in: &cancellables)
 
-    screenView.saveButton
+    screenView
+      .saveButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in viewModel.didTapNext() }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        viewModel.didTapNext()
+      }.store(in: &cancellables)
 
-    viewModel.statePublisher
+    viewModel
+      .statePublisher
       .map(\.resendDebouncer)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
         screenView.resendButton.isEnabled = $0 == 0
-
         if $0 == 0 {
-          screenView.resendButton.setTitle(Localized.Profile.Code.resend(""), for: .normal)
+          screenView.resendButton.setTitle(
+            Localized.Profile.Code.resend(""), for: .normal
+          )
         } else {
-          screenView.resendButton.setTitle(Localized.Profile.Code.resend("(\($0))"), for: .disabled)
+          screenView.resendButton.setTitle(
+            Localized.Profile.Code.resend("(\($0))"), for: .disabled
+          )
         }
       }.store(in: &cancellables)
 
-    screenView.resendButton
+    screenView
+      .resendButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in viewModel.didTapResend() }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        viewModel.didTapResend()
+      }.store(in: &cancellables)
+
+    viewModel
+      .statePublisher
+      .map(\.didConfirm)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        guard let navigationController, $0 == true else { return }
+        navigator.perform(PopToRoot(on: navigationController))
+      }.store(in: &cancellables)
   }
 }

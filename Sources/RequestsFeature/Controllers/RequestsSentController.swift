@@ -29,7 +29,7 @@ final class RequestsSentController: UIViewController {
             let cell: RequestCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
             cell.setupFor(requestSent: requestSent)
             cell.didTapStateButton = { [weak self] in
-                guard let self = self else { return }
+                guard let self else { return }
                 self.viewModel.didTapStateButtonFor(request: requestSent)
             }
             return cell

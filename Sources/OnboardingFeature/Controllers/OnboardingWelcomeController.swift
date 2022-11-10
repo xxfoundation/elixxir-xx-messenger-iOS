@@ -2,7 +2,6 @@ import UIKit
 import Shared
 import Combine
 import Defaults
-import Navigation
 import XXNavigation
 import DrawerFeature
 import DependencyInjection
@@ -29,12 +28,26 @@ public final class OnboardingWelcomeController: UIViewController {
 
   public override func viewDidLoad() {
     super.viewDidLoad()
-    setupBindings()
+    screenView.setupTitle(
+      Localized.Onboarding.Welcome.title(username)
+    )
+    screenView
+      .continueButton
+      .publisher(for: .touchUpInside)
+      .sink { [unowned self] in
+        navigator.perform(PresentOnboardingEmail())
+      }.store(in: &cancellables)
 
-    screenView.setupTitle(Localized.Onboarding.Welcome.title(username))
+    screenView
+      .skipButton
+      .publisher(for: .touchUpInside)
+      .sink { [unowned self] in
+        navigator.perform(PresentChatList())
+      }.store(in: &cancellables)
 
     screenView.didTapInfo = { [weak self] in
-      self?.presentInfo(
+      guard let self else { return }
+      self.presentInfo(
         title: Localized.Onboarding.Welcome.Info.title,
         subtitle: Localized.Onboarding.Welcome.Info.subtitle,
         urlString: "https://links.xx.network/ud"
@@ -42,57 +55,42 @@ public final class OnboardingWelcomeController: UIViewController {
     }
   }
 
-  private func setupBindings() {
-    screenView.continueButton.publisher(for: .touchUpInside)
-      .sink { [unowned self] in
-        navigator.perform(PresentOnboardingEmail())
-      }.store(in: &cancellables)
-
-    screenView.skipButton.publisher(for: .touchUpInside)
-      .sink { [unowned self] in
-        navigator.perform(PresentChatList())
-      }.store(in: &cancellables)
-  }
-
   private func presentInfo(
     title: String,
     subtitle: String,
     urlString: String = ""
   ) {
-//    let actionButton = CapsuleButton()
-//    actionButton.set(
-//      style: .seeThrough,
-//      title: Localized.Settings.InfoDrawer.action
-//    )
-//
-//    let drawer = DrawerController([
-//      DrawerText(
-//        font: Fonts.Mulish.bold.font(size: 26.0),
-//        text: title,
-//        color: Asset.neutralActive.color,
-//        alignment: .left,
-//        spacingAfter: 19
-//      ),
-//      DrawerLinkText(
-//        text: subtitle,
-//        urlString: urlString,
-//        spacingAfter: 37
-//      ),
-//      DrawerStack(views: [
-//        actionButton,
-//        FlexibleSpace()
-//      ])
-//    ])
-//
-//    actionButton.publisher(for: .touchUpInside)
-//      .receive(on: DispatchQueue.main)
-//      .sink {
-//        drawer.dismiss(animated: true) { [weak self] in
-//          guard let self = self else { return }
-//          self.drawerCancellables.removeAll()
-//        }
-//      }.store(in: &drawerCancellables)
-//
-//    navigator.perform(PresentDrawer())
+    let actionButton = CapsuleButton()
+    actionButton.set(
+      style: .seeThrough,
+      title: Localized.Settings.InfoDrawer.action
+    )
+    actionButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) {
+          self.drawerCancellables.removeAll()
+        }
+      }.store(in: &drawerCancellables)
+
+    navigator.perform(PresentDrawer(items: [
+      DrawerText(
+        font: Fonts.Mulish.bold.font(size: 26.0),
+        text: title,
+        color: Asset.neutralActive.color,
+        alignment: .left,
+        spacingAfter: 19
+      ),
+      DrawerLinkText(
+        text: subtitle,
+        urlString: urlString,
+        spacingAfter: 37
+      ),
+      DrawerStack(views: [
+        actionButton,
+        FlexibleSpace()
+      ])
+    ]))
   }
 }

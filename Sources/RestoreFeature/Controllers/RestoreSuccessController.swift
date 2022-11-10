@@ -1,11 +1,12 @@
 import UIKit
 import Shared
 import Combine
+import XXNavigation
 import DependencyInjection
 
 public final class RestoreSuccessController: UIViewController {
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: RestoreCoordinating
 
   private lazy var screenView = RestoreSuccessView()
   private var cancellables = Set<AnyCancellable>()
@@ -44,9 +45,11 @@ public final class RestoreSuccessController: UIViewController {
   }
 
   private func setupBindings() {
-    screenView.nextButton
+    screenView
+      .nextButton
       .publisher(for: .touchUpInside)
-      .sink { [unowned self] in coordinator.toChats(from: self) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigator.perform(PresentChatList())
+      }.store(in: &cancellables)
   }
 }

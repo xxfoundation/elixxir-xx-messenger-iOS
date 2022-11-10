@@ -1,11 +1,12 @@
 import UIKit
 import Shared
 import Combine
+import XXNavigation
 import DrawerFeature
 import DependencyInjection
 
 public final class RestoreListController: UIViewController {
-  @Dependency var coordinator: RestoreCoordinating
+  @Dependency var navigator: Navigator
 
   private lazy var screenView = RestoreListView()
 
@@ -27,23 +28,20 @@ public final class RestoreListController: UIViewController {
   public override func viewDidLoad() {
     super.viewDidLoad()
 
-    viewModel.sftpPublisher
+    viewModel
+      .sftpPublisher
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] _ in
-        coordinator.toSFTP(from: self) { [weak self] host, username, password in
+        navigator.perform(PresentSFTP { [weak self] host, username, password in
           guard let self else { return }
-          self.viewModel.setupSFTP(
-            host: host,
-            username: username,
-            password: password
-          )
-        }
+          self.viewModel.setupSFTP(host: host, username: username, password: password)
+        })
       }.store(in: &cancellables)
 
     viewModel.detailsPublisher
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in
-        coordinator.toRestore(with: $0, from: self)
+      .sink { [unowned self] _ in
+//        coordinator.toRestore(with: $0, from: self)
       }.store(in: &cancellables)
 
     screenView.cancelButton
@@ -97,7 +95,17 @@ extension RestoreListController {
       style: .brandColored
     ))
 
-    let drawer = DrawerController([
+    actionButton
+      .action
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+        }
+      }.store(in: &drawerCancellables)
+
+    navigator.perform(PresentDrawer(items: [
       DrawerText(
         font: Fonts.Mulish.bold.font(size: 26.0),
         text: Localized.AccountRestore.Warning.title,
@@ -108,17 +116,6 @@ extension RestoreListController {
         spacingAfter: 37
       ),
       actionButton
-    ])
-
-    actionButton.action
-      .receive(on: DispatchQueue.main)
-      .sink {
-        drawer.dismiss(animated: true) { [weak self] in
-          guard let self = self else { return }
-          self.drawerCancellables.removeAll()
-        }
-      }.store(in: &drawerCancellables)
-
-    coordinator.toDrawer(drawer, from: self)
+    ]))
   }
 }

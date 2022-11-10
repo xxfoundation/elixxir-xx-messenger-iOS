@@ -159,7 +159,7 @@ extension RootViewController {
 
       self.toastTimer?.invalidate()
       self.toastTimer = Timer.scheduledTimer(withTimeInterval: 5, repeats: false) { [weak self] _ in
-        guard let self = self else { return }
+        guard let self else { return }
         self.dismiss(toastView: toastView)
       }
     }

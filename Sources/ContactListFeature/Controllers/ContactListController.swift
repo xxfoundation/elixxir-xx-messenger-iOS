@@ -1,11 +1,12 @@
 import UIKit
 import Shared
 import Combine
+import XXNavigation
 import DependencyInjection
 
 public final class ContactListController: UIViewController {
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: ContactListCoordinating
 
   private lazy var screenView = ContactListView()
   private lazy var tableController = ContactListTableController(viewModel)
@@ -65,55 +66,65 @@ public final class ContactListController: UIViewController {
 
     navigationItem.rightBarButtonItem = UIBarButtonItem(customView: rightStack)
 
-    search.snp.makeConstraints { $0.width.equalTo(40) }
+    search.snp.makeConstraints {
+      $0.width.equalTo(40)
+    }
   }
 
   private func setupTableView() {
     addChild(tableController)
     screenView.addSubview(tableController.view)
-
-    tableController.view.snp.makeConstraints { make in
-      make.top.equalTo(screenView.topStackView.snp.bottom)
-      make.left.bottom.right.equalToSuperview()
+    tableController.view.snp.makeConstraints {
+      $0.top.equalTo(screenView.topStackView.snp.bottom)
+      $0.left.bottom.right.equalToSuperview()
     }
-
     tableController.didMove(toParent: self)
   }
 
   private func setupBindings() {
-    tableController.didTap
+    tableController
+      .didTap
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in coordinator.toSingleChat(with: $0, from: self) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigator.perform(PresentChat(contact: $0))
+      }.store(in: &cancellables)
 
-    screenView.requestsButton
+    screenView
+      .requestsButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in coordinator.toRequests(from: self) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigator.perform(PresentRequests())
+      }.store(in: &cancellables)
 
-    screenView.newGroupButton
+    screenView
+      .newGroupButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in coordinator.toNewGroup(from: self) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigator.perform(PresentNewGroup())
+      }.store(in: &cancellables)
 
-    screenView.searchButton
+    screenView
+      .searchButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in coordinator.toSearch(from: self) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigator.perform(PresentSearch(replacing: false))
+      }.store(in: &cancellables)
 
-    viewModel.requestCount
+    viewModel
+      .requestCount
       .receive(on: DispatchQueue.main)
-      .sink { [weak screenView] in screenView?.requestsButton.updateNotification($0) }
-      .store(in: &cancellables)
+      .sink { [weak screenView] in
+        screenView?.requestsButton.updateNotification($0)
+      }.store(in: &cancellables)
 
-    viewModel.contacts
+    viewModel
+      .contacts
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
         screenView.stackView.isHidden = !$0.isEmpty
-
         if $0.isEmpty {
           screenView.bringSubviewToFront(screenView.stackView)
         }
@@ -121,14 +132,14 @@ public final class ContactListController: UIViewController {
   }
 
   @objc private func didTapSearch() {
-    coordinator.toSearch(from: self)
+    navigator.perform(PresentSearch(replacing: false))
   }
 
   @objc private func didTapScan() {
-    coordinator.toScan(from: self)
+    navigator.perform(PresentScan())
   }
 
   @objc private func didTapMenu() {
-    coordinator.toSideMenu(from: self)
+    navigator.perform(PresentMenu(currentItem: .contacts))
   }
 }

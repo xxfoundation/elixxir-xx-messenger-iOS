@@ -1,13 +1,14 @@
 import UIKit
 import Shared
 import Combine
+import XXNavigation
 import DrawerFeature
 import DependencyInjection
 import ScrollViewController
 
 public final class SettingsController: UIViewController {
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: SettingsCoordinating
 
   private lazy var scrollViewController = ScrollViewController()
   private lazy var screenView = SettingsView {
@@ -80,47 +81,66 @@ public final class SettingsController: UIViewController {
 
   private func setupScrollView() {
     scrollViewController.view.backgroundColor = Asset.neutralWhite.color
-
     addChild(scrollViewController)
     view.addSubview(scrollViewController.view)
-
-    scrollViewController.view.snp.makeConstraints { $0.edges.equalToSuperview() }
+    scrollViewController.view.snp.makeConstraints {
+      $0.edges.equalToSuperview()
+    }
     scrollViewController.didMove(toParent: self)
     scrollViewController.contentView = screenView
   }
 
   private func setupBindings() {
-    screenView.inAppNotifications.switcherView
+    screenView
+      .inAppNotifications
+      .switcherView
       .publisher(for: .valueChanged)
-      .sink { [weak viewModel] in viewModel?.didToggleInAppNotifications() }
-      .store(in: &cancellables)
+      .sink { [weak viewModel] in
+        viewModel?.didToggleInAppNotifications()
+      }.store(in: &cancellables)
 
-    screenView.dummyTraffic.switcherView
+    screenView
+      .dummyTraffic
+      .switcherView
       .publisher(for: .valueChanged)
-      .sink { [weak viewModel] in viewModel?.didToggleDummyTraffic() }
-      .store(in: &cancellables)
+      .sink { [weak viewModel] in
+        viewModel?.didToggleDummyTraffic()
+      }.store(in: &cancellables)
 
-    screenView.remoteNotifications.switcherView
+    screenView
+      .remoteNotifications
+      .switcherView
       .publisher(for: .valueChanged)
-      .sink { [weak viewModel] in viewModel?.didTogglePushNotifications() }
-      .store(in: &cancellables)
+      .sink { [weak viewModel] in
+        viewModel?.didTogglePushNotifications()
+      }.store(in: &cancellables)
 
-    screenView.hideActiveApp.switcherView
+    screenView
+      .hideActiveApp
+      .switcherView
       .publisher(for: .valueChanged)
-      .sink { [weak viewModel] in viewModel?.didToggleHideActiveApps() }
-      .store(in: &cancellables)
+      .sink { [weak viewModel] in
+        viewModel?.didToggleHideActiveApps()
+      }.store(in: &cancellables)
 
-    screenView.icognitoKeyboard.switcherView
+    screenView
+      .icognitoKeyboard
+      .switcherView
       .publisher(for: .valueChanged)
-      .sink { [weak viewModel] in viewModel?.didToggleIcognitoKeyboard() }
-      .store(in: &cancellables)
+      .sink { [weak viewModel] in
+        viewModel?.didToggleIcognitoKeyboard()
+      }.store(in: &cancellables)
 
-    screenView.biometrics.switcherView
+    screenView
+      .biometrics
+      .switcherView
       .publisher(for: .valueChanged)
-      .sink { [weak viewModel] in viewModel?.didToggleBiometrics() }
-      .store(in: &cancellables)
+      .sink { [weak viewModel] in
+        viewModel?.didToggleBiometrics()
+      }.store(in: &cancellables)
 
-    screenView.privacyPolicyButton
+    screenView
+      .privacyPolicyButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
@@ -133,7 +153,8 @@ public final class SettingsController: UIViewController {
           }
       }.store(in: &cancellables)
 
-    screenView.disclosuresButton
+    screenView
+      .disclosuresButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
@@ -146,32 +167,41 @@ public final class SettingsController: UIViewController {
           }
       }.store(in: &cancellables)
 
-    screenView.deleteButton
+    screenView
+      .deleteButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in coordinator.toDelete(from: self) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigator.perform(PresentSettingsAccountDelete())
+      }.store(in: &cancellables)
 
-    screenView.accountBackupButton
+    screenView
+      .accountBackupButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in coordinator.toBackup(from: self) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigator.perform(PresentSettingsBackup())
+      }.store(in: &cancellables)
 
-    screenView.advancedButton
+    screenView
+      .advancedButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in coordinator.toAdvanced(from: self) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigator.perform(PresentSettingsAdvanced())
+      }.store(in: &cancellables)
 
-    viewModel.state
+    viewModel
+      .state
       .map(\.isBiometricsPossible)
       .removeDuplicates()
       .receive(on: DispatchQueue.main)
-      .sink { [weak screenView] in screenView?.biometrics.switcherView.isEnabled = $0 }
-      .store(in: &cancellables)
+      .sink { [weak screenView] in
+        screenView?.biometrics.switcherView.isEnabled = $0
+      }.store(in: &cancellables)
 
-    viewModel.state
+    viewModel
+      .state
       .removeDuplicates()
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] state in
@@ -198,7 +228,27 @@ public final class SettingsController: UIViewController {
     cancelButton.setStyle(.seeThrough)
     cancelButton.setTitle(Localized.ChatList.Dashboard.cancel, for: .normal)
 
-    let drawer = DrawerController([
+    actionButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+          action()
+        }
+      }.store(in: &drawerCancellables)
+
+    cancelButton.publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+        }
+      }.store(in: &drawerCancellables)
+
+    navigator.perform(PresentDrawer(items: [
       DrawerImage(
         image: Asset.drawerNegative.image
       ),
@@ -218,32 +268,11 @@ public final class SettingsController: UIViewController {
         spacing: 20.0,
         views: [actionButton, cancelButton]
       )
-    ])
-
-    actionButton.publisher(for: .touchUpInside)
-      .receive(on: DispatchQueue.main)
-      .sink {
-        drawer.dismiss(animated: true) { [weak self] in
-          guard let self = self else { return }
-          self.drawerCancellables.removeAll()
-
-          action()
-        }
-      }.store(in: &drawerCancellables)
-
-    cancelButton.publisher(for: .touchUpInside)
-      .receive(on: DispatchQueue.main)
-      .sink {
-        drawer.dismiss(animated: true) { [weak self] in
-          self?.drawerCancellables.removeAll()
-        }
-      }.store(in: &drawerCancellables)
-
-    coordinator.toDrawer(drawer, from: self)
+    ]))
   }
 
   @objc private func didTapMenu() {
-    coordinator.toSideMenu(from: self)
+    navigator.perform(PresentMenu(currentItem: .settings))
   }
 }
 
@@ -258,8 +287,17 @@ extension SettingsController {
       style: .seeThrough,
       title: Localized.Settings.InfoDrawer.action
     )
+    actionButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+        }
+      }.store(in: &drawerCancellables)
 
-    let drawer = DrawerController([
+    navigator.perform(PresentDrawer(items: [
       DrawerText(
         font: Fonts.Mulish.bold.font(size: 26.0),
         text: title,
@@ -276,17 +314,6 @@ extension SettingsController {
         actionButton,
         FlexibleSpace()
       ])
-    ])
-
-    actionButton.publisher(for: .touchUpInside)
-      .receive(on: DispatchQueue.main)
-      .sink {
-        drawer.dismiss(animated: true) { [weak self] in
-          guard let self = self else { return }
-          self.drawerCancellables.removeAll()
-        }
-      }.store(in: &drawerCancellables)
-
-    coordinator.toDrawer(drawer, from: self)
+    ]))
   }
 }

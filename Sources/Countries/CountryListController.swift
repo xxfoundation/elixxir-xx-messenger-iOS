@@ -1,21 +1,22 @@
-import os
 import UIKit
 import Shared
 import Combine
+import XXNavigation
 import DependencyInjection
 
-public final class CountryListController: UIViewController {
+public final class CountryListController: UIViewController, UITableViewDelegate {
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
 
   private lazy var screenView = CountryListView()
 
-  private var didChoose: ((Country) -> Void)!
+  private let completion: (Country) -> Void
   private let viewModel = CountryListViewModel()
   private var cancellables = Set<AnyCancellable>()
   private var dataSource: UITableViewDiffableDataSource<SectionId, Country>!
 
-  public init(_ didChoose: @escaping (Country) -> Void) {
-    self.didChoose = didChoose
+  public init(_ completion: @escaping (Country) -> Void) {
+    self.completion = completion
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -25,7 +26,6 @@ public final class CountryListController: UIViewController {
     super.viewWillAppear(animated)
     navigationItem.backButtonTitle = ""
     barStylist.styleSubject.send(.darkContent)
-
     navigationController?.navigationBar.customize(
       backgroundColor: Asset.neutralWhite.color,
       shadowColor: Asset.neutralDisabled.color
@@ -38,28 +38,16 @@ public final class CountryListController: UIViewController {
 
   public override func viewDidLoad() {
     super.viewDidLoad()
-    screenView.tableView.register(CountryListCell.self)
-    setupNavigationBar()
-    setupBindings()
+    screenView
+      .tableView
+      .register(CountryListCell.self)
 
-    viewModel.fetchCountryList()
-  }
-
-  private func setupNavigationBar() {
-    let title = UILabel()
-    title.text = Localized.Countries.title
-    title.textColor = Asset.neutralActive.color
-    title.font = Fonts.Mulish.semiBold.font(size: 18.0)
-
-    navigationItem.leftBarButtonItem = UIBarButtonItem(customView: title)
-    navigationItem.leftItemsSupplementBackButton = true
-  }
-
-  private func setupBindings() {
-    viewModel.countries
+    viewModel
+      .countries
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in dataSource.apply($0, animatingDifferences: false) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        dataSource.apply($0, animatingDifferences: false)
+      }.store(in: &cancellables)
 
     dataSource = UITableViewDiffableDataSource<SectionId, Country>(
       tableView: screenView.tableView
@@ -71,22 +59,23 @@ public final class CountryListController: UIViewController {
       return cell
     }
 
-    screenView.searchComponent
+    screenView
+      .searchComponent
       .textPublisher
       .removeDuplicates()
-      .sink { [unowned self] in viewModel.didSearchFor($0) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        viewModel.didSearchFor($0)
+      }.store(in: &cancellables)
 
     screenView.tableView.delegate = self
     screenView.tableView.dataSource = dataSource
+    viewModel.fetchCountryList()
   }
 
   public func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
     if let country = dataSource.itemIdentifier(for: indexPath) {
-      didChoose(country)
-      navigationController?.popViewController(animated: true)
+      completion(country)
+      navigator.perform(DismissModal(from: self))
     }
   }
 }
-
-extension CountryListController: UITableViewDelegate {}

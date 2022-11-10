@@ -2,13 +2,14 @@ import UIKit
 import Shared
 import Combine
 import XXModels
+import XXNavigation
 import DrawerFeature
 import DependencyInjection
 import ScrollViewController
 
 public final class ContactController: UIViewController {
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: ContactCoordinating
 
   private lazy var screenView = ContactView()
   private lazy var scrollViewController = ScrollViewController()
@@ -47,11 +48,14 @@ public final class ContactController: UIViewController {
     setupBindings()
 
     screenView.didTapSend = { [weak self] in
-      guard let self = self else { return }
-      self.coordinator.toSingleChat(with: self.viewModel.contact, from: self)
+      guard let self else { return }
+      self.navigator.perform(PresentChat(
+        contact: self.viewModel.contact
+      ))
     }
     screenView.didTapInfo = { [weak self] in
-      self?.presentInfo(
+      guard let self else { return }
+      self.presentInfo(
         title: Localized.Contact.SendMessage.Info.title,
         subtitle: Localized.Contact.SendMessage.Info.subtitle,
         urlString: "https://links.xx.network/cmix"
@@ -72,40 +76,54 @@ public final class ContactController: UIViewController {
   }
 
   private func setupBindings() {
-    screenView.cardComponent.avatarView.editButton
+    screenView
+      .cardComponent
+      .avatarView
+      .editButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in coordinator.toPhotos(from: self) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigator.perform(PresentPhotoLibrary())
+      }.store(in: &cancellables)
 
-    viewModel.statePublisher
+    viewModel
+      .statePublisher
       .map(\.photo)
       .compactMap { $0 }
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in screenView.cardComponent.image = $0 }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        screenView.cardComponent.image = $0
+      }.store(in: &cancellables)
 
-    viewModel.statePublisher
+    viewModel
+      .statePublisher
       .map(\.title)
       .compactMap { $0 }
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in screenView.cardComponent.nameLabel.text = $0 }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        screenView.cardComponent.nameLabel.text = $0
+      }.store(in: &cancellables)
 
-    viewModel.popPublisher
+    viewModel
+      .popPublisher
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in navigationController?.popViewController(animated: true) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigationController?.popViewController(animated: true)
+      }.store(in: &cancellables)
 
-    viewModel.popToRootPublisher
+    viewModel
+      .popToRootPublisher
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in navigationController?.popToRootViewController(animated: true) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigationController?.popToRootViewController(animated: true)
+      }.store(in: &cancellables)
 
-    viewModel.successPublisher
+    viewModel
+      .successPublisher
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in screenView.updateToSuccess() }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        screenView.updateToSuccess()
+      }.store(in: &cancellables)
 
     setupScannedBindings()
     setupReceivedBindings()
@@ -115,17 +133,24 @@ public final class ContactController: UIViewController {
   }
 
   private func setupSuccessBindings() {
-    screenView.successView.keepAdding
+    screenView
+      .successView
+      .keepAdding
       .publisher(for: .touchUpInside)
-      .sink { [unowned self] in navigationController?.popViewController(animated: true) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigationController?.popViewController(animated: true)
+      }.store(in: &cancellables)
 
-    screenView.successView.sentRequests
+    screenView
+      .successView
+      .sentRequests
       .publisher(for: .touchUpInside)
-      .sink { [unowned self] in coordinator.toRequests(from: self) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigator.perform(PresentRequests())
+      }.store(in: &cancellables)
 
-    viewModel.statePublisher
+    viewModel
+      .statePublisher
       .map(\.username)
       .removeDuplicates()
       .combineLatest(
@@ -137,49 +162,52 @@ public final class ContactController: UIViewController {
          Localized.Contact.email: $0.1,
          Localized.Contact.phone: $0.2].forEach { pair in
           guard let value = pair.value else { return }
-
           let attributeView = AttributeComponent()
           attributeView.set(
             title: pair.key,
             value: value
           )
-
           screenView.successView.stack.addArrangedSubview(attributeView)
         }
       }.store(in: &cancellables)
   }
 
   private func setupScannedBindings() {
-    screenView.scannedView.add
+    screenView
+      .scannedView.add
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
-        coordinator.toNickname(
-          from: self,
-          prefilled: (viewModel.contact.nickname ?? viewModel.contact.username) ?? "",
-          viewModel.didTapRequest(with:)
-        )
+        let nickname = (viewModel.contact.nickname ?? viewModel.contact.username) ?? ""
+        navigator.perform(PresentNickname(prefilled: nickname) { [weak self] in
+          guard let self else { return }
+          self.viewModel.didTapRequest(with: $0)
+        })
       }.store(in: &cancellables)
   }
 
   private func setupReceivedBindings() {
-    screenView.receivedView.accept
+    screenView
+      .receivedView.accept
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
-        coordinator.toNickname(
-          from: self,
-          prefilled: (viewModel.contact.nickname ?? viewModel.contact.username) ?? "",
-          viewModel.didTapAccept(_:)
-        )
+        let nickname = (viewModel.contact.nickname ?? viewModel.contact.username) ?? ""
+        navigator.perform(PresentNickname(prefilled: nickname) { [weak self] in
+          guard let self else { return }
+          self.viewModel.didTapAccept($0)
+        })
       }.store(in: &cancellables)
 
-    screenView.receivedView.reject
+    screenView
+      .receivedView.reject
       .publisher(for: .touchUpInside)
-      .sink { [weak viewModel] in viewModel?.didTapReject() }
-      .store(in: &cancellables)
+      .sink { [weak viewModel] in
+        viewModel?.didTapReject()
+      }.store(in: &cancellables)
   }
 
   private func setupInProgressBindings() {
-    viewModel.statePublisher
+    viewModel
+      .statePublisher
       .map(\.username)
       .removeDuplicates()
       .combineLatest(
@@ -202,10 +230,12 @@ public final class ContactController: UIViewController {
         }
       }.store(in: &cancellables)
 
-    screenView.inProgressView.feedback
+    screenView
+      .inProgressView.feedback
       .button.publisher(for: .touchUpInside)
-      .sink { [weak viewModel] in viewModel?.didTapResend() }
-      .store(in: &cancellables)
+      .sink { [weak viewModel] in
+        viewModel?.didTapResend()
+      }.store(in: &cancellables)
   }
 
   private func setupConfirmedBindings() {
@@ -225,15 +255,16 @@ public final class ContactController: UIViewController {
         nicknameAttribute.set(title: Localized.Contact.nickname, value: $0.0, style: .requiredEditable)
         screenView.confirmedView.stackView.insertArrangedSubview(nicknameAttribute, at: 0)
 
-        nicknameAttribute.actionButton.publisher(for: .touchUpInside)
+        nicknameAttribute
+          .actionButton
+          .publisher(for: .touchUpInside)
           .sink { [unowned self] in
-            coordinator.toNickname(
-              from: self,
-              prefilled: (viewModel.contact.nickname ?? viewModel.contact.username) ?? "",
-              viewModel.didUpdateNickname(_:)
-            )
-          }
-          .store(in: &cancellables)
+            let nickname = (viewModel.contact.nickname ?? viewModel.contact.username) ?? ""
+            navigator.perform(PresentNickname(prefilled: nickname, completion: { [weak self] in
+              guard let self else { return }
+              self.viewModel.didUpdateNickname($0)
+            }))
+          }.store(in: &cancellables)
 
         let usernameAttribute = AttributeComponent()
         usernameAttribute.set(title: Localized.Contact.username, value: $0.1)
@@ -262,10 +293,13 @@ public final class ContactController: UIViewController {
           .store(in: &cancellables)
       }.store(in: &cancellables)
 
-    screenView.confirmedView.clearButton
+    screenView
+      .confirmedView
+      .clearButton
       .publisher(for: .touchUpInside)
-      .sink { [unowned self] in presentClearDrawer() }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        presentClearDrawer()
+      }.store(in: &cancellables)
   }
 
   private func presentClearDrawer() {
@@ -277,7 +311,28 @@ public final class ContactController: UIViewController {
     cancelButton.setStyle(.seeThrough)
     cancelButton.setTitle(Localized.Contact.Clear.cancel, for: .normal)
 
-    let drawer = DrawerController([
+    clearButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+          self.viewModel.didTapClear()
+        }
+      }.store(in: &drawerCancellables)
+
+    cancelButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+        }
+      }.store(in: &drawerCancellables)
+
+    navigator.perform(PresentDrawer(items: [
       DrawerImage(
         image: Asset.drawerNegative.image
       ),
@@ -297,27 +352,7 @@ public final class ContactController: UIViewController {
         spacing: 20.0,
         views: [clearButton, cancelButton]
       )
-    ])
-
-    clearButton.publisher(for: .touchUpInside)
-      .receive(on: DispatchQueue.main)
-      .sink {
-        drawer.dismiss(animated: true) { [weak self] in
-          guard let self = self else { return }
-          self.drawerCancellables.removeAll()
-          self.viewModel.didTapClear()
-        }
-      }.store(in: &drawerCancellables)
-
-    cancelButton.publisher(for: .touchUpInside)
-      .receive(on: DispatchQueue.main)
-      .sink {
-        drawer.dismiss(animated: true) { [weak self] in
-          self?.drawerCancellables.removeAll()
-        }
-      }.store(in: &drawerCancellables)
-
-    coordinator.toDrawer(drawer, from: self)
+    ]))
   }
 }
 
@@ -360,7 +395,17 @@ extension ContactController {
       title: Localized.Settings.InfoDrawer.action
     )
 
-    let drawer = DrawerController([
+    actionButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+        }
+      }.store(in: &drawerCancellables)
+
+    navigator.perform(PresentDrawer(items: [
       DrawerText(
         font: Fonts.Mulish.bold.font(size: 26.0),
         text: title,
@@ -377,18 +422,7 @@ extension ContactController {
         actionButton,
         FlexibleSpace()
       ])
-    ])
-
-    actionButton.publisher(for: .touchUpInside)
-      .receive(on: DispatchQueue.main)
-      .sink {
-        drawer.dismiss(animated: true) { [weak self] in
-          guard let self = self else { return }
-          self.drawerCancellables.removeAll()
-        }
-      }.store(in: &drawerCancellables)
-
-    coordinator.toDrawer(drawer, from: self)
+    ]))
   }
 
   private func presentDeleteInfo() {
@@ -397,7 +431,18 @@ extension ContactController {
       style: .red
     ))
 
-    let drawer = DrawerController([
+    actionButton
+      .action
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+          self.viewModel.didTapDelete()
+        }
+      }.store(in: &drawerCancellables)
+
+    navigator.perform(PresentDrawer(items: [
       DrawerText(
         font: Fonts.Mulish.bold.font(size: 26.0),
         text: Localized.Contact.Delete.Drawer.title,
@@ -411,18 +456,6 @@ extension ContactController {
         customAttributes: [.font:  Fonts.Mulish.bold.font(size: 16.0)]
       ),
       actionButton
-    ])
-
-    actionButton.action
-      .receive(on: DispatchQueue.main)
-      .sink {
-        drawer.dismiss(animated: true) { [weak self] in
-          guard let self = self else { return }
-          self.drawerCancellables.removeAll()
-          self.viewModel.didTapDelete()
-        }
-      }.store(in: &drawerCancellables)
-
-    coordinator.toDrawer(drawer, from: self)
+    ]))
   }
 }

@@ -116,7 +116,7 @@ final class SearchLeftViewModel {
     }
 
     retry(max: 5, retryStrategy: .delay(seconds: 2)) { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
 
       do {
         let nrr = try self.messenger.cMix.get()!.getNodeRegistrationStatus()
@@ -125,7 +125,7 @@ final class SearchLeftViewModel {
         throw NodeRegistrationError.unhealthyNet
       }
     }.finalCatch { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
 
       if case .unhealthyNet = $0 as? NodeRegistrationError {
         self.hudController.show(.init(content: "Network is not healthy yet, try again within the next minute or so."))
@@ -147,7 +147,7 @@ final class SearchLeftViewModel {
     }
 
     backgroundScheduler.schedule { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
 
       do {
         let report = try SearchUD.live(
@@ -199,7 +199,7 @@ final class SearchLeftViewModel {
     contact.authStatus = .requesting
 
     backgroundScheduler.schedule { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
 
       do {
         try self.database.saveContact(contact)
@@ -245,7 +245,7 @@ final class SearchLeftViewModel {
     contact.authStatus = .requesting
 
     backgroundScheduler.schedule { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
 
       do {
         try self.database.saveContact(contact)
@@ -349,7 +349,7 @@ final class SearchLeftViewModel {
     Deferred {
       Future { promise in
         retry(max: timeout, retryStrategy: .delay(seconds: 1)) { [weak self] in
-          guard let self = self else { return }
+          guard let self else { return }
           _ = try self.messenger.cMix.get()!.getNodeRegistrationStatus()
           promise(.success(()))
         }.finalCatch {

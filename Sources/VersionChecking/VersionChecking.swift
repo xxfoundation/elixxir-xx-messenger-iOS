@@ -14,13 +14,7 @@ public struct VersionCheck {
 }
 
 public extension VersionCheck {
-  static let mock: Self = .init { $0(.outdated(.init(
-    appUrl: "https://testflight.apple.com/join/L1Rj0so3",
-    minimum: "2.0",
-    isRequired: false,
-    recommended: "5.0",
-    minimumMessage: "This app version is not supported anymore, please update to the latest version to keep enjoying our app"
-  ))) }
+  static let mock: Self = .init { $0(.upToDate) }
 
   static let live: Self = .init { completion in
     let request = URLRequest(

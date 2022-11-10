@@ -1,12 +1,13 @@
 import UIKit
 import Shared
 import Combine
+import XXNavigation
 import DependencyInjection
 import ScrollViewController
 
 public final class ProfilePhoneController: UIViewController {
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: ProfileCoordinating
 
   private lazy var screenView = ProfilePhoneView()
   private lazy var scrollViewController = ScrollViewController()
@@ -31,62 +32,79 @@ public final class ProfilePhoneController: UIViewController {
   private func setupScrollView() {
     addChild(scrollViewController)
     view.addSubview(scrollViewController.view)
-    scrollViewController.view.snp.makeConstraints { $0.edges.equalToSuperview() }
+    scrollViewController.view.snp.makeConstraints {
+      $0.edges.equalToSuperview()
+    }
     scrollViewController.didMove(toParent: self)
     scrollViewController.contentView = screenView
     scrollViewController.scrollView.backgroundColor = Asset.neutralWhite.color
   }
 
   private func setupBindings() {
-    screenView.inputField.textPublisher
-      .sink { [unowned self] in viewModel.didInput($0) }
-      .store(in: &cancellables)
-
-    screenView.inputField.returnPublisher
-      .sink { [unowned self] in screenView.inputField.endEditing(true) }
-      .store(in: &cancellables)
-
-    screenView.inputField.codePublisher
-      .receive(on: DispatchQueue.main)
+    screenView
+      .inputField
+      .textPublisher
       .sink { [unowned self] in
-        coordinator.toCountries(from: self) { self.viewModel.didChooseCountry($0) }
+        viewModel.didInput($0)
       }.store(in: &cancellables)
 
-    viewModel.statePublisher
-      .map(\.confirmationId)
-      .receive(on: DispatchQueue.main)
-      .compactMap { $0 }
+    screenView
+      .inputField
+      .returnPublisher
       .sink { [unowned self] in
+        screenView.inputField.endEditing(true)
+      }.store(in: &cancellables)
+
+    screenView
+      .inputField
+      .codePublisher
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(PresentCountryList(completion: { [weak self] in
+          guard let self else { return }
+          self.viewModel.didChooseCountry($0)
+        }))
+      }.store(in: &cancellables)
+
+    viewModel
+      .statePublisher
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        guard let id = $0.confirmationId, let content = $0.content else { return }
         viewModel.clearUp()
-//        coordinator.toCode(with: $0, from: self) { _, _ in
-//          if let viewControllers = self.navigationController?.viewControllers {
-//            self.navigationController?.popToViewController(
-//              viewControllers[viewControllers.count - 3],
-//              animated: true
-//            )
-//          }
-//        }
+        navigator.perform(
+          PresentProfileCode(
+            isEmail: false,
+            content: content,
+            confirmationId: id
+          )
+        )
       }.store(in: &cancellables)
 
-    viewModel.statePublisher
+    viewModel
+      .statePublisher
       .map(\.country)
       .removeDuplicates()
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
         screenView.inputField.set(prefix: $0.prefixWithFlag)
         screenView.inputField.update(placeholder: $0.example)
-      }
-      .store(in: &cancellables)
+      }.store(in: &cancellables)
 
-    viewModel.statePublisher
+    viewModel
+      .statePublisher
       .map(\.status)
       .removeDuplicates()
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in screenView.update(status: $0) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        screenView.update(status: $0)
+      }.store(in: &cancellables)
 
-    screenView.saveButton.publisher(for: .touchUpInside)
-      .sink { [unowned self] in viewModel.didTapNext() }
-      .store(in: &cancellables)
+    screenView
+      .saveButton
+      .publisher(for: .touchUpInside)
+      .sink { [unowned self] in
+        viewModel.didTapNext()
+      }.store(in: &cancellables)
   }
 }

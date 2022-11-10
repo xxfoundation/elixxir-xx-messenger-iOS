@@ -105,7 +105,7 @@ final class ContactViewModel {
     contact.authStatus = .requesting
     
     backgroundScheduler.schedule { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
       
       do {
         try self.database.saveContact(self.contact)
@@ -149,7 +149,7 @@ final class ContactViewModel {
     contact.authStatus = .requesting
     
     backgroundScheduler.schedule { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
       
       do {
         try self.database.saveContact(self.contact)
@@ -193,7 +193,7 @@ final class ContactViewModel {
     contact.authStatus = .confirming
     
     backgroundScheduler.schedule { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
       
       do {
         try self.database.saveContact(self.contact)

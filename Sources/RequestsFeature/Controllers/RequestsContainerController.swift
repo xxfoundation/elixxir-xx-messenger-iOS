@@ -1,12 +1,13 @@
 import UIKit
 import Shared
 import Combine
+import XXNavigation
 import ContactFeature
 import DependencyInjection
 
 public final class RequestsContainerController: UIViewController {
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: RequestsCoordinating
 
   private lazy var screenView = RequestsContainerView()
   private var cancellables = Set<AnyCancellable>()
@@ -42,7 +43,7 @@ public final class RequestsContainerController: UIViewController {
     if let stack = navigationController?.viewControllers, stack.count > 1 {
       if stack[stack.count - 2].isKind(of: ContactController.self) {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-          guard let self = self else { return }
+          guard let self else { return }
 
           let point = CGPoint(x: self.screenView.frame.width, y: 0.0)
           self.screenView.scrollView.setContentOffset(point, animated: true)
@@ -75,8 +76,9 @@ public final class RequestsContainerController: UIViewController {
       .sentController
       .connectionsPublisher
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in coordinator.toSearch(from: self) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        navigator.perform(PresentSearch(replacing: false))
+      }.store(in: &cancellables)
 
     screenView
       .segmentedControl
@@ -106,7 +108,7 @@ public final class RequestsContainerController: UIViewController {
   }
 
   @objc private func didTapMenu() {
-    coordinator.toSideMenu(from: self)
+    navigator.perform(PresentMenu(currentItem: .requests))
   }
 }
 

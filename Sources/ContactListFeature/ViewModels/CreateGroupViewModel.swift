@@ -87,7 +87,7 @@ final class CreateGroupViewModel {
     hudController.show()
 
     backgroundScheduler.schedule { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
 
       do {
         let report = try self.groupManager.makeGroup(

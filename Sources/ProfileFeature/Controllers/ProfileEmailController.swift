@@ -1,12 +1,13 @@
 import UIKit
 import Shared
 import Combine
+import XXNavigation
 import DependencyInjection
 import ScrollViewController
 
 public final class ProfileEmailController: UIViewController {
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: ProfileCoordinating
 
   private lazy var screenView = ProfileEmailView()
   private lazy var scrollViewController = ScrollViewController()
@@ -18,8 +19,7 @@ public final class ProfileEmailController: UIViewController {
     super.viewWillAppear(animated)
     navigationItem.backButtonTitle = ""
     barStylist.styleSubject.send(.darkContent)
-    navigationController?.navigationBar
-      .customize(backgroundColor: Asset.neutralWhite.color)
+    navigationController?.navigationBar.customize(backgroundColor: Asset.neutralWhite.color)
   }
 
   public override func viewDidLoad() {
@@ -56,19 +56,17 @@ public final class ProfileEmailController: UIViewController {
 
     viewModel
       .statePublisher
-      .map(\.confirmationId)
       .receive(on: DispatchQueue.main)
-      .compactMap { $0 }
       .sink { [unowned self] in
+        guard let id = $0.confirmationId else { return }
         viewModel.clearUp()
-//        coordinator.toCode(with: $0, from: self) { _, _ in
-//          if let viewControllers = self.navigationController?.viewControllers {
-//            self.navigationController?.popToViewController(
-//              viewControllers[viewControllers.count - 3],
-//              animated: true
-//            )
-//          }
-//        }
+        navigator.perform(
+          PresentProfileCode(
+            isEmail: true,
+            content: $0.input,
+            confirmationId: id
+          )
+        )
       }.store(in: &cancellables)
 
     viewModel

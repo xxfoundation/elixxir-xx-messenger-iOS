@@ -43,7 +43,6 @@ import ContactListFeature
 
 import Shared
 import XXClient
-import Navigation
 import XXNavigation
 import KeychainAccess
 import XXMessengerClient
@@ -112,6 +111,7 @@ struct DependencyRegistrator {
       SetStackNavigator(),
 
       OpenUpNavigator(),
+      OpenLeftNavigator(),
 
       PresentOnboardingStartNavigator(
         screen: OnboardingStartController.init,
@@ -168,12 +168,109 @@ struct DependencyRegistrator {
       PresentDrawerNavigator(
         screen: DrawerController.init(_:),
         navigationController: { navController }
+      ),
+      PresentContactListNavigator(
+        screen: ContactListController.init,
+        navigationController: { navController }
+      ),
+      PresentMenuNavigator(
+        screen: MenuController.init(_:),
+        navigationController: { navController }
+      ),
+      PresentScanNavigator(
+        screen: ScanContainerController.init,
+        navigationController: { navController }
+      ),
+      PresentNewGroupNavigator(
+        screen: CreateGroupController.init,
+        navigationController: { navController }
+      ),
+      PresentCountryListNavigator(
+        screen: CountryListController.init(_:),
+        navigationController: { navController }
+      ),
+      PresentProfileNavigator(
+        screen: ProfileController.init,
+        navigationController: { navController }
+      ),
+      PresentSettingsNavigator(
+        screen: SettingsController.init,
+        navigationController: { navController }
+      ),
+      PresentSettingsAdvancedNavigator(
+        screen: SettingsAdvancedController.init,
+        navigationController: { navController }
+      ),
+      PresentSettingsBackupNavigator(
+        screen: BackupController.init,
+        navigationController: { navController }
+      ),
+      PresentSettingsAccountDeleteNavigator(
+        screen: AccountDeleteController.init,
+        navigationController: { navController }
+      ),
+      PresentContactNavigator(
+        screen: ContactController.init(_:),
+        navigationController: { navController }
+      ),
+      PresentActivitySheetNavigator(
+        screen: { UIActivityViewController(
+          activityItems: $0,
+          applicationActivities: nil
+        )},
+        navigationController: { navController }
+      ),
+      PresentProfileEmailNavigator(
+        screen: ProfileEmailController.init,
+        navigationController: { navController }
+      ),
+      PresentProfilePhoneNavigator(
+        screen: ProfilePhoneController.init,
+        navigationController: { navController }
+      ),
+      PresentPermissionRequestNavigator(
+        screen: RequestPermissionController.init,
+        navigationController: { navController }
+      ),
+      PresentPhotoLibraryNavigator(
+        screen: UIImagePickerController.init,
+        navigationController: { navController }
+      ),
+      PresentProfileCodeNavigator(
+        screen: ProfileCodeController.init(_:_:_:),
+        navigationController: { navController }
       )
-      //        searchFactory: SearchContainerController.init,
-      //        restoreListFactory: RestoreListController.init,
-      //        countriesFactory: CountryListController.init(_:),
     ) as Navigator)
   }
+
+  //    container.register(
+  //      ProfileCoordinator(
+  //        imagePickerFactory: UIImagePickerController.init,
+  //        permissionFactory: RequestPermissionController.init,
+  //        countriesFactory: CountryListController.init(_:)
+  //        //codeFactory: ProfileCodeController.init(_:_:)
+  //      ) as ProfileCoordinating)
+
+  //    container.register(
+  //      SearchCoordinator(
+  //        contactsFactory: ContactListController.init,
+  //        requestsFactory: RequestsContainerController.init,
+  //        contactFactory: ContactController.init(_:),
+  //        countriesFactory: CountryListController.init(_:)
+  //      ) as SearchCoordinating)
+
+  //    container.register(
+  //      ContactListCoordinator(
+  //        scanFactory: ScanContainerController.init,
+  //        searchFactory: SearchContainerController.init,
+  //        newGroupFactory: CreateGroupController.init,
+  //        requestsFactory: RequestsContainerController.init,
+  //        contactFactory: ContactController.init(_:),
+  //        singleChatFactory: SingleChatController.init(_:),
+  //        groupChatFactory: GroupChatController.init(_:),
+  //        sideMenuFactory: MenuController.init(_:_:),
+  //        groupDrawerFactory: CreateDrawerController.init(_:_:)
+  //      ) as ContactListCoordinating)
 
   static private func registerCommonDependencies() {
     var environment: MessengerEnvironment = .live()
@@ -197,129 +294,6 @@ struct DependencyRegistrator {
     container.register(HUDController())
     container.register(ToastController())
     container.register(StatusBarStylist())
-
-    container.register(
-      TermsCoordinator.live(
-        usernameFactory: OnboardingUsernameController.init,
-        chatListFactory: ChatListController.init
-      )
-    )
-
-    container.register(
-      BackupCoordinator(
-        sftpFactory: BackupSFTPController.init(_:),
-        passphraseFactory: BackupPassphraseController.init(_:_:)
-      ) as BackupCoordinating)
-
-    container.register(
-      MenuCoordinator(
-        scanFactory: ScanContainerController.init,
-        chatsFactory: ChatListController.init,
-        profileFactory: ProfileController.init,
-        settingsFactory: SettingsController.init,
-        contactsFactory: ContactListController.init,
-        requestsFactory: RequestsContainerController.init
-      ) as MenuCoordinating)
-
-    container.register(
-      SearchCoordinator(
-        contactsFactory: ContactListController.init,
-        requestsFactory: RequestsContainerController.init,
-        contactFactory: ContactController.init(_:),
-        countriesFactory: CountryListController.init(_:)
-      ) as SearchCoordinating)
-
-    container.register(
-      ProfileCoordinator(
-        emailFactory: ProfileEmailController.init,
-        phoneFactory: ProfilePhoneController.init,
-        imagePickerFactory: UIImagePickerController.init,
-        permissionFactory: RequestPermissionController.init,
-        sideMenuFactory: MenuController.init(_:_:),
-        countriesFactory: CountryListController.init(_:)
-        //codeFactory: ProfileCodeController.init(_:_:)
-      ) as ProfileCoordinating)
-
-    container.register(
-      SettingsCoordinator(
-        backupFactory: BackupController.init,
-        advancedFactory: SettingsAdvancedController.init,
-        accountDeleteFactory: AccountDeleteController.init,
-        sideMenuFactory: MenuController.init(_:_:)
-      ) as SettingsCoordinating)
-
-    container.register(
-      RestoreCoordinator(
-        successFactory: RestoreSuccessController.init,
-        chatListFactory: ChatListController.init,
-        restoreFactory: RestoreController.init(_:),
-        sftpFactory: RestoreSFTPController.init(_:),
-        passphraseFactory: RestorePassphraseController.init(_:_:)
-      ) as RestoreCoordinating)
-
-    container.register(
-      ChatCoordinator(
-        retryFactory: RetrySheetController.init,
-        webFactory: WebScreen.init(_:),
-        previewFactory: QLPreviewController.init,
-        contactFactory: ContactController.init(_:),
-        imagePickerFactory: UIImagePickerController.init,
-        permissionFactory: RequestPermissionController.init
-      ) as ChatCoordinating)
-
-    container.register(
-      ContactCoordinator(
-        requestsFactory: RequestsContainerController.init,
-        singleChatFactory: SingleChatController.init(_:),
-        imagePickerFactory: UIImagePickerController.init,
-        nicknameFactory: NicknameController.init(_:_:)
-      ) as ContactCoordinating)
-
-    container.register(
-      RequestsCoordinator(
-        searchFactory: SearchContainerController.init,
-        contactFactory: ContactController.init(_:),
-        singleChatFactory: SingleChatController.init(_:),
-        groupChatFactory: GroupChatController.init(_:),
-        sideMenuFactory: MenuController.init(_:_:),
-        nicknameFactory: NicknameController.init(_:_:)
-      ) as RequestsCoordinating)
-
-    container.register(
-      ContactListCoordinator(
-        scanFactory: ScanContainerController.init,
-        searchFactory: SearchContainerController.init,
-        newGroupFactory: CreateGroupController.init,
-        requestsFactory: RequestsContainerController.init,
-        contactFactory: ContactController.init(_:),
-        singleChatFactory: SingleChatController.init(_:),
-        groupChatFactory: GroupChatController.init(_:),
-        sideMenuFactory: MenuController.init(_:_:),
-        groupDrawerFactory: CreateDrawerController.init(_:_:)
-      ) as ContactListCoordinating)
-
-    container.register(
-      ScanCoordinator(
-        emailFactory: ProfileEmailController.init,
-        phoneFactory: ProfilePhoneController.init,
-        contactsFactory: ContactListController.init,
-        requestsFactory: RequestsContainerController.init,
-        contactFactory: ContactController.init(_:),
-        sideMenuFactory: MenuController.init(_:_:)
-      ) as ScanCoordinating)
-
-
-    container.register(
-      ChatListCoordinator(
-        scanFactory: ScanContainerController.init,
-        searchFactory: SearchContainerController.init,
-        newGroupFactory: CreateGroupController.init,
-        contactsFactory: ContactListController.init,
-        contactFactory: ContactController.init(_:),
-        singleChatFactory: SingleChatController.init(_:),
-        groupChatFactory: GroupChatController.init(_:),
-        sideMenuFactory: MenuController.init(_:_:)
-      ) as ChatListCoordinating)
   }
 }
 
@@ -339,27 +313,27 @@ extension PasswordStorage {
 private enum AlternativeUDConstants {
   static let address = "46.101.98.49:18001"
   static let cert = """
-            -----BEGIN CERTIFICATE-----
-            MIIDbDCCAlSgAwIBAgIJAOUNtZneIYECMA0GCSqGSIb3DQEBBQUAMGgxCzAJBgNV
-            BAYTAlVTMRMwEQYDVQQIDApDYWxpZm9ybmlhMRIwEAYDVQQHDAlDbGFyZW1vbnQx
-            GzAZBgNVBAoMElByaXZhdGVncml0eSBDb3JwLjETMBEGA1UEAwwKKi5jbWl4LnJp
-            cDAeFw0xOTAzMDUxODM1NDNaFw0yOTAzMDIxODM1NDNaMGgxCzAJBgNVBAYTAlVT
-            MRMwEQYDVQQIDApDYWxpZm9ybmlhMRIwEAYDVQQHDAlDbGFyZW1vbnQxGzAZBgNV
-            BAoMElByaXZhdGVncml0eSBDb3JwLjETMBEGA1UEAwwKKi5jbWl4LnJpcDCCASIw
-            DQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAPP0WyVkfZA/CEd2DgKpcudn0oDh
-            Dwsjmx8LBDWsUgQzyLrFiVigfUmUefknUH3dTJjmiJtGqLsayCnWdqWLHPJYvFfs
-            WYW0IGF93UG/4N5UAWO4okC3CYgKSi4ekpfw2zgZq0gmbzTnXcHF9gfmQ7jJUKSE
-            tJPSNzXq+PZeJTC9zJAb4Lj8QzH18rDM8DaL2y1ns0Y2Hu0edBFn/OqavBJKb/uA
-            m3AEjqeOhC7EQUjVamWlTBPt40+B/6aFJX5BYm2JFkRsGBIyBVL46MvC02MgzTT9
-            bJIJfwqmBaTruwemNgzGu7Jk03hqqS1TUEvSI6/x8bVoba3orcKkf9HsDjECAwEA
-            AaMZMBcwFQYDVR0RBA4wDIIKKi5jbWl4LnJpcDANBgkqhkiG9w0BAQUFAAOCAQEA
-            neUocN4AbcQAC1+b3To8u5UGdaGxhcGyZBlAoenRVdjXK3lTjsMdMWb4QctgNfIf
-            U/zuUn2mxTmF/ekP0gCCgtleZr9+DYKU5hlXk8K10uKxGD6EvoiXZzlfeUuotgp2
-            qvI3ysOm/hvCfyEkqhfHtbxjV7j7v7eQFPbvNaXbLa0yr4C4vMK/Z09Ui9JrZ/Z4
-            cyIkxfC6/rOqAirSdIp09EGiw7GM8guHyggE4IiZrDslT8V3xIl985cbCxSxeW1R
-            tgH4rdEXuVe9+31oJhmXOE9ux2jCop9tEJMgWg7HStrJ5plPbb+HmjoX3nBO04E5
-            6m52PyzMNV+2N21IPppKwA==
-            -----END CERTIFICATE-----
+-----BEGIN CERTIFICATE-----
+MIIDbDCCAlSgAwIBAgIJAOUNtZneIYECMA0GCSqGSIb3DQEBBQUAMGgxCzAJBgNV
+BAYTAlVTMRMwEQYDVQQIDApDYWxpZm9ybmlhMRIwEAYDVQQHDAlDbGFyZW1vbnQx
+GzAZBgNVBAoMElByaXZhdGVncml0eSBDb3JwLjETMBEGA1UEAwwKKi5jbWl4LnJp
+cDAeFw0xOTAzMDUxODM1NDNaFw0yOTAzMDIxODM1NDNaMGgxCzAJBgNVBAYTAlVT
+MRMwEQYDVQQIDApDYWxpZm9ybmlhMRIwEAYDVQQHDAlDbGFyZW1vbnQxGzAZBgNV
+BAoMElByaXZhdGVncml0eSBDb3JwLjETMBEGA1UEAwwKKi5jbWl4LnJpcDCCASIw
+DQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAPP0WyVkfZA/CEd2DgKpcudn0oDh
+Dwsjmx8LBDWsUgQzyLrFiVigfUmUefknUH3dTJjmiJtGqLsayCnWdqWLHPJYvFfs
+WYW0IGF93UG/4N5UAWO4okC3CYgKSi4ekpfw2zgZq0gmbzTnXcHF9gfmQ7jJUKSE
+tJPSNzXq+PZeJTC9zJAb4Lj8QzH18rDM8DaL2y1ns0Y2Hu0edBFn/OqavBJKb/uA
+m3AEjqeOhC7EQUjVamWlTBPt40+B/6aFJX5BYm2JFkRsGBIyBVL46MvC02MgzTT9
+bJIJfwqmBaTruwemNgzGu7Jk03hqqS1TUEvSI6/x8bVoba3orcKkf9HsDjECAwEA
+AaMZMBcwFQYDVR0RBA4wDIIKKi5jbWl4LnJpcDANBgkqhkiG9w0BAQUFAAOCAQEA
+neUocN4AbcQAC1+b3To8u5UGdaGxhcGyZBlAoenRVdjXK3lTjsMdMWb4QctgNfIf
+U/zuUn2mxTmF/ekP0gCCgtleZr9+DYKU5hlXk8K10uKxGD6EvoiXZzlfeUuotgp2
+qvI3ysOm/hvCfyEkqhfHtbxjV7j7v7eQFPbvNaXbLa0yr4C4vMK/Z09Ui9JrZ/Z4
+cyIkxfC6/rOqAirSdIp09EGiw7GM8guHyggE4IiZrDslT8V3xIl985cbCxSxeW1R
+tgH4rdEXuVe9+31oJhmXOE9ux2jCop9tEJMgWg7HStrJ5plPbb+HmjoX3nBO04E5
+6m52PyzMNV+2N21IPppKwA==
+-----END CERTIFICATE-----
 """
   static let contact = """
 <xxc(2)7mbKFLE201WzH4SGxAOpHjjehwztIV+KGifi5L/PYPcDkAZiB9kZo+Dl3Vc7dD2SdZCFMOJVgwqGzfYRDkjc8RGEllBqNxq2sRRX09iQVef0kJQUgJCHNCOcvm6Ki0JJwvjLceyFh36iwK8oLbhLgqEZY86UScdACTyBCzBIab3ob5mBthYc3mheV88yq5PGF2DQ+dEvueUm+QhOSfwzppAJA/rpW9Wq9xzYcQzaqc3ztAGYfm2BBAHS7HVmkCbvZ/K07Xrl4EBPGHJYq12tWAN/C3mcbbBYUOQXyEzbSl/mO7sL3ORr0B4FMuqCi8EdlD6RO52pVhY+Cg6roRH1t5Ng1JxPt8Mv1yyjbifPhZ5fLKwxBz8UiFORfk0/jnhwgm25LRHqtNRRUlYXLvhv0HhqyYTUt17WNtCLATSVbqLrFGdy2EGadn8mP+kQNHp93f27d/uHgBNNe7LpuYCJMdWpoG6bOqmHEftxt0/MIQA8fTtTm3jJzv+7/QjZJDvQIv0SNdp8HFogpuwde+GuS4BcY7v5xz+ArGWcRR63ct2z83MqQEn9ODr1/gAAAgA7szRpDDQIdFUQo9mkWg8xBA==xxc>

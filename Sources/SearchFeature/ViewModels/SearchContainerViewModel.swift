@@ -39,7 +39,7 @@ final class SearchContainerViewModel {
         guard pushNotifications == false else { return }
 
         pushHandler.requestAuthorization { [weak self] result in
-            guard let self = self else { return }
+            guard let self else { return }
 
             switch result {
             case .success(let granted):

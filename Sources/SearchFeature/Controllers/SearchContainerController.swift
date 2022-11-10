@@ -2,12 +2,13 @@ import UIKit
 import Shared
 import Combine
 import XXModels
+import XXNavigation
 import DrawerFeature
 import DependencyInjection
 
 public final class SearchContainerController: UIViewController {
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: SearchCoordinating
 
   private lazy var screenView = SearchContainerView()
 
@@ -130,14 +131,34 @@ extension SearchContainerController {
       style: .brandColored,
       title: Localized.ChatList.Traffic.positive
     )
-
     let dismissButton = CapsuleButton()
     dismissButton.set(
       style: .seeThrough,
       title: Localized.ChatList.Traffic.negative
     )
 
-    let drawer = DrawerController([
+    enableButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+          self.viewModel.didEnableCoverTraffic()
+        }
+      }.store(in: &drawerCancellables)
+
+    dismissButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+        }
+      }.store(in: &drawerCancellables)
+
+    navigator.perform(PresentDrawer(items: [
       DrawerText(
         font: Fonts.Mulish.bold.font(size: 26.0),
         text: Localized.ChatList.Traffic.title,
@@ -159,29 +180,6 @@ extension SearchContainerController {
         distribution: .fillEqually,
         views: [enableButton, dismissButton]
       )
-    ])
-
-    enableButton
-      .publisher(for: .touchUpInside)
-      .receive(on: DispatchQueue.main)
-      .sink {
-        drawer.dismiss(animated: true) { [weak self] in
-          guard let self = self else { return }
-          self.drawerCancellables.removeAll()
-          self.viewModel.didEnableCoverTraffic()
-        }
-      }.store(in: &drawerCancellables)
-
-    dismissButton
-      .publisher(for: .touchUpInside)
-      .receive(on: DispatchQueue.main)
-      .sink {
-        drawer.dismiss(animated: true) { [weak self] in
-          guard let self = self else { return }
-          self.drawerCancellables.removeAll()
-        }
-      }.store(in: &drawerCancellables)
-
-    coordinator.toDrawer(drawer, from: self)
+    ]))
   }
 }

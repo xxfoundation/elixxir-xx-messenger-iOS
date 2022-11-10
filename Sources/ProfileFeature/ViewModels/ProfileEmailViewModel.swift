@@ -10,7 +10,6 @@ import DependencyInjection
 final class ProfileEmailViewModel {
   struct ViewState: Equatable {
     var input: String = ""
-    var content: String?
     var confirmationId: String?
     var status: InputField.ValidationStatus = .unknown(nil)
   }
@@ -25,29 +24,29 @@ final class ProfileEmailViewModel {
   private let stateSubject = CurrentValueSubject<ViewState, Never>(.init())
   private var scheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
+  func clearUp() {
+    stateSubject.value.confirmationId = nil
+  }
+
   func didInput(_ string: String) {
     stateSubject.value.input = string
     validate()
   }
 
-  func clearUp() {
-    stateSubject.value.confirmationId = nil
-  }
-
   func didTapNext() {
     hudController.show()
     scheduler.schedule { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
       do {
         let confirmationId = try self.messenger.ud.get()!.sendRegisterFact(
           .init(type: .email, value: self.stateSubject.value.input)
         )
         self.hudController.dismiss()
         self.stateSubject.value.confirmationId = confirmationId
-        self.stateSubject.value.content = self.stateSubject.value.input
       } catch {
+        self.hudController.dismiss()
         let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
-        self.hudController.show(.init(content: xxError))
+        self.stateSubject.value.status = .invalid(xxError)
       }
     }
   }

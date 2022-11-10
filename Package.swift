@@ -137,6 +137,7 @@ let package = Package(
         .target(name: "ChatFeature"),
         .target(name: "MenuFeature"),
         .target(name: "PushFeature"),
+        .target(name: "XXNavigation"),
         .target(name: "TermsFeature"),
         .target(name: "CrashService"),
         .target(name: "BackupFeature"),
@@ -152,8 +153,6 @@ let package = Package(
         .target(name: "ReportingFeature"),
         .target(name: "OnboardingFeature"),
         .target(name: "ContactListFeature"),
-        .target(name: "XXNavigation"),
-        .product(name: "Navigation", package: "Navigation"),
       ]
     ),
     .testTarget(
@@ -193,12 +192,14 @@ let package = Package(
       name: "Permissions",
       dependencies: [
         .target(name: "Shared"),
+        .target(name: "XXNavigation"),
         .target(name: "DependencyInjection"),
       ]
     ),
     .target(
       name: "XXNavigation",
       dependencies: [
+        .target(name: "DrawerFeature"),
         .target(name: "DependencyInjection"),
         .product(name: "Navigation", package: "Navigation"),
         .product(name: "XXModels", package: "client-ios-db"),
@@ -244,10 +245,8 @@ let package = Package(
       name: "Countries",
       dependencies: [
         .target(name: "Shared"),
+        .target(name: "XXNavigation"),
         .target(name: "DependencyInjection"),
-      ],
-      resources: [
-        .process("Resources"),
       ]
     ),
     .target(
@@ -306,6 +305,7 @@ let package = Package(
       dependencies: [
         .target(name: "Shared"),
         .target(name: "Presentation"),
+        .target(name: "XXNavigation"),
         .target(name: "DependencyInjection"),
         .product(name: "XXDatabase", package: "client-ios-db"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
@@ -326,14 +326,6 @@ let package = Package(
         .product(name: "ScrollViewController", package: "ScrollViewController"),
       ]
     ),
-    .testTarget(
-      name: "ContactFeatureTests",
-      dependencies: [
-        .target(name: "ContactFeature"),
-        .product(name: "Quick", package: "Quick"),
-        .product(name: "Nimble", package: "Nimble"),
-      ]
-    ),
     .target(
       name: "ChatFeature",
       dependencies: [
@@ -343,23 +335,16 @@ let package = Package(
         .target(name: "Voxophone"),
         .target(name: "Permissions"),
         .target(name: "Presentation"),
+        .target(name: "XXNavigation"),
         .target(name: "DrawerFeature"),
         .target(name: "ChatInputFeature"),
         .target(name: "ReportingFeature"),
         .target(name: "DependencyInjection"),
         .product(name: "ChatLayout", package: "ChatLayout"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
-        .product(name: "ScrollViewController", package: "ScrollViewController"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
         .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
-      ]
-    ),
-    .testTarget(
-      name: "ChatFeatureTests",
-      dependencies: [
-        .target(name: "ChatFeature"),
-        .product(name: "Quick", package: "Quick"),
-        .product(name: "Nimble", package: "Nimble"),
+        .product(name: "ScrollViewController", package: "ScrollViewController"),
       ]
     ),
     .target(
@@ -374,14 +359,6 @@ let package = Package(
         .target(name: "DependencyInjection"),
         .product(name: "Retry", package: "Retry"),
         .product(name: "XXDatabase", package: "client-ios-db"),
-      ]
-    ),
-    .testTarget(
-      name: "SearchFeatureTests",
-      dependencies: [
-        .target(name: "SearchFeature"),
-        .product(name: "Quick", package: "Quick"),
-        .product(name: "Nimble", package: "Nimble"),
       ]
     ),
     .target(
@@ -409,6 +386,7 @@ let package = Package(
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "Presentation"),
+        .target(name: "XXNavigation"),
       ]
     ),
     .target(
@@ -418,14 +396,6 @@ let package = Package(
         .target(name: "ContactFeature"),
         .target(name: "DependencyInjection"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
-      ]
-    ),
-    .testTarget(
-      name: "RequestsFeatureTests",
-      dependencies: [
-        .target(name: "RequestsFeature"),
-        .product(name: "Quick", package: "Quick"),
-        .product(name: "Nimble", package: "Nimble"),
       ]
     ),
     .target(
@@ -448,14 +418,6 @@ let package = Package(
         .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
       ]
     ),
-    .testTarget(
-      name: "ProfileFeatureTests",
-      dependencies: [
-        .target(name: "ProfileFeature"),
-        .product(name: "Quick", package: "Quick"),
-        .product(name: "Nimble", package: "Nimble"),
-      ]
-    ),
     .target(
       name: "ChatListFeature",
       dependencies: [
@@ -463,19 +425,12 @@ let package = Package(
         .target(name: "Defaults"),
         .target(name: "MenuFeature"),
         .target(name: "ChatFeature"),
+        .target(name: "XXNavigation"),
         .target(name: "ProfileFeature"),
         .target(name: "SettingsFeature"),
         .target(name: "ContactListFeature"),
         .target(name: "DependencyInjection"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
-      ]
-    ),
-    .testTarget(
-      name: "ChatListFeatureTests",
-      dependencies: [
-        .target(name: "ChatListFeature"),
-        .product(name: "Quick", package: "Quick"),
-        .product(name: "Nimble", package: "Nimble"),
       ]
     ),
     .target(
@@ -496,20 +451,13 @@ let package = Package(
         .product(name: "ScrollViewController", package: "ScrollViewController"),
       ]
     ),
-    .testTarget(
-      name: "OnboardingFeatureTests",
-      dependencies: [
-        .target(name: "OnboardingFeature"),
-        .product(name: "Quick", package: "Quick"),
-        .product(name: "Nimble", package: "Nimble"),
-      ]
-    ),
     .target(
       name: "MenuFeature",
       dependencies: [
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "Presentation"),
+        .target(name: "XXNavigation"),
         .target(name: "DrawerFeature"),
         .target(name: "ReportingFeature"),
         .target(name: "DependencyInjection"),
@@ -546,14 +494,6 @@ let package = Package(
         .product(name: "SnapKit", package: "SnapKit"),
       ]
     ),
-    .testTarget(
-      name: "ScanFeatureTests",
-      dependencies: [
-        .target(name: "ScanFeature"),
-        .product(name: "Quick", package: "Quick"),
-        .product(name: "Nimble", package: "Nimble"),
-      ]
-    ),
     .target(
       name: "ContactListFeature",
       dependencies: [
@@ -562,14 +502,6 @@ let package = Package(
         .target(name: "ContactFeature"),
         .target(name: "DependencyInjection"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
-      ]
-    ),
-    .testTarget(
-      name: "ContactListFeatureTests",
-      dependencies: [
-        .target(name: "ContactListFeature"),
-        .product(name: "Quick", package: "Quick"),
-        .product(name: "Nimble", package: "Nimble"),
       ]
     ),
     .target(
@@ -588,14 +520,6 @@ let package = Package(
         .target(name: "DependencyInjection"),
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "ScrollViewController", package: "ScrollViewController"),
-      ]
-    ),
-    .testTarget(
-      name: "SettingsFeatureTests",
-      dependencies: [
-        .target(name: "SettingsFeature"),
-        .product(name: "Quick", package: "Quick"),
-        .product(name: "Nimble", package: "Nimble"),
       ]
     ),
     .target(

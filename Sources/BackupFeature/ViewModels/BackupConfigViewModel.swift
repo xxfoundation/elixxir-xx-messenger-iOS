@@ -8,6 +8,7 @@ import Foundation
 import DependencyInjection
 
 import CloudFiles
+import XXNavigation
 
 enum BackupActionState {
   case backupFinished
@@ -33,9 +34,9 @@ struct BackupConfigViewModel {
 extension BackupConfigViewModel {
   static func live() -> Self {
     class Context {
+      @Dependency var navigator: Navigator
       @Dependency var service: BackupService
       @Dependency var hudController: HUDController
-      @Dependency var coordinator: BackupCoordinating
     }
 
     let context = Context()
@@ -56,22 +57,22 @@ extension BackupConfigViewModel {
           context.service.stopBackups()
           return
         }
-        context.coordinator.toPassphrase(from: controller, cancelClosure: {
+        context.navigator.perform(PresentPassphrase(onCancel: {
           context.service.toggle(service: service, enabling: false)
-        }, passphraseClosure: { passphrase in
+        }, onPassphrase: { passphrase in
           context.hudController.show(.init(
             content: "Initializing and securing your backup file will take few seconds, please keep the app open."
           ))
           context.service.toggle(service: service, enabling: enabling)
           context.service.initializeBackup(passphrase: passphrase)
           context.hudController.dismiss()
-        })
+        }))
       },
       didTapService: { service, controller in
         if service == .sftp {
-          context.coordinator.toSFTP(from: controller) { host, username, password in
+          context.navigator.perform(PresentSFTP { host, username, password in
             context.service.setupSFTP(host: host, username: username, password: password)
-          }
+          })
           return
         }
 

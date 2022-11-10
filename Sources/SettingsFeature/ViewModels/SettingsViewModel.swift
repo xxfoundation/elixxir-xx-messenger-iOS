@@ -89,7 +89,7 @@ final class SettingsViewModel {
     }
     
     permissions.requestBiometrics { [weak self] result in
-      guard let self = self else { return }
+      guard let self else { return }
       
       switch result {
       case .success(let granted):
@@ -112,7 +112,7 @@ final class SettingsViewModel {
     
     if enable == true {
       pushHandler.requestAuthorization { [weak self] result in
-        guard let self = self else { return }
+        guard let self else { return }
         
         switch result {
         case .success(let granted):
@@ -129,7 +129,7 @@ final class SettingsViewModel {
       }
     } else {
       backgroundScheduler.schedule { [weak self] in
-        guard let self = self else { return }
+        guard let self else { return }
         
         do {
           try UnregisterForNotifications.live(
@@ -140,6 +140,7 @@ final class SettingsViewModel {
         } catch {
           let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
           self.hudController.show(.init(content: xxError))
+
         }
         
         self.pushNotifications = false

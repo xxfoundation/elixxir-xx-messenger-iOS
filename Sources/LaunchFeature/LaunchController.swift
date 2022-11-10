@@ -1,7 +1,6 @@
 import UIKit
 import Shared
 import Combine
-import Navigation
 import PushFeature
 import XXNavigation
 import DrawerFeature
@@ -10,8 +9,9 @@ import DependencyInjection
 public final class LaunchController: UIViewController {
   @Dependency var navigator: Navigator
 
-  private let viewModel = LaunchViewModel()
   private lazy var screenView = LaunchView()
+
+  private let viewModel = LaunchViewModel()
   public var pendingPushRoute: PushRouter.Route?
   private var cancellables = Set<AnyCancellable>()
   private var drawerCancellables = Set<AnyCancellable>()
@@ -123,6 +123,7 @@ public final class LaunchController: UIViewController {
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
         navigator.perform(DismissModal(from: self)) {
+          self.drawerCancellables.removeAll()
           self.viewModel.didRefuseUpdating()
         }
       }.store(in: &drawerCancellables)

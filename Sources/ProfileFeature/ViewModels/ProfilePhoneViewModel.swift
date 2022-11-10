@@ -44,7 +44,7 @@ final class ProfilePhoneViewModel {
   func didTapNext() {
     hudController.show()
     scheduler.schedule { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
       let content = "\(self.stateSubject.value.input)\(self.stateSubject.value.country.code)"
       do {
         let confirmationId = try self.messenger.ud.get()!.sendRegisterFact(

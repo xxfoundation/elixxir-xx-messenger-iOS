@@ -5,6 +5,7 @@ public struct HUDModel {
   var content: String?
   var actionTitle: String?
   var hasDotAnimation: Bool
+  var isAutoDismissable: Bool
   var onTapClosure: (() -> Void)?
 
   public init(
@@ -12,6 +13,7 @@ public struct HUDModel {
     content: String? = nil,
     actionTitle: String? = nil,
     hasDotAnimation: Bool = false,
+    isAutoDismissable: Bool = false,
     onTapClosure: (() -> Void)? = nil
   ) {
     self.title = title
@@ -19,6 +21,7 @@ public struct HUDModel {
     self.actionTitle = actionTitle
     self.onTapClosure = onTapClosure
     self.hasDotAnimation = hasDotAnimation
+    self.isAutoDismissable = isAutoDismissable
   }
 
   public init(
@@ -30,6 +33,7 @@ public struct HUDModel {
     self.actionTitle = actionTitle
     self.onTapClosure = onTapClosure
     self.title = Localized.Hud.Error.title
+    self.isAutoDismissable = onTapClosure == nil
     self.content = error.localizedDescription
   }
 }

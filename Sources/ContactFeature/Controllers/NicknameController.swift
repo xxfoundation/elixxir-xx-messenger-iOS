@@ -46,7 +46,7 @@ public final class NicknameController: UIViewController {
 
     private func setupKeyboard() {
         keyboardListener.keyboardFrameWillChange = { [weak self] keyboard in
-            guard let self = self else { return }
+            guard let self else { return }
 
             let inset = self.view.frame.height - self.view.convert(keyboard.frame, from: nil).minY
 

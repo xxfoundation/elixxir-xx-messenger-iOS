@@ -3,17 +3,17 @@ import WebKit
 import Shared
 import Combine
 import Defaults
+import XXNavigation
 import DependencyInjection
 
 public final class TermsConditionsController: UIViewController {
-  @Dependency var coordinator: TermsCoordinator
+  @Dependency var navigator: Navigator
 
   @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.acceptedTerms, defaultValue: false) var didAcceptTerms: Bool
 
-  private lazy var screenView = TermsConditionsView()
-
   private var cancellables = Set<AnyCancellable>()
+  private lazy var screenView = TermsConditionsView()
 
   public override func loadView() {
     view = screenView
@@ -30,7 +30,6 @@ public final class TermsConditionsController: UIViewController {
 
   public override func viewDidLayoutSubviews() {
     super.viewDidLayoutSubviews()
-
     let gradient = CAGradientLayer()
     gradient.colors = [
       UIColor(red: 122/255, green: 235/255, blue: 239/255, alpha: 1).cgColor,
@@ -38,18 +37,16 @@ public final class TermsConditionsController: UIViewController {
       UIColor(red: 63/255, green: 186/255, blue: 253/255, alpha: 1).cgColor,
       UIColor(red: 98/255, green: 163/255, blue: 255/255, alpha: 1).cgColor
     ]
-
     gradient.startPoint = CGPoint(x: 0, y: 0)
     gradient.endPoint = CGPoint(x: 1, y: 1)
-
     gradient.frame = screenView.bounds
     screenView.layer.insertSublayer(gradient, at: 0)
   }
 
   public override func viewDidLoad() {
     super.viewDidLoad()
-
-    screenView.radioComponent
+    screenView
+      .radioComponent
       .radioButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
@@ -58,19 +55,20 @@ public final class TermsConditionsController: UIViewController {
         UIImpactFeedbackGenerator(style: .heavy).impactOccurred()
       }.store(in: &cancellables)
 
-    screenView.nextButton
+    screenView
+      .nextButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
         didAcceptTerms = true
-
-        if let _ = username {
-          coordinator.presentChatList(self)
+        if username != nil {
+          navigator.perform(PresentChatList())
         } else {
-          coordinator.presentUsername(self)
+          navigator.perform(PresentOnboardingUsername())
         }
       }.store(in: &cancellables)
 
-    screenView.showTermsButton
+    screenView
+      .showTermsButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] _ in
         let webView = WKWebView()

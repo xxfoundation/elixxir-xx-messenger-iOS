@@ -1,12 +1,13 @@
 import UIKit
 import Shared
 import Combine
+import XXNavigation
 import DrawerFeature
 import DependencyInjection
 
 public final class ProfileController: UIViewController {
+  @Dependency var navigator: Navigator
   @Dependency var barStylist: StatusBarStylist
-  @Dependency var coordinator: ProfileCoordinating
 
   private lazy var screenView = ProfileView()
 
@@ -64,7 +65,7 @@ public final class ProfileController: UIViewController {
               self.viewModel.didTapDelete(isEmail: true)
             }
         } else {
-          coordinator.toEmail(from: self)
+          navigator.perform(PresentProfileEmail())
         }
       }.store(in: &cancellables)
 
@@ -86,17 +87,22 @@ public final class ProfileController: UIViewController {
               self.viewModel.didTapDelete(isEmail: false)
             }
         } else {
-          coordinator.toPhone(from: self)
+          navigator.perform(PresentProfilePhone())
         }
       }.store(in: &cancellables)
 
-    screenView.cardComponent.avatarView.editButton
+    screenView
+      .cardComponent
+      .avatarView
+      .editButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in viewModel.didRequestLibraryAccess() }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        viewModel.didRequestLibraryAccess()
+      }.store(in: &cancellables)
 
-    viewModel.navigation
+    viewModel
+      .navigation
       .receive(on: DispatchQueue.main)
       .removeDuplicates()
       .sink { [unowned self] in
@@ -106,38 +112,43 @@ public final class ProfileController: UIViewController {
             title: Localized.Profile.Photo.title,
             subtitle: Localized.Profile.Photo.subtitle,
             actionTitle: Localized.Profile.Photo.continue) {
-              self.coordinator.toPhotos(from: self)
-            }
+              self.navigator.perform(PresentPhotoLibrary())
+          }
         case .libraryPermission:
-          coordinator.toPermission(type: .library, from: self)
+          self.navigator.perform(PresentPermissionRequest(type: .library))
         case .none:
           break
         }
-
         viewModel.didNavigateSomewhere()
       }.store(in: &cancellables)
 
-    viewModel.state
+    viewModel
+      .state
       .map(\.email)
       .removeDuplicates()
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in screenView.emailView.set(value: $0) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        screenView.emailView.set(value: $0)
+      }.store(in: &cancellables)
 
-    viewModel.state
+    viewModel
+      .state
       .map(\.phone)
       .removeDuplicates()
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in screenView.phoneView.set(value: $0) }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        screenView.phoneView.set(value: $0)
+      }.store(in: &cancellables)
 
-    viewModel.state
+    viewModel
+      .state
       .map(\.photo)
       .compactMap { $0 }
       .removeDuplicates()
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in screenView.cardComponent.image = $0 }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        screenView.cardComponent.image = $0
+      }.store(in: &cancellables)
   }
 
   private func presentDrawer(
@@ -151,7 +162,18 @@ public final class ProfileController: UIViewController {
       style: .red
     ))
 
-    let drawer = DrawerController([
+    actionButton
+      .action
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+          action()
+        }
+      }.store(in: &drawerCancellables)
+
+    navigator.perform(PresentDrawer(items: [
       DrawerText(
         font: Fonts.Mulish.bold.font(size: 26.0),
         text: title,
@@ -168,24 +190,11 @@ public final class ProfileController: UIViewController {
         spacingAfter: 37
       ),
       actionButton
-    ])
-
-    actionButton.action
-      .receive(on: DispatchQueue.main)
-      .sink {
-        drawer.dismiss(animated: true) { [weak self] in
-          guard let self = self else { return }
-          self.drawerCancellables.removeAll()
-
-          action()
-        }
-      }.store(in: &drawerCancellables)
-
-    coordinator.toDrawer(drawer, from: self)
+    ]))
   }
 
   @objc private func didTapMenu() {
-    coordinator.toSideMenu(from: self)
+    navigator.perform(PresentMenu(currentItem: .profile))
   }
 }
 

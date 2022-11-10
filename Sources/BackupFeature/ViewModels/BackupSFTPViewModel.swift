@@ -54,7 +54,7 @@ final class BackupSFTPViewModel {
     let anyController = UIViewController()
 
     DispatchQueue.global().async { [weak self] in
-      guard let self = self else { return }
+      guard let self else { return }
       do {
         try CloudFilesManager.sftp(
           host: host,

@@ -1,7 +1,6 @@
 import UIKit
 import Shared
 import Combine
-import Navigation
 import XXNavigation
 import DrawerFeature
 import DependencyInjection
@@ -142,9 +141,20 @@ public final class OnboardingCodeController: UIViewController {
 
   private func presentInfo(title: String, subtitle: String) {
     let actionButton = CapsuleButton()
-    actionButton.set(style: .seeThrough, title: Localized.Settings.InfoDrawer.action)
+    actionButton.set(
+      style: .seeThrough,
+      title: Localized.Settings.InfoDrawer.action
+    )
+    actionButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) {
+          self.drawerCancellables.removeAll()
+        }
+      }.store(in: &drawerCancellables)
 
-    let drawer = DrawerController([
+    navigator.perform(PresentDrawer(items: [
       DrawerText(
         font: Fonts.Mulish.bold.font(size: 26.0),
         text: title,
@@ -164,17 +174,6 @@ public final class OnboardingCodeController: UIViewController {
         actionButton,
         FlexibleSpace()
       ])
-    ])
-
-    actionButton.publisher(for: .touchUpInside)
-      .receive(on: DispatchQueue.main)
-      .sink {
-        drawer.dismiss(animated: true) { [weak self] in
-          guard let self = self else { return }
-          self.drawerCancellables.removeAll()
-        }
-      }.store(in: &drawerCancellables)
-
-//    navigator.perform(PresentDrawer())
+    ]))
   }
 }
