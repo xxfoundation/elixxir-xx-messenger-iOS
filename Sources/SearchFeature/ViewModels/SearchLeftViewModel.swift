@@ -11,7 +11,7 @@ import NetworkMonitor
 import ReportingFeature
 import CombineSchedulers
 import XXMessengerClient
-import DependencyInjection
+import DI
 
 typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchItem>
 

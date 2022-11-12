@@ -7,7 +7,7 @@ import XXModels
 import XXClient
 import Foundation
 import XXMessengerClient
-import DependencyInjection
+import DI
 
 final class AccountDeleteViewModel {
   @Dependency var database: Database

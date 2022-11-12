@@ -7,7 +7,7 @@ import InputField
 import Foundation
 import XXMessengerClient
 import CombineSchedulers
-import DependencyInjection
+import DI
 
 final class OnboardingUsernameViewModel {
   struct ViewState: Equatable {

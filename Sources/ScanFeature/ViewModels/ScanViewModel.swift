@@ -4,7 +4,7 @@ import XXModels
 import XXClient
 import Foundation
 import ReportingFeature
-import DependencyInjection
+import DI
 
 enum ScanStatus: Equatable {
     case reading

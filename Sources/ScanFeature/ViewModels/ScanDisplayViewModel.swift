@@ -4,7 +4,7 @@ import Combine
 import Defaults
 import Countries
 import XXClient
-import DependencyInjection
+import DI
 import XXMessengerClient
 
 struct ScanDisplayViewState: Equatable {

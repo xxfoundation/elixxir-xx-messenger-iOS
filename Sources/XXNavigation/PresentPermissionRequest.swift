@@ -1,7 +1,7 @@
 import UIKit
 import Shared
 import Navigation
-import DependencyInjection
+import DI
 
 public struct PresentPermissionRequest: Navigation.Action {
   public var type: PermissionType

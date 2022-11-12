@@ -42,8 +42,7 @@ let package = Package(
     .library(name: "ChatInputFeature", targets: ["ChatInputFeature"]),
     .library(name: "OnboardingFeature", targets: ["OnboardingFeature"]),
     .library(name: "ContactListFeature", targets: ["ContactListFeature"]),
-    .library(name: "DependencyInjection", targets: ["DependencyInjection"]),
-    .library(name: "ReportingFeature", targets: ["ReportingFeature"]),
+    .library(name: "ReportingFeature", targets: ["ReportingFeature"])
   ],
   dependencies: [
     .package(
@@ -125,6 +124,10 @@ let package = Package(
       url: "https://github.com/pointfreeco/xctest-dynamic-overlay.git",
       .upToNextMajor(from: "0.3.3")
     ),
+    .package(
+      url: "https://git.xx.network/elixxir/xxm-di.git",
+      .upToNextMajor(from: "1.0.0")
+    )
   ],
   targets: [
     .target(
@@ -174,15 +177,6 @@ let package = Package(
       name: "VersionChecking"
     ),
     .target(
-      name: "DependencyInjection"
-    ),
-    .testTarget(
-      name: "DependencyInjectionTests",
-      dependencies: [
-        .target(name: "DependencyInjection"),
-      ]
-    ),
-    .target(
       name: "InputField",
       dependencies: [
         .target(name: "Shared"),
@@ -193,14 +187,14 @@ let package = Package(
       dependencies: [
         .target(name: "Shared"),
         .target(name: "XXNavigation"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
       ]
     ),
     .target(
       name: "XXNavigation",
       dependencies: [
         .target(name: "DrawerFeature"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "Navigation", package: "Navigation"),
         .product(name: "XXModels", package: "client-ios-db"),
       ]
@@ -210,7 +204,7 @@ let package = Package(
       dependencies: [
         .target(name: "Defaults"),
         .target(name: "ReportingFeature"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "XXDatabase", package: "client-ios-db"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
         .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
@@ -231,7 +225,7 @@ let package = Package(
     .target(
       name: "Defaults",
       dependencies: [
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
       ]
     ),
     .target(
@@ -246,7 +240,7 @@ let package = Package(
       dependencies: [
         .target(name: "Shared"),
         .target(name: "XXNavigation"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
       ]
     ),
     .target(
@@ -306,7 +300,7 @@ let package = Package(
         .target(name: "Shared"),
         .target(name: "Presentation"),
         .target(name: "XXNavigation"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "XXDatabase", package: "client-ios-db"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
         .product(name: "CloudFilesDrive", package: "xxm-cloud-providers"),
@@ -339,7 +333,7 @@ let package = Package(
         .target(name: "DrawerFeature"),
         .target(name: "ChatInputFeature"),
         .target(name: "ReportingFeature"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "ChatLayout", package: "ChatLayout"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
@@ -356,7 +350,7 @@ let package = Package(
         .target(name: "Presentation"),
         .target(name: "ContactFeature"),
         .target(name: "NetworkMonitor"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "Retry", package: "Retry"),
         .product(name: "XXDatabase", package: "client-ios-db"),
       ]
@@ -371,7 +365,7 @@ let package = Package(
         .target(name: "BackupFeature"),
         .target(name: "VersionChecking"),
         .target(name: "ReportingFeature"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
         .product(name: "CloudFilesSFTP", package: "xxm-cloud-providers"),
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
@@ -394,7 +388,7 @@ let package = Package(
       dependencies: [
         .target(name: "Shared"),
         .target(name: "ContactFeature"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
       ]
     ),
@@ -411,7 +405,7 @@ let package = Package(
         .target(name: "Presentation"),
         .target(name: "DrawerFeature"),
         .target(name: "BackupFeature"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "ScrollViewController", package: "ScrollViewController"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
@@ -429,7 +423,7 @@ let package = Package(
         .target(name: "ProfileFeature"),
         .target(name: "SettingsFeature"),
         .target(name: "ContactListFeature"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
       ]
     ),
@@ -446,7 +440,7 @@ let package = Package(
         .target(name: "Presentation"),
         .target(name: "DrawerFeature"),
         .target(name: "VersionChecking"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "ScrollViewController", package: "ScrollViewController"),
       ]
@@ -460,7 +454,7 @@ let package = Package(
         .target(name: "XXNavigation"),
         .target(name: "DrawerFeature"),
         .target(name: "ReportingFeature"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
       ]
     ),
@@ -472,7 +466,7 @@ let package = Package(
         .target(name: "Presentation"),
         .target(name: "DrawerFeature"),
         .target(name: "NetworkMonitor"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
         .product(name: "CloudFilesSFTP", package: "xxm-cloud-providers"),
         .product(name: "CloudFilesDrive", package: "xxm-cloud-providers"),
@@ -490,7 +484,7 @@ let package = Package(
         .target(name: "Presentation"),
         .target(name: "ContactFeature"),
         .target(name: "NetworkMonitor"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "SnapKit", package: "SnapKit"),
       ]
     ),
@@ -500,7 +494,7 @@ let package = Package(
         .target(name: "Shared"),
         .target(name: "Presentation"),
         .target(name: "ContactFeature"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
       ]
     ),
@@ -517,7 +511,7 @@ let package = Package(
         .target(name: "MenuFeature"),
         .target(name: "Presentation"),
         .target(name: "DrawerFeature"),
-        .target(name: "DependencyInjection"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "ScrollViewController", package: "ScrollViewController"),
       ]

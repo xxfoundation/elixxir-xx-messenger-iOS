@@ -8,7 +8,7 @@ import XXClient
 import XXMessengerClient
 import UserNotifications
 import CombineSchedulers
-import DependencyInjection
+import DI
 
 struct SettingsViewState: Equatable {
   var isHideActiveApps: Bool = false

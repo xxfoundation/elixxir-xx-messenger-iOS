@@ -3,7 +3,7 @@ import Shared
 import Combine
 import XXNavigation
 import DrawerFeature
-import DependencyInjection
+import DI
 import ScrollViewController
 
 public final class OnboardingCodeController: UIViewController {

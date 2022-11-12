@@ -2,7 +2,7 @@ import UIKit
 import Shared
 import Combine
 import XXNavigation
-import DependencyInjection
+import DI
 
 public final class RestoreSuccessController: UIViewController {
   @Dependency var navigator: Navigator

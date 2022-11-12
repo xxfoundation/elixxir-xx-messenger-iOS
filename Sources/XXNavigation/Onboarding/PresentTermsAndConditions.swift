@@ -1,6 +1,6 @@
 import UIKit
 import Navigation
-import DependencyInjection
+import DI
 
 public struct PresentTermsAndConditions: Navigation.Action {
   public var popAllowed: Bool

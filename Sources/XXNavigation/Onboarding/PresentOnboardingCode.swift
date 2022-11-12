@@ -1,6 +1,6 @@
 import UIKit
 import Navigation
-import DependencyInjection
+import DI
 
 public struct PresentOnboardingCode: Navigation.Action {
   public var isEmail: Bool

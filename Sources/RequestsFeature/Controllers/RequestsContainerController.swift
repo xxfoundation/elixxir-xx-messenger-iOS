@@ -3,7 +3,7 @@ import Shared
 import Combine
 import XXNavigation
 import ContactFeature
-import DependencyInjection
+import DI
 
 public final class RequestsContainerController: UIViewController {
   @Dependency var navigator: Navigator

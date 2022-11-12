@@ -2,7 +2,7 @@ import UIKit
 import Shared
 import Combine
 import XXNavigation
-import DependencyInjection
+import DI
 import ScrollViewController
 
 public final class ProfileCodeController: UIViewController {

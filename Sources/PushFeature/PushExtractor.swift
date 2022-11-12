@@ -2,7 +2,7 @@ import XXModels
 import Foundation
 import XXClient
 import XXMessengerClient
-import DependencyInjection
+import DI
 
 public struct PushExtractor {
   enum Constants {

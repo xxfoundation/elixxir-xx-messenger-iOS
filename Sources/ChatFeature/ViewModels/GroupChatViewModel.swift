@@ -6,7 +6,7 @@ import Defaults
 import Foundation
 import DifferenceKit
 import ReportingFeature
-import DependencyInjection
+import DI
 import XXMessengerClient
 
 import struct XXModels.Message

@@ -4,7 +4,7 @@ import Combine
 import XXModels
 import XXNavigation
 import DrawerFeature
-import DependencyInjection
+import DI
 import ScrollViewController
 
 public final class ContactController: UIViewController {

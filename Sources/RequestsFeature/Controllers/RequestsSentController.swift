@@ -1,6 +1,6 @@
 import UIKit
 import Combine
-import DependencyInjection
+import DI
 
 final class RequestsSentController: UIViewController {
     var connectionsPublisher: AnyPublisher<Void, Never> {

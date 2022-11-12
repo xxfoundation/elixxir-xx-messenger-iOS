@@ -4,7 +4,7 @@ import Combine
 import Defaults
 import XXNavigation
 import DrawerFeature
-import DependencyInjection
+import DI
 
 public final class OnboardingWelcomeController: UIViewController {
   @Dependency var navigator: Navigator

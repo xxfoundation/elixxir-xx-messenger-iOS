@@ -1,6 +1,6 @@
 import UIKit
 import Navigation
-import DependencyInjection
+import DI
 
 public struct PresentChatList: Navigation.Action {
   public var animated: Bool = true

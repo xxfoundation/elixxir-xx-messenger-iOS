@@ -5,7 +5,7 @@ import Foundation
 import InputField
 import CombineSchedulers
 import XXMessengerClient
-import DependencyInjection
+import DI
 
 final class ProfileEmailViewModel {
   struct ViewState: Equatable {

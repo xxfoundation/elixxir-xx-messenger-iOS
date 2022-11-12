@@ -1,7 +1,7 @@
 import UIKit
 import Shared
 import Combine
-import DependencyInjection
+import DI
 
 public final class BackupController: UIViewController {
     private let viewModel = BackupViewModel.live()

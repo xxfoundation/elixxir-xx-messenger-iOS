@@ -4,7 +4,7 @@ import Combine
 import Foundation
 import CloudFiles
 import CloudFilesSFTP
-import DependencyInjection
+import DI
 
 struct SFTPViewState {
   var host: String = ""

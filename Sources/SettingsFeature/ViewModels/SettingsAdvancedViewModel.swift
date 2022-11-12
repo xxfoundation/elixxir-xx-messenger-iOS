@@ -4,7 +4,7 @@ import Defaults
 import Foundation
 import CrashReporting
 import ReportingFeature
-import DependencyInjection
+import DI
 
 struct AdvancedViewState: Equatable {
   var isRecordingLogs = false

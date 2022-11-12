@@ -4,7 +4,7 @@ import Combine
 import PushFeature
 import XXNavigation
 import DrawerFeature
-import DependencyInjection
+import DI
 
 public final class LaunchController: UIViewController {
   @Dependency var navigator: Navigator

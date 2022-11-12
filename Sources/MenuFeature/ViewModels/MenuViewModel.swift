@@ -4,7 +4,7 @@ import XXClient
 import Defaults
 import Foundation
 import ReportingFeature
-import DependencyInjection
+import DI
 
 final class MenuViewModel {
     @Dependency var database: Database

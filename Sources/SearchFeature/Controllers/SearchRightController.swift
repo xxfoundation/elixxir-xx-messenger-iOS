@@ -1,7 +1,7 @@
 import UIKit
 import Combine
 import XXNavigation
-import DependencyInjection
+import DI
 
 final class SearchRightController: UIViewController {
   @Dependency var navigator: Navigator

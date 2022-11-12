@@ -4,7 +4,7 @@ import Combine
 import Permissions
 import XXNavigation
 import CombineSchedulers
-import DependencyInjection
+import DI
 
 final class ScanController: UIViewController {
   @Dependency var navigator: Navigator

@@ -1,5 +1,5 @@
 import Foundation
-import DependencyInjection
+import DI
 
 public enum Key: String {
     // MARK: Profile

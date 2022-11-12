@@ -2,7 +2,7 @@ import Combine
 import XXModels
 import Defaults
 import ReportingFeature
-import DependencyInjection
+import DI
 import XXMessengerClient
 
 import Foundation

@@ -7,7 +7,7 @@ import XXClient
 import ReportingFeature
 import CombineSchedulers
 import XXMessengerClient
-import DependencyInjection
+import DI
 
 final class CreateGroupViewModel {
   @KeyObject(.username, defaultValue: "") var username: String

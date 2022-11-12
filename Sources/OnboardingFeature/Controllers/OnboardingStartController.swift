@@ -1,7 +1,7 @@
 import UIKit
 import Combine
 import XXNavigation
-import DependencyInjection
+import DI
 
 public final class OnboardingStartController: UIViewController {
   @Dependency var navigator: Navigator

@@ -5,7 +5,7 @@ import XXModels
 import XXNavigation
 import DifferenceKit
 import DrawerFeature
-import DependencyInjection
+import DI
 
 extension ChatInfo: Differentiable {
   public var differenceIdentifier: ChatInfo.ID { id }

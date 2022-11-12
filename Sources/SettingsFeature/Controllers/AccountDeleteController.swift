@@ -5,7 +5,7 @@ import Defaults
 import XXNavigation
 import DrawerFeature
 import ScrollViewController
-import DependencyInjection
+import DI
 
 public final class AccountDeleteController: UIViewController {
   @Dependency var navigator: Navigator

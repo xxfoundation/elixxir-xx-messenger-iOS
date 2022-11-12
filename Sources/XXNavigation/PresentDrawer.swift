@@ -1,7 +1,7 @@
 import UIKit
 import Navigation
 import DrawerFeature
-import DependencyInjection
+import DI
 
 public struct PresentDrawer: Navigation.Action {
   public var items: [DrawerItem]

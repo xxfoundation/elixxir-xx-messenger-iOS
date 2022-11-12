@@ -3,7 +3,7 @@ import Shared
 import Combine
 import XXNavigation
 import DrawerFeature
-import DependencyInjection
+import DI
 
 public final class ScanContainerController: UIViewController {
   @Dependency var navigator: Navigator

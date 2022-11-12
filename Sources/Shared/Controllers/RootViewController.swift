@@ -1,6 +1,6 @@
 import UIKit
 import Combine
-import DependencyInjection
+import DI
 
 public final class RootViewController: UIViewController {
   @Dependency var barStylist: StatusBarStylist

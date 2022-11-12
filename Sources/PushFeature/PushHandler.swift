@@ -5,7 +5,7 @@ import XXModels
 import XXDatabase
 import XXMessengerClient
 import ReportingFeature
-import DependencyInjection
+import DI
 
 public final class PushHandler: PushHandling {
   private enum Constants {

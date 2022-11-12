@@ -9,7 +9,7 @@ import Permissions
 import BackupFeature
 import XXMessengerClient
 import CombineSchedulers
-import DependencyInjection
+import DI
 
 enum ProfileNavigationRoutes {
   case none

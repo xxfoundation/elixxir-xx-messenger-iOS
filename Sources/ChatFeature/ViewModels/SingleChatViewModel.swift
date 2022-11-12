@@ -9,7 +9,7 @@ import Foundation
 import Permissions
 import DifferenceKit
 import ReportingFeature
-import DependencyInjection
+import DI
 import XXMessengerClient
 
 import struct XXModels.Message

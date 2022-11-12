@@ -7,7 +7,7 @@ import XXClient
 import DrawerFeature
 import ReportingFeature
 import CombineSchedulers
-import DependencyInjection
+import DI
 import XXMessengerClient
 
 import struct XXModels.Group

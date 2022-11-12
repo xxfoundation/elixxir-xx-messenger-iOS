@@ -3,7 +3,7 @@ import Combine
 import Defaults
 import XXClient
 import PushFeature
-import DependencyInjection
+import DI
 
 final class SearchContainerViewModel {
     @Dependency var pushHandler: PushHandling

@@ -3,7 +3,7 @@ import Shared
 import Combine
 import Defaults
 import CloudFiles
-import DependencyInjection
+import DI
 
 import XXClient
 import XXModels

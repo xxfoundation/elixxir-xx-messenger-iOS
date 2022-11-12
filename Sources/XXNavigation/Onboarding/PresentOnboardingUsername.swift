@@ -1,6 +1,6 @@
 import UIKit
 import Navigation
-import DependencyInjection
+import DI
 
 public struct PresentOnboardingUsername: Navigation.Action {
   public var animated: Bool

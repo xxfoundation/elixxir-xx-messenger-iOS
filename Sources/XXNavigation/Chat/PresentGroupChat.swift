@@ -1,7 +1,7 @@
 import UIKit
 import XXModels
 import Navigation
-import DependencyInjection
+import DI
 
 public struct PresentGroupChat: Navigation.Action {
   public var model: GroupInfo

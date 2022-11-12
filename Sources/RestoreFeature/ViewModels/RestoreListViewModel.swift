@@ -3,7 +3,7 @@ import Shared
 import Combine
 import CloudFiles
 import CloudFilesSFTP
-import DependencyInjection
+import DI
 
 public struct RestorationDetails {
   var provider: CloudService

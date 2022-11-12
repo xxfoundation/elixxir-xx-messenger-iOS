@@ -4,7 +4,7 @@ import Combine
 import XXModels
 import MenuFeature
 import XXNavigation
-import DependencyInjection
+import DI
 
 public final class ChatListController: UIViewController {
   @Dependency var navigator: Navigator

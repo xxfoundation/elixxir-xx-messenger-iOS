@@ -5,7 +5,7 @@ import XXModels
 import Defaults
 import XXMessengerClient
 import ReportingFeature
-import DependencyInjection
+import DI
 
 import struct XXModels.Group
 import XXClient

@@ -4,7 +4,7 @@ import Shared
 import Combine
 import Defaults
 import XXNavigation
-import DependencyInjection
+import DI
 
 public final class TermsConditionsController: UIViewController {
   @Dependency var navigator: Navigator

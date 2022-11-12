@@ -6,7 +6,7 @@ import Defaults
 import PushFeature
 import LaunchFeature
 import CrashReporting
-import DependencyInjection
+import DI
 
 import XXModels
 import XXLogger
@@ -54,7 +54,7 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
 
     DependencyRegistrator.registerNavigators(navController)
 
-    DependencyInjection.Container.shared.register(
+    DI.Container.shared.register(
       PushRouter.live(navigationController: navController)
     )
     return true
@@ -65,8 +65,8 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
   }
 
   public func applicationDidEnterBackground(_ application: UIApplication) {
-    if let messenger = try? DependencyInjection.Container.shared.resolve() as Messenger,
-       let database = try? DependencyInjection.Container.shared.resolve() as Database,
+    if let messenger = try? DI.Container.shared.resolve() as Messenger,
+       let database = try? DI.Container.shared.resolve() as Database,
        let cMix = try? messenger.cMix.tryGet() {
       let backgroundTask = application.beginBackgroundTask(withName: "xx.stop.network") {}
 
@@ -111,7 +111,7 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
   }
 
   public func applicationWillTerminate(_ application: UIApplication) {
-    if let messenger = try? DependencyInjection.Container.shared.resolve() as Messenger {
+    if let messenger = try? DI.Container.shared.resolve() as Messenger {
       try? messenger.stop()
     }
   }
@@ -123,7 +123,7 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
       print(">>> Invalidated background timer")
     }
 
-    if let messenger = try? DependencyInjection.Container.shared.resolve() as Messenger,
+    if let messenger = try? DI.Container.shared.resolve() as Messenger,
        let cMix = messenger.cMix.get() {
       guard self.calledStopNetwork == true else { return }
       try? cMix.startNetworkFollower(timeoutMS: 10_000)
@@ -153,7 +153,7 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     guard userActivity.activityType == NSUserActivityTypeBrowsingWeb,
           let incomingURL = userActivity.webpageURL,
           let username = getUsernameFromInvitationDeepLink(incomingURL),
-          let router = try? DependencyInjection.Container.shared.resolve() as PushRouter else {
+          let router = try? DI.Container.shared.resolve() as PushRouter else {
       return false
     }
 

@@ -5,7 +5,7 @@ import XXModels
 import Countries
 import XXNavigation
 import DrawerFeature
-import DependencyInjection
+import DI
 
 final class RequestsReceivedController: UIViewController {
   @Dependency var navigator: Navigator

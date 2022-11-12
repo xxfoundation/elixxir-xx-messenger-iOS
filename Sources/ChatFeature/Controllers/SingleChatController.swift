@@ -11,7 +11,7 @@ import DrawerFeature
 import DifferenceKit
 import ChatInputFeature
 import ReportingFeature
-import DependencyInjection
+import DI
 import ScrollViewController
 
 extension FlexibleSpace: CollectionCellContent {
@@ -65,7 +65,7 @@ public final class SingleChatController: UIViewController {
       initialState: .init(canAddAttachments: true),
       reducer: chatInputReducer,
       environment: .init(
-        voxophone: try! DependencyInjection.Container.shared.resolve() as Voxophone,
+        voxophone: try! DI.Container.shared.resolve() as Voxophone,
         sendAudio: { viewModel.didSendAudio(url: $0) },
         didTapCamera: { viewModel.didTest(permission: .camera) },
         didTapLibrary: { viewModel.didTest(permission: .library) },

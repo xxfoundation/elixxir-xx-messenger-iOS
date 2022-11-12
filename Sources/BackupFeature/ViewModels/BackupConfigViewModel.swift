@@ -5,7 +5,7 @@ import XXClient
 import Defaults
 import Foundation
 
-import DependencyInjection
+import DI
 
 import CloudFiles
 import XXNavigation

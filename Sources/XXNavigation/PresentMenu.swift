@@ -1,7 +1,7 @@
 import UIKit
 import Shared
 import Navigation
-import DependencyInjection
+import DI
 
 public struct PresentMenu: Navigation.Action {
   public var currentItem: MenuItem

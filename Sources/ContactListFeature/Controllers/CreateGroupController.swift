@@ -3,7 +3,7 @@ import Shared
 import Combine
 import XXModels
 import XXNavigation
-import DependencyInjection
+import DI
 
 public final class CreateGroupController: UIViewController {
   @Dependency var navigator: Navigator

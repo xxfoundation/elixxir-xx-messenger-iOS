@@ -7,7 +7,7 @@ import Defaults
 import XXClient
 import ReportingFeature
 import CombineSchedulers
-import DependencyInjection
+import DI
 import XXMessengerClient
 
 struct RequestSent: Hashable, Equatable {

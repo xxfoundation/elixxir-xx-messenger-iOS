@@ -4,7 +4,7 @@ import XXModels
 import XXLogger
 import Foundation
 import XXMessengerClient
-import DependencyInjection
+import DI
 
 extension LaunchViewModel {
   func setupBackupCallback() {
@@ -177,7 +177,7 @@ extension LaunchViewModel {
     ))
 
     do {
-      let messenger: Messenger = try DependencyInjection.Container.shared.resolve()
+      let messenger: Messenger = try DI.Container.shared.resolve()
       try messenger.waitForNetwork()
 
       if try messenger.verifyContact(contact) {
@@ -367,7 +367,7 @@ extension LaunchViewModel {
       })
     )
 
-    DependencyInjection.Container.shared.register(manager)
+    DI.Container.shared.register(manager)
   }
 
   func generateTransferManager() throws {
@@ -393,7 +393,7 @@ extension LaunchViewModel {
       cMixId: messenger.e2e()!.getId()
     )
 
-    DependencyInjection.Container.shared.register(manager)
+    DI.Container.shared.register(manager)
     try! manager.setStatus(dummyTrafficOn)
   }
 

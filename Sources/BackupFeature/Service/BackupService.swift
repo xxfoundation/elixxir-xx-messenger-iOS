@@ -7,7 +7,7 @@ import CloudFilesSFTP
 import NetworkMonitor
 import KeychainAccess
 import XXMessengerClient
-import DependencyInjection
+import DI
 
 public final class BackupService {
   @Dependency var messenger: Messenger

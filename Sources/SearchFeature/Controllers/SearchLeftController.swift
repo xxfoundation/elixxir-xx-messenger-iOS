@@ -6,7 +6,7 @@ import Defaults
 import Countries
 import XXNavigation
 import DrawerFeature
-import DependencyInjection
+import DI
 
 final class SearchLeftController: UIViewController {
   @Dependency var navigator: Navigator

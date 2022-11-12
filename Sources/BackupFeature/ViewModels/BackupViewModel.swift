@@ -1,5 +1,5 @@
 import Combine
-import DependencyInjection
+import DI
 
 enum BackupViewState: Equatable {
     case setup

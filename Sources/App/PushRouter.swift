@@ -5,7 +5,7 @@ import SearchFeature
 import LaunchFeature
 import ChatListFeature
 import RequestsFeature
-import DependencyInjection
+import DI
 import XXModels
 import XXMessengerClient
 
@@ -21,7 +21,7 @@ extension PushRouter {
                         navigationController.setViewControllers([RequestsContainerController()], animated: true)
                     }
                 case .search(username: let username):
-                    if let messenger = try? DependencyInjection.Container.shared.resolve() as Messenger,
+                    if let messenger = try? DI.Container.shared.resolve() as Messenger,
                        let _ = try? messenger.ud.get()?.getContact() {
                         if !(navigationController.viewControllers.last is SearchContainerController) {
                             navigationController.setViewControllers([
@@ -33,7 +33,7 @@ extension PushRouter {
                         }
                     }
                 case .contactChat(id: let id):
-                    if let database: Database = try? DependencyInjection.Container.shared.resolve(),
+                    if let database: Database = try? DI.Container.shared.resolve(),
                        let contact = try? database.fetchContacts(.init(id: [id])).first {
                         navigationController.setViewControllers([
                             ChatListController(),
@@ -41,7 +41,7 @@ extension PushRouter {
                         ], animated: true)
                     }
                 case .groupChat(id: let id):
-                    if let database: Database = try? DependencyInjection.Container.shared.resolve(),
+                    if let database: Database = try? DI.Container.shared.resolve(),
                        let info = try? database.fetchGroupInfos(.init(groupId: id)).first {
                         navigationController.setViewControllers([
                             ChatListController(),

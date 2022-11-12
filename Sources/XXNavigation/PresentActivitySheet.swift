@@ -1,7 +1,7 @@
 import UIKit
 import XXModels
 import Navigation
-import DependencyInjection
+import DI
 
 public struct PresentActivitySheet: Navigation.Action {
   public var items: [Any]

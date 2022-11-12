@@ -5,7 +5,7 @@ import InputField
 import Foundation
 import CombineSchedulers
 import XXMessengerClient
-import DependencyInjection
+import DI
 
 final class OnboardingEmailViewModel {
   struct ViewState: Equatable {

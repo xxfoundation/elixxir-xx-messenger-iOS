@@ -1,5 +1,5 @@
 import XCTest
-import DependencyInjection
+import DI
 
 @testable import Defaults
 

@@ -1,6 +1,6 @@
 import UIKit
 import Combine
-import DependencyInjection
+import DI
 
 final class RequestsFailedController: UIViewController {
     private lazy var screenView = RequestsFailedView()

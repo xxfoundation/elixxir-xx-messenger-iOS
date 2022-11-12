@@ -1,3 +1,4 @@
+import DI
 import UIKit
 import Shared
 import Combine
@@ -9,7 +10,6 @@ import DrawerFeature
 import DifferenceKit
 import ReportingFeature
 import ChatInputFeature
-import DependencyInjection
 
 typealias OutgoingGroupTextCell = CollectionCell<FlexibleSpace, StackMessageView>
 typealias IncomingGroupTextCell = CollectionCell<StackMessageView, FlexibleSpace>
@@ -50,7 +50,7 @@ public final class GroupChatController: UIViewController {
       initialState: .init(canAddAttachments: false),
       reducer: chatInputReducer,
       environment: .init(
-        voxophone: try! DependencyInjection.Container.shared.resolve() as Voxophone,
+        voxophone: try! DI.Container.shared.resolve() as Voxophone,
         sendAudio: { _ in },
         didTapCamera: {},
         didTapLibrary: {},

@@ -2,7 +2,7 @@ import UIKit
 import Shared
 import Combine
 import XXNavigation
-import DependencyInjection
+import DI
 
 class ChatSearchListTableViewDiffableDataSource: UITableViewDiffableDataSource<SearchSection, SearchItem> {
   override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {

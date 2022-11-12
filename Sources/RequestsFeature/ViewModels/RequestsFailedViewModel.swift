@@ -5,7 +5,7 @@ import XXModels
 import Defaults
 import XXClient
 import CombineSchedulers
-import DependencyInjection
+import DI
 import XXMessengerClient
 
 final class RequestsFailedViewModel {

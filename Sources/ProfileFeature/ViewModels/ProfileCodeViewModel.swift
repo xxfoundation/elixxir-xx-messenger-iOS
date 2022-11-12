@@ -6,7 +6,7 @@ import InputField
 import Foundation
 import CombineSchedulers
 import XXMessengerClient
-import DependencyInjection
+import DI
 
 final class ProfileCodeViewModel {
   struct ViewState: Equatable {

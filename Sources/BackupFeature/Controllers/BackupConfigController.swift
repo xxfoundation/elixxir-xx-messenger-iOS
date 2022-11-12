@@ -4,7 +4,7 @@ import Combine
 import CloudFiles
 import XXNavigation
 import DrawerFeature
-import DependencyInjection
+import DI
 
 final class BackupConfigController: UIViewController {
   @Dependency var navigator: Navigator

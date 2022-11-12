@@ -20,7 +20,7 @@ import CrashReporting
 import NetworkMonitor
 import VersionChecking
 import ReportingFeature
-import DependencyInjection
+import DI
 
 // MARK: UI Features
 
@@ -48,7 +48,7 @@ import KeychainAccess
 import XXMessengerClient
 
 struct DependencyRegistrator {
-  static private let container = DependencyInjection.Container.shared
+  static private let container = DI.Container.shared
 
   static func registerDependencies() {
     #if DEBUG

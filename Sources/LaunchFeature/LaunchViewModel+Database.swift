@@ -1,7 +1,7 @@
 import XXModels
 import Foundation
 import XXDatabase
-import DependencyInjection
+import DI
 import XXLegacyDatabaseMigrator
 
 extension LaunchViewModel {
@@ -40,7 +40,7 @@ extension LaunchViewModel {
       try FileManager.default.moveItem(atPath: legacyPath, toPath: legacyPath.appending("-backup"))
     }
 
-    DependencyInjection.Container.shared.register(database)
+    DI.Container.shared.register(database)
 
     _ = try? database.bulkUpdateContacts(.init(authStatus: [.requesting]), .init(authStatus: .requestFailed))
     _ = try? database.bulkUpdateContacts(.init(authStatus: [.confirming]), .init(authStatus: .confirmationFailed))
@@ -54,7 +54,7 @@ extension LaunchViewModel {
       isBanned: reportingStatus.isEnabled() ? false : nil
     )
 
-    guard let database: Database = try? DependencyInjection.Container.shared.resolve(),
+    guard let database: Database = try? DI.Container.shared.resolve(),
           let contact = try? database.fetchContacts(query).first else {
       return nil
     }
@@ -65,7 +65,7 @@ extension LaunchViewModel {
   func getGroupInfoWith(groupId: Data) -> GroupInfo? {
     let query = GroupInfo.Query(groupId: groupId)
 
-    guard let database: Database = try? DependencyInjection.Container.shared.resolve(),
+    guard let database: Database = try? DI.Container.shared.resolve(),
           let info = try? database.fetchGroupInfos(query).first else {
       return nil
     }

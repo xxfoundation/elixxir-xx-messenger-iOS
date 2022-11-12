@@ -6,7 +6,7 @@ import Defaults
 import XXClient
 import CombineSchedulers
 import XXMessengerClient
-import DependencyInjection
+import DI
 
 struct ContactViewState: Equatable {
   var title: String?

@@ -2,7 +2,7 @@ import Quick
 import Nimble
 import Defaults
 import Foundation
-import DependencyInjection
+import DI
 
 @testable import Theme
 

@@ -4,7 +4,7 @@ import Combine
 import XXModels
 import XXNavigation
 import DrawerFeature
-import DependencyInjection
+import DI
 
 public final class SearchContainerController: UIViewController {
   @Dependency var navigator: Navigator

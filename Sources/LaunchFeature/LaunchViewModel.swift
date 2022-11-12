@@ -14,7 +14,7 @@ import ReportingFeature
 import CombineSchedulers
 import CloudFilesDropbox
 import XXMessengerClient
-import DependencyInjection
+import DI
 
 import class XXClient.Cancellable
 

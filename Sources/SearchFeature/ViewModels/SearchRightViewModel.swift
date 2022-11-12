@@ -7,7 +7,7 @@ import Foundation
 import Permissions
 import ReportingFeature
 import XXMessengerClient
-import DependencyInjection
+import DI
 
 enum ScanningStatus: Equatable {
     case reading
