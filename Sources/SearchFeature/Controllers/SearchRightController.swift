@@ -1,6 +1,6 @@
 import UIKit
 import Combine
-import XXNavigation
+import Navigation
 import DI
 
 final class SearchRightController: UIViewController {

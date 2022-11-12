@@ -1,8 +1,8 @@
+import DI
 import UIKit
 import Shared
 import Combine
-import XXNavigation
-import DI
+import Navigation
 
 public final class RequestPermissionController: UIViewController {
   @Dependency var navigator: Navigator

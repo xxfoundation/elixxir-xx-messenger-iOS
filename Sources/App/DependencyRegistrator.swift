@@ -43,7 +43,7 @@ import ContactListFeature
 
 import Shared
 import XXClient
-import XXNavigation
+import Navigation
 import KeychainAccess
 import XXMessengerClient
 

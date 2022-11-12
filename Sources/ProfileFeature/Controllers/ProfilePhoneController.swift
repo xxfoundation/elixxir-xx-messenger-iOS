@@ -1,8 +1,8 @@
+import DI
 import UIKit
 import Shared
 import Combine
-import XXNavigation
-import DI
+import Navigation
 import ScrollViewController
 
 public final class ProfilePhoneController: UIViewController {
@@ -62,7 +62,7 @@ public final class ProfilePhoneController: UIViewController {
       .sink { [unowned self] in
         navigator.perform(PresentCountryList(completion: { [weak self] in
           guard let self else { return }
-          self.viewModel.didChooseCountry($0)
+          self.viewModel.didChooseCountry($0 as! Country)
         }))
       }.store(in: &cancellables)
 

@@ -1,7 +1,7 @@
 import UIKit
 import Shared
 import Combine
-import XXNavigation
+import Navigation
 import DrawerFeature
 import DI
 

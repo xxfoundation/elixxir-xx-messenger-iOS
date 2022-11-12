@@ -1,10 +1,10 @@
+import DI
 import Shared
 import XXClient
 import XXModels
 import XXLogger
 import Foundation
 import XXMessengerClient
-import DI
 
 extension LaunchViewModel {
   func setupBackupCallback() {
@@ -118,7 +118,7 @@ extension LaunchViewModel {
     //        fileTransferId: model.id
     //      ))
     //
-    //      if let manager: XXClient.FileTransfer = try? DependencyInjection.Container.shared.resolve() {
+    //      if let manager: XXClient.FileTransfer = try? DI.Container.shared.resolve() {
     //        print(">>> registerReceivedProgressCallback")
     //
     //        try! manager.registerReceivedProgressCallback(
@@ -143,7 +143,7 @@ extension LaunchViewModel {
     //          })
     //        )
     //      } else {
-    //        //print(DependencyInjection.Container.shared.dependencies)
+    //        //print(DI.Container.shared.dependencies)
     //      }
     //    }
   }
@@ -385,7 +385,7 @@ extension LaunchViewModel {
     //      })
     //    )
     //
-    //    DependencyInjection.Container.shared.register(manager)
+    //    DI.Container.shared.register(manager)
   }
 
   func generateTrafficManager() throws {

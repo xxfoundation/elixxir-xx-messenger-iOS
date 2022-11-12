@@ -5,7 +5,7 @@ import Combine
 import XXModels
 import Voxophone
 import ChatLayout
-import XXNavigation
+import Navigation
 import DrawerFeature
 import DifferenceKit
 import ReportingFeature

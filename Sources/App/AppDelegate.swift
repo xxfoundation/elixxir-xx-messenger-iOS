@@ -11,7 +11,7 @@ import DI
 import XXModels
 import XXLogger
 import XXClient
-import XXNavigation
+import Navigation
 import XXMessengerClient
 
 import CloudFiles

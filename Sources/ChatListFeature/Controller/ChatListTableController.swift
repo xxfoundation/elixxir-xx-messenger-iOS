@@ -2,7 +2,7 @@ import UIKit
 import Shared
 import Combine
 import XXModels
-import XXNavigation
+import Navigation
 import DifferenceKit
 import DrawerFeature
 import DI

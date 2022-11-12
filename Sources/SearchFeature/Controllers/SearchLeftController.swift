@@ -4,7 +4,7 @@ import Combine
 import XXModels
 import Defaults
 import Countries
-import XXNavigation
+import Navigation
 import DrawerFeature
 import DI
 
@@ -160,7 +160,7 @@ final class SearchLeftController: UIViewController {
       .sink { [unowned self] in
         navigator.perform(PresentCountryList(completion: { [weak self] in
           guard let self else { return }
-          self.viewModel.didPick(country: $0)
+          self.viewModel.didPick(country: $0 as! Country)
         }))
       }.store(in: &cancellables)
 

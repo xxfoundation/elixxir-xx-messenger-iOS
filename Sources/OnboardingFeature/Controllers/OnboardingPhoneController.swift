@@ -1,7 +1,7 @@
 import UIKit
 import Shared
 import Combine
-import XXNavigation
+import Navigation
 import DrawerFeature
 import DI
 import ScrollViewController
@@ -95,7 +95,7 @@ public final class OnboardingPhoneController: UIViewController {
         navigator.perform(PresentCountryList(completion: { [weak self] in
           guard let self else { return }
           self.navigator.perform(DismissModal(from: self))
-          self.viewModel.didChooseCountry($0)
+          self.viewModel.didChooseCountry($0 as! Country)
         }))
       }.store(in: &cancellables)
 

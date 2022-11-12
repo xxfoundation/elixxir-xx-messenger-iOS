@@ -23,7 +23,6 @@ let package = Package(
     .library(name: "PushFeature", targets: ["PushFeature"]),
     .library(name: "CrashService", targets: ["CrashService"]),
     .library(name: "TermsFeature", targets: ["TermsFeature"]),
-    .library(name: "XXNavigation", targets: ["XXNavigation"]),
     .library(name: "Presentation", targets: ["Presentation"]),
     .library(name: "BackupFeature", targets: ["BackupFeature"]),
     .library(name: "LaunchFeature", targets: ["LaunchFeature"]),
@@ -98,9 +97,6 @@ let package = Package(
       path: "../xxm-cloud-providers"
     ),
     .package(
-      path: "../Router-PoC/Navigation"
-    ),
-    .package(
       url: "https://git.xx.network/elixxir/client-ios-db.git",
       .upToNextMajor(from: "1.1.0")
     ),
@@ -127,6 +123,9 @@ let package = Package(
     .package(
       url: "https://git.xx.network/elixxir/xxm-di.git",
       .upToNextMajor(from: "1.0.0")
+    ),
+    .package(
+      path: "../xxm-navigation"
     )
   ],
   targets: [
@@ -140,7 +139,6 @@ let package = Package(
         .target(name: "ChatFeature"),
         .target(name: "MenuFeature"),
         .target(name: "PushFeature"),
-        .target(name: "XXNavigation"),
         .target(name: "TermsFeature"),
         .target(name: "CrashService"),
         .target(name: "BackupFeature"),
@@ -156,6 +154,7 @@ let package = Package(
         .target(name: "ReportingFeature"),
         .target(name: "OnboardingFeature"),
         .target(name: "ContactListFeature"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
       ]
     ),
     .testTarget(
@@ -186,17 +185,8 @@ let package = Package(
       name: "Permissions",
       dependencies: [
         .target(name: "Shared"),
-        .target(name: "XXNavigation"),
+        .product(name: "Navigation", package: "xxm-navigation"),
         .product(name: "DependencyInjection", package: "xxm-di"),
-      ]
-    ),
-    .target(
-      name: "XXNavigation",
-      dependencies: [
-        .target(name: "DrawerFeature"),
-        .product(name: "DependencyInjection", package: "xxm-di"),
-        .product(name: "Navigation", package: "Navigation"),
-        .product(name: "XXModels", package: "client-ios-db"),
       ]
     ),
     .target(
@@ -239,7 +229,6 @@ let package = Package(
       name: "Countries",
       dependencies: [
         .target(name: "Shared"),
-        .target(name: "XXNavigation"),
         .product(name: "DependencyInjection", package: "xxm-di"),
       ]
     ),
@@ -299,9 +288,9 @@ let package = Package(
       dependencies: [
         .target(name: "Shared"),
         .target(name: "Presentation"),
-        .target(name: "XXNavigation"),
-        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "XXDatabase", package: "client-ios-db"),
+        .product(name: "Navigation", package: "xxm-navigation"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
         .product(name: "CloudFilesDrive", package: "xxm-cloud-providers"),
         .product(name: "CloudFilesDropbox", package: "xxm-cloud-providers"),
@@ -329,7 +318,6 @@ let package = Package(
         .target(name: "Voxophone"),
         .target(name: "Permissions"),
         .target(name: "Presentation"),
-        .target(name: "XXNavigation"),
         .target(name: "DrawerFeature"),
         .target(name: "ChatInputFeature"),
         .target(name: "ReportingFeature"),
@@ -350,9 +338,9 @@ let package = Package(
         .target(name: "Presentation"),
         .target(name: "ContactFeature"),
         .target(name: "NetworkMonitor"),
-        .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "Retry", package: "Retry"),
         .product(name: "XXDatabase", package: "client-ios-db"),
+        .product(name: "DependencyInjection", package: "xxm-di"),
       ]
     ),
     .target(
@@ -380,7 +368,7 @@ let package = Package(
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "Presentation"),
-        .target(name: "XXNavigation"),
+        .product(name: "Navigation", package: "xxm-navigation"),
       ]
     ),
     .target(
@@ -405,6 +393,7 @@ let package = Package(
         .target(name: "Presentation"),
         .target(name: "DrawerFeature"),
         .target(name: "BackupFeature"),
+        .product(name: "Navigation", package: "xxm-navigation"),
         .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "ScrollViewController", package: "ScrollViewController"),
@@ -419,7 +408,6 @@ let package = Package(
         .target(name: "Defaults"),
         .target(name: "MenuFeature"),
         .target(name: "ChatFeature"),
-        .target(name: "XXNavigation"),
         .target(name: "ProfileFeature"),
         .target(name: "SettingsFeature"),
         .target(name: "ContactListFeature"),
@@ -451,9 +439,9 @@ let package = Package(
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "Presentation"),
-        .target(name: "XXNavigation"),
         .target(name: "DrawerFeature"),
         .target(name: "ReportingFeature"),
+        .product(name: "Navigation", package: "xxm-navigation"),
         .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
       ]
@@ -466,6 +454,7 @@ let package = Package(
         .target(name: "Presentation"),
         .target(name: "DrawerFeature"),
         .target(name: "NetworkMonitor"),
+        .product(name: "Navigation", package: "xxm-navigation"),
         .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
         .product(name: "CloudFilesSFTP", package: "xxm-cloud-providers"),

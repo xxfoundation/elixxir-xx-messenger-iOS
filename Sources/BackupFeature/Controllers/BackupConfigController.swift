@@ -2,7 +2,7 @@ import UIKit
 import Shared
 import Combine
 import CloudFiles
-import XXNavigation
+import Navigation
 import DrawerFeature
 import DI
 

@@ -1,3 +1,4 @@
+import DI
 import UIKit
 import Shared
 import Combine
@@ -5,11 +6,11 @@ import XXLogger
 import XXModels
 import XXClient
 import Defaults
+import Navigation
 import Foundation
 import Permissions
 import DifferenceKit
 import ReportingFeature
-import DI
 import XXMessengerClient
 
 import struct XXModels.Message

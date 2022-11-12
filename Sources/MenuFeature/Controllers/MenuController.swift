@@ -1,9 +1,9 @@
+import DI
 import UIKit
 import Shared
 import Combine
-import XXNavigation
+import Navigation
 import DrawerFeature
-import DI
 
 public final class MenuController: UIViewController {
   @Dependency var navigator: Navigator
@@ -33,7 +33,22 @@ public final class MenuController: UIViewController {
       username: viewModel.username,
       image: viewModel.avatar
     )
-    screenView.select(item: currentItem)
+
+    switch currentItem {
+    case .scan:
+      screenView.scanButton.set(color: Asset.brandPrimary.color)
+    case .chats:
+      screenView.chatsButton.set(color: Asset.brandPrimary.color)
+    case .contacts:
+      screenView.contactsButton.set(color: Asset.brandPrimary.color)
+    case .requests:
+      screenView.requestsButton.set(color: Asset.brandPrimary.color)
+    case .settings:
+      screenView.settingsButton.set(color: Asset.brandPrimary.color)
+    default:
+      break
+    }
+
     screenView.xxdkVersionLabel.text = "XXDK \(viewModel.xxdk)"
     screenView.buildLabel.text = Localized.Menu.build(viewModel.build)
     screenView.versionLabel.text = Localized.Menu.version(viewModel.version)

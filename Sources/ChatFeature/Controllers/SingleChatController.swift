@@ -1,17 +1,18 @@
+import DI
 import UIKit
 import Shared
 import Combine
 import XXLogger
-import QuickLook
 import XXModels
+import QuickLook
 import Voxophone
+import Navigation
 import ChatLayout
-import XXNavigation
+import Navigation
 import DrawerFeature
 import DifferenceKit
 import ChatInputFeature
 import ReportingFeature
-import DI
 import ScrollViewController
 
 extension FlexibleSpace: CollectionCellContent {

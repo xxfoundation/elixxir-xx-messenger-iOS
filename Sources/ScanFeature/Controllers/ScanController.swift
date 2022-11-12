@@ -2,7 +2,7 @@ import UIKit
 import Shared
 import Combine
 import Permissions
-import XXNavigation
+import Navigation
 import CombineSchedulers
 import DI
 

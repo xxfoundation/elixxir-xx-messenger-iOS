@@ -3,7 +3,7 @@ import Shared
 import Combine
 import XXModels
 import MenuFeature
-import XXNavigation
+import Navigation
 import DI
 
 public final class ChatListController: UIViewController {

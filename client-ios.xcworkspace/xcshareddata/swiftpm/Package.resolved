@@ -386,15 +386,6 @@
         "revision" : "16e6409ee82e1b81390bdffbf217b9c08ab32784",
         "version" : "0.5.0"
       }
-    },
-    {
-      "identity" : "xxm-di",
-      "kind" : "remoteSourceControl",
-      "location" : "https://git.xx.network/elixxir/xxm-di.git",
-      "state" : {
-        "revision" : "43b1e12c32109f1753fcc62e5b0b21e479ee27e3",
-        "version" : "1.0.0"
-      }
     }
   ],
   "version" : 2

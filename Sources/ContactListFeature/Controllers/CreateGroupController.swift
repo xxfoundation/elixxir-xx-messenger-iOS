@@ -2,7 +2,7 @@ import UIKit
 import Shared
 import Combine
 import XXModels
-import XXNavigation
+import Navigation
 import DI
 
 public final class CreateGroupController: UIViewController {

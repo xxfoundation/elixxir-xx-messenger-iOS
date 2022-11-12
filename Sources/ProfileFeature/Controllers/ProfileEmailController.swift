@@ -1,8 +1,8 @@
+import DI
 import UIKit
 import Shared
 import Combine
-import XXNavigation
-import DI
+import Navigation
 import ScrollViewController
 
 public final class ProfileEmailController: UIViewController {

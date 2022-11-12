@@ -1,10 +1,10 @@
+import DI
 import UIKit
 import WebKit
 import Shared
 import Combine
 import Defaults
-import XXNavigation
-import DI
+import Navigation
 
 public final class TermsConditionsController: UIViewController {
   @Dependency var navigator: Navigator
