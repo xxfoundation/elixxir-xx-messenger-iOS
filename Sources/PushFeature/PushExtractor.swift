@@ -28,17 +28,14 @@ public extension PushExtractor {
       return .success(nil)
     }
     do {
-      let report = try messenger.getNotificationReport(notificationCSV: csv)
-      guard report.forMe,
-            report.type != .silent,
-            report.type != .default
-      else {
-        return .success(nil)
-      }
-      return .success([Push(
-        type: report.type,
-        source: report.source
-      )])
+      let reports = try messenger.getNotificationReports(notificationCSV: csv)
+      return .success(
+        reports
+          .filter { $0.forMe }
+          .filter { $0.type != .silent }
+          .filter { $0.type != .default }
+          .map { Push(type: $0.type, source: $0.source) }
+      )
     } catch {
       return .failure(error)
     }
