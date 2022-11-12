@@ -108,24 +108,6 @@ final class SearchLeftController: UIViewController {
   }
 
   private func setupBindings() {
-    //        viewModel.hudPublisher
-    //            .removeDuplicates()
-    //            .receive(on: DispatchQueue.main)
-    //            .sink { [unowned self] in
-    //                hud.update(with: $0)
-    //
-    //                if case .onAction = $0, let hudBtn = hud.actionButton {
-    //                    hudBtn.publisher(for: .touchUpInside)
-    //                        .receive(on: DispatchQueue.main)
-    //                        .sink { [unowned self] in viewModel.didTapCancelSearch() }
-    //                        .store(in: &self.hudCancellables)
-    //                } else {
-    //                    hudCancellables.forEach { $0.cancel() }
-    //                    hudCancellables.removeAll()
-    //                }
-    //            }
-    //            .store(in: &cancellables)
-
     viewModel
       .statePublisher
       .map(\.item)

@@ -79,8 +79,10 @@ extension LaunchViewModel {
   }
 
   func setupLogWriter() {
-    _ = try! SetLogLevel.live(.fatal)
-    RegisterLogWriter.live(.init(handle: { XXLogger.live().debug($0) }))
+    _ = try! SetLogLevel.live(.error)
+    RegisterLogWriter.live(.init(handle: {
+      XXLogger.live().debug($0)
+    }))
   }
 
   func listenToNetworkUpdates() {
@@ -439,6 +441,11 @@ extension LaunchViewModel {
     if !messenger.isBackupRunning() {
       try? messenger.resumeBackup()
     }
+
+    try messenger.trackServices {
+      print(">>> Error on track services callback: \($0.localizedDescription)")
+    }
+
     // TODO: Biometric auth
   }
 }

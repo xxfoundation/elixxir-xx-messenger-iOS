@@ -243,38 +243,13 @@ struct DependencyRegistrator {
     ) as Navigator)
   }
 
-  //    container.register(
-  //      ProfileCoordinator(
-  //        imagePickerFactory: UIImagePickerController.init,
-  //        permissionFactory: RequestPermissionController.init,
-  //        countriesFactory: CountryListController.init(_:)
-  //        //codeFactory: ProfileCodeController.init(_:_:)
-  //      ) as ProfileCoordinating)
-
-  //    container.register(
-  //      SearchCoordinator(
-  //        contactsFactory: ContactListController.init,
-  //        requestsFactory: RequestsContainerController.init,
-  //        contactFactory: ContactController.init(_:),
-  //        countriesFactory: CountryListController.init(_:)
-  //      ) as SearchCoordinating)
-
-  //    container.register(
-  //      ContactListCoordinator(
-  //        scanFactory: ScanContainerController.init,
-  //        searchFactory: SearchContainerController.init,
-  //        newGroupFactory: CreateGroupController.init,
-  //        requestsFactory: RequestsContainerController.init,
-  //        contactFactory: ContactController.init(_:),
-  //        singleChatFactory: SingleChatController.init(_:),
-  //        groupChatFactory: GroupChatController.init(_:),
-  //        sideMenuFactory: MenuController.init(_:_:),
-  //        groupDrawerFactory: CreateDrawerController.init(_:_:)
-  //      ) as ContactListCoordinating)
-
   static private func registerCommonDependencies() {
     var environment: MessengerEnvironment = .live()
     environment.ndfEnvironment = .mainnet
+    environment.serviceList = .userDefaults(
+      key: "preImage",
+      userDefaults: UserDefaults(suiteName: "group.elixxir.messenger")!
+    )
     environment.udEnvironment = .init(
       address: AlternativeUDConstants.address,
       cert: AlternativeUDConstants.cert.data(using: .utf8)!,

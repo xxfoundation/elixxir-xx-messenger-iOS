@@ -118,9 +118,12 @@ final class SettingsViewModel {
         case .success(let granted):
           self.pushNotifications = granted
           self.stateRelay.value.isPushNotification = granted
-          if granted { DispatchQueue.main.async { UIApplication.shared.registerForRemoteNotifications() }}
+          if granted {
+            DispatchQueue.main.async {
+              UIApplication.shared.registerForRemoteNotifications()
+            }
+          }
           self.hudController.dismiss()
-          
         case .failure(let error):
           self.hudController.show(.init(error: error))
           self.pushNotifications = false
@@ -130,19 +133,15 @@ final class SettingsViewModel {
     } else {
       backgroundScheduler.schedule { [weak self] in
         guard let self else { return }
-        
         do {
           try UnregisterForNotifications.live(
             e2eId: self.messenger.e2e.get()!.getId()
           )
-          
           self.hudController.dismiss()
         } catch {
           let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
           self.hudController.show(.init(content: xxError))
-
         }
-        
         self.pushNotifications = false
         self.stateRelay.value.isPushNotification = false
       }

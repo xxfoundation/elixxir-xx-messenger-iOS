@@ -8,171 +8,212 @@ import ReportingFeature
 import DependencyInjection
 
 public final class PushHandler: PushHandling {
-    private enum Constants {
-        static let appGroup = "group.elixxir.messenger"
-        static let usernamesSetting = "isShowingUsernames"
+  private enum Constants {
+    static let appGroup = "group.elixxir.messenger"
+    static let usernamesSetting = "isShowingUsernames"
+  }
+
+  @Dependency var messenger: Messenger
+
+  @KeyObject(.pushNotifications, defaultValue: false) var isPushEnabled: Bool
+
+  let requestAuth: RequestAuth
+  public static let defaultRequestAuth = UNUserNotificationCenter.current().requestAuthorization
+  public typealias RequestAuth = (UNAuthorizationOptions, @escaping (Bool, Error?) -> Void) -> Void
+
+  public var pushExtractor: PushExtractor
+  public var contentsBuilder: ContentsBuilder
+  public var applicationState: () -> UIApplication.State
+
+  public init(
+    requestAuth: @escaping RequestAuth = defaultRequestAuth,
+    pushExtractor: PushExtractor = .live,
+    contentsBuilder: ContentsBuilder = .live,
+    applicationState: @escaping () -> UIApplication.State = { UIApplication.shared.applicationState }
+  ) {
+    self.requestAuth = requestAuth
+    self.pushExtractor = pushExtractor
+    self.contentsBuilder = contentsBuilder
+    self.applicationState = applicationState
+  }
+
+  public func registerToken(_ token: Data) {
+    do {
+      try RegisterForNotifications.live(
+        e2eId: messenger.e2e.get()!.getId(),
+        token: token.map { String(format: "%02hhx", $0) }.joined()
+      )
+    } catch {
+      print(error.localizedDescription)
+      isPushEnabled = false
+    }
+  }
+
+  public func requestAuthorization(
+    _ completion: @escaping (Result<Bool, Error>) -> Void
+  ) {
+    let options: UNAuthorizationOptions = [.alert, .sound, .badge]
+
+    requestAuth(options) { granted, error in
+      guard let error = error else {
+        completion(.success(granted))
+        return
+      }
+
+      completion(.failure(error))
+    }
+  }
+
+  public func handlePush(
+    _ userInfo: [AnyHashable: Any],
+    _ completion: @escaping (UIBackgroundFetchResult) -> Void
+  ) {
+    do {
+      guard
+        let pushes = try pushExtractor.extractFrom(userInfo).get(),
+        applicationState() == .background,
+        pushes.isEmpty == false
+      else {
+        completion(.noData)
+        return
+      }
+
+      let content = contentsBuilder.build("New Messages Available", pushes.first!)
+      let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
+      let request = UNNotificationRequest(identifier: Bundle.main.bundleIdentifier!, content: content, trigger: trigger)
+
+      UNUserNotificationCenter.current().add(request) { error in
+        if error == nil {
+          completion(.newData)
+        } else {
+          completion(.failed)
+        }
+      }
+    } catch {
+      completion(.failed)
+    }
+  }
+
+  public func handlePush(
+    _ request: UNNotificationRequest,
+    _ completion: @escaping (UNNotificationContent) -> Void
+  ) {
+    guard let pushes = try? pushExtractor.extractFrom(request.content.userInfo).get(), !pushes.isEmpty,
+          let defaults = UserDefaults(suiteName: Constants.appGroup) else { return }
+
+    let dbPath = FileManager.default
+      .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
+      .appendingPathComponent("xxm_database")
+      .appendingPathExtension("sqlite").path
+
+    let tuples: [(String, Push)] = pushes.compactMap {
+      guard let dbManager = try? Database.onDisk(path: dbPath),
+            let contact = try? dbManager.fetchContacts(.init(id: [$0.source])).first else {
+        return (getStringForUnknown(type: $0.type), $0)
+      }
+
+      if ReportingStatus.live().isEnabled(), (contact.isBlocked || contact.isBanned) {
+        return nil
+      }
+
+      if let showSender = defaults.value(forKey: Constants.usernamesSetting) as? Bool, showSender == true {
+        let name = (contact.nickname ?? contact.username) ?? ""
+        return (getStringForKnown(name: name, type: $0.type), $0)
+      } else {
+        return (getStringForUnknown(type: $0.type), $0)
+      }
     }
 
-    @Dependency var messenger: Messenger
-    @Dependency var reportingStatus: ReportingStatus
+    tuples
+      .map(contentsBuilder.build)
+      .forEach { completion($0) }
+  }
 
-    @KeyObject(.pushNotifications, defaultValue: false) var isPushEnabled: Bool
-
-    let requestAuth: RequestAuth
-    public static let defaultRequestAuth = UNUserNotificationCenter.current().requestAuthorization
-    public typealias RequestAuth = (UNAuthorizationOptions, @escaping (Bool, Error?) -> Void) -> Void
-
-    public var pushExtractor: PushExtractor
-    public var contentsBuilder: ContentsBuilder
-    public var applicationState: () -> UIApplication.State
-
-    public init(
-        requestAuth: @escaping RequestAuth = defaultRequestAuth,
-        pushExtractor: PushExtractor = .live,
-        contentsBuilder: ContentsBuilder = .live,
-        applicationState: @escaping () -> UIApplication.State = { UIApplication.shared.applicationState }
-    ) {
-        self.requestAuth = requestAuth
-        self.pushExtractor = pushExtractor
-        self.contentsBuilder = contentsBuilder
-        self.applicationState = applicationState
+  public func handleAction(
+    _ router: PushRouter,
+    _ userInfo: [AnyHashable : Any],
+    _ completion: @escaping () -> Void
+  ) {
+    guard let typeString = userInfo["type"] as? String,
+          let type = NotificationReport.ReportType.init(rawValue: typeString) else {
+      completion()
+      return
     }
 
-    public func registerToken(_ token: Data) {
-        do {
-            try RegisterForNotifications.live(
-                e2eId: messenger.e2e.get()!.getId(),
-                token: token.map { String(format: "%02hhx", $0) }.joined()
-            )
-        } catch {
-            print(error.localizedDescription)
-            isPushEnabled = false
-        }
+    let route: PushRouter.Route
+
+    switch type {
+    case .e2e:
+      guard let source = userInfo["source"] as? Data else {
+        completion()
+        return
+      }
+
+      route = .contactChat(id: source)
+
+    case .group:
+      guard let source = userInfo["source"] as? Data else {
+        completion()
+        return
+      }
+
+      route = .groupChat(id: source)
+
+    case .request, .groupRQ:
+      route = .requests
+
+    case .silent, .`default`:
+      fatalError("Silent/Default push types should be filtered at this point")
+
+    case .reset, .endFT, .confirm:
+      route = .requests
     }
 
-    public func requestAuthorization(
-        _ completion: @escaping (Result<Bool, Error>) -> Void
-    ) {
-        let options: UNAuthorizationOptions = [.alert, .sound, .badge]
+    router.navigateTo(route, completion)
+  }
+}
 
-        requestAuth(options) { granted, error in
-            guard let error = error else {
-                completion(.success(granted))
-                return
-            }
+private func getStringForUnknown(type: NotificationReport.ReportType) -> String {
+  switch type {
+  case .`default`, .silent:
+    return ""
+  case .request:
+    return "Request received"
+  case .reset:
+    return "One of your contacts has restored their account"
+  case .confirm:
+    return "Request accepted"
+  case .e2e:
+    return "New private message"
+  case .group:
+    return "New group message"
+  case .endFT:
+    return "New media received"
+  case .groupRQ:
+    return "Group request received"
+  }
+}
 
-            completion(.failure(error))
-        }
-    }
-
-    public func handlePush(
-        _ userInfo: [AnyHashable: Any],
-        _ completion: @escaping (UIBackgroundFetchResult) -> Void
-    ) {
-        do {
-            guard
-                let pushes = try pushExtractor.extractFrom(userInfo).get(),
-                applicationState() == .background,
-                pushes.isEmpty == false
-            else {
-                completion(.noData)
-                return
-            }
-
-            let content = contentsBuilder.build("New Messages Available", pushes.first!)
-            let trigger = UNTimeIntervalNotificationTrigger(timeInterval: 1, repeats: false)
-            let request = UNNotificationRequest(identifier: Bundle.main.bundleIdentifier!, content: content, trigger: trigger)
-
-            UNUserNotificationCenter.current().add(request) { error in
-                if error == nil {
-                    completion(.newData)
-                } else {
-                    completion(.failed)
-                }
-            }
-        } catch {
-            completion(.failed)
-        }
-    }
-
-    public func handlePush(
-        _ request: UNNotificationRequest,
-        _ completion: @escaping (UNNotificationContent) -> Void
-    ) {
-        guard let pushes = try? pushExtractor.extractFrom(request.content.userInfo).get(), !pushes.isEmpty,
-              let defaults = UserDefaults(suiteName: Constants.appGroup) else {
-            return
-        }
-
-        let dbPath = FileManager.default
-            .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
-            .appendingPathComponent("xxm_database")
-            .appendingPathExtension("sqlite").path
-
-        let tuples: [(String, Push)] = pushes.compactMap {
-            guard let userId = $0.source,
-                  let dbManager = try? Database.onDisk(path: dbPath),
-                  let contact = try? dbManager.fetchContacts(.init(id: [userId])).first else {
-                return ($0.type.unknownSenderContent!, $0)
-            }
-
-            if reportingStatus.isEnabled(), (contact.isBlocked || contact.isBanned) {
-                return nil
-            }
-
-            if let showSender = defaults.value(forKey: Constants.usernamesSetting) as? Bool, showSender == true {
-                let name = (contact.nickname ?? contact.username) ?? ""
-                return ($0.type.knownSenderContent(name)!, $0)
-            } else {
-                return ($0.type.unknownSenderContent!, $0)
-            }
-        }
-
-        tuples
-            .map(contentsBuilder.build)
-            .forEach { completion($0) }
-    }
-
-    public func handleAction(
-        _ router: PushRouter,
-        _ userInfo: [AnyHashable : Any],
-        _ completion: @escaping () -> Void
-    ) {
-        guard let typeString = userInfo["type"] as? String,
-              let type = PushType(rawValue: typeString) else {
-            completion()
-            return
-        }
-
-        let route: PushRouter.Route
-
-        switch type {
-        case .e2e:
-            guard let source = userInfo["source"] as? Data else {
-                completion()
-                return
-            }
-
-            route = .contactChat(id: source)
-
-        case .group:
-            guard let source = userInfo["source"] as? Data else {
-                completion()
-                return
-            }
-
-            route = .groupChat(id: source)
-
-        case .request, .groupRq:
-            route = .requests
-
-        case .silent, .`default`:
-            fatalError("Silent/Default push types should be filtered at this point")
-
-        case .reset, .endFT, .confirm:
-            route = .requests
-        }
-
-        router.navigateTo(route, completion)
-    }
+private func getStringForKnown(
+  name: String,
+  type: NotificationReport.ReportType
+) -> String {
+  switch type {
+  case .silent, .`default`:
+    return ""
+  case .e2e:
+    return String(format: "%@ sent you a private message", name)
+  case .reset:
+    return String(format: "%@ restored their account", name)
+  case .endFT:
+    return String(format: "%@ sent you a file", name)
+  case .group:
+    return String(format: "%@ sent you a group message", name)
+  case .groupRQ:
+    return String(format: "%@ sent you a group request", name)
+  case .confirm:
+    return String(format: "%@ confirmed your contact request", name)
+  case .request:
+    return String(format: "%@ sent you a contact request", name)
+  }
 }

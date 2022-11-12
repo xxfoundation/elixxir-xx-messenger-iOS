@@ -1,6 +1,9 @@
 import Combine
+import Foundation
 
 public final class HUDController {
+  private var timer: Timer?
+
   var modelPublisher: AnyPublisher<HUDModel?, Never> {
     modelSubject.eraseToAnyPublisher()
   }
@@ -17,6 +20,13 @@ public final class HUDController {
     guard let model else {
       modelSubject.send(.init(hasDotAnimation: true))
       return
+    }
+
+    if model.isAutoDismissable {
+      DispatchQueue.main.asyncAfter(deadline: .now() + 2) { [weak self] in
+        guard let self else { return }
+        self.modelSubject.send(nil)
+      }
     }
 
     modelSubject.send(model)

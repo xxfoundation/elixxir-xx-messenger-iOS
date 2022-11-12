@@ -1,8 +1,8 @@
 import UIKit
 import Combine
 import Defaults
-import PushFeature
 import XXClient
+import PushFeature
 import DependencyInjection
 
 final class SearchContainerViewModel {

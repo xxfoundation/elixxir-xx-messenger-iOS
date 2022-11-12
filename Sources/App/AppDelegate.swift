@@ -21,6 +21,7 @@ import CloudFilesDropbox
 
 public class AppDelegate: UIResponder, UIApplicationDelegate {
   @Dependency var navigator: Navigator
+  @Dependency var pushRouter: PushRouter
   @Dependency var pushHandler: PushHandling
   @Dependency var crashReporter: CrashReporter
 
@@ -52,6 +53,10 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     window?.makeKeyAndVisible()
 
     DependencyRegistrator.registerNavigators(navController)
+
+    DependencyInjection.Container.shared.register(
+      PushRouter.live(navigationController: navController)
+    )
     return true
   }
 
@@ -86,12 +91,10 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
         guard UIApplication.shared.backgroundTimeRemaining > 9 else {
           if !self.forceFailedPendingMessages {
             self.forceFailedPendingMessages = true
-
             let query = Message.Query(status: [.sending])
             let assignment = Message.Assignments(status: .sendingFailed)
             _ = try? database.bulkUpdateMessages(query, assignment)
           }
-
           return
         }
       })
@@ -166,7 +169,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
     withCompletionHandler completionHandler: @escaping () -> Void
   ) {
     let userInfo = response.notification.request.content.userInfo
-    //pushHandler.handleAction(pushRouter, userInfo, completionHandler)
+    pushHandler.handleAction(pushRouter, userInfo, completionHandler)
   }
 
   public func application(

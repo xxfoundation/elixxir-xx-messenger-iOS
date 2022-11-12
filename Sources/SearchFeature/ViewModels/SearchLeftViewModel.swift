@@ -62,11 +62,19 @@ final class SearchLeftViewModel {
     if let pendingInvitation = invitation {
       invitation = nil
       stateSubject.value.input = pendingInvitation
-      hudController.show(.init(actionTitle: Localized.Ud.Search.cancel))
+      hudController.show(.init(
+        actionTitle: Localized.Ud.Search.cancel,
+        hasDotAnimation: true,
+        onTapClosure: { [weak self] in
+          guard let self else { return }
+          self.didTapCancelSearch()
+        }
+      ))
 
       networkCancellable.removeAll()
 
-      networkMonitor.statusPublisher
+      networkMonitor
+        .statusPublisher
         .first { $0 == .available }
         .eraseToAnyPublisher()
         .flatMap { _ in
@@ -102,7 +110,14 @@ final class SearchLeftViewModel {
   func didStartSearching() {
     guard stateSubject.value.input.isEmpty == false else { return }
 
-    hudController.show(.init(actionTitle: Localized.Ud.Search.cancel))
+    hudController.show(.init(
+      actionTitle: Localized.Ud.Search.cancel,
+      hasDotAnimation: true,
+      onTapClosure: { [weak self] in
+        guard let self else { return }
+        self.didTapCancelSearch()
+      }
+    ))
 
     var content = stateSubject.value.input
 
