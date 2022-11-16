@@ -196,7 +196,7 @@ public final class GroupChatController: UIViewController {
               lineHeightMultiple: 1.35,
               spacingAfter: 25
             ), button
-          ]))
+          ], isDismissable: false, from: self))
 
         case .webview(let urlString):
           navigator.perform(PresentWebsite(url: URL(string: urlString)!))
@@ -260,7 +260,7 @@ public final class GroupChatController: UIViewController {
             spacing: 20.0,
             views: [reportButton, cancelButton]
           )
-        ]))
+        ], isDismissable: true, from: self))
       }.store(in: &cancellables)
 
     viewModel

@@ -1,8 +1,6 @@
-import DI
 import Shared
 import XXClient
 import XXModels
-import XXLogger
 import Foundation
 import XXMessengerClient
 
@@ -91,61 +89,6 @@ extension LaunchViewModel {
       guard let self else { return }
       self.networkMonitor.update($0)
     }))
-  }
-
-  func handleIncomingTransfer(_ receivedFile: ReceivedFile) {
-    //    if var model = try? database.saveFileTransfer(.init(
-    //      id: receivedFile.transferId,
-    //      contactId: receivedFile.senderId,
-    //      name: receivedFile.name,
-    //      type: receivedFile.type,
-    //      data: nil,
-    //      progress: 0.0,
-    //      isIncoming: true,
-    //      createdAt: Date()
-    //    )) {
-    //      try! database.saveMessage(.init(
-    //        networkId: nil,
-    //        senderId: receivedFile.senderId,
-    //        recipientId: messenger.e2e.get()!.getContact().getId(),
-    //        groupId: nil,
-    //        date: Date(),
-    //        status: .receiving,
-    //        isUnread: false,
-    //        text: "",
-    //        replyMessageId: nil,
-    //        roundURL: nil,
-    //        fileTransferId: model.id
-    //      ))
-    //
-    //      if let manager: XXClient.FileTransfer = try? DI.Container.shared.resolve() {
-    //        print(">>> registerReceivedProgressCallback")
-    //
-    //        try! manager.registerReceivedProgressCallback(
-    //          transferId: receivedFile.transferId,
-    //          period: 1_000,
-    //          callback: .init(handle: { [weak self] in
-    //            guard let self else { return }
-    //            switch $0 {
-    //            case .success(let cb):
-    //              if cb.progress.completed {
-    //                model.progress = 100
-    //                model.data = try! manager.receive(transferId: receivedFile.transferId)
-    //              } else {
-    //                model.progress = Float(cb.progress.transmitted/cb.progress.total)
-    //              }
-    //
-    //              model = try! self.database.saveFileTransfer(model)
-    //
-    //            case .failure(let error):
-    //              print(error.localizedDescription)
-    //            }
-    //          })
-    //        )
-    //      } else {
-    //        //print(DI.Container.shared.dependencies)
-    //      }
-    //    }
   }
 
   func handleDirectRequest(from contact: XXClient.Contact) {
@@ -370,24 +313,6 @@ extension LaunchViewModel {
     DI.Container.shared.register(manager)
   }
 
-  func generateTransferManager() throws {
-    //    let manager = try InitFileTransfer.live(
-    //      e2eId: messenger.e2e()!.getId(),
-    //      callback: .init(handle: { [weak self] in
-    //        guard let self else { return }
-    //
-    //        switch $0 {
-    //        case .success(let receivedFile):
-    //          self.handleIncomingTransfer(receivedFile, messenger: messenger)
-    //        case .failure(let error):
-    //          print(error.localizedDescription)
-    //        }
-    //      })
-    //    )
-    //
-    //    DI.Container.shared.register(manager)
-  }
-
   func generateTrafficManager() throws {
     let manager = try NewDummyTrafficManager.live(
       cMixId: messenger.e2e()!.getId()
@@ -420,7 +345,6 @@ extension LaunchViewModel {
 
     try generateGroupManager()
     try generateTrafficManager()
-    try generateTransferManager()
     listenToNetworkUpdates()
 
     if messenger.isLoggedIn() == false {
@@ -449,3 +373,59 @@ extension LaunchViewModel {
     // TODO: Biometric auth
   }
 }
+
+
+//func handleIncomingTransfer(_ receivedFile: ReceivedFile) {
+//  if var model = try? database.saveFileTransfer(.init(
+//    id: receivedFile.transferId,
+//    contactId: receivedFile.senderId,
+//    name: receivedFile.name,
+//    type: receivedFile.type,
+//    data: nil,
+//    progress: 0.0,
+//    isIncoming: true,
+//    createdAt: Date()
+//  )) {
+//    try! database.saveMessage(.init(
+//      networkId: nil,
+//      senderId: receivedFile.senderId,
+//      recipientId: messenger.e2e.get()!.getContact().getId(),
+//      groupId: nil,
+//      date: Date(),
+//      status: .receiving,
+//      isUnread: false,
+//      text: "",
+//      replyMessageId: nil,
+//      roundURL: nil,
+//      fileTransferId: model.id
+//    ))
+//
+//    if let manager: XXClient.FileTransfer = try? DI.Container.shared.resolve() {
+//      print(">>> registerReceivedProgressCallback")
+//
+//      try! manager.registerReceivedProgressCallback(
+//        transferId: receivedFile.transferId,
+//        period: 1_000,
+//        callback: .init(handle: { [weak self] in
+//          guard let self else { return }
+//          switch $0 {
+//          case .success(let cb):
+//            if cb.progress.completed {
+//              model.progress = 100
+//              model.data = try! manager.receive(transferId: receivedFile.transferId)
+//            } else {
+//              model.progress = Float(cb.progress.transmitted/cb.progress.total)
+//            }
+//
+//            model = try! self.database.saveFileTransfer(model)
+//
+//          case .failure(let error):
+//            print(error.localizedDescription)
+//          }
+//        })
+//      )
+//    } else {
+//      //print(DI.Container.shared.dependencies)
+//    }
+//  }
+//}

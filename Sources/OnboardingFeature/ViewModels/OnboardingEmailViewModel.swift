@@ -1,3 +1,4 @@
+import AppCore
 import Shared
 import Combine
 import XXClient
@@ -5,7 +6,7 @@ import InputField
 import Foundation
 import CombineSchedulers
 import XXMessengerClient
-import DI
+import ComposableArchitecture
 
 final class OnboardingEmailViewModel {
   struct ViewState: Equatable {
@@ -14,15 +15,15 @@ final class OnboardingEmailViewModel {
     var status: InputField.ValidationStatus = .unknown(nil)
   }
 
-  @Dependency var messenger: Messenger
-  @Dependency var hudController: HUDController
+  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
+  @Dependency(\.app.bgQueue) var bgQueue: AnySchedulerOf<DispatchQueue>
 
   var statePublisher: AnyPublisher<ViewState, Never> {
     stateSubject.eraseToAnyPublisher()
   }
 
   private let stateSubject = CurrentValueSubject<ViewState, Never>(.init())
-  private var scheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
   func clearUp() {
     stateSubject.value.confirmationId = nil
@@ -34,17 +35,17 @@ final class OnboardingEmailViewModel {
   }
 
   func didTapNext() {
-    hudController.show()
-    scheduler.schedule { [weak self] in
+    hudManager.show()
+    bgQueue.schedule { [weak self] in
       guard let self else { return }
       do {
         let confirmationId = try self.messenger.ud.get()!.sendRegisterFact(
           .init(type: .email, value: self.stateSubject.value.input)
         )
-        self.hudController.dismiss()
+        self.hudManager.hide()
         self.stateSubject.value.confirmationId = confirmationId
       } catch {
-        self.hudController.dismiss()
+        self.hudManager.hide()
         let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
         self.stateSubject.value.status = .invalid(xxError)
       }

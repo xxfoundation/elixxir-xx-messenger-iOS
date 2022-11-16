@@ -1,17 +1,17 @@
+import AppCore
 import UIKit
 import Combine
 import XXClient
 import Defaults
 import CloudFiles
 import CloudFilesSFTP
-import NetworkMonitor
 import KeychainAccess
 import XXMessengerClient
-import DI
+import ComposableArchitecture
 
 public final class BackupService {
-  @Dependency var messenger: Messenger
-  @Dependency var networkManager: NetworkMonitoring
+  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.networkMonitor) var networkMonitor: NetworkMonitorManager
 
   @KeyObject(.email, defaultValue: nil) var email: String?
   @KeyObject(.phone, defaultValue: nil) var phone: String?
@@ -34,7 +34,6 @@ public final class BackupService {
     }).eraseToAnyPublisher()
   }
 
-  private var connType: ConnectionType = .wifi
   private var cancellables = Set<AnyCancellable>()
   private let connectedServicesSubject = CurrentValueSubject<Set<CloudService>, Never>([])
   private let backupSubject = CurrentValueSubject<[CloudService: Fetch.Metadata], Never>([:])
@@ -44,13 +43,9 @@ public final class BackupService {
     settings
       .dropFirst()
       .removeDuplicates()
-      .sink { [unowned self] in storedSettings = $0.toData() }
-      .store(in: &cancellables)
-
-    networkManager.connType
-      .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in connType = $0 }
-      .store(in: &cancellables)
+      .sink { [unowned self] in
+        storedSettings = $0.toData()
+      }.store(in: &cancellables)
   }
 
   func didSetWiFiOnly(enabled: Bool) {
@@ -87,26 +82,21 @@ public final class BackupService {
 
   private func shouldBackupIfSetAutomatic() {
     guard let lastBackup = try? Data(contentsOf: getBackupURL()) else {
-      print(">>> No stored backup so won't upload anything.")
-      return
+      return // No stored backup so won't upload anything
     }
     guard settings.value.automaticBackups else {
-      print(">>> Backups are not set to automatic")
-      return
+      return // Backups are not set to automatic
     }
     guard settings.value.enabledService != nil else {
-      print(">>> No service enabled to upload")
-      return
+      return // No service enabled to upload
     }
     if settings.value.wifiOnlyBackup {
-      guard connType == .wifi else {
-        print(">>> WiFi only backups, and connType != Wifi")
-        return
+      guard networkMonitor.connType() == .wifi else {
+        return // WiFi only backups, and connType != Wifi
       }
     } else {
-      guard connType != .unknown else {
-        print(">>> Connectivity is unknown")
-        return
+      guard networkMonitor.connType() != .unknown else {
+        return // Connectivity is unknown
       }
     }
     performUpload(of: lastBackup)
@@ -154,8 +144,6 @@ public final class BackupService {
     }
     backupManager.addJSON(string)
   }
-
-  // MARK: - CloudProviders
 
   func setupSFTP(host: String, username: String, password: String) {
     let sftpManager = CloudFilesManager.sftp(
@@ -233,8 +221,7 @@ public final class BackupService {
       )
     }
     guard let manager = CloudFilesManager.all[enabledService] else {
-      print(">>> Tried to upload but the enabled service is not set")
-      return
+      return // Tried to upload but the enabled service is not set
     }
     do {
       try manager.upload(data) { [weak self] in

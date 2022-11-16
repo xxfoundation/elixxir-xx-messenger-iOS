@@ -86,7 +86,10 @@ public final class ContactListController: UIViewController {
       .didTap
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentChat(contact: $0))
+        navigator.perform(PresentChat(
+          contact: $0,
+          on: navigationController!
+        ))
       }.store(in: &cancellables)
 
     screenView
@@ -94,7 +97,7 @@ public final class ContactListController: UIViewController {
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentRequests())
+        navigator.perform(PresentRequests(on: navigationController!))
       }.store(in: &cancellables)
 
     screenView
@@ -102,7 +105,7 @@ public final class ContactListController: UIViewController {
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentNewGroup())
+        navigator.perform(PresentNewGroup(on: navigationController!))
       }.store(in: &cancellables)
 
     screenView
@@ -110,7 +113,11 @@ public final class ContactListController: UIViewController {
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentSearch(replacing: false))
+        navigator.perform(PresentSearch(
+          searching: nil,
+          replacing: false,
+          on: navigationController!
+        ))
       }.store(in: &cancellables)
 
     viewModel
@@ -132,14 +139,18 @@ public final class ContactListController: UIViewController {
   }
 
   @objc private func didTapSearch() {
-    navigator.perform(PresentSearch(replacing: false))
+    navigator.perform(PresentSearch(
+      searching: nil,
+      replacing: false,
+      on: navigationController!
+    ))
   }
 
   @objc private func didTapScan() {
-    navigator.perform(PresentScan())
+    navigator.perform(PresentScan(on: navigationController!))
   }
 
   @objc private func didTapMenu() {
-    navigator.perform(PresentMenu(currentItem: .contacts))
+    navigator.perform(PresentMenu(currentItem: .contacts, from: self))
   }
 }

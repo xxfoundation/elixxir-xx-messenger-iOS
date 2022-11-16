@@ -3,9 +3,9 @@ import Shared
 import Combine
 import XXModels
 import Defaults
-import Countries
 import Navigation
 import DrawerFeature
+import CountryListFeature
 import DI
 
 final class SearchLeftController: UIViewController {
@@ -161,7 +161,7 @@ final class SearchLeftController: UIViewController {
         navigator.perform(PresentCountryList(completion: { [weak self] in
           guard let self else { return }
           self.viewModel.didPick(country: $0 as! Country)
-        }))
+        }, from: self))
       }.store(in: &cancellables)
 
     screenView
@@ -233,7 +233,7 @@ final class SearchLeftController: UIViewController {
         actionButton,
         FlexibleSpace()
       ])
-    ]))
+    ], isDismissable: true, from: self))
   }
 
   private func presentSucessDrawerFor(contact: Contact) {
@@ -423,7 +423,11 @@ final class SearchLeftController: UIViewController {
         }
       }.store(in: &drawerCancellables)
 
-    navigator.perform(PresentDrawer(items: items))
+    navigator.perform(PresentDrawer(
+      items: items,
+      isDismissable: true,
+      from: self
+    ))
   }
 }
 
@@ -445,7 +449,7 @@ extension SearchLeftController: UITableViewDelegate {
 
   private func didTap(contact: Contact) {
     guard contact.authStatus == .stranger else {
-      navigator.perform(PresentContact(contact: contact))
+      navigator.perform(PresentContact(contact: contact, on: navigationController!))
       return
     }
 

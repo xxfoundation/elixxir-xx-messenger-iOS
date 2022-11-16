@@ -1,5 +1,6 @@
 import Shared
 import Foundation
+import AppResources
 
 private enum Constants {
     static let codeMinimum = Localized.Validator.Code.minimum

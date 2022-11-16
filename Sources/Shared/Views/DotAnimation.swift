@@ -1,4 +1,5 @@
 import UIKit
+import AppResources
 
 public final class DotAnimation: UIView {
   let leftDot = UIView()
@@ -48,7 +49,7 @@ public final class DotAnimation: UIView {
 
   required init?(coder: NSCoder) { nil }
 
-  func setColor(_ color: UIColor = Asset.brandPrimary.color) {
+  public func setColor(_ color: UIColor = Asset.brandPrimary.color) {
     leftDot.backgroundColor = color
     middleDot.backgroundColor = color
     rightDot.backgroundColor = color

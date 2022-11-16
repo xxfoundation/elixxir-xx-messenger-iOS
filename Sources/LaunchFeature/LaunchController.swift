@@ -1,13 +1,14 @@
 import UIKit
 import Shared
 import Combine
-import PushFeature
 import Navigation
+import PushFeature
 import DrawerFeature
-import DI
+import AppResources
+import ComposableArchitecture
 
 public final class LaunchController: UIViewController {
-  @Dependency var navigator: Navigator
+  @Dependency(\.navigator) var navigator: Navigator
 
   private lazy var screenView = LaunchView()
 
@@ -54,18 +55,18 @@ public final class LaunchController: UIViewController {
       .sink { [unowned self] in
         guard $0.shouldPushChats == false else {
           guard $0.shouldShowTerms == false else {
-            navigator.perform(PresentTermsAndConditions(popAllowed: false))
+            navigator.perform(PresentTermsAndConditions(replacing: true, on: navigationController!))
             return
           }
           if let route = pendingPushRoute {
             hasPendingPushRoute(route)
             return
           }
-          navigator.perform(PresentChatList())
+          navigator.perform(PresentChatList(on: navigationController!))
           return
         }
         guard $0.shouldPushOnboarding == false else {
-          navigator.perform(PresentOnboardingStart())
+          navigator.perform(PresentOnboardingStart(on: navigationController!))
           return
         }
         if let update = $0.shouldOfferUpdate {
@@ -77,21 +78,24 @@ public final class LaunchController: UIViewController {
   private func hasPendingPushRoute(_ route: PushRouter.Route) {
     switch route {
     case .requests:
-      navigator.perform(PresentRequests())
+      navigator.perform(PresentRequests(on: navigationController!))
     case .search(username: let username):
-      navigator.perform(PresentSearch(searching: username))
+      navigator.perform(PresentSearch(
+        searching: username,
+        replacing: true,
+        on: navigationController!))
     case .groupChat(id: let groupId):
       if let info = viewModel.getGroupInfoWith(groupId: groupId) {
-        navigator.perform(PresentGroupChat(model: info))
+        navigator.perform(PresentGroupChat(groupInfo: info, on: navigationController!))
         return
       }
-      navigator.perform(PresentChatList())
+      navigator.perform(PresentChatList(on: navigationController!))
     case .contactChat(id: let userId):
       if let model = viewModel.getContactWith(userId: userId) {
-        navigator.perform(PresentChat(contact: model))
+        navigator.perform(PresentChat(contact: model, on: navigationController!))
         return
       }
-      navigator.perform(PresentChatList())
+      navigator.perform(PresentChatList(on: navigationController!))
     }
   }
 
@@ -152,6 +156,6 @@ public final class LaunchController: UIViewController {
         axis: .vertical,
         views: actions
       )
-    ], dismissable: false))
+    ], isDismissable: false, from: self))
   }
 }

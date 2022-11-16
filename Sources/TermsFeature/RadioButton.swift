@@ -1,53 +1,54 @@
 import UIKit
 import Shared
+import AppResources
 
 final class RadioButton: UIControl {
-    private let filledView = UIView()
-    private let containerView = UIView()
+  private let filledView = UIView()
+  private let containerView = UIView()
 
-    init() {
-        super.init(frame: .zero)
+  init() {
+    super.init(frame: .zero)
 
-        containerView.layer.borderWidth = 1
-        containerView.layer.cornerRadius = 15
-        containerView.layer.masksToBounds = true
-        containerView.layer.borderColor = Asset.neutralWhite.color.cgColor
+    containerView.layer.borderWidth = 1
+    containerView.layer.cornerRadius = 15
+    containerView.layer.masksToBounds = true
+    containerView.layer.borderColor = Asset.neutralWhite.color.cgColor
 
-        filledView.isHidden = true
-        filledView.layer.cornerRadius = 10
-        filledView.layer.masksToBounds = true
-        filledView.backgroundColor = Asset.neutralWhite.color
+    filledView.isHidden = true
+    filledView.layer.cornerRadius = 10
+    filledView.layer.masksToBounds = true
+    filledView.backgroundColor = Asset.neutralWhite.color
 
-        containerView.isUserInteractionEnabled = false
-        filledView.isUserInteractionEnabled = false
+    containerView.isUserInteractionEnabled = false
+    filledView.isUserInteractionEnabled = false
 
-        addSubview(containerView)
-        containerView.addSubview(filledView)
+    addSubview(containerView)
+    containerView.addSubview(filledView)
 
-        setupConstraints()
+    setupConstraints()
+  }
+
+  required init?(coder: NSCoder) { nil }
+
+  func set(enabled: Bool) {
+    filledView.isHidden = !enabled
+  }
+
+  private func setupConstraints() {
+    containerView.snp.makeConstraints {
+      $0.width.equalTo(30)
+      $0.height.equalTo(30)
+      $0.top.equalToSuperview().offset(5)
+      $0.left.equalToSuperview().offset(5)
+      $0.right.equalToSuperview().offset(-5)
+      $0.bottom.equalToSuperview().offset(-5)
     }
 
-    required init?(coder: NSCoder) { nil }
-
-    func set(enabled: Bool) {
-        filledView.isHidden = !enabled
+    filledView.snp.makeConstraints {
+      $0.top.equalToSuperview().offset(5)
+      $0.left.equalToSuperview().offset(5)
+      $0.right.equalToSuperview().offset(-5)
+      $0.bottom.equalToSuperview().offset(-5)
     }
-
-    private func setupConstraints() {
-        containerView.snp.makeConstraints {
-            $0.width.equalTo(30)
-            $0.height.equalTo(30)
-            $0.top.equalToSuperview().offset(5)
-            $0.left.equalToSuperview().offset(5)
-            $0.right.equalToSuperview().offset(-5)
-            $0.bottom.equalToSuperview().offset(-5)
-        }
-
-        filledView.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(5)
-            $0.left.equalToSuperview().offset(5)
-            $0.right.equalToSuperview().offset(-5)
-            $0.bottom.equalToSuperview().offset(-5)
-        }
-    }
+  }
 }

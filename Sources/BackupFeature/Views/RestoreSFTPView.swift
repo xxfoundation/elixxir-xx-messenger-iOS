@@ -1,6 +1,7 @@
 import UIKit
 import Shared
 import InputField
+import AppResources
 
 final class BackupSFTPView: UIView {
   let titleLabel = UILabel()

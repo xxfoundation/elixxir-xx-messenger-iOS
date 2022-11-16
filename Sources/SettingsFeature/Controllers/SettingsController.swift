@@ -172,7 +172,7 @@ public final class SettingsController: UIViewController {
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentSettingsAccountDelete())
+        navigator.perform(PresentSettingsAccountDelete(on: navigationController!))
       }.store(in: &cancellables)
 
     screenView
@@ -180,7 +180,7 @@ public final class SettingsController: UIViewController {
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentSettingsBackup())
+        navigator.perform(PresentSettingsBackup(on: navigationController!))
       }.store(in: &cancellables)
 
     screenView
@@ -188,7 +188,7 @@ public final class SettingsController: UIViewController {
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentSettingsAdvanced())
+        navigator.perform(PresentSettingsAdvanced(on: navigationController!))
       }.store(in: &cancellables)
 
     viewModel
@@ -268,11 +268,11 @@ public final class SettingsController: UIViewController {
         spacing: 20.0,
         views: [actionButton, cancelButton]
       )
-    ]))
+    ], isDismissable: true, from: self))
   }
 
   @objc private func didTapMenu() {
-    navigator.perform(PresentMenu(currentItem: .settings))
+    navigator.perform(PresentMenu(currentItem: .settings, from: self))
   }
 }
 
@@ -314,6 +314,6 @@ extension SettingsController {
         actionButton,
         FlexibleSpace()
       ])
-    ]))
+    ], isDismissable: true, from: self))
   }
 }

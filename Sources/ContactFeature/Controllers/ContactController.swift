@@ -50,7 +50,8 @@ public final class ContactController: UIViewController {
     screenView.didTapSend = { [weak self] in
       guard let self else { return }
       self.navigator.perform(PresentChat(
-        contact: self.viewModel.contact
+        contact: self.viewModel.contact,
+        on: self.navigationController!
       ))
     }
     screenView.didTapInfo = { [weak self] in
@@ -83,7 +84,9 @@ public final class ContactController: UIViewController {
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentPhotoLibrary())
+        navigator.perform(
+          PresentPhotoLibrary(from: self)
+        )
       }.store(in: &cancellables)
 
     viewModel
@@ -146,7 +149,7 @@ public final class ContactController: UIViewController {
       .sentRequests
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
-        navigator.perform(PresentRequests())
+        navigator.perform(PresentRequests(on: navigationController!))
       }.store(in: &cancellables)
 
     viewModel
@@ -178,10 +181,10 @@ public final class ContactController: UIViewController {
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
         let nickname = (viewModel.contact.nickname ?? viewModel.contact.username) ?? ""
-        navigator.perform(PresentNickname(prefilled: nickname) { [weak self] in
+        navigator.perform(PresentNickname(prefilled: nickname, completion: { [weak self] in
           guard let self else { return }
           self.viewModel.didTapRequest(with: $0)
-        })
+        }, from: self))
       }.store(in: &cancellables)
   }
 
@@ -191,10 +194,10 @@ public final class ContactController: UIViewController {
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
         let nickname = (viewModel.contact.nickname ?? viewModel.contact.username) ?? ""
-        navigator.perform(PresentNickname(prefilled: nickname) { [weak self] in
+        navigator.perform(PresentNickname(prefilled: nickname, completion: { [weak self] in
           guard let self else { return }
           self.viewModel.didTapAccept($0)
-        })
+        }, from: self))
       }.store(in: &cancellables)
 
     screenView
@@ -263,7 +266,7 @@ public final class ContactController: UIViewController {
             navigator.perform(PresentNickname(prefilled: nickname, completion: { [weak self] in
               guard let self else { return }
               self.viewModel.didUpdateNickname($0)
-            }))
+            }, from: self))
           }.store(in: &cancellables)
 
         let usernameAttribute = AttributeComponent()
@@ -352,7 +355,7 @@ public final class ContactController: UIViewController {
         spacing: 20.0,
         views: [clearButton, cancelButton]
       )
-    ]))
+    ], isDismissable: true, from: self))
   }
 }
 
@@ -422,7 +425,7 @@ extension ContactController {
         actionButton,
         FlexibleSpace()
       ])
-    ]))
+    ], isDismissable: true, from: self))
   }
 
   private func presentDeleteInfo() {
@@ -456,6 +459,6 @@ extension ContactController {
         customAttributes: [.font:  Fonts.Mulish.bold.font(size: 16.0)]
       ),
       actionButton
-    ]))
+    ], isDismissable: true, from: self))
   }
 }

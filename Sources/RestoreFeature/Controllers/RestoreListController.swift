@@ -32,10 +32,10 @@ public final class RestoreListController: UIViewController {
       .sftpPublisher
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] _ in
-        navigator.perform(PresentSFTP { [weak self] host, username, password in
+        navigator.perform(PresentSFTP(completion: { [weak self] host, username, password in
           guard let self else { return }
           self.viewModel.setupSFTP(host: host, username: username, password: password)
-        })
+        }, on: navigationController!))
       }.store(in: &cancellables)
 
     viewModel.detailsPublisher
@@ -116,6 +116,6 @@ extension RestoreListController {
         spacingAfter: 37
       ),
       actionButton
-    ]))
+    ], isDismissable: true, from: self))
   }
 }

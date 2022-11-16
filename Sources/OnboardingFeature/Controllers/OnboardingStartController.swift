@@ -1,10 +1,10 @@
 import UIKit
 import Combine
 import Navigation
-import DI
+import ComposableArchitecture
 
 public final class OnboardingStartController: UIViewController {
-  @Dependency var navigator: Navigator
+  @Dependency(\.navigator) var navigator: Navigator
 
   private lazy var screenView = OnboardingStartView()
 
@@ -45,7 +45,7 @@ public final class OnboardingStartController: UIViewController {
       .startButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
-        navigator.perform(PresentTermsAndConditions())
+        navigator.perform(PresentTermsAndConditions(replacing: false, on: navigationController!))
       }.store(in: &cancellables)
   }
 }

@@ -1,10 +1,10 @@
 import UIKit
 import Shared
 import Combine
+import XXClient
 import Defaults
 import Permissions
 import PushFeature
-import XXClient
 import XXMessengerClient
 import UserNotifications
 import CombineSchedulers

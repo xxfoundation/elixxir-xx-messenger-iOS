@@ -1,3 +1,4 @@
+import AppCore
 import Shared
 import Combine
 import Defaults
@@ -6,7 +7,7 @@ import InputField
 import Foundation
 import CombineSchedulers
 import XXMessengerClient
-import DI
+import ComposableArchitecture
 
 final class OnboardingCodeViewModel {
   struct ViewState: Equatable {
@@ -20,8 +21,10 @@ final class OnboardingCodeViewModel {
     stateSubject.eraseToAnyPublisher()
   }
 
-  @Dependency var messenger: Messenger
-  @Dependency var hudController: HUDController
+  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
+  @Dependency(\.app.bgQueue) var bgQueue: AnySchedulerOf<DispatchQueue>
+
   @KeyObject(.email, defaultValue: nil) var email: String?
   @KeyObject(.phone, defaultValue: nil) var phone: String?
 
@@ -30,7 +33,6 @@ final class OnboardingCodeViewModel {
   private let content: String
   private let confirmationId: String
   private let stateSubject = CurrentValueSubject<ViewState, Never>(.init())
-  private var scheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
   init(
     isEmail: Bool,
@@ -61,8 +63,8 @@ final class OnboardingCodeViewModel {
   }
 
   func didTapNext() {
-    hudController.show()
-    scheduler.schedule { [weak self] in
+    hudManager.show()
+    bgQueue.schedule { [weak self] in
       guard let self else { return }
       do {
         try self.messenger.ud.get()!.confirmFact(
@@ -75,10 +77,10 @@ final class OnboardingCodeViewModel {
           self.phone = self.content
         }
         self.timer?.invalidate()
-        self.hudController.dismiss()
+        self.hudManager.hide()
         self.stateSubject.value.didConfirm = true
       } catch {
-        self.hudController.dismiss()
+        self.hudManager.hide()
         let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
         self.stateSubject.value.status = .invalid(xxError)
       }

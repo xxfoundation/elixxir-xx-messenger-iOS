@@ -1,9 +1,10 @@
+import DI
 import UIKit
 import Shared
 import Combine
 import Navigation
+import AppResources
 import DrawerFeature
-import DI
 
 public final class RestoreController: UIViewController {
   @Dependency var navigator: Navigator
@@ -130,6 +131,6 @@ extension RestoreController {
         spacingAfter: 37
       ),
       actionButton
-    ]))
+    ], isDismissable: true, from: self))
   }
 }

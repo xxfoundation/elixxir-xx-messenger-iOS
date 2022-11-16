@@ -119,6 +119,6 @@ public final class AccountDeleteController: UIViewController {
         actionButton,
         FlexibleSpace()
       ])
-    ]))
+    ], isDismissable: true, from: self))
   }
 }

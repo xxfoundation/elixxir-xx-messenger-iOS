@@ -8,40 +8,38 @@ let package = Package(
     .iOS(.v14),
   ],
   products: [
-    .library(name: "App", targets: ["App"]),
     .library(name: "Shared", targets: ["Shared"]),
-    .library(name: "XXLogger", targets: ["XXLogger"]),
+    .library(name: "AppCore", targets: ["AppCore"]),
     .library(name: "Defaults", targets: ["Defaults"]),
     .library(name: "Keychain", targets: ["Keychain"]),
-    .library(name: "Voxophone", targets: ["Voxophone"]),
-    .library(name: "Countries", targets: ["Countries"]),
+    .library(name: "AppFeature", targets: ["AppFeature"]),
     .library(name: "InputField", targets: ["InputField"]),
     .library(name: "ScanFeature", targets: ["ScanFeature"]),
-    .library(name: "Permissions", targets: ["Permissions"]),
     .library(name: "MenuFeature", targets: ["MenuFeature"]),
     .library(name: "ChatFeature", targets: ["ChatFeature"]),
     .library(name: "PushFeature", targets: ["PushFeature"]),
+    .library(name: "AppResources", targets: ["AppResources"]),
     .library(name: "CrashService", targets: ["CrashService"]),
     .library(name: "TermsFeature", targets: ["TermsFeature"]),
-    .library(name: "Presentation", targets: ["Presentation"]),
     .library(name: "BackupFeature", targets: ["BackupFeature"]),
     .library(name: "LaunchFeature", targets: ["LaunchFeature"]),
     .library(name: "SearchFeature", targets: ["SearchFeature"]),
     .library(name: "DrawerFeature", targets: ["DrawerFeature"]),
-    .library(name: "CollectionView", targets: ["CollectionView"]),
     .library(name: "RestoreFeature", targets: ["RestoreFeature"]),
     .library(name: "CrashReporting", targets: ["CrashReporting"]),
     .library(name: "ProfileFeature", targets: ["ProfileFeature"]),
     .library(name: "ContactFeature", targets: ["ContactFeature"]),
-    .library(name: "NetworkMonitor", targets: ["NetworkMonitor"]),
-    .library(name: "VersionChecking", targets: ["VersionChecking"]),
     .library(name: "SettingsFeature", targets: ["SettingsFeature"]),
     .library(name: "ChatListFeature", targets: ["ChatListFeature"]),
     .library(name: "RequestsFeature", targets: ["RequestsFeature"]),
+    .library(name: "ReportingFeature", targets: ["ReportingFeature"]),
+    .library(name: "StatusBarFeature", targets: ["StatusBarFeature"]),
     .library(name: "ChatInputFeature", targets: ["ChatInputFeature"]),
     .library(name: "OnboardingFeature", targets: ["OnboardingFeature"]),
+    .library(name: "CountryListFeature", targets: ["CountryListFeature"]),
+    .library(name: "PermissionsFeature", targets: ["PermissionsFeature"]),
     .library(name: "ContactListFeature", targets: ["ContactListFeature"]),
-    .library(name: "ReportingFeature", targets: ["ReportingFeature"])
+    .library(name: "RequestPermissionFeature", targets: ["RequestPermissionFeature"]),
   ],
   dependencies: [
     .package(
@@ -73,10 +71,6 @@ let package = Package(
       .upToNextMajor(from: "1.14.0")
     ),
     .package(
-      url: "https://github.com/SwiftyBeaver/SwiftyBeaver.git",
-      .upToNextMajor(from: "1.9.5")
-    ),
-    .package(
       url: "https://github.com/darrarski/ScrollViewController",
       .upToNextMajor(from: "1.2.0")
     ),
@@ -106,7 +100,7 @@ let package = Package(
     ),
     .package(
       url: "https://github.com/pointfreeco/swift-composable-architecture.git",
-      .upToNextMajor(from: "0.32.0")
+      .upToNextMajor(from: "0.43.0")
     ),
     .package(
       url: "https://github.com/pointfreeco/swift-custom-dump.git",
@@ -117,24 +111,27 @@ let package = Package(
       from: "0.8.0"
     ),
     .package(
+      url: "https://github.com/apple/swift-log.git",
+      .upToNextMajor(from: "1.4.4")
+    ),
+    .package(
       url: "https://github.com/pointfreeco/xctest-dynamic-overlay.git",
       .upToNextMajor(from: "0.3.3")
     ),
     .package(
-      url: "https://git.xx.network/elixxir/xxm-di.git",
-      .upToNextMajor(from: "1.0.0")
+      path: "../xxm-navigation"
     ),
     .package(
-      path: "../xxm-navigation"
+      url: "https://git.xx.network/elixxir/xxm-di",
+      .upToNextMajor(from: "1.0.0")
     )
   ],
   targets: [
     .target(
-      name: "App",
+      name: "AppFeature",
       dependencies: [
+        .target(name: "AppCore"),
         .target(name: "Keychain"),
-        .target(name: "Voxophone"),
-        .target(name: "Permissions"),
         .target(name: "ScanFeature"),
         .target(name: "ChatFeature"),
         .target(name: "MenuFeature"),
@@ -154,26 +151,66 @@ let package = Package(
         .target(name: "ReportingFeature"),
         .target(name: "OnboardingFeature"),
         .target(name: "ContactListFeature"),
+        .target(name: "RequestPermissionFeature"),
         .product(name: "DependencyInjection", package: "xxm-di"),
       ]
     ),
     .testTarget(
-      name: "AppTests",
+      name: "AppFeatureTests",
       dependencies: [
-        .target(name: "App"),
+        .target(name: "AppFeature"),
+      ]
+    ),
+    .target(
+      name: "AppCore",
+      dependencies: [
+        .target(name: "Shared"),
+        .target(name: "AppResources"),
+        .target(name: "StatusBarFeature"),
+        .product(name: "SnapKit", package: "SnapKit"),
+        .product(name: "Logging", package: "swift-log"),
+        .product(name: "XXModels", package: "client-ios-db"),
+        .product(name: "XXDatabase", package: "client-ios-db"),
+        .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
+        .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
+        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
     .target(
       name: "CrashReporting"
     ),
     .target(
-      name: "NetworkMonitor",
+      name: "PermissionsFeature",
       dependencies: [
-        .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
+        .product(
+          name: "XCTestDynamicOverlay",
+          package: "xctest-dynamic-overlay"
+        ),
+        .product(
+          name: "ComposableArchitecture",
+          package: "swift-composable-architecture"
+        ),
       ]
     ),
     .target(
-      name: "VersionChecking"
+      name: "StatusBarFeature",
+      dependencies: [
+        .product(
+          name: "XCTestDynamicOverlay",
+          package: "xctest-dynamic-overlay"
+        ),
+        .product(
+          name: "ComposableArchitecture",
+          package: "swift-composable-architecture"
+        ),
+      ]
+    ),
+    .target(
+      name: "AppResources",
+      resources: [
+        .process("Resources")
+      ]
     ),
     .target(
       name: "InputField",
@@ -182,11 +219,15 @@ let package = Package(
       ]
     ),
     .target(
-      name: "Permissions",
+      name: "RequestPermissionFeature",
       dependencies: [
         .target(name: "Shared"),
-        .product(name: "Navigation", package: "xxm-navigation"),
-        .product(name: "DependencyInjection", package: "xxm-di"),
+        .target(name: "AppResources"),
+        .target(name: "PermissionsFeature"),
+        .product(
+          name: "ComposableArchitecture",
+          package: "swift-composable-architecture"
+        ),
       ]
     ),
     .target(
@@ -207,12 +248,6 @@ let package = Package(
       ]
     ),
     .target(
-      name: "Voxophone",
-      dependencies: [
-        .target(name: "Shared"),
-      ]
-    ),
-    .target(
       name: "Defaults",
       dependencies: [
         .product(name: "DependencyInjection", package: "xxm-di"),
@@ -226,10 +261,10 @@ let package = Package(
       ]
     ),
     .target(
-      name: "Countries",
+      name: "CountryListFeature",
       dependencies: [
         .target(name: "Shared"),
-        .product(name: "DependencyInjection", package: "xxm-di"),
+        .target(name: "StatusBarFeature")
       ]
     ),
     .target(
@@ -238,12 +273,6 @@ let package = Package(
         .target(name: "Shared"),
         .target(name: "InputField"),
         .product(name: "ScrollViewController", package: "ScrollViewController"),
-      ]
-    ),
-    .target(
-      name: "XXLogger",
-      dependencies: [
-        .product(name: "SwiftyBeaver", package: "SwiftyBeaver"),
       ]
     ),
     .target(
@@ -262,32 +291,18 @@ let package = Package(
       ]
     ),
     .target(
-      name: "Presentation",
-      dependencies: [
-        .target(name: "Shared"),
-        .product(name: "SnapKit", package: "SnapKit"),
-      ]
-    ),
-    .testTarget(
-      name: "PresentationTests",
-      dependencies: [
-        .target(name: "Presentation"),
-        .product(name: "Quick", package: "Quick"),
-        .product(name: "Nimble", package: "Nimble"),
-      ]
-    ),
-    .target(
       name: "ChatInputFeature",
       dependencies: [
-        .target(name: "Voxophone"),
-        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
+        .product(
+          name: "ComposableArchitecture",
+          package: "swift-composable-architecture"
+        ),
       ]
     ),
     .target(
       name: "RestoreFeature",
       dependencies: [
         .target(name: "Shared"),
-        .target(name: "Presentation"),
         .product(name: "XXDatabase", package: "client-ios-db"),
         .product(name: "Navigation", package: "xxm-navigation"),
         .product(name: "DependencyInjection", package: "xxm-di"),
@@ -304,7 +319,6 @@ let package = Package(
         .target(name: "Shared"),
         .target(name: "InputField"),
         .target(name: "ChatFeature"),
-        .target(name: "Presentation"),
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "ScrollViewController", package: "ScrollViewController"),
       ]
@@ -315,29 +329,26 @@ let package = Package(
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "Keychain"),
-        .target(name: "Voxophone"),
-        .target(name: "Permissions"),
-        .target(name: "Presentation"),
         .target(name: "DrawerFeature"),
         .target(name: "ChatInputFeature"),
         .target(name: "ReportingFeature"),
+        .target(name: "RequestPermissionFeature"),
         .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "ChatLayout", package: "ChatLayout"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
         .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
         .product(name: "ScrollViewController", package: "ScrollViewController"),
+        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ]
     ),
     .target(
       name: "SearchFeature",
       dependencies: [
         .target(name: "Shared"),
-        .target(name: "Countries"),
         .target(name: "PushFeature"),
-        .target(name: "Presentation"),
         .target(name: "ContactFeature"),
-        .target(name: "NetworkMonitor"),
+        .target(name: "CountryListFeature"),
         .product(name: "Retry", package: "Retry"),
         .product(name: "XXDatabase", package: "client-ios-db"),
         .product(name: "DependencyInjection", package: "xxm-di"),
@@ -349,11 +360,9 @@ let package = Package(
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "PushFeature"),
-        .target(name: "Permissions"),
         .target(name: "BackupFeature"),
-        .target(name: "VersionChecking"),
         .target(name: "ReportingFeature"),
-        .product(name: "DependencyInjection", package: "xxm-di"),
+        .target(name: "RequestPermissionFeature"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
         .product(name: "CloudFilesSFTP", package: "xxm-cloud-providers"),
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
@@ -367,7 +376,6 @@ let package = Package(
       dependencies: [
         .target(name: "Shared"),
         .target(name: "Defaults"),
-        .target(name: "Presentation"),
         .product(name: "Navigation", package: "xxm-navigation"),
       ]
     ),
@@ -386,13 +394,12 @@ let package = Package(
         .target(name: "Shared"),
         .target(name: "Keychain"),
         .target(name: "Defaults"),
-        .target(name: "Countries"),
         .target(name: "InputField"),
         .target(name: "MenuFeature"),
-        .target(name: "Permissions"),
-        .target(name: "Presentation"),
         .target(name: "DrawerFeature"),
         .target(name: "BackupFeature"),
+        .target(name: "CountryListFeature"),
+        .target(name: "RequestPermissionFeature"),
         .product(name: "Navigation", package: "xxm-navigation"),
         .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
@@ -419,18 +426,17 @@ let package = Package(
       name: "OnboardingFeature",
       dependencies: [
         .target(name: "Shared"),
+        .target(name: "AppCore"),
         .target(name: "Defaults"),
         .target(name: "Keychain"),
-        .target(name: "Countries"),
         .target(name: "InputField"),
-        .target(name: "Permissions"),
         .target(name: "PushFeature"),
-        .target(name: "Presentation"),
         .target(name: "DrawerFeature"),
-        .target(name: "VersionChecking"),
-        .product(name: "DependencyInjection", package: "xxm-di"),
+        .target(name: "CountryListFeature"),
+        .target(name: "RequestPermissionFeature"),
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "ScrollViewController", package: "ScrollViewController"),
+        .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
     .target(
@@ -438,7 +444,6 @@ let package = Package(
       dependencies: [
         .target(name: "Shared"),
         .target(name: "Defaults"),
-        .target(name: "Presentation"),
         .target(name: "DrawerFeature"),
         .target(name: "ReportingFeature"),
         .product(name: "Navigation", package: "xxm-navigation"),
@@ -450,29 +455,50 @@ let package = Package(
       name: "BackupFeature",
       dependencies: [
         .target(name: "Shared"),
+        .target(name: "AppCore"),
         .target(name: "InputField"),
-        .target(name: "Presentation"),
         .target(name: "DrawerFeature"),
-        .target(name: "NetworkMonitor"),
-        .product(name: "Navigation", package: "xxm-navigation"),
-        .product(name: "DependencyInjection", package: "xxm-di"),
-        .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
-        .product(name: "CloudFilesSFTP", package: "xxm-cloud-providers"),
-        .product(name: "CloudFilesDrive", package: "xxm-cloud-providers"),
-        .product(name: "CloudFilesICloud", package: "xxm-cloud-providers"),
-        .product(name: "CloudFilesDropbox", package: "xxm-cloud-providers"),
-        .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
+        .product(
+          name: "Navigation",
+          package: "xxm-navigation"
+        ),
+        .product(
+          name: "XXClient",
+          package: "elixxir-dapps-sdk-swift"
+        ),
+        .product(
+          name: "CloudFilesSFTP",
+          package: "xxm-cloud-providers"
+        ),
+        .product(
+          name: "CloudFilesDrive",
+          package: "xxm-cloud-providers"
+        ),
+        .product(
+          name: "CloudFilesICloud",
+          package: "xxm-cloud-providers"
+        ),
+        .product(
+          name: "CloudFilesDropbox",
+          package: "xxm-cloud-providers"
+        ),
+        .product(
+          name: "XXMessengerClient",
+          package: "elixxir-dapps-sdk-swift"
+        ),
+        .product(
+          name: "ComposableArchitecture",
+          package: "swift-composable-architecture"
+        ),
       ]
     ),
     .target(
       name: "ScanFeature",
       dependencies: [
         .target(name: "Shared"),
-        .target(name: "Countries"),
-        .target(name: "Permissions"),
-        .target(name: "Presentation"),
         .target(name: "ContactFeature"),
-        .target(name: "NetworkMonitor"),
+        .target(name: "CountryListFeature"),
+        .target(name: "RequestPermissionFeature"),
         .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "SnapKit", package: "SnapKit"),
       ]
@@ -481,7 +507,6 @@ let package = Package(
       name: "ContactListFeature",
       dependencies: [
         .target(name: "Shared"),
-        .target(name: "Presentation"),
         .target(name: "ContactFeature"),
         .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
@@ -493,30 +518,14 @@ let package = Package(
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "Keychain"),
-        .target(name: "XXLogger"),
         .target(name: "InputField"),
         .target(name: "PushFeature"),
-        .target(name: "Permissions"),
         .target(name: "MenuFeature"),
-        .target(name: "Presentation"),
         .target(name: "DrawerFeature"),
+        .target(name: "RequestPermissionFeature"),
         .product(name: "DependencyInjection", package: "xxm-di"),
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "ScrollViewController", package: "ScrollViewController"),
-      ]
-    ),
-    .target(
-      name: "CollectionView",
-      dependencies: [
-        .product(name: "ChatLayout", package: "ChatLayout"),
-        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
-      ]
-    ),
-    .testTarget(
-      name: "CollectionViewTests",
-      dependencies: [
-        .target(name: "CollectionView"),
-        .product(name: "CustomDump", package: "swift-custom-dump"),
       ]
     ),
     .target(

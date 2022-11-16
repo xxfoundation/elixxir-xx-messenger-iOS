@@ -1,6 +1,6 @@
 import XXModels
-import Foundation
 import XXClient
+import Foundation
 import XXMessengerClient
 import DI
 

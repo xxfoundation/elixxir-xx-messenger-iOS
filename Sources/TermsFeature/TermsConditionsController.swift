@@ -5,6 +5,7 @@ import Shared
 import Combine
 import Defaults
 import Navigation
+import AppResources
 
 public final class TermsConditionsController: UIViewController {
   @Dependency var navigator: Navigator
@@ -61,9 +62,9 @@ public final class TermsConditionsController: UIViewController {
       .sink { [unowned self] in
         didAcceptTerms = true
         if username != nil {
-          navigator.perform(PresentChatList())
+          navigator.perform(PresentChatList(on: navigationController!))
         } else {
-          navigator.perform(PresentOnboardingUsername())
+          navigator.perform(PresentOnboardingUsername(on: navigationController!))
         }
       }.store(in: &cancellables)
 

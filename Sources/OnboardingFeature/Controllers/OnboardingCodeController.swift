@@ -2,13 +2,15 @@ import UIKit
 import Shared
 import Combine
 import Navigation
+import AppResources
 import DrawerFeature
-import DI
+import StatusBarFeature
 import ScrollViewController
+import ComposableArchitecture
 
 public final class OnboardingCodeController: UIViewController {
-  @Dependency var navigator: Navigator
-  @Dependency var barStylist: StatusBarStylist
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.statusBar) var statusBar: StatusBarStyleManager
 
   private lazy var screenView = OnboardingCodeView()
   private lazy var scrollViewController = ScrollViewController()
@@ -39,7 +41,7 @@ public final class OnboardingCodeController: UIViewController {
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     navigationItem.backButtonTitle = ""
-    barStylist.styleSubject.send(.darkContent)
+    statusBar.update(.darkContent)
     navigationController?.navigationBar.customize(translucent: true)
   }
 
@@ -103,9 +105,9 @@ public final class OnboardingCodeController: UIViewController {
       .sink { [unowned self] in
         guard $0 == true else { return }
         if isEmail {
-          navigator.perform(PresentOnboardingPhone())
+          navigator.perform(PresentOnboardingPhone(on: navigationController!))
         } else {
-          navigator.perform(PresentChatList())
+          navigator.perform(PresentChatList(on: navigationController!))
         }
       }.store(in: &cancellables)
 
@@ -174,6 +176,6 @@ public final class OnboardingCodeController: UIViewController {
         actionButton,
         FlexibleSpace()
       ])
-    ]))
+    ], isDismissable: true, from: self))
   }
 }

@@ -63,7 +63,7 @@ public final class ProfilePhoneController: UIViewController {
         navigator.perform(PresentCountryList(completion: { [weak self] in
           guard let self else { return }
           self.viewModel.didChooseCountry($0 as! Country)
-        }))
+        }, from: self))
       }.store(in: &cancellables)
 
     viewModel
@@ -76,7 +76,8 @@ public final class ProfilePhoneController: UIViewController {
           PresentProfileCode(
             isEmail: false,
             content: content,
-            confirmationId: id
+            confirmationId: id,
+            on: navigationController!
           )
         )
       }.store(in: &cancellables)

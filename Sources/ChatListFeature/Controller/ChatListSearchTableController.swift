@@ -108,18 +108,18 @@ extension ChatSearchTableController {
         switch chatInfo {
         case .group(let group):
           if let groupInfo = viewModel.groupInfo(from: group) {
-            navigator.perform(PresentGroupChat(model: groupInfo))
+            navigator.perform(PresentGroupChat(groupInfo: groupInfo, on: navigationController!))
           }
         case .groupChat(let info):
           if let groupInfo = viewModel.groupInfo(from: info.group) {
-            navigator.perform(PresentGroupChat(model: groupInfo))
+            navigator.perform(PresentGroupChat(groupInfo: groupInfo, on: navigationController!))
           }
         case .contactChat(let info):
           guard info.contact.authStatus == .friend else { return }
-          navigator.perform(PresentChat(contact: info.contact))
+          navigator.perform(PresentChat(contact: info.contact, on: navigationController!))
         }
       case .connection(let contact):
-        navigator.perform(PresentContact(contact: contact))
+        navigator.perform(PresentContact(contact: contact, on: navigationController!))
       }
     }
   }

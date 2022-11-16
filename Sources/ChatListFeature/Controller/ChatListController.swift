@@ -2,7 +2,6 @@ import UIKit
 import Shared
 import Combine
 import XXModels
-import MenuFeature
 import Navigation
 import DI
 
@@ -70,9 +69,9 @@ public final class ChatListController: UIViewController {
       .sink { [unowned self] in
         switch $0 {
         case .didTapSearch:
-          navigator.perform(PresentSearch(replacing: false))
+          navigator.perform(PresentSearch(searching: nil, replacing: false, on: navigationController!))
         case .didTapNewGroup:
-          navigator.perform(PresentNewGroup())
+          navigator.perform(PresentNewGroup(on: navigationController!))
         }
       }.store(in: &cancellables)
     
@@ -87,7 +86,7 @@ public final class ChatListController: UIViewController {
       .actionPublisher
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentMenu(currentItem: .chats))
+        navigator.perform(PresentMenu(currentItem: .chats, from: self))
       }.store(in: &cancellables)
   }
   
@@ -146,7 +145,7 @@ public final class ChatListController: UIViewController {
       .rightPublisher
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentScan())
+        navigator.perform(PresentScan(on: navigationController!))
       }.store(in: &cancellables)
     
     screenView
@@ -211,7 +210,11 @@ public final class ChatListController: UIViewController {
       .searchButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
-        navigator.perform(PresentSearch(replacing: false))
+        navigator.perform(PresentSearch(
+          searching: nil,
+          replacing: false,
+          on: navigationController!
+        ))
       }.store(in: &cancellables)
     
     screenView
@@ -221,7 +224,7 @@ public final class ChatListController: UIViewController {
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentContactList())
+        navigator.perform(PresentContactList(on: navigationController!))
       }.store(in: &cancellables)
     
     viewModel
@@ -240,7 +243,7 @@ extension ChatListController: UICollectionViewDelegate {
     didSelectItemAt indexPath: IndexPath
   ) {
     if let contact = collectionDataSource.itemIdentifier(for: indexPath) {
-      navigator.perform(PresentChat(contact: contact))
+      navigator.perform(PresentChat(contact: contact, on: navigationController!))
     }
   }
 }

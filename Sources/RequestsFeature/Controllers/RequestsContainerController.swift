@@ -77,7 +77,11 @@ public final class RequestsContainerController: UIViewController {
       .connectionsPublisher
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentSearch(replacing: false))
+        navigator.perform(PresentSearch(
+          searching: nil,
+          replacing: false,
+          on: navigationController!
+        ))
       }.store(in: &cancellables)
 
     screenView
@@ -108,7 +112,7 @@ public final class RequestsContainerController: UIViewController {
   }
 
   @objc private func didTapMenu() {
-    navigator.perform(PresentMenu(currentItem: .requests))
+    navigator.perform(PresentMenu(currentItem: .requests, from: self))
   }
 }
 

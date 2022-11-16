@@ -74,7 +74,7 @@ public final class MenuController: UIViewController {
       .sink { [unowned self] in
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self, self.currentItem != .scan else { return }
-          self.navigator.perform(PresentScan())
+          self.navigator.perform(PresentScan(on: self.navigationController!))
         }
       }.store(in: &cancellables)
 
@@ -86,7 +86,7 @@ public final class MenuController: UIViewController {
       .sink { [unowned self] in
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self, self.currentItem != .profile else { return }
-          self.navigator.perform(PresentProfile())
+          self.navigator.perform(PresentProfile(on: self.navigationController!))
         }
       }.store(in: &cancellables)
 
@@ -97,7 +97,7 @@ public final class MenuController: UIViewController {
       .sink { [unowned self] in
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self, self.currentItem != .scan else { return }
-          self.navigator.perform(PresentScan())
+          self.navigator.perform(PresentScan(on: self.navigationController!))
         }
       }.store(in: &cancellables)
 
@@ -108,7 +108,7 @@ public final class MenuController: UIViewController {
       .sink { [unowned self] in
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self, self.currentItem != .chats else { return }
-          self.navigator.perform(PresentChatList())
+          self.navigator.perform(PresentChatList(on: self.navigationController!))
         }
       }.store(in: &cancellables)
 
@@ -119,7 +119,7 @@ public final class MenuController: UIViewController {
       .sink { [unowned self] in
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self, self.currentItem != .contacts else { return }
-          self.navigator.perform(PresentContactList())
+          self.navigator.perform(PresentContactList(on: self.navigationController!))
         }
       }.store(in: &cancellables)
 
@@ -130,7 +130,7 @@ public final class MenuController: UIViewController {
       .sink { [unowned self] in
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self, self.currentItem != .settings else { return }
-          self.navigator.perform(PresentSettings())
+          self.navigator.perform(PresentSettings(on: self.navigationController!))
         }
       }.store(in: &cancellables)
 
@@ -158,7 +158,7 @@ public final class MenuController: UIViewController {
       .sink { [unowned self] in
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self, self.currentItem != .requests else { return }
-          self.navigator.perform(PresentRequests())
+          self.navigator.perform(PresentRequests(on: self.navigationController!))
         }
       }.store(in: &cancellables)
 
@@ -188,7 +188,7 @@ public final class MenuController: UIViewController {
           guard let self, self.currentItem != .share else { return }
           self.navigator.perform(PresentActivitySheet(items: [
             Localized.Menu.shareContent(self.viewModel.referralDeeplink)
-          ]))
+          ], from: self))
         }
       }.store(in: &cancellables)
 
@@ -239,6 +239,6 @@ public final class MenuController: UIViewController {
         spacingAfter: 39
       ),
       actionButton
-    ]))
+    ], isDismissable: true, from: self))
   }
 }

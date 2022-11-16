@@ -2,13 +2,15 @@ import UIKit
 import Shared
 import Combine
 import Navigation
+import AppResources
 import DrawerFeature
-import DI
+import StatusBarFeature
 import ScrollViewController
+import ComposableArchitecture
 
 public final class OnboardingUsernameController: UIViewController {
-  @Dependency var navigator: Navigator
-  @Dependency var barStylist: StatusBarStylist
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.statusBar) var statusBar: StatusBarStyleManager
 
   private lazy var screenView = OnboardingUsernameView()
   private lazy var scrollViewController = ScrollViewController()
@@ -20,7 +22,7 @@ public final class OnboardingUsernameController: UIViewController {
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     navigationItem.backButtonTitle = ""
-    barStylist.styleSubject.send(.darkContent)
+    statusBar.update(.darkContent)
     navigationController?.navigationBar.customize(translucent: true)
   }
 
@@ -65,7 +67,7 @@ public final class OnboardingUsernameController: UIViewController {
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentRestoreList())
+        navigator.perform(PresentRestoreList(on: navigationController!))
       }.store(in: &cancellables)
 
     screenView
@@ -91,7 +93,7 @@ public final class OnboardingUsernameController: UIViewController {
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
         guard $0.didConfirm == true else { return }
-        navigator.perform(PresentOnboardingWelcome())
+        navigator.perform(PresentOnboardingWelcome(on: navigationController!))
       }.store(in: &cancellables)
 
     viewModel
@@ -140,6 +142,6 @@ public final class OnboardingUsernameController: UIViewController {
         actionButton,
         FlexibleSpace()
       ])
-    ]))
+    ], isDismissable: true, from: self))
   }
 }

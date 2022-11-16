@@ -2,9 +2,9 @@ import UIKit
 import Shared
 import Combine
 import XXModels
-import Countries
 import Navigation
 import DrawerFeature
+import CountryListFeature
 import DI
 
 final class RequestsReceivedController: UIViewController {
@@ -183,7 +183,8 @@ extension RequestsReceivedController {
           guard let self else { return }
           self.drawerCancellables.removeAll()
           self.navigator.perform(PresentGroupChat(
-            model: self.viewModel.groupChatWith(group: group)
+            groupInfo: self.viewModel.groupChatWith(group: group),
+            on: self.navigationController!
           ))
         }
       }.store(in: &drawerCancellables)
@@ -198,7 +199,7 @@ extension RequestsReceivedController {
         }
       }.store(in: &drawerCancellables)
 
-    navigator.perform(PresentDrawer(items: items))
+    navigator.perform(PresentDrawer(items: items, isDismissable: true, from: self))
   }
 }
 
@@ -264,7 +265,7 @@ extension RequestsReceivedController {
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self else { return }
           self.drawerCancellables.removeAll()
-          self.navigator.perform(PresentChat(contact: contact))
+          self.navigator.perform(PresentChat(contact: contact, on: navigationController!))
         }
       }.store(in: &drawerCancellables)
 
@@ -278,7 +279,7 @@ extension RequestsReceivedController {
         }
       }.store(in: &drawerCancellables)
 
-    navigator.perform(PresentDrawer(items: items))
+    navigator.perform(PresentDrawer(items: items, isDismissable: true,  from: self))
   }
 }
 
@@ -389,7 +390,7 @@ extension RequestsReceivedController {
         }
       }.store(in: &drawerCancellables)
 
-    navigator.perform(PresentDrawer(items: items))
+    navigator.perform(PresentDrawer(items: items, isDismissable: true, from: self))
   }
 }
 
@@ -540,7 +541,7 @@ extension RequestsReceivedController {
         }
       }.store(in: &drawerCancellables)
 
-    navigator.perform(PresentDrawer(items: items))
+    navigator.perform(PresentDrawer(items: items, isDismissable: true, from: self))
   }
 }
 
@@ -588,6 +589,6 @@ extension RequestsReceivedController {
         }
       }.store(in: &drawerCancellables)
 
-    navigator.perform(PresentDrawer(items: items))
+    navigator.perform(PresentDrawer(items: items, isDismissable: true, from: self))
   }
 }

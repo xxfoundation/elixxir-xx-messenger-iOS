@@ -157,7 +157,10 @@ public final class CreateGroupController: UIViewController {
       .info
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentGroupChat(model: $0))
+        navigator.perform(PresentGroupChat(
+          groupInfo: $0,
+          on: navigationController!
+        ))
       }.store(in: &cancellables)
 
     createButton

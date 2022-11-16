@@ -87,7 +87,7 @@ public final class SettingsAdvancedController: UIViewController {
       .sharePublisher
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentActivitySheet(items: [$0]))
+        navigator.perform(PresentActivitySheet(items: [$0], from: self))
       }.store(in: &cancellables)
 
     viewModel

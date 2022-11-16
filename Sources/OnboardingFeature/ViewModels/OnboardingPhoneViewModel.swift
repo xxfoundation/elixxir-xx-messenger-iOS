@@ -1,12 +1,13 @@
+import AppCore
 import Shared
 import Combine
 import XXClient
-import Countries
 import InputField
 import Foundation
 import CombineSchedulers
 import XXMessengerClient
-import DI
+import CountryListFeature
+import ComposableArchitecture
 
 final class OnboardingPhoneViewModel {
   struct ViewState: Equatable {
@@ -17,15 +18,15 @@ final class OnboardingPhoneViewModel {
     var country: Country = .fromMyPhone()
   }
 
-  @Dependency var messenger: Messenger
-  @Dependency var hudController: HUDController
+  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
+  @Dependency(\.app.bgQueue) var bgQueue: AnySchedulerOf<DispatchQueue>
 
   var statePublisher: AnyPublisher<ViewState, Never> {
     stateSubject.eraseToAnyPublisher()
   }
 
   private let stateSubject = CurrentValueSubject<ViewState, Never>(.init())
-  private var scheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
   func clearUp() {
     stateSubject.value.confirmationId = nil
@@ -42,19 +43,19 @@ final class OnboardingPhoneViewModel {
   }
 
   func didTapNext() {
-    hudController.show()
-    scheduler.schedule { [weak self] in
+    hudManager.show()
+    bgQueue.schedule { [weak self] in
       guard let self else { return }
       let content = "\(self.stateSubject.value.input)\(self.stateSubject.value.country.code)"
       do {
         let confirmationId = try self.messenger.ud.get()!.sendRegisterFact(
           .init(type: .phone, value: content)
         )
-        self.hudController.dismiss()
+        self.hudManager.hide()
         self.stateSubject.value.content = content
         self.stateSubject.value.confirmationId = confirmationId
       } catch {
-        self.hudController.dismiss()
+        self.hudManager.hide()
         let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
         self.stateSubject.value.status = .invalid(xxError)
       }

@@ -65,7 +65,7 @@ public final class ProfileController: UIViewController {
               self.viewModel.didTapDelete(isEmail: true)
             }
         } else {
-          navigator.perform(PresentProfileEmail())
+          navigator.perform(PresentProfileEmail(on: navigationController!))
         }
       }.store(in: &cancellables)
 
@@ -87,7 +87,7 @@ public final class ProfileController: UIViewController {
               self.viewModel.didTapDelete(isEmail: false)
             }
         } else {
-          navigator.perform(PresentProfilePhone())
+          navigator.perform(PresentProfilePhone(on: navigationController!))
         }
       }.store(in: &cancellables)
 
@@ -112,10 +112,10 @@ public final class ProfileController: UIViewController {
             title: Localized.Profile.Photo.title,
             subtitle: Localized.Profile.Photo.subtitle,
             actionTitle: Localized.Profile.Photo.continue) {
-              self.navigator.perform(PresentPhotoLibrary())
+              self.navigator.perform(PresentPhotoLibrary(from: self))
           }
         case .libraryPermission:
-          self.navigator.perform(PresentPermissionRequest(type: .library))
+          self.navigator.perform(PresentPermissionRequest(type: .library, from: self))
         case .none:
           break
         }
@@ -190,11 +190,11 @@ public final class ProfileController: UIViewController {
         spacingAfter: 37
       ),
       actionButton
-    ]))
+    ], isDismissable: true, from: self))
   }
 
   @objc private func didTapMenu() {
-    navigator.perform(PresentMenu(currentItem: .profile))
+    navigator.perform(PresentMenu(currentItem: .profile, from: self))
   }
 }
 

@@ -15,7 +15,6 @@ import XXMessengerClient
 
 import struct XXModels.Message
 import struct XXModels.FileTransfer
-import NetworkMonitor
 
 enum SingleChatNavigationRoutes: Equatable {
   case none

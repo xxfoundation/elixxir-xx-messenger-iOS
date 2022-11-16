@@ -58,11 +58,11 @@ public final class ScanContainerController: UIViewController {
     }
     displayController.didTapAddEmail = { [weak self] in
       guard let self else { return }
-      self.navigator.perform(PresentProfileEmail())
+      self.navigator.perform(PresentProfileEmail(on: self.navigationController!))
     }
     displayController.didTapAddPhone = { [weak self] in
       guard let self else { return }
-      self.navigator.perform(PresentProfilePhone())
+      self.navigator.perform(PresentProfilePhone(on: self.navigationController!))
     }
   }
 
@@ -106,7 +106,7 @@ public final class ScanContainerController: UIViewController {
   }
 
   @objc private func didTapMenu() {
-    navigator.perform(PresentMenu(currentItem: .scan))
+    navigator.perform(PresentMenu(currentItem: .scan, from: self))
   }
 
   private func presentInfo(title: String, subtitle: String) {
@@ -146,7 +146,7 @@ public final class ScanContainerController: UIViewController {
         actionButton,
         FlexibleSpace()
       ])
-    ]))
+    ], isDismissable: true, from: self))
   }
 }
 

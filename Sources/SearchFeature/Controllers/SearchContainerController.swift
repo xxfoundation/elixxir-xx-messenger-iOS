@@ -180,6 +180,6 @@ extension SearchContainerController {
         distribution: .fillEqually,
         views: [enableButton, dismissButton]
       )
-    ]))
+    ], isDismissable: true, from: self))
   }
 }

@@ -3,12 +3,12 @@ import Shared
 import Combine
 import Defaults
 import XXClient
-import Countries
 import Foundation
 import Permissions
 import BackupFeature
 import XXMessengerClient
 import CombineSchedulers
+import CountryListFeature
 import DI
 
 enum ProfileNavigationRoutes {

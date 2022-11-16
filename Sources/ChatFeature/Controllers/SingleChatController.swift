@@ -213,49 +213,49 @@ public final class SingleChatController: UIViewController {
     viewModel.navigation
       .receive(on: DispatchQueue.main)
       .removeDuplicates()
-      .sink { [unowned self] in
-        switch $0 {
-        case .library:
-          navigator.perform(PresentPhotoLibrary())
-        case .camera:
-          navigator.perform(PresentCamera())
-        case .cameraPermission:
-          navigator.perform(PresentPermissionRequest(type: .camera))
-        case .microphonePermission:
-          navigator.perform(PresentPermissionRequest(type: .microphone))
-        case .libraryPermission:
-          navigator.perform(PresentPermissionRequest(type: .library))
-        case .webview(let urlString):
-          navigator.perform(PresentWebsite(url: URL(string: urlString)!))
-        case .waitingRound:
-          let button = DrawerCapsuleButton(model: .init(
-            title: Localized.Chat.RoundDrawer.action,
-            style: .brandColored
-          ))
-
-          button
-            .action
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in
-              navigator.perform(DismissModal(from: self)) { [weak self] in
-                guard let self else { return }
-                self.drawerCancellables.removeAll()
-              }
-            }.store(in: &drawerCancellables)
-
-          navigator.perform(PresentDrawer(items: [
-            DrawerText(
-              font: Fonts.Mulish.semiBold.font(size: 14.0),
-              text: Localized.Chat.RoundDrawer.title,
-              color: Asset.neutralWeak.color,
-              lineHeightMultiple: 1.35,
-              spacingAfter: 25
-            ),
-            button
-          ]))
-        case .none:
-          break
-        }
+      .sink { [unowned self] _ in
+//        switch $0 {
+//        case .library:
+//          navigator.perform(PresentPhotoLibrary())
+//        case .camera:
+//          navigator.perform(PresentCamera())
+//        case .cameraPermission:
+//          navigator.perform(PresentPermissionRequest(type: .camera))
+//        case .microphonePermission:
+//          navigator.perform(PresentPermissionRequest(type: .microphone))
+//        case .libraryPermission:
+//          navigator.perform(PresentPermissionRequest(type: .library))
+//        case .webview(let urlString):
+//          navigator.perform(PresentWebsite(url: URL(string: urlString)!))
+//        case .waitingRound:
+//          let button = DrawerCapsuleButton(model: .init(
+//            title: Localized.Chat.RoundDrawer.action,
+//            style: .brandColored
+//          ))
+//
+//          button
+//            .action
+//            .receive(on: DispatchQueue.main)
+//            .sink { [unowned self] in
+//              navigator.perform(DismissModal(from: self)) { [weak self] in
+//                guard let self else { return }
+//                self.drawerCancellables.removeAll()
+//              }
+//            }.store(in: &drawerCancellables)
+//
+//          navigator.perform(PresentDrawer(items: [
+//            DrawerText(
+//              font: Fonts.Mulish.semiBold.font(size: 14.0),
+//              text: Localized.Chat.RoundDrawer.title,
+//              color: Asset.neutralWeak.color,
+//              lineHeightMultiple: 1.35,
+//              spacingAfter: 25
+//            ),
+//            button
+//          ]))
+//        case .none:
+//          break
+//        }
 
         viewModel.didNavigateSomewhere()
       }.store(in: &cancellables)
@@ -270,7 +270,10 @@ public final class SingleChatController: UIViewController {
         case .clear:
           presentDeleteAllDrawer()
         case .details:
-          navigator.perform(PresentContact(contact: viewModel.contact))
+          navigator.perform(PresentContact(
+            contact: viewModel.contact,
+            on: navigationController!
+          ))
         case .report:
           presentReportDrawer()
         }
@@ -444,7 +447,7 @@ public final class SingleChatController: UIViewController {
         spacing: 20.0,
         views: [reportButton, cancelButton]
       )
-    ]))
+    ], isDismissable: true, from: self))
   }
 
   private func presentDeleteAllDrawer() {
@@ -497,7 +500,7 @@ public final class SingleChatController: UIViewController {
         spacing: 20.0,
         views: [clearButton, cancelButton]
       )
-    ]))
+    ], isDismissable: true, from: self))
   }
 
   private func previewItemAt(_ indexPath: IndexPath) {
@@ -516,7 +519,10 @@ public final class SingleChatController: UIViewController {
   }
 
   @objc private func didTapInfo() {
-    navigator.perform(PresentContact(contact: viewModel.contact))
+    navigator.perform(PresentContact(
+      contact: viewModel.contact,
+      on: navigationController!
+    ))
   }
 }
 

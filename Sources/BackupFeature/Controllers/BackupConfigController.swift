@@ -1,10 +1,11 @@
+import DI
 import UIKit
 import Shared
 import Combine
 import CloudFiles
 import Navigation
 import DrawerFeature
-import DI
+import AppResources
 
 final class BackupConfigController: UIViewController {
   @Dependency var navigator: Navigator
@@ -271,7 +272,7 @@ final class BackupConfigController: UIViewController {
       wifiOnlyButton,
       wifiAndCellularButton,
       cancelButton
-    ]))
+    ], isDismissable: true, from: self))
   }
 
   private func presentFrequencyDrawer(manual: Bool) {
@@ -329,6 +330,6 @@ final class BackupConfigController: UIViewController {
       manualButton,
       automaticButton,
       cancelButton
-    ]))
+    ], isDismissable: true, from: self))
   }
 }

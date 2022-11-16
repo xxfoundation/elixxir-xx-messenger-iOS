@@ -1,7 +1,6 @@
 import XXModels
 import Foundation
 import XXDatabase
-import DI
 import XXLegacyDatabaseMigrator
 
 extension LaunchViewModel {

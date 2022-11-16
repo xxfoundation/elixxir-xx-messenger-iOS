@@ -56,7 +56,7 @@ final class SearchRightController: UIViewController {
       .receive(on: DispatchQueue.main)
       .delay(for: 1, scheduler: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentContact(contact: $0))
+        navigator.perform(PresentContact(contact: $0, on: navigationController!))
       }.store(in: &cancellables)
 
     viewModel
@@ -77,9 +77,9 @@ final class SearchRightController: UIViewController {
           guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
           UIApplication.shared.open(url, options: [:])
         case .failed(.requestOpened):
-          navigator.perform(PresentRequests())
+          navigator.perform(PresentRequests(on: navigationController!))
         case .failed(.alreadyFriends):
-          navigator.perform(PresentContactList())
+          navigator.perform(PresentContactList(on: navigationController!))
         default:
           break
         }

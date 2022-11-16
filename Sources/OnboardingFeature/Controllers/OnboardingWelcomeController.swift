@@ -3,12 +3,15 @@ import Shared
 import Combine
 import Defaults
 import Navigation
+import AppResources
 import DrawerFeature
-import DI
+import StatusBarFeature
+import ComposableArchitecture
 
 public final class OnboardingWelcomeController: UIViewController {
-  @Dependency var navigator: Navigator
-  @Dependency var barStylist: StatusBarStylist
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.statusBar) var statusBar: StatusBarStyleManager
+
   @KeyObject(.username, defaultValue: "") var username: String
 
   private lazy var screenView = OnboardingWelcomeView()
@@ -22,7 +25,7 @@ public final class OnboardingWelcomeController: UIViewController {
 
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    barStylist.styleSubject.send(.darkContent)
+    statusBar.update(.darkContent)
     navigationController?.navigationBar.customize(translucent: true)
   }
 
@@ -35,14 +38,14 @@ public final class OnboardingWelcomeController: UIViewController {
       .continueButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
-        navigator.perform(PresentOnboardingEmail())
+        navigator.perform(PresentOnboardingEmail(on: navigationController!))
       }.store(in: &cancellables)
 
     screenView
       .skipButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
-        navigator.perform(PresentChatList())
+        navigator.perform(PresentChatList(on: navigationController!))
       }.store(in: &cancellables)
 
     screenView.didTapInfo = { [weak self] in
@@ -91,6 +94,6 @@ public final class OnboardingWelcomeController: UIViewController {
         actionButton,
         FlexibleSpace()
       ])
-    ]))
+    ], isDismissable: true, from: self))
   }
 }

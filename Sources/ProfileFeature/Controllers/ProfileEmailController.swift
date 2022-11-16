@@ -64,7 +64,8 @@ public final class ProfileEmailController: UIViewController {
           PresentProfileCode(
             isEmail: true,
             content: $0.input,
-            confirmationId: id
+            confirmationId: id,
+            on: navigationController!
           )
         )
       }.store(in: &cancellables)

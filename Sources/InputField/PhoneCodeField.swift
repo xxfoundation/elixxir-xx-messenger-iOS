@@ -1,34 +1,26 @@
 import UIKit
 import Shared
+import AppResources
 
 final class PhoneCodeField: UIButton {
-    // MARK: UI
+  public let content = UILabel()
 
-    public let content = UILabel()
+  public init() {
+    super.init(frame: .zero)
 
-    // MARK: Lifecycle
+    content.textColor = Asset.neutralActive.color
+    content.font = Fonts.Mulish.semiBold.font(size: 14.0)
 
-    public init() {
-        super.init(frame: .zero)
-        setup()
+    addSubview(content)
+
+    content.snp.makeConstraints {
+      $0.top.equalToSuperview()
+      $0.left.equalToSuperview().offset(11)
+      $0.right.equalToSuperview().offset(-11)
+      $0.width.equalTo(60)
+      $0.bottom.equalToSuperview()
     }
+  }
 
-    public required init?(coder: NSCoder) { nil }
-
-    // MARK: Private
-
-    private func setup() {
-        content.textColor = Asset.neutralActive.color
-        content.font = Fonts.Mulish.semiBold.font(size: 14.0)
-
-        addSubview(content)
-
-        content.snp.makeConstraints { make in
-            make.top.equalToSuperview()
-            make.left.equalToSuperview().offset(11)
-            make.right.equalToSuperview().offset(-11)
-            make.width.equalTo(60)
-            make.bottom.equalToSuperview()
-        }
-    }
+  public required init?(coder: NSCoder) { nil }
 }

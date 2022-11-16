@@ -49,7 +49,7 @@ public final class RestoreSuccessController: UIViewController {
       .nextButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
-        navigator.perform(PresentChatList())
+        navigator.perform(PresentChatList(on: navigationController!))
       }.store(in: &cancellables)
   }
 }

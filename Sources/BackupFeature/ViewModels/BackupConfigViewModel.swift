@@ -1,14 +1,12 @@
 import UIKit
 import Shared
+import AppCore
 import Combine
 import XXClient
 import Defaults
-import Foundation
-
-import DI
-
 import CloudFiles
 import Navigation
+import ComposableArchitecture
 
 enum BackupActionState {
   case backupFinished
@@ -34,9 +32,9 @@ struct BackupConfigViewModel {
 extension BackupConfigViewModel {
   static func live() -> Self {
     class Context {
-      @Dependency var navigator: Navigator
-      @Dependency var service: BackupService
-      @Dependency var hudController: HUDController
+      //@Dependency var service: BackupService
+      @Dependency(\.navigator) var navigator: Navigator
+      @Dependency(\.app.hudManager) var hudManager: HUDManager
     }
 
     let context = Context()
@@ -70,9 +68,9 @@ extension BackupConfigViewModel {
       },
       didTapService: { service, controller in
         if service == .sftp {
-          context.navigator.perform(PresentSFTP { host, username, password in
+          context.navigator.perform(PresentSFTP(completion: { host, username, password in
             context.service.setupSFTP(host: host, username: username, password: password)
-          })
+          }, on: controller.navigationController!))
           return
         }
 

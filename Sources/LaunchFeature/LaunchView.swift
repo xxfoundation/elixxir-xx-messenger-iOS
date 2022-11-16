@@ -1,5 +1,6 @@
 import UIKit
 import Shared
+import AppResources
 
 final class LaunchView: UIView {
   let imageView = UIImageView()

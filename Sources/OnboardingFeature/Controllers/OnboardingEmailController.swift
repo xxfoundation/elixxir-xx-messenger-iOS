@@ -2,13 +2,15 @@ import UIKit
 import Shared
 import Combine
 import Navigation
+import AppResources
 import DrawerFeature
-import DI
+import StatusBarFeature
 import ScrollViewController
+import ComposableArchitecture
 
 public final class OnboardingEmailController: UIViewController {
-  @Dependency var navigator: Navigator
-  @Dependency var barStylist: StatusBarStylist
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.statusBar) var statusBar: StatusBarStyleManager
 
   private lazy var screenView = OnboardingEmailView()
   private lazy var scrollViewController = ScrollViewController()
@@ -20,7 +22,7 @@ public final class OnboardingEmailController: UIViewController {
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     navigationItem.backButtonTitle = " "
-    barStylist.styleSubject.send(.darkContent)
+    statusBar.update(.darkContent)
     navigationController?.navigationBar.customize(translucent: true)
   }
 
@@ -74,7 +76,8 @@ public final class OnboardingEmailController: UIViewController {
           PresentOnboardingCode(
             isEmail: true,
             content: $0.input,
-            confirmationId: id
+            confirmationId: id,
+            on: navigationController!
           )
         )
       }.store(in: &cancellables)
@@ -99,7 +102,7 @@ public final class OnboardingEmailController: UIViewController {
       .skipButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
-        navigator.perform(PresentOnboardingPhone())
+        navigator.perform(PresentOnboardingPhone(on: navigationController!))
       }.store(in: &cancellables)
   }
 
@@ -139,6 +142,6 @@ public final class OnboardingEmailController: UIViewController {
         actionButton,
         FlexibleSpace()
       ])
-    ]))
+    ], isDismissable: true, from: self))
   }
 }

@@ -1,3 +1,4 @@
+import AppCore
 import Shared
 import Combine
 import Defaults
@@ -6,8 +7,7 @@ import XXClient
 import InputField
 import Foundation
 import XXMessengerClient
-import CombineSchedulers
-import DI
+import ComposableArchitecture
 
 final class OnboardingUsernameViewModel {
   struct ViewState: Equatable {
@@ -16,9 +16,11 @@ final class OnboardingUsernameViewModel {
     var didConfirm: Bool = false
   }
 
-  @Dependency var database: Database
-  @Dependency var messenger: Messenger
-  @Dependency var hudController: HUDController
+  @Dependency(\.app.dbManager) var dbManager: DBManager
+  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
+  @Dependency(\.app.bgQueue) var bgQueue: AnySchedulerOf<DispatchQueue>
+
   @KeyObject(.username, defaultValue: "") var username: String
 
   var statePublisher: AnyPublisher<ViewState, Never> {
@@ -26,7 +28,6 @@ final class OnboardingUsernameViewModel {
   }
 
   private let stateSubject = CurrentValueSubject<ViewState, Never>(.init())
-  private var scheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
   func didInput(_ string: String) {
     stateSubject.value.input = string.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -39,14 +40,14 @@ final class OnboardingUsernameViewModel {
   }
 
   func didTapRegister() {
-    hudController.show()
-    scheduler.schedule { [weak self] in
+    hudManager.show()
+    bgQueue.schedule { [weak self] in
       guard let self else { return }
       do {
         try self.messenger.register(
           username: self.stateSubject.value.input
         )
-        try self.database.saveContact(.init(
+        try self.dbManager.getDB().saveContact(.init(
           id: self.messenger.e2e.get()!.getContact().getId(),
           marshaled: self.messenger.e2e.get()!.getContact().data,
           username: self.stateSubject.value.input,
@@ -61,10 +62,10 @@ final class OnboardingUsernameViewModel {
           createdAt: Date()
         ))
         self.username = self.stateSubject.value.input
-        self.hudController.dismiss()
+        self.hudManager.hide()
         self.stateSubject.value.didConfirm = true
       } catch {
-        self.hudController.dismiss()
+        self.hudManager.hide()
         let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
         self.stateSubject.value.status = .invalid(xxError)
       }
