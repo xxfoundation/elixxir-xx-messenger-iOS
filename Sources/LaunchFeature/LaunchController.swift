@@ -1,49 +1,22 @@
 import UIKit
 import Shared
 import Combine
-import Navigation
 import PushFeature
-import DrawerFeature
+import Dependencies
 import AppResources
-import ComposableArchitecture
+import DrawerFeature
+import AppNavigation
 
 public final class LaunchController: UIViewController {
   @Dependency(\.navigator) var navigator: Navigator
 
   private lazy var screenView = LaunchView()
-
   private let viewModel = LaunchViewModel()
-  public var pendingPushRoute: PushRouter.Route?
   private var cancellables = Set<AnyCancellable>()
   private var drawerCancellables = Set<AnyCancellable>()
 
-  public override func viewDidAppear(_ animated: Bool) {
-    super.viewDidAppear(animated)
-    viewModel.viewDidAppear()
-  }
-
   public override func loadView() {
     view = screenView
-  }
-
-  public override func viewWillAppear(_ animated: Bool) {
-    super.viewWillAppear(animated)
-    navigationController?.navigationBar.customize(translucent: true)
-  }
-
-  public override func viewDidLayoutSubviews() {
-    super.viewDidLayoutSubviews()
-    let gradient = CAGradientLayer()
-    gradient.colors = [
-      UIColor(red: 122/255, green: 235/255, blue: 239/255, alpha: 1).cgColor,
-      UIColor(red: 56/255, green: 204/255, blue: 232/255, alpha: 1).cgColor,
-      UIColor(red: 63/255, green: 186/255, blue: 253/255, alpha: 1).cgColor,
-      UIColor(red: 98/255, green: 163/255, blue: 255/255, alpha: 1).cgColor
-    ]
-    gradient.frame = screenView.bounds
-    gradient.startPoint = CGPoint(x: 1, y: 0)
-    gradient.endPoint = CGPoint(x: 0, y: 1)
-    screenView.layer.insertSublayer(gradient, at: 0)
   }
 
   public override func viewDidLoad() {
@@ -58,10 +31,10 @@ public final class LaunchController: UIViewController {
             navigator.perform(PresentTermsAndConditions(replacing: true, on: navigationController!))
             return
           }
-          if let route = pendingPushRoute {
-            hasPendingPushRoute(route)
-            return
-          }
+//          if let route = pendingPushRoute {
+//            hasPendingPushRoute(route)
+//            return
+//          }
           navigator.perform(PresentChatList(on: navigationController!))
           return
         }
@@ -73,6 +46,8 @@ public final class LaunchController: UIViewController {
           offerUpdate(model: update)
         }
       }.store(in: &cancellables)
+
+    viewModel.startLaunch()
   }
 
   private func hasPendingPushRoute(_ route: PushRouter.Route) {

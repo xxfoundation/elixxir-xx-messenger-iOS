@@ -1,5 +1,5 @@
-import DI
 import Combine
+import ComposableArchitecture
 
 enum BackupViewState: Equatable {
   case setup
@@ -16,7 +16,7 @@ struct BackupViewModel {
 extension BackupViewModel {
   static func live() -> Self {
     class Context {
-      @Dependency var service: BackupService
+      @Dependency(\.backupService) var service: BackupService
     }
 
     let context = Context()

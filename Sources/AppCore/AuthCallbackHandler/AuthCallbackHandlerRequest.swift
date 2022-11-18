@@ -1,8 +1,8 @@
-import Foundation
-import XCTestDynamicOverlay
-import XXClient
-import XXMessengerClient
 import XXModels
+import XXClient
+import Foundation
+import XXMessengerClient
+import XCTestDynamicOverlay
 
 public struct AuthCallbackHandlerRequest {
   public var run: (XXClient.Contact) throws -> Void
@@ -15,6 +15,7 @@ public struct AuthCallbackHandlerRequest {
 extension AuthCallbackHandlerRequest {
   public static func live(
     db: DBManagerGetDB,
+    messenger: Messenger,
     now: @escaping () -> Date
   ) -> AuthCallbackHandlerRequest {
     AuthCallbackHandlerRequest { xxContact in
@@ -27,9 +28,21 @@ extension AuthCallbackHandlerRequest {
       dbContact.username = try xxContact.getFact(.username)?.value
       dbContact.email = try xxContact.getFact(.email)?.value
       dbContact.phone = try xxContact.getFact(.phone)?.value
-      dbContact.authStatus = .stranger
+      dbContact.authStatus = .verificationInProgress
       dbContact.createdAt = now()
       dbContact = try db().saveContact(dbContact)
+      do {
+        try messenger.waitForNetwork()
+        if try messenger.verifyContact(xxContact) {
+          dbContact.authStatus = .verified
+          dbContact = try db().saveContact(dbContact)
+        } else {
+          try db().deleteContact(dbContact)
+        }
+      } catch {
+        dbContact.authStatus = .verificationFailed
+        dbContact = try db().saveContact(dbContact)
+      }
     }
   }
 }

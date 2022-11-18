@@ -3,7 +3,8 @@ import Shared
 import Combine
 import Defaults
 import XXClient
-import DI
+import AppCore
+import Dependencies
 import XXMessengerClient
 
 struct ScanDisplayViewState: Equatable {
@@ -15,7 +16,7 @@ struct ScanDisplayViewState: Equatable {
 }
 
 final class ScanDisplayViewModel {
-    @Dependency var messenger: Messenger
+    @Dependency(\.app.messenger) var messenger: Messenger
 
     @KeyObject(.email, defaultValue: nil) var email: String?
     @KeyObject(.phone, defaultValue: nil) var phone: String?

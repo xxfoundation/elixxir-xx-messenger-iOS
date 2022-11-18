@@ -1,17 +1,17 @@
-import DI
 import UIKit
 import Shared
+import AppCore
 import Combine
-import XXLogger
 import XXModels
 import XXClient
 import Defaults
-import Navigation
-import Foundation
-import Permissions
+import AppResources
+import Dependencies
+import AppNavigation
 import DifferenceKit
 import ReportingFeature
 import XXMessengerClient
+import PermissionsFeature
 
 import struct XXModels.Message
 import struct XXModels.FileTransfer
@@ -28,16 +28,16 @@ enum SingleChatNavigationRoutes: Equatable {
 }
 
 final class SingleChatViewModel: NSObject {
-  @Dependency var logger: XXLogger
-  @Dependency var database: Database
-  @Dependency var messenger: Messenger
-  @Dependency var sendReport: SendReport
-  @Dependency var hudController: HUDController
-  @Dependency var permissions: PermissionHandling
-  @Dependency var toastController: ToastController
-  @Dependency var networkMonitor: NetworkMonitoring
-  @Dependency var transferManager: XXClient.FileTransfer
-  
+  @Dependency(\.sendReport) var sendReport
+  @Dependency(\.permissions) var permissions
+  @Dependency(\.app.dbManager) var dbManager
+  @Dependency(\.app.sendImage) var sendImage
+  @Dependency(\.app.messenger) var messenger
+  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.app.sendMessage) var sendMessage
+  @Dependency(\.app.toastManager) var toastManager
+  @Dependency(\.app.networkMonitor) var networkMonitor
+
   @KeyObject(.username, defaultValue: nil) var username: String?
   
   var contact: XXModels.Contact { contactSubject.value }
@@ -53,12 +53,11 @@ final class SingleChatViewModel: NSObject {
   
   var isOnline: AnyPublisher<Bool, Never> {
     networkMonitor
-      .statusPublisher
+      .observeStatus()
       .map { $0 == .available }
       .eraseToAnyPublisher()
   }
-  
-  
+
   var myId: Data {
     try! messenger.e2e.get()!.getContact().getId()
   }
@@ -84,7 +83,7 @@ final class SingleChatViewModel: NSObject {
     if contact.isRecent == true {
       var contact = contact
       contact.isRecent = false
-      _ = try? database.saveContact(contact)
+      _ = try? dbManager.getDB().saveContact(contact)
     }
   }
   
@@ -98,13 +97,13 @@ final class SingleChatViewModel: NSObject {
     
     updateRecentState(contact)
     
-    database.fetchContactsPublisher(Contact.Query(id: [contact.id]))
+    try! dbManager.getDB().fetchContactsPublisher(Contact.Query(id: [contact.id]))
       .replaceError(with: [])
       .compactMap { $0.first }
       .sink { [unowned self] in contactSubject.send($0) }
       .store(in: &cancellables)
     
-    database.fetchMessagesPublisher(.init(chat: .direct(myId, contact.id)))
+    try! dbManager.getDB().fetchMessagesPublisher(.init(chat: .direct(myId, contact.id)))
       .replaceError(with: [])
       .map {
         let groupedByDate = Dictionary(grouping: $0) { domainModel -> Date in
@@ -125,296 +124,102 @@ final class SingleChatViewModel: NSObject {
     }))
   }
   
-  // MARK: Public
-  
   func getFileTransferWith(id: Data) -> FileTransfer {
-    guard let transfer = try? database.fetchFileTransfers(.init(id: [id])).first else {
+    guard let transfer = try? dbManager.getDB().fetchFileTransfers(.init(id: [id])).first else {
       fatalError()
     }
     
     return transfer
   }
   
-  func didSendAudio(url: URL) {
-//    do {
-//      let _ = try transferManager.send(
-//        params: .init(
-//          payload: .init(
-//            name: "",
-//            type: "",
-//            preview: Data(),
-//            contents: Data()
-//          ),
-//          recipientId: contact.id,
-//          retry: 1,
-//          period: 1_000
-//        ),
-//        callback: .init(handle: {
-//          switch $0 {
-//          case .success(let progressCallback):
-//            print(progressCallback.progress.total)
-//          case .failure(let error):
-//            print(error.localizedDescription)
-//          }
-//        })
-//      )
-//
-//      // transferId
-//    } catch {
-//
-//    }
-  }
+  func didSendAudio(url: URL) {}
   
   func didSend(image: UIImage) {
     guard let imageData = image.orientedUp().jpegData(compressionQuality: 1.0) else { return }
-    hudController.show()
-    
-    let transferName = UUID().uuidString
-    
-    do {
-//      let tid = try transferManager.send(
-//        params: .init(
-//          payload: .init(
-//            name: transferName,
-//            type: "jpeg",
-//            preview: Data(),
-//            contents: imageData
-//          ),
-//          recipientId: contact.id,
-//          retry: 10,
-//          period: 1_000
-//        ),
-//        callback: .init(handle: {
-//          switch $0 {
-//          case .success(let progressCallback):
-//
-//            if progressCallback.progress.completed {
-//              print(">>> Outgoing transfer finished successfully")
-//            } else {
-//              print(">>> Outgoing transfer. (\(progressCallback.progress.transmitted)/\(progressCallback.progress.total))")
-//            }
-//
-//            /// THIS IS TOO COMPLEX, NEEDS HELP FROM DARIUSZ
-//
-//          case .failure(let error):
-//            print(">>> Transfer.error: \(error.localizedDescription)")
-//          }
-//        })
-////      )
-//      
-//      let transferModel = FileTransfer(
-//        id: tid,
-//        contactId: contact.id,
-//        name: transferName,
-//        type: "jpeg",
-//        data: imageData,
-//        progress: 0.0,
-//        isIncoming: false,
-//        createdAt: Date()
-//      )
-//      
-//      let transferMessage = Message(
-//        senderId: myId,
-//        recipientId: contact.id,
-//        groupId: nil,
-//        date: Date(),
-//        status: .sending,
-//        isUnread: false,
-//        text: "",
-//        replyMessageId: nil,
-//        roundURL: nil,
-//        fileTransferId: tid
-//      )
-//      
-//      try database.saveFileTransfer(transferModel)
-//      try database.saveMessage(transferMessage)
-      
-      hudController.dismiss()
-    } catch {
-      hudController.show(.init(error: error))
+
+    sendImage(imageData, to: contact.id, onError: {
+      print("\($0.localizedDescription)")
+    }) {
+      print("finished")
     }
   }
-  
+
   func readAll() {
     let assignment = Message.Assignments(isUnread: false)
     let query = Message.Query(chat: .direct(myId, contact.id))
-    _ = try? database.bulkUpdateMessages(query, assignment)
+    _ = try? dbManager.getDB().bulkUpdateMessages(query, assignment)
   }
-  
+
   func didRequestDeleteAll() {
-    _ = try? database.deleteMessages(.init(chat: .direct(myId, contact.id)))
+    _ = try? dbManager.getDB().deleteMessages(.init(chat: .direct(myId, contact.id)))
   }
-  
+
   func didRequestRetry(_ message: Message) {
-    var message = message
-    
-    do {
-      message.status = .sending
-      message = try database.saveMessage(message)
-      
-      var reply: Reply?
-      
-      if let replyId = message.replyMessageId {
-        reply = Reply(messageId: replyId, senderId: myId)
-      }
-      
-      let report = try messenger.e2e.get()!.send(
-        messageType: 2,
-        recipientId: contact.id,
-        payload: Payload(
-          text: message.text,
-          reply: reply
-        ).asData(),
-        e2eParams: GetE2EParams.liveDefault()
-      )
-      
-      try messenger.cMix.get()!.waitForRoundResult(
-        roundList: try report.encode(),
-        timeoutMS: 15_000,
-        callback: .init(handle: {
-          switch $0 {
-          case .delivered:
-            message.status = .sent
-            _ = try? self.database.saveMessage(message)
-            
-          case .notDelivered(timedOut: let timedOut):
-            if timedOut {
-              message.status = .sendingTimedOut
-            } else {
-              message.status = .sendingFailed
-            }
-            
-            _ = try? self.database.saveMessage(message)
-          }
-        })
-      )
-      
-      message.roundURL = report.roundURL
-      message.networkId = report.messageId
-      if let timestamp = report.timestamp {
-        message.date = Date.fromTimestamp(Int(timestamp))
-      }
-      
-      message = try database.saveMessage(message)
-    } catch {
-      print(error.localizedDescription)
-      message.status = .sendingFailed
-      _ = try? database.saveMessage(message)
-    }
+    // TODO
   }
-  
+
   func didNavigateSomewhere() {
     navigationRoutes.send(.none)
   }
-  
+
   @discardableResult
   func didTest(permission: PermissionType) -> Bool {
     switch permission {
     case .camera:
-      if permissions.isCameraAllowed {
+      if permissions.camera.status() {
         navigationRoutes.send(.camera)
       } else {
         navigationRoutes.send(.cameraPermission)
       }
     case .library:
-      if permissions.isPhotosAllowed {
+      if permissions.library.status() {
         navigationRoutes.send(.library)
       } else {
         navigationRoutes.send(.libraryPermission)
       }
     case .microphone:
-      if permissions.isMicrophoneAllowed {
+      if permissions.microphone.status() {
         return true
       } else {
         navigationRoutes.send(.microphonePermission)
       }
     }
-    
+
     return false
   }
-  
+
   func didRequestCopy(_ model: Message) {
     UIPasteboard.general.string = model.text
   }
-  
+
   func didRequestDeleteSingle(_ model: Message) {
     didRequestDelete([model])
   }
-  
+
   func didRequestReport(_: Message) {
     reportPopupSubject.send()
   }
-  
+
   func abortReply() {
     stagedReply = nil
   }
-  
+
   func send(_ string: String) {
-    var message: Message = .init(
-      senderId: myId,
-      recipientId: contact.id,
-      groupId: nil,
-      date: Date(),
-      status: .sending,
-      isUnread: false,
+    sendMessage(
       text: string.trimmingCharacters(in: .whitespacesAndNewlines),
-      replyMessageId: stagedReply?.messageId
-    )
-    
-    DispatchQueue.global().async { [weak self] in
-      guard let self else { return }
-      
-      do {
-        message = try self.database.saveMessage(message)
-        
-        let report = try self.messenger.e2e.get()!.send(
-          messageType: 2,
-          recipientId: self.contact.id,
-          payload: Payload(text: message.text, reply: self.stagedReply).asData(),
-          e2eParams: GetE2EParams.liveDefault()
-        )
-        
-        try self.messenger.cMix.get()!.waitForRoundResult(
-          roundList: try report.encode(),
-          timeoutMS: 15_000,
-          callback: .init(handle: {
-            switch $0 {
-            case .delivered:
-              message.status = .sent
-              _ = try? self.database.saveMessage(message)
-              
-            case .notDelivered(timedOut: let timedOut):
-              if timedOut {
-                message.status = .sendingTimedOut
-              } else {
-                message.status = .sendingFailed
-              }
-              
-              _ = try? self.database.saveMessage(message)
-            }
-          })
-        )
-        
-        message.roundURL = report.roundURL
-        message.networkId = report.messageId
-        if let timestamp = report.timestamp {
-          message.date = Date.fromTimestamp(Int(timestamp))
-        }
-        
-        message = try self.database.saveMessage(message)
-      } catch {
-        print(error.localizedDescription)
-        message.status = .sendingFailed
-        _ = try? self.database.saveMessage(message)
+      replyingTo: stagedReply?.messageId,
+      to: contact.id,
+      onError: {
+        print("\($0.localizedDescription)")
+      }, completion: {
+        print("completed")
       }
-      
-      self.stagedReply = nil
-    }
+    )
   }
-  
+
   func didRequestReply(_ message: Message) {
     guard let networkId = message.networkId else { return }
-    
+
     let senderTitle: String = {
       if message.senderId == myId {
         return "You"
@@ -422,24 +227,24 @@ final class SingleChatViewModel: NSObject {
         return (contact.nickname ?? contact.username) ?? "Fetching username..."
       }
     }()
-    
+
     replySubject.send((senderTitle, message.text))
     stagedReply = Reply(messageId: networkId, senderId: message.senderId)
   }
-  
+
   func getReplyContent(for messageId: Data) -> (String, String) {
-    guard let message = try? database.fetchMessages(.init(networkId: messageId)).first else {
+    guard let message = try? dbManager.getDB().fetchMessages(.init(networkId: messageId)).first else {
       return ("[DELETED]", "[DELETED]")
     }
-    
-    guard let contact = try? database.fetchContacts(.init(id: [message.senderId])).first else {
+
+    guard let contact = try? dbManager.getDB().fetchContacts(.init(id: [message.senderId])).first else {
       fatalError()
     }
-    
+
     let contactTitle = (contact.nickname ?? contact.username) ?? "You"
     return (contactTitle, message.text)
   }
-  
+
   func showRoundFrom(_ roundURL: String?) {
     if let urlString = roundURL, !urlString.isEmpty {
       navigationRoutes.send(.webview(urlString))
@@ -447,26 +252,26 @@ final class SingleChatViewModel: NSObject {
       navigationRoutes.send(.waitingRound)
     }
   }
-  
+
   func didRequestDelete(_ items: [Message]) {
-    _ = try? database.deleteMessages(.init(id: Set(items.compactMap(\.id))))
+    _ = try? dbManager.getDB().deleteMessages(.init(id: Set(items.compactMap(\.id))))
   }
-  
+
   func itemWith(id: Int64) -> Message? {
     sectionsRelay.value.flatMap(\.elements).first(where: { $0.id == id })
   }
-  
+
   func itemAt(indexPath: IndexPath) -> Message? {
     guard sectionsRelay.value.count > indexPath.section else { return nil }
-    
+
     let items = sectionsRelay.value[indexPath.section].elements
     return items.count > indexPath.row ? items[indexPath.row] : nil
   }
-  
+
   func section(at index: Int) -> ChatSection? {
     sectionsRelay.value.count > 0 ? sectionsRelay.value[index].model : nil
   }
-  
+
   func report(screenshot: UIImage, completion: @escaping (Bool) -> Void) {
     let report = Report(
       sender: .init(
@@ -480,36 +285,36 @@ final class SingleChatViewModel: NSObject {
       type: .dm,
       screenshot: screenshot.pngData()!
     )
-    
-    hudController.show()
+
+    hudManager.show()
     sendReport(report) { result in
       switch result {
       case .failure(let error):
         DispatchQueue.main.async {
-          self.hudController.show(.init(error: error))
+          self.hudManager.show(.init(error: error))
           completion(false)
         }
-        
+
       case .success(_):
         self.blockContact()
         DispatchQueue.main.async {
-          self.hudController.dismiss()
+          self.hudManager.hide()
           self.presentReportConfirmation()
           completion(true)
         }
       }
     }
   }
-  
+
   private func blockContact() {
     var contact = contact
     contact.isBlocked = true
-    _ = try? database.saveContact(contact)
+    _ = try? dbManager.getDB().saveContact(contact)
   }
-  
+
   private func presentReportConfirmation() {
     let name = (contact.nickname ?? contact.username) ?? "the contact"
-    toastController.enqueueToast(model: .init(
+    toastManager.enqueue(.init(
       title: "Your report has been sent and \(name) is now blocked.",
       leftImage: Asset.requestSentToaster.image
     ))

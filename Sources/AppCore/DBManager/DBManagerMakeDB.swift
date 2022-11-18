@@ -21,7 +21,7 @@ extension DBManagerMakeDB {
         .createDirectory(at: url, withIntermediateDirectories: true)
 
       let dbFilePath = url
-        .appendingPathComponent("db")
+        .appendingPathComponent("xxm_database")
         .appendingPathExtension("sqlite")
         .path
 

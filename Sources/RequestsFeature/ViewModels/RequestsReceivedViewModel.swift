@@ -1,13 +1,14 @@
 import UIKit
 import Shared
+import AppCore
 import Combine
 import Defaults
 import XXModels
 import XXClient
+import Dependencies
 import DrawerFeature
 import ReportingFeature
 import CombineSchedulers
-import DI
 import XXMessengerClient
 
 import struct XXModels.Group
@@ -19,11 +20,12 @@ struct RequestReceived: Hashable, Equatable {
 }
 
 final class RequestsReceivedViewModel {
-  @Dependency var database: Database
-  @Dependency var messenger: Messenger
-  @Dependency var groupManager: GroupChat
-  @Dependency var hudController: HUDController
-  @Dependency var reportingStatus: ReportingStatus
+  @Dependency(\.app.dbManager) var dbManager: DBManager
+  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
+  @Dependency(\.reportingStatus) var reportingStatus: ReportingStatus
+
+  //@Dependency var groupManager: GroupChat
   
   @KeyObject(.isShowingHiddenRequests, defaultValue: false) var isShowingHiddenRequests: Bool
 
@@ -74,11 +76,11 @@ final class RequestsReceivedViewModel {
       isBanned: reportingStatus.isEnabled() ? false : nil
     )
     
-    let groupStream = database
+    let groupStream = try! dbManager.getDB()
       .fetchGroupsPublisher(groupsQuery)
       .replaceError(with: [])
     
-    let contactsStream = database
+    let contactsStream = try! dbManager.getDB()
       .fetchContactsPublisher(contactsQuery)
       .replaceError(with: [])
     
@@ -151,7 +153,7 @@ final class RequestsReceivedViewModel {
         
         do {
           contact.authStatus = .verificationInProgress
-          try self.database.saveContact(contact)
+          try self.dbManager.getDB().saveContact(contact)
           
           print(">>> [messenger.verifyContact] will start")
           
@@ -159,17 +161,17 @@ final class RequestsReceivedViewModel {
             print(">>> [messenger.verifyContact] verified")
             
             contact.authStatus = .verified
-            contact = try self.database.saveContact(contact)
+            contact = try self.dbManager.getDB().saveContact(contact)
           } else {
             print(">>> [messenger.verifyContact] is fake")
             
-            try self.database.deleteContact(contact)
+            try self.dbManager.getDB().deleteContact(contact)
           }
         } catch {
           print(">>> [messenger.verifyContact] thrown an exception: \(error.localizedDescription)")
           
           contact.authStatus = .verificationFailed
-          _ = try? self.database.saveContact(contact)
+          _ = try? self.dbManager.getDB().saveContact(contact)
         }
       }
     } else if request.status == .verifying {
@@ -178,29 +180,29 @@ final class RequestsReceivedViewModel {
   }
   
   func didRequestHide(group: Group) {
-    if var group = try? database.fetchGroups(.init(id: [group.id])).first {
+    if var group = try? dbManager.getDB().fetchGroups(.init(id: [group.id])).first {
       group.authStatus = .hidden
-      _ = try? database.saveGroup(group)
+      _ = try? dbManager.getDB().saveGroup(group)
     }
   }
   
   func didRequestAccept(group: Group) {
-    hudController.show()
+    hudManager.show()
     
     backgroundScheduler.schedule { [weak self] in
       guard let self else { return }
       
       do {
-        try self.groupManager.joinGroup(serializedGroupData: group.serialized)
+        //try self.groupManager.joinGroup(serializedGroupData: group.serialized)
         
         var group = group
         group.authStatus = .participating
-        try self.database.saveGroup(group)
+        try self.dbManager.getDB().saveGroup(group)
         
-        self.hudController.dismiss()
+        self.hudManager.hide()
         self.groupConfirmationSubject.send(group)
       } catch {
-        self.hudController.show(.init(error: error))
+        self.hudManager.show(.init(error: error))
       }
     }
   }
@@ -209,8 +211,8 @@ final class RequestsReceivedViewModel {
     _ group: Group,
     _ completion: @escaping (Result<[DrawerTableCellModel], Error>) -> Void
   ) {
-    if let info = try? database.fetchGroupInfos(.init(groupId: group.id)).first {
-      database.fetchContactsPublisher(.init(id: Set(info.members.map(\.id))))
+    if let info = try? dbManager.getDB().fetchGroupInfos(.init(groupId: group.id)).first {
+      try! dbManager.getDB().fetchContactsPublisher(.init(id: Set(info.members.map(\.id))))
         .replaceError(with: [])
         .sink { members in
           let withUsername = members
@@ -243,14 +245,14 @@ final class RequestsReceivedViewModel {
   }
   
   func didRequestHide(contact: XXModels.Contact) {
-    if var contact = try? database.fetchContacts(.init(id: [contact.id])).first {
+    if var contact = try? dbManager.getDB().fetchContacts(.init(id: [contact.id])).first {
       contact.authStatus = .hidden
-      _ = try? database.saveContact(contact)
+      _ = try? dbManager.getDB().saveContact(contact)
     }
   }
   
   func didRequestAccept(contact: XXModels.Contact, nickname: String? = nil) {
-    hudController.show()
+    hudManager.show()
     
     var contact = contact
     contact.authStatus = .confirming
@@ -260,24 +262,24 @@ final class RequestsReceivedViewModel {
       guard let self else { return }
       
       do {
-        try self.database.saveContact(contact)
+        try self.dbManager.getDB().saveContact(contact)
         
         let _ = try self.messenger.e2e.get()!.confirmReceivedRequest(partner: .live(contact.marshaled!))
         contact.authStatus = .friend
-        try self.database.saveContact(contact)
+        try self.dbManager.getDB().saveContact(contact)
         
-        self.hudController.dismiss()
+        self.hudManager.hide()
         self.contactConfirmationSubject.send(contact)
       } catch {
         contact.authStatus = .confirmationFailed
-        _ = try? self.database.saveContact(contact)
-        self.hudController.show(.init(error: error))
+        _ = try? self.dbManager.getDB().saveContact(contact)
+        self.hudManager.show(.init(error: error))
       }
     }
   }
   
   func groupChatWith(group: Group) -> GroupInfo {
-    guard let info = try? database.fetchGroupInfos(.init(groupId: group.id)).first else {
+    guard let info = try? dbManager.getDB().fetchGroupInfos(.init(groupId: group.id)).first else {
       fatalError()
     }
     

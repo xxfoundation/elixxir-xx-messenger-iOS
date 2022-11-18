@@ -1,12 +1,12 @@
 import UIKit
 import Shared
 import Combine
+import AppCore
 import AppResources
-import StatusBarFeature
-import ComposableArchitecture
+import Dependencies
 
 public final class CountryListController: UIViewController, UITableViewDelegate {
-  @Dependency(\.statusBar) var statusBar: StatusBarStyleManager
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
 
   private lazy var screenView = CountryListView()
 
@@ -24,7 +24,7 @@ public final class CountryListController: UIViewController, UITableViewDelegate 
 
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    statusBar.update(.darkContent)
+    statusBar.set(.darkContent)
   }
 
   public override func loadView() {

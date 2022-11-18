@@ -1,13 +1,15 @@
-import DI
 import UIKit
 import Shared
 import Combine
-import Navigation
+import AppCore
+import Dependencies
+import AppResources
+import AppNavigation
 import DrawerFeature
 
 public final class MenuController: UIViewController {
-  @Dependency var navigator: Navigator
-  @Dependency var barStylist: StatusBarStylist
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
 
   private lazy var screenView = MenuView()
 
@@ -16,8 +18,14 @@ public final class MenuController: UIViewController {
   private var cancellables = Set<AnyCancellable>()
   private var drawerCancellables = Set<AnyCancellable>()
 
-  public init(_ currentItem: MenuItem) {
+  private var navController: UINavigationController?
+
+  public init(
+    _ currentItem: MenuItem,
+    _ navController: UINavigationController? = nil
+  ) {
     self.currentItem = currentItem
+    self.navController = navController
     super.init(nibName: nil, bundle: nil)
   }
 
@@ -57,12 +65,12 @@ public final class MenuController: UIViewController {
 
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    barStylist.styleSubject.send(.lightContent)
+    statusBar.set(.lightContent)
   }
 
   public override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
-    barStylist.styleSubject.send(.darkContent)
+    statusBar.set(.darkContent)
   }
 
   private func setupBindings() {
@@ -74,7 +82,7 @@ public final class MenuController: UIViewController {
       .sink { [unowned self] in
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self, self.currentItem != .scan else { return }
-          self.navigator.perform(PresentScan(on: self.navigationController!))
+          self.navigator.perform(PresentScan(on: self.navController!))
         }
       }.store(in: &cancellables)
 
@@ -86,7 +94,7 @@ public final class MenuController: UIViewController {
       .sink { [unowned self] in
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self, self.currentItem != .profile else { return }
-          self.navigator.perform(PresentProfile(on: self.navigationController!))
+          self.navigator.perform(PresentProfile(on: self.navController!))
         }
       }.store(in: &cancellables)
 
@@ -97,7 +105,7 @@ public final class MenuController: UIViewController {
       .sink { [unowned self] in
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self, self.currentItem != .scan else { return }
-          self.navigator.perform(PresentScan(on: self.navigationController!))
+          self.navigator.perform(PresentScan(on: self.navController!))
         }
       }.store(in: &cancellables)
 
@@ -108,7 +116,7 @@ public final class MenuController: UIViewController {
       .sink { [unowned self] in
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self, self.currentItem != .chats else { return }
-          self.navigator.perform(PresentChatList(on: self.navigationController!))
+          self.navigator.perform(PresentChatList(on: self.navController!))
         }
       }.store(in: &cancellables)
 
@@ -119,7 +127,7 @@ public final class MenuController: UIViewController {
       .sink { [unowned self] in
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self, self.currentItem != .contacts else { return }
-          self.navigator.perform(PresentContactList(on: self.navigationController!))
+          self.navigator.perform(PresentContactList(on: self.navController!))
         }
       }.store(in: &cancellables)
 
@@ -130,7 +138,7 @@ public final class MenuController: UIViewController {
       .sink { [unowned self] in
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self, self.currentItem != .settings else { return }
-          self.navigator.perform(PresentSettings(on: self.navigationController!))
+          self.navigator.perform(PresentSettings(on: self.navController!))
         }
       }.store(in: &cancellables)
 
@@ -158,7 +166,7 @@ public final class MenuController: UIViewController {
       .sink { [unowned self] in
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self, self.currentItem != .requests else { return }
-          self.navigator.perform(PresentRequests(on: self.navigationController!))
+          self.navigator.perform(PresentRequests(on: self.navController!))
         }
       }.store(in: &cancellables)
 

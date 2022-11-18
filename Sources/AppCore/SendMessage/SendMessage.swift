@@ -8,15 +8,16 @@ public struct SendMessage {
   public typealias OnError = (Error) -> Void
   public typealias Completion = () -> Void
 
-  public var run: (String, Data, @escaping OnError, @escaping Completion) -> Void
+  public var run: (String, Data?, Data, @escaping OnError, @escaping Completion) -> Void
 
   public func callAsFunction(
     text: String,
+    replyingTo: Data?,
     to recipientId: Data,
     onError: @escaping OnError,
     completion: @escaping Completion
   ) {
-    run(text, recipientId, onError, completion)
+    run(text, replyingTo, recipientId, onError, completion)
   }
 }
 
@@ -26,7 +27,7 @@ extension SendMessage {
     db: DBManagerGetDB,
     now: @escaping () -> Date
   ) -> SendMessage {
-    SendMessage { text, recipientId, onError, completion in
+    SendMessage { text, replyingTo, recipientId, onError, completion in
       do {
         let myContactId = try messenger.e2e.tryGet().getContact().getId()
         let message = try db().saveMessage(.init(
@@ -36,9 +37,10 @@ extension SendMessage {
           date: now(),
           status: .sending,
           isUnread: false,
-          text: text
+          text: text,
+          replyMessageId: replyingTo
         ))
-        let payload = MessagePayload(text: message.text)
+        let payload = MessagePayload(text: message.text, replyingTo: replyingTo)
         let report = try messenger.sendMessage(
           recipientId: recipientId,
           payload: try payload.encode(),

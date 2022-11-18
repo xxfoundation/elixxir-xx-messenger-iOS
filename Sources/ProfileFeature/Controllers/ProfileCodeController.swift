@@ -1,13 +1,15 @@
 import UIKit
 import Shared
 import Combine
-import Navigation
-import DI
+import AppCore
+import AppResources
+import Dependencies
+import AppNavigation
 import ScrollViewController
 
 public final class ProfileCodeController: UIViewController {
-  @Dependency var navigator: Navigator
-  @Dependency var barStylist: StatusBarStylist
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
 
   private lazy var screenView = ProfileCodeView()
   private lazy var scrollViewController = ScrollViewController()

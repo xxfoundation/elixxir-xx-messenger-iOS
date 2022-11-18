@@ -17,13 +17,13 @@ public final class RestorePassphraseController: UIViewController {
     }
   }
 
-  private let cancelClosure: EmptyClosure
-  private let stringClosure: StringClosure
+  private let cancelClosure: () -> Void
+  private let stringClosure: (String) -> Void
   private var cancellables = Set<AnyCancellable>()
 
   public init(
-    _ cancelClosure: @escaping EmptyClosure,
-    _ stringClosure: @escaping StringClosure
+    _ cancelClosure: @escaping () -> Void,
+    _ stringClosure: @escaping (String) -> Void
   ) {
     self.stringClosure = stringClosure
     self.cancelClosure = cancelClosure

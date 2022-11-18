@@ -2,14 +2,16 @@ import UIKit
 import Shared
 import Combine
 import XXModels
-import Navigation
+import AppCore
+import AppResources
+import Dependencies
+import AppNavigation
 import DrawerFeature
 import CountryListFeature
-import DI
 
 final class RequestsReceivedController: UIViewController {
-  @Dependency var navigator: Navigator
-  @Dependency var toaster: ToastController
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.app.toastManager) var toaster: ToastManager
 
   private lazy var screenView = RequestsReceivedView()
   private var cancellables = Set<AnyCancellable>()
@@ -265,7 +267,7 @@ extension RequestsReceivedController {
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self else { return }
           self.drawerCancellables.removeAll()
-          self.navigator.perform(PresentChat(contact: contact, on: navigationController!))
+          self.navigator.perform(PresentChat(contact: contact, on: self.navigationController!))
         }
       }.store(in: &drawerCancellables)
 

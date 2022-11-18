@@ -1,6 +1,5 @@
 import UIKit
 import Combine
-import DI
 
 final class RequestsFailedController: UIViewController {
     private lazy var screenView = RequestsFailedView()

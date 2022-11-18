@@ -1,6 +1,7 @@
 import UIKit
 import Shared
 import Combine
+import AppResources
 
 final class ChatListMenuView: UIToolbar {
   enum Action {

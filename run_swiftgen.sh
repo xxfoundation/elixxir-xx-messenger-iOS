@@ -1,2 +1,2 @@
 #!/bin/bash
-swiftgen config run --config Sources/Shared/swiftgen.yml
+swiftgen config run --config Sources/AppResources/swiftgen.yml

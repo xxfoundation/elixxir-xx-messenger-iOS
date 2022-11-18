@@ -1,6 +1,7 @@
 import UIKit
 import Shared
 import Combine
+import AppResources
 
 final class RequestsHiddenSectionHeader: UICollectionReusableView {
   let titleLabel = UILabel()

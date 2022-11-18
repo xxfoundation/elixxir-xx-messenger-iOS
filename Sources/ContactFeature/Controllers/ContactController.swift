@@ -2,14 +2,16 @@ import UIKit
 import Shared
 import Combine
 import XXModels
-import Navigation
+import AppCore
+import Dependencies
+import AppResources
+import AppNavigation
 import DrawerFeature
-import DI
 import ScrollViewController
 
 public final class ContactController: UIViewController {
-  @Dependency var navigator: Navigator
-  @Dependency var barStylist: StatusBarStylist
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
 
   private lazy var screenView = ContactView()
   private lazy var scrollViewController = ScrollViewController()
@@ -28,7 +30,7 @@ public final class ContactController: UIViewController {
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     navigationItem.backButtonTitle = ""
-    barStylist.styleSubject.send(.lightContent)
+    statusBar.set(.lightContent)
     navigationController?.navigationBar
       .customize(
         backgroundColor: Asset.neutralBody.color,

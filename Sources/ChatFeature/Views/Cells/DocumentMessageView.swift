@@ -1,5 +1,6 @@
 import UIKit
 import Shared
+import AppResources
 
 typealias OutgoingDocumentCell = CollectionCell<FlexibleSpace, DocumentMessageView>
 typealias IncomingDocumentCell = CollectionCell<DocumentMessageView, FlexibleSpace>

@@ -3,13 +3,14 @@ import Shared
 import Combine
 import XXModels
 import Defaults
-import Navigation
+import AppResources
+import Dependencies
+import AppNavigation
 import DrawerFeature
 import CountryListFeature
-import DI
 
 final class SearchLeftController: UIViewController {
-  @Dependency var navigator: Navigator
+  @Dependency(\.navigator) var navigator: Navigator
   @KeyObject(.email, defaultValue: nil) var email: String?
   @KeyObject(.phone, defaultValue: nil) var phone: String?
   @KeyObject(.sharingEmail, defaultValue: false) var isSharingEmail: Bool

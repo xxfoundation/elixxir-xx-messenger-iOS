@@ -1,12 +1,13 @@
 import Shared
 import Combine
+import AppCore
 import XXClient
 import InputField
 import Foundation
+import Dependencies
 import CombineSchedulers
 import XXMessengerClient
 import CountryListFeature
-import DI
 
 final class ProfilePhoneViewModel {
   struct ViewState: Equatable {
@@ -17,15 +18,15 @@ final class ProfilePhoneViewModel {
     var country: Country = .fromMyPhone()
   }
 
-  @Dependency var messenger: Messenger
-  @Dependency var hudController: HUDController
+  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
+  @Dependency(\.app.bgQueue) var bgQueue: AnySchedulerOf<DispatchQueue>
 
   var statePublisher: AnyPublisher<ViewState, Never> {
     stateSubject.eraseToAnyPublisher()
   }
 
   private let stateSubject = CurrentValueSubject<ViewState, Never>(.init())
-  private var scheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
   func didInput(_ string: String) {
     stateSubject.value.input = string
@@ -42,8 +43,8 @@ final class ProfilePhoneViewModel {
   }
 
   func didTapNext() {
-    hudController.show()
-    scheduler.schedule { [weak self] in
+    hudManager.show()
+    bgQueue.schedule { [weak self] in
       guard let self else { return }
       let content = "\(self.stateSubject.value.input)\(self.stateSubject.value.country.code)"
       do {
@@ -51,12 +52,12 @@ final class ProfilePhoneViewModel {
           .init(type: .phone, value: content)
         )
 
-        self.hudController.dismiss()
+        self.hudManager.hide()
         self.stateSubject.value.content = content
         self.stateSubject.value.confirmationId = confirmationId
       } catch {
         let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
-        self.hudController.show(.init(content: xxError))
+        self.hudManager.show(.init(content: xxError))
       }
     }
   }

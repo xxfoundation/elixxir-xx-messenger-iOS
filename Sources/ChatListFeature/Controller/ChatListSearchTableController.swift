@@ -1,8 +1,9 @@
 import UIKit
 import Shared
 import Combine
-import Navigation
-import DI
+import AppResources
+import Dependencies
+import AppNavigation
 
 class ChatSearchListTableViewDiffableDataSource: UITableViewDiffableDataSource<SearchSection, SearchItem> {
   override func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
@@ -16,7 +17,7 @@ class ChatSearchListTableViewDiffableDataSource: UITableViewDiffableDataSource<S
 }
 
 final class ChatSearchTableController: UITableViewController {
-  @Dependency var navigator: Navigator
+  @Dependency(\.navigator) var navigator: Navigator
 
   private let viewModel: ChatListViewModel
   private let cellHeight: CGFloat = 83.0

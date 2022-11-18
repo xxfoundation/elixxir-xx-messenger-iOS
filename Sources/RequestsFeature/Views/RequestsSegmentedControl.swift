@@ -1,6 +1,7 @@
 import UIKit
 import Shared
 import SnapKit
+import AppResources
 
 final class RequestsSegmentedControl: UIView {
   private let trackView = UIView()

@@ -2,15 +2,15 @@ import UIKit
 import Shared
 import Combine
 import Defaults
-import Navigation
+import AppCore
+import Dependencies
 import AppResources
+import AppNavigation
 import DrawerFeature
-import StatusBarFeature
-import ComposableArchitecture
 
 public final class OnboardingWelcomeController: UIViewController {
   @Dependency(\.navigator) var navigator: Navigator
-  @Dependency(\.statusBar) var statusBar: StatusBarStyleManager
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
 
   @KeyObject(.username, defaultValue: "") var username: String
 
@@ -25,7 +25,7 @@ public final class OnboardingWelcomeController: UIViewController {
 
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    statusBar.update(.darkContent)
+    statusBar.set(.darkContent)
     navigationController?.navigationBar.customize(translucent: true)
   }
 

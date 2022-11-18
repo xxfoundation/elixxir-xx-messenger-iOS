@@ -1,6 +1,6 @@
 import UIKit
 import Combine
-import Navigation
+import AppNavigation
 import ComposableArchitecture
 
 public final class OnboardingStartController: UIViewController {

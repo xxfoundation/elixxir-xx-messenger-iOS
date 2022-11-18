@@ -18,6 +18,7 @@ extension AuthCallbackHandlerConfirm {
       guard var dbContact = try db().fetchContacts(.init(id: [id])).first else {
         return
       }
+      dbContact.isRecent = true
       dbContact.authStatus = .friend
       dbContact = try db().saveContact(dbContact)
     }

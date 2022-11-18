@@ -1,14 +1,14 @@
-import DI
 import UIKit
 import Shared
 import Combine
 import CloudFiles
-import Navigation
-import DrawerFeature
 import AppResources
+import AppNavigation
+import DrawerFeature
+import ComposableArchitecture
 
 final class BackupConfigController: UIViewController {
-  @Dependency var navigator: Navigator
+  @Dependency(\.navigator) var navigator: Navigator
 
   private lazy var screenView = BackupConfigView()
 

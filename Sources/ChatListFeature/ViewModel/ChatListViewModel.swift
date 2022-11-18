@@ -3,9 +3,10 @@ import Shared
 import Combine
 import XXModels
 import Defaults
+import AppCore
+import Dependencies
 import XXMessengerClient
 import ReportingFeature
-import DI
 
 import struct XXModels.Group
 import XXClient
@@ -24,11 +25,11 @@ typealias RecentsSnapshot = NSDiffableDataSourceSnapshot<SectionId, XXModels.Con
 typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchItem>
 
 final class ChatListViewModel {
-  @Dependency var database: Database
-  @Dependency var messenger: Messenger
-  @Dependency var groupManager: GroupChat
-  @Dependency var hudController: HUDController
-  @Dependency var reportingStatus: ReportingStatus
+  @Dependency(\.app.dbManager) var dbManager
+  @Dependency(\.app.messenger) var messenger
+  @Dependency(\.groupManager) var groupManager
+  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.reportingStatus) var reportingStatus
   
   // TO REFACTOR:
   var isOnline: AnyPublisher<Bool, Never> {
@@ -51,7 +52,7 @@ final class ChatListViewModel {
       isBanned: reportingStatus.isEnabled() ? false : nil
     )
     
-    return database.fetchContactsPublisher(query)
+    return try! dbManager.getDB().fetchContactsPublisher(query)
       .replaceError(with: [])
       .map {
         let section = SectionId()
@@ -69,7 +70,7 @@ final class ChatListViewModel {
     )
     
     return Publishers.CombineLatest3(
-      database.fetchContactsPublisher(contactsQuery)
+      try! dbManager.getDB().fetchContactsPublisher(contactsQuery)
         .replaceError(with: [])
         .map { $0.filter { $0.id != self.myId }},
       chatsPublisher,
@@ -135,8 +136,8 @@ final class ChatListViewModel {
     )
     
     return Publishers.CombineLatest(
-      database.fetchContactsPublisher(contactsQuery).replaceError(with: []),
-      database.fetchGroupsPublisher(groupQuery).replaceError(with: [])
+      try! dbManager.getDB().fetchContactsPublisher(contactsQuery).replaceError(with: []),
+      try! dbManager.getDB().fetchGroupsPublisher(groupQuery).replaceError(with: [])
     )
     .map { $0.0.count + $0.1.count }
     .eraseToAnyPublisher()
@@ -147,7 +148,7 @@ final class ChatListViewModel {
   private let chatsSubject = CurrentValueSubject<[ChatInfo], Never>([])
   
   init() {
-    database.fetchChatInfosPublisher(
+    try! dbManager.getDB().fetchChatInfosPublisher(
       ChatInfo.Query(
         contactChatInfoQuery: .init(
           userId: myId,
@@ -174,25 +175,27 @@ final class ChatListViewModel {
   }
   
   func leave(_ group: Group) {
-    hudController.show()
-    
+    guard let manager = groupManager.get() else {
+      return
+    }
+    hudManager.show()
     do {
-      try groupManager.leaveGroup(groupId: group.id)
-      try database.deleteMessages(.init(chat: .group(group.id)))
-      try database.deleteGroup(group)
-      hudController.dismiss()
+      try manager.leaveGroup(groupId: group.id)
+      try dbManager.getDB().deleteMessages(.init(chat: .group(group.id)))
+      try dbManager.getDB().deleteGroup(group)
+      hudManager.hide()
     } catch {
-      hudController.show(.init(error: error))
+      hudManager.show(.init(error: error))
     }
   }
   
   func clear(_ contact: XXModels.Contact) {
-    _ = try? database.deleteMessages(.init(chat: .direct(myId, contact.id)))
+    _ = try? dbManager.getDB().deleteMessages(.init(chat: .direct(myId, contact.id)))
   }
   
   func groupInfo(from group: Group) -> GroupInfo? {
     let query = GroupInfo.Query(groupId: group.id)
-    guard let info = try? database.fetchGroupInfos(query).first else {
+    guard let info = try? dbManager.getDB().fetchGroupInfos(query).first else {
       return nil
     }
     

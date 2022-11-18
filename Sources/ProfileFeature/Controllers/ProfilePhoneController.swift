@@ -1,13 +1,15 @@
-import DI
 import UIKit
 import Shared
 import Combine
-import Navigation
+import AppCore
+import AppResources
+import Dependencies
+import AppNavigation
 import ScrollViewController
 
 public final class ProfilePhoneController: UIViewController {
-  @Dependency var navigator: Navigator
-  @Dependency var barStylist: StatusBarStylist
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
 
   private lazy var screenView = ProfilePhoneView()
   private lazy var scrollViewController = ScrollViewController()
@@ -18,7 +20,7 @@ public final class ProfilePhoneController: UIViewController {
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     navigationItem.backButtonTitle = ""
-    barStylist.styleSubject.send(.darkContent)
+    statusBar.set(.darkContent)
     navigationController?.navigationBar
       .customize(backgroundColor: Asset.neutralWhite.color)
   }

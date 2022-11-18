@@ -1,13 +1,15 @@
 import UIKit
 import Shared
+import AppCore
 import Combine
 import Defaults
 import XXModels
 import Defaults
 import XXClient
+import AppResources
+import Dependencies
 import ReportingFeature
 import CombineSchedulers
-import DI
 import XXMessengerClient
 
 struct RequestSent: Hashable, Equatable {
@@ -16,11 +18,11 @@ struct RequestSent: Hashable, Equatable {
 }
 
 final class RequestsSentViewModel {
-  @Dependency var database: Database
-  @Dependency var messenger: Messenger
-  @Dependency var hudController: HUDController
-  @Dependency var reportingStatus: ReportingStatus
-  @Dependency var toastController: ToastController
+  @Dependency(\.app.dbManager) var dbManager: DBManager
+  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
+  @Dependency(\.app.toastManager) var toastManager: ToastManager
+  @Dependency(\.reportingStatus) var reportingStatus: ReportingStatus
   
   @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.sharingEmail, defaultValue: false) var sharingEmail: Bool
@@ -45,7 +47,7 @@ final class RequestsSentViewModel {
       isBanned: reportingStatus.isEnabled() ? false : nil
     )
     
-    database.fetchContactsPublisher(query)
+    try! dbManager.getDB().fetchContactsPublisher(query)
       .replaceError(with: [])
       .removeDuplicates()
       .map { data -> NSDiffableDataSourceSnapshot<Section, RequestSent> in
@@ -67,7 +69,7 @@ final class RequestsSentViewModel {
     
     let name = (contact.nickname ?? contact.username) ?? ""
     
-    hudController.show()
+    hudManager.show()
     backgroundScheduler.schedule { [weak self] in
       guard let self else { return }
       
@@ -92,7 +94,7 @@ final class RequestsSentViewModel {
           myFacts: includedFacts
         )
         
-        self.hudController.dismiss()
+        self.hudManager.hide()
         
         var item = item
         var allRequests = self.itemsSubject.value.itemIdentifiers
@@ -104,7 +106,7 @@ final class RequestsSentViewModel {
         item.isResent = true
         allRequests.append(item)
         
-        self.toastController.enqueueToast(model: .init(
+        self.toastManager.enqueue(.init(
           title: Localized.Requests.Sent.Toast.resent(name),
           leftImage: Asset.requestSentToaster.image
         ))
@@ -114,13 +116,13 @@ final class RequestsSentViewModel {
         snapshot.appendItems(allRequests, toSection: .appearing)
         self.itemsSubject.send(snapshot)
       } catch {
-        self.toastController.enqueueToast(model: .init(
+        self.toastManager.enqueue(.init(
           title: Localized.Requests.Sent.Toast.resentFailed(name),
           leftImage: Asset.requestFailedToaster.image
         ))
         
         let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
-        self.hudController.show(.init(content: xxError))
+        self.hudManager.show(.init(content: xxError))
       }
     }
   }

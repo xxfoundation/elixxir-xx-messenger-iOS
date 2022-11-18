@@ -4,6 +4,7 @@ import XCTestDynamicOverlay
 
 public struct Logger {
   public enum Message: Equatable {
+    case info(String)
     case error(NSError)
   }
 
@@ -24,6 +25,13 @@ extension Logger {
     let logger = Logging.Logger(label: "xx.messenger")
     return Logger { msg, file, function, line in
       switch msg {
+      case .info(let text):
+        logger.info(
+          .init(stringLiteral: text),
+          file: file,
+          function: function,
+          line: line
+        )
       case .error(let error):
         logger.error(
           .init(stringLiteral: error.localizedDescription),

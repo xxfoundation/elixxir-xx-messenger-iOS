@@ -1,13 +1,16 @@
+import XXClient
 import Foundation
 import XXMessengerClient
 import XCTestDynamicOverlay
 import ComposableArchitecture
 
 public struct AppDependencies {
-  public var networkMonitor: NetworkMonitorManager
+  public var networkMonitor: NetworkMonitor
   public var toastManager: ToastManager
+  public var backupHandler: BackupCallbackHandler
   public var hudManager: HUDManager
   public var dbManager: DBManager
+  public var statusBar: StatusBarStylist
   public var messenger: Messenger
   public var authHandler: AuthCallbackHandler
   public var backupStorage: BackupStorage
@@ -24,7 +27,11 @@ public struct AppDependencies {
 
 extension AppDependencies {
   public static func live() -> AppDependencies {
-    let dbManager = DBManager.live()
+    let dbManager = DBManager.live(
+      url: FileManager.default.containerURL(
+        forSecurityApplicationGroupIdentifier: "group.elixxir.messenger"
+      )!
+    )
     var messengerEnv = MessengerEnvironment.live()
     messengerEnv.udEnvironment = .init(
       address: Constants.address,
@@ -41,12 +48,20 @@ extension AppDependencies {
     return AppDependencies(
       networkMonitor: .live(),
       toastManager: .live(),
+      backupHandler: .live(
+        messenger: messenger
+      ),
       hudManager: .live(),
       dbManager: dbManager,
+      statusBar: .live(),
       messenger: messenger,
       authHandler: .live(
         messenger: messenger,
-        handleRequest: .live(db: dbManager.getDB, now: now),
+        handleRequest: .live(
+          db: dbManager.getDB,
+          messenger: messenger,
+          now: now
+        ),
         handleConfirm: .live(db: dbManager.getDB),
         handleReset: .live(db: dbManager.getDB)
       ),
@@ -81,8 +96,10 @@ extension AppDependencies {
   public static let unimplemented = AppDependencies(
     networkMonitor: .unimplemented,
     toastManager: .unimplemented,
+    backupHandler: .unimplemented,
     hudManager: .unimplemented,
     dbManager: .unimplemented,
+    statusBar: .unimplemented,
     messenger: .unimplemented,
     authHandler: .unimplemented,
     backupStorage: .unimplemented,
@@ -141,4 +158,28 @@ tgH4rdEXuVe9+31oJhmXOE9ux2jCop9tEJMgWg7HStrJ5plPbb+HmjoX3nBO04E5
   static let contact = """
 <xxc(2)7mbKFLE201WzH4SGxAOpHjjehwztIV+KGifi5L/PYPcDkAZiB9kZo+Dl3Vc7dD2SdZCFMOJVgwqGzfYRDkjc8RGEllBqNxq2sRRX09iQVef0kJQUgJCHNCOcvm6Ki0JJwvjLceyFh36iwK8oLbhLgqEZY86UScdACTyBCzBIab3ob5mBthYc3mheV88yq5PGF2DQ+dEvueUm+QhOSfwzppAJA/rpW9Wq9xzYcQzaqc3ztAGYfm2BBAHS7HVmkCbvZ/K07Xrl4EBPGHJYq12tWAN/C3mcbbBYUOQXyEzbSl/mO7sL3ORr0B4FMuqCi8EdlD6RO52pVhY+Cg6roRH1t5Ng1JxPt8Mv1yyjbifPhZ5fLKwxBz8UiFORfk0/jnhwgm25LRHqtNRRUlYXLvhv0HhqyYTUt17WNtCLATSVbqLrFGdy2EGadn8mP+kQNHp93f27d/uHgBNNe7LpuYCJMdWpoG6bOqmHEftxt0/MIQA8fTtTm3jJzv+7/QjZJDvQIv0SNdp8HFogpuwde+GuS4BcY7v5xz+ArGWcRR63ct2z83MqQEn9ODr1/gAAAgA7szRpDDQIdFUQo9mkWg8xBA==xxc>
 """
+}
+
+private enum StoredDummyTrafficKey: DependencyKey {
+  static var liveValue = Stored<DummyTraffic?>.inMemory()
+  static var testValue = Stored<DummyTraffic?>.unimplemented()
+}
+
+extension DependencyValues {
+  public var dummyTraffic: Stored<DummyTraffic?> {
+    get { self[StoredDummyTrafficKey.self] }
+    set { self[StoredDummyTrafficKey.self] = newValue }
+  }
+}
+
+private enum StoredNewGroupChatKey: DependencyKey {
+  static var liveValue = Stored<GroupChat?>.inMemory()
+  static var testValue = Stored<GroupChat?>.unimplemented()
+}
+
+extension DependencyValues {
+  public var groupManager: Stored<GroupChat?> {
+    get { self[StoredNewGroupChatKey.self] }
+    set { self[StoredNewGroupChatKey.self] = newValue }
+  }
 }

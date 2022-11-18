@@ -1,5 +1,6 @@
 import UIKit
 import Shared
+import AppResources
 
 final class RequestReceivedEmptyCell: UICollectionViewCell {
   private let titleLabel = UILabel()

@@ -2,17 +2,18 @@ import UIKit
 import Shared
 import Combine
 import XXModels
-import Navigation
+import AppNavigation
 import DifferenceKit
 import DrawerFeature
-import DI
+import Dependencies
+import AppResources
 
 extension ChatInfo: Differentiable {
   public var differenceIdentifier: ChatInfo.ID { id }
 }
 
 final class ChatListTableController: UITableViewController {
-  @Dependency var navigator: Navigator
+  @Dependency(\.navigator) var navigator: Navigator
 
   private var rows = [ChatInfo]()
   private let viewModel: ChatListViewModel

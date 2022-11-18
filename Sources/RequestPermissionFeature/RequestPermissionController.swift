@@ -1,13 +1,14 @@
 import UIKit
 import Shared
 import Combine
+import AppCore
+import Dependencies
 import AppResources
-import StatusBarFeature
+import AppNavigation
 import PermissionsFeature
-import ComposableArchitecture
 
 public final class RequestPermissionController: UIViewController {
-  @Dependency(\.statusBar) var statusBar: StatusBarStyleManager
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
   @Dependency(\.permissions) var permissions: PermissionsManager
 
   private lazy var screenView = RequestPermissionView()
@@ -28,7 +29,7 @@ public final class RequestPermissionController: UIViewController {
 
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    statusBar.update(.darkContent)
+    statusBar.set(.darkContent)
   }
 
   public override func viewDidLoad() {

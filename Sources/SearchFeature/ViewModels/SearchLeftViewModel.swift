@@ -6,11 +6,13 @@ import XXModels
 import XXClient
 import Defaults
 import CustomDump
+import AppResources
 import ReportingFeature
 import CombineSchedulers
 import XXMessengerClient
 import CountryListFeature
-import DI
+import Dependencies
+import AppCore
 
 typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchItem>
 
@@ -22,12 +24,12 @@ struct SearchLeftViewState {
 }
 
 final class SearchLeftViewModel {
-  @Dependency var database: Database
-  @Dependency var messenger: Messenger
-  @Dependency var hudController: HUDController
-  @Dependency var reportingStatus: ReportingStatus
-  @Dependency var toastController: ToastController
-  @Dependency var networkMonitor: NetworkMonitoring
+  @Dependency(\.app.dbManager) var dbManager
+  @Dependency(\.app.messenger) var messenger
+  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.app.toastManager) var toastManager
+  @Dependency(\.reportingStatus) var reportingStatus
+  @Dependency(\.app.networkMonitor) var networkMonitor
 
   @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.sharingEmail, defaultValue: false) var sharingEmail: Bool
@@ -61,7 +63,7 @@ final class SearchLeftViewModel {
     if let pendingInvitation = invitation {
       invitation = nil
       stateSubject.value.input = pendingInvitation
-      hudController.show(.init(
+      hudManager.show(.init(
         actionTitle: Localized.Ud.Search.cancel,
         hasDotAnimation: true,
         onTapClosure: { [weak self] in
@@ -72,19 +74,19 @@ final class SearchLeftViewModel {
 
       networkCancellable.removeAll()
 
-      networkMonitor
-        .statusPublisher
-        .first { $0 == .available }
-        .eraseToAnyPublisher()
-        .flatMap { _ in
-          self.waitForNodes(timeout: 5)
-        }.sink(receiveCompletion: {
-          if case .failure(let error) = $0 {
-            self.hudController.show(.init(error: error))
-          }
-        }, receiveValue: {
-          self.didStartSearching()
-        }).store(in: &networkCancellable)
+//      networkMonitor
+//        .statusPublisher
+//        .first { $0 == .available }
+//        .eraseToAnyPublisher()
+//        .flatMap { _ in
+//          self.waitForNodes(timeout: 5)
+//        }.sink(receiveCompletion: {
+//          if case .failure(let error) = $0 {
+//            self.hudManager.show(.init(error: error))
+//          }
+//        }, receiveValue: {
+//          self.didStartSearching()
+//        }).store(in: &networkCancellable)
     }
   }
 
@@ -103,13 +105,13 @@ final class SearchLeftViewModel {
   func didTapCancelSearch() {
     searchCancellables.forEach { $0.cancel() }
     searchCancellables.removeAll()
-    hudController.dismiss()
+    hudManager.hide()
   }
 
   func didStartSearching() {
     guard stateSubject.value.input.isEmpty == false else { return }
 
-    hudController.show(.init(
+    hudManager.show(.init(
       actionTitle: Localized.Ud.Search.cancel,
       hasDotAnimation: true,
       onTapClosure: { [weak self] in
@@ -142,11 +144,11 @@ final class SearchLeftViewModel {
       guard let self else { return }
 
       if case .unhealthyNet = $0 as? NodeRegistrationError {
-        self.hudController.show(.init(content: "Network is not healthy yet, try again within the next minute or so."))
+        self.hudManager.show(.init(content: "Network is not healthy yet, try again within the next minute or so."))
       } else if case .belowMinimum = $0 as? NodeRegistrationError {
-        self.hudController.show(.init(content:"Node registration ratio is still below 80%, try again within the next minute or so."))
+        self.hudManager.show(.init(content:"Node registration ratio is still below 80%, try again within the next minute or so."))
       } else {
-        self.hudController.show(.init(error: $0))
+        self.hudManager.show(.init(error: $0))
       }
 
       return
@@ -173,7 +175,7 @@ final class SearchLeftViewModel {
           callback: .init(handle: {
             switch $0 {
             case .success(let results):
-              self.hudController.dismiss()
+              self.hudManager.hide()
               self.appendToLocalSearch(
                 XXModels.Contact(
                   id: try! results.first!.getId(),
@@ -194,7 +196,7 @@ final class SearchLeftViewModel {
               print(">>> SearchUD error: \(error.localizedDescription)")
 
               self.appendToLocalSearch(nil)
-              self.hudController.show(.init(error: error))
+              self.hudManager.show(.init(error: error))
             }
           })
         )
@@ -207,7 +209,7 @@ final class SearchLeftViewModel {
   }
 
   func didTapResend(contact: XXModels.Contact) {
-    hudController.show()
+    hudManager.show()
 
     var contact = contact
     contact.authStatus = .requesting
@@ -216,7 +218,7 @@ final class SearchLeftViewModel {
       guard let self else { return }
 
       do {
-        try self.database.saveContact(contact)
+        try self.dbManager.getDB().saveContact(contact)
 
         var includedFacts: [Fact] = []
         let myFacts = try self.messenger.ud.get()!.getFacts()
@@ -239,20 +241,20 @@ final class SearchLeftViewModel {
         )
 
         contact.authStatus = .requested
-        contact = try self.database.saveContact(contact)
+        contact = try self.dbManager.getDB().saveContact(contact)
 
-        self.hudController.dismiss()
+        self.hudManager.hide()
         self.presentSuccessToast(for: contact, resent: true)
       } catch {
         contact.authStatus = .requestFailed
-        _ = try? self.database.saveContact(contact)
-        self.hudController.show(.init(error: error))
+        _ = try? self.dbManager.getDB().saveContact(contact)
+        self.hudManager.show(.init(error: error))
       }
     }
   }
 
   func didTapRequest(contact: XXModels.Contact) {
-    hudController.show()
+    hudManager.show()
 
     var contact = contact
     contact.nickname = contact.username
@@ -262,7 +264,7 @@ final class SearchLeftViewModel {
       guard let self else { return }
 
       do {
-        try self.database.saveContact(contact)
+        try self.dbManager.getDB().saveContact(contact)
 
         var includedFacts: [Fact] = []
         let myFacts = try self.messenger.ud.get()!.getFacts()
@@ -285,23 +287,23 @@ final class SearchLeftViewModel {
         )
 
         contact.authStatus = .requested
-        contact = try self.database.saveContact(contact)
+        contact = try self.dbManager.getDB().saveContact(contact)
 
-        self.hudController.dismiss()
+        self.hudManager.hide()
         self.successSubject.send(contact)
         self.presentSuccessToast(for: contact, resent: false)
       } catch {
         contact.authStatus = .requestFailed
-        _ = try? self.database.saveContact(contact)
-        self.hudController.show(.init(error: error))
+        _ = try? self.dbManager.getDB().saveContact(contact)
+        self.hudManager.show(.init(error: error))
       }
     }
   }
 
   func didSet(nickname: String, for contact: XXModels.Contact) {
-    if var contact = try? database.fetchContacts(.init(id: [contact.id])).first {
+    if var contact = try? dbManager.getDB().fetchContacts(.init(id: [contact.id])).first {
       contact.nickname = nickname
-      _ = try? database.saveContact(contact)
+      _ = try? dbManager.getDB().saveContact(contact)
     }
   }
 
@@ -309,7 +311,7 @@ final class SearchLeftViewModel {
     var snapshot = SearchSnapshot()
 
     if var user = user {
-      if let contact = try? database.fetchContacts(.init(id: [user.id])).first {
+      if let contact = try? dbManager.getDB().fetchContacts(.init(id: [user.id])).first {
         user.isBanned = contact.isBanned
         user.isBlocked = contact.isBlocked
         user.authStatus = contact.authStatus
@@ -331,7 +333,7 @@ final class SearchLeftViewModel {
       isBanned: reportingStatus.isEnabled() ? false : nil
     )
 
-    if let locals = try? database.fetchContacts(localsQuery),
+    if let locals = try? dbManager.getDB().fetchContacts(localsQuery),
        let localsWithoutMe = removeMyself(from: locals),
        localsWithoutMe.isEmpty == false {
       snapshot.appendSections([.connections])
@@ -353,7 +355,7 @@ final class SearchLeftViewModel {
     let sentTitle = Localized.Requests.Sent.Toast.sent(name ?? "")
     let resentTitle = Localized.Requests.Sent.Toast.resent(name ?? "")
 
-    toastController.enqueueToast(model: .init(
+    toastManager.enqueue(.init(
       title: resent ? resentTitle : sentTitle,
       leftImage: Asset.sharedSuccess.image
     ))

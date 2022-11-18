@@ -1,11 +1,13 @@
-import DI
 import UIKit
 import Shared
 import Combine
+import AppCore
 import XXModels
 import Voxophone
 import ChatLayout
-import Navigation
+import Dependencies
+import AppResources
+import AppNavigation
 import DrawerFeature
 import DifferenceKit
 import ReportingFeature
@@ -19,12 +21,13 @@ typealias OutgoingFailedGroupTextCell = CollectionCell<FlexibleSpace, StackMessa
 typealias OutgoingFailedGroupReplyCell = CollectionCell<FlexibleSpace, ReplyStackMessageView>
 
 public final class GroupChatController: UIViewController {
-  @Dependency var database: Database
-  @Dependency var navigator: Navigator
-  @Dependency var barStylist: StatusBarStylist
-  @Dependency var reportingStatus: ReportingStatus
-  @Dependency var makeReportDrawer: MakeReportDrawer
-  @Dependency var makeAppScreenshot: MakeAppScreenshot
+  @Dependency(\.navigator) var navigator
+  @Dependency(\.app.dbManager) var dbManager
+  @Dependency(\.app.statusBar) var statusBar
+  @Dependency(\.reportingStatus) var reportingStatus
+
+//  @Dependency var makeReportDrawer: MakeReportDrawer
+//  @Dependency var makeAppScreenshot: MakeAppScreenshot
 
   private var collectionView: UICollectionView!
   private lazy var header = GroupHeaderView()
@@ -50,7 +53,7 @@ public final class GroupChatController: UIViewController {
       initialState: .init(canAddAttachments: false),
       reducer: chatInputReducer,
       environment: .init(
-        voxophone: try! DI.Container.shared.resolve() as Voxophone,
+        voxophone: Voxophone(), //try! DI.Container.shared.resolve() as Voxophone,
         sendAudio: { _ in },
         didTapCamera: {},
         didTapLibrary: {},
@@ -76,7 +79,7 @@ public final class GroupChatController: UIViewController {
 
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    barStylist.styleSubject.send(.darkContent)
+    statusBar.set(.darkContent)
     navigationController?.navigationBar.customize(
       backgroundColor: Asset.neutralWhite.color,
       shadowColor: Asset.neutralDisabled.color
@@ -199,7 +202,7 @@ public final class GroupChatController: UIViewController {
           ], isDismissable: false, from: self))
 
         case .webview(let urlString):
-          navigator.perform(PresentWebsite(url: URL(string: urlString)!))
+          navigator.perform(PresentWebsite(urlString: urlString, from: self))
         }
       }.store(in: &cancellables)
 
@@ -222,10 +225,10 @@ public final class GroupChatController: UIViewController {
             navigator.perform(DismissModal(from: self)) { [weak self] in
               guard let self else { return }
               self.drawerCancellables.removeAll()
-              let screenshot = try! self.makeAppScreenshot()
-              self.viewModel.report(contact: contact, screenshot: screenshot) {
-                self.collectionView.reloadData()
-              }
+//              let screenshot = try! self.makeAppScreenshot()
+//              self.viewModel.report(contact: contact, screenshot: screenshot) {
+//                self.collectionView.reloadData()
+//              }
             }
           }.store(in: &drawerCancellables)
 
@@ -392,7 +395,7 @@ extension GroupChatController: UICollectionViewDataSource {
 
     var isSenderBanned = false
 
-    if let sender = try? database.fetchContacts(.init(id: [item.senderId])).first {
+    if let sender = try? dbManager.getDB().fetchContacts(.init(id: [item.senderId])).first {
       isSenderBanned = sender.isBanned
     }
 
@@ -640,7 +643,10 @@ extension GroupChatController: UICollectionViewDelegate {
       previewProvider: nil
     ) { [weak self] suggestedActions in
 
-      guard let self else { return nil }
+      guard let self else {
+        fatalError()
+        //return nil
+      }
 
       let item = self.sections[indexPath.section].elements[indexPath.item]
 

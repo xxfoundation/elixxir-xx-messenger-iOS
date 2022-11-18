@@ -6,7 +6,9 @@ import Combine
 import Foundation
 import CloudFiles
 import CloudFilesSFTP
-import DI
+
+import AppCore
+import ComposableArchitecture
 
 struct SFTPViewState {
   var host: String = ""
@@ -16,7 +18,7 @@ struct SFTPViewState {
 }
 
 final class BackupSFTPViewModel {
-  @Dependency var hudController: HUDController
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
 
   var statePublisher: AnyPublisher<SFTPViewState, Never> {
     stateSubject.eraseToAnyPublisher()
@@ -45,7 +47,7 @@ final class BackupSFTPViewModel {
   }
 
   func didTapLogin() {
-    hudController.show()
+    hudManager.show()
 
     let host = stateSubject.value.host
     let username = stateSubject.value.username
@@ -64,7 +66,7 @@ final class BackupSFTPViewModel {
         ).link(anyController) {
           switch $0 {
           case .success:
-            self.hudController.dismiss()
+            self.hudManager.hide()
             self.authSubject.send((host, username, password))
           case .failure(let error):
             var message = "An error occurred while trying to link SFTP: "
@@ -81,11 +83,11 @@ final class BackupSFTPViewModel {
               message.append(error.localizedDescription)
             }
 
-            self.hudController.show(.init(content: message))
+            self.hudManager.show(.init(content: message))
           }
         }
       } catch {
-        self.hudController.show(.init(error: error))
+        self.hudManager.show(.init(error: error))
       }
     }
   }

@@ -3,12 +3,14 @@ import Shared
 import Combine
 import Defaults
 import CloudFiles
-import DI
 
 import XXClient
 import XXModels
 import XXDatabase
 import XXMessengerClient
+
+import AppCore
+import ComposableArchitecture
 
 enum Step {
   case done
@@ -36,8 +38,8 @@ extension Step: Equatable {
 }
 
 final class RestoreViewModel {
-  @Dependency var database: Database
-  @Dependency var messenger: Messenger
+  @Dependency(\.app.dbManager) var dbManager: DBManager
+  @Dependency(\.app.messenger) var messenger: Messenger
 
   @KeyObject(.phone, defaultValue: nil) var phone: String?
   @KeyObject(.email, defaultValue: nil) var email: String?
@@ -125,7 +127,7 @@ final class RestoreViewModel {
           onProgress: { print(">>> \($0)") }
         )
 
-        try self.database.saveContact(.init(
+        try self.dbManager.getDB().saveContact(.init(
           id: self.messenger.e2e.get()!.getContact().getId(),
           marshaled: self.messenger.e2e.get()!.getContact().data,
           username: self.username!,
@@ -146,7 +148,7 @@ final class RestoreViewModel {
         multilookup.contacts.forEach {
           print(">>> Found \(try! $0.getFact(.username)?.value)")
 
-          try! self.database.saveContact(.init(
+          try! self.dbManager.getDB().saveContact(.init(
             id: try $0.getId(),
             marshaled: $0.data,
             username: try? $0.getFact(.username)?.value,

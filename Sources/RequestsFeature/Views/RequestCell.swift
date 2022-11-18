@@ -1,6 +1,7 @@
 import UIKit
 import Shared
 import Combine
+import AppResources
 import CountryListFeature
 
 final class RequestCell: UICollectionViewCell {

@@ -1,14 +1,16 @@
 import UIKit
 import Shared
 import Combine
+import AppCore
 import XXModels
-import Navigation
+import Dependencies
+import AppResources
+import AppNavigation
 import DrawerFeature
-import DI
 
 public final class SearchContainerController: UIViewController {
-  @Dependency var navigator: Navigator
-  @Dependency var barStylist: StatusBarStylist
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
 
   private lazy var screenView = SearchContainerView()
 
@@ -39,7 +41,7 @@ public final class SearchContainerController: UIViewController {
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     navigationItem.backButtonTitle = ""
-    barStylist.styleSubject.send(.darkContent)
+    statusBar.set(.darkContent)
     navigationController?.navigationBar.customize(
       backgroundColor: Asset.neutralWhite.color
     )

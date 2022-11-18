@@ -1,6 +1,5 @@
 import UIKit
 import Combine
-import DI
 
 final class BackupSetupController: UIViewController {
     private lazy var screenView = BackupSetupView()

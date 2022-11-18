@@ -1,12 +1,13 @@
 import UIKit
 import Shared
 import Combine
-import Navigation
-import DI
+import AppCore
+import Dependencies
+import AppNavigation
 
 public final class RestoreSuccessController: UIViewController {
-  @Dependency var navigator: Navigator
-  @Dependency var barStylist: StatusBarStylist
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
 
   private lazy var screenView = RestoreSuccessView()
   private var cancellables = Set<AnyCancellable>()
@@ -17,7 +18,7 @@ public final class RestoreSuccessController: UIViewController {
 
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    barStylist.styleSubject.send(.darkContent)
+    statusBar.set(.darkContent)
     navigationController?.navigationBar.customize(translucent: true)
   }
 

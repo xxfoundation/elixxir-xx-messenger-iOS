@@ -1,6 +1,5 @@
 import UIKit
 import Combine
-import DI
 import ScrollViewController
 
 public final class RestoreSFTPController: UIViewController {

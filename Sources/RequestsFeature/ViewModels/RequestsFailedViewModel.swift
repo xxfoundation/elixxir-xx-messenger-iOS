@@ -1,17 +1,18 @@
 import UIKit
 import Shared
+import AppCore
 import Combine
 import XXModels
 import Defaults
 import XXClient
+import Dependencies
 import CombineSchedulers
-import DI
 import XXMessengerClient
 
 final class RequestsFailedViewModel {
-  @Dependency var database: Database
-  @Dependency var messenger: Messenger
-  @Dependency var hudController: HUDController
+  @Dependency(\.app.dbManager) var dbManager: DBManager
+  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
   
   @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.sharingEmail, defaultValue: false) var sharingEmail: Bool
@@ -27,7 +28,7 @@ final class RequestsFailedViewModel {
   var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
   
   init() {
-    database.fetchContactsPublisher(.init(authStatus: [.requestFailed, .confirmationFailed]))
+    try! dbManager.getDB().fetchContactsPublisher(.init(authStatus: [.requestFailed, .confirmationFailed]))
       .replaceError(with: [])
       .map { data -> NSDiffableDataSourceSnapshot<Section, Request> in
         var snapshot = NSDiffableDataSourceSnapshot<Section, Request>()
@@ -45,7 +46,7 @@ final class RequestsFailedViewModel {
       return
     }
     
-    hudController.show()
+    hudManager.show()
     backgroundScheduler.schedule { [weak self] in
       guard let self else { return }
       
@@ -81,11 +82,11 @@ final class RequestsFailedViewModel {
           contact.authStatus = .friend
         }
         
-        try self.database.saveContact(contact)
-        self.hudController.dismiss()
+        try self.dbManager.getDB().saveContact(contact)
+        self.hudManager.hide()
       } catch {
         let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
-        self.hudController.show(.init(content: xxError))
+        self.hudManager.show(.init(content: xxError))
       }
     }
   }

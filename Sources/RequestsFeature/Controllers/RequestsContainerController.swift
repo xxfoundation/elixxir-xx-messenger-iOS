@@ -1,13 +1,15 @@
 import UIKit
 import Shared
 import Combine
-import Navigation
+import AppCore
+import AppResources
+import Dependencies
+import AppNavigation
 import ContactFeature
-import DI
 
 public final class RequestsContainerController: UIViewController {
-  @Dependency var navigator: Navigator
-  @Dependency var barStylist: StatusBarStylist
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
 
   private lazy var screenView = RequestsContainerView()
   private var cancellables = Set<AnyCancellable>()
@@ -29,7 +31,7 @@ public final class RequestsContainerController: UIViewController {
 
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    barStylist.styleSubject.send(.darkContent)
+    statusBar.set(.darkContent)
 
     navigationController?.navigationBar
       .customize(backgroundColor: Asset.neutralWhite.color)

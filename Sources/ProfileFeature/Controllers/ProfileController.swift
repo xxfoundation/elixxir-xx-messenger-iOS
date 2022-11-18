@@ -1,13 +1,15 @@
 import UIKit
 import Shared
 import Combine
-import Navigation
+import AppCore
+import AppResources
+import AppNavigation
 import DrawerFeature
-import DI
+import ComposableArchitecture
 
 public final class ProfileController: UIViewController {
-  @Dependency var navigator: Navigator
-  @Dependency var barStylist: StatusBarStylist
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
 
   private lazy var screenView = ProfileView()
 
@@ -21,7 +23,7 @@ public final class ProfileController: UIViewController {
 
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    barStylist.styleSubject.send(.lightContent)
+    statusBar.set(.lightContent)
     navigationController?.navigationBar
       .customize(backgroundColor: Asset.neutralBody.color)
     viewModel.refresh()

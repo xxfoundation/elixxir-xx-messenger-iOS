@@ -1,6 +1,7 @@
 import UIKit
 import Shared
 import CloudFiles
+import AppResources
 
 final class RestoreView: UIView {
   let titleLabel = UILabel()

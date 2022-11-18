@@ -1,13 +1,15 @@
 import UIKit
 import Shared
 import Combine
+import AppCore
 import XXModels
-import Navigation
-import DI
+import AppResources
+import Dependencies
+import AppNavigation
 
 public final class ChatListController: UIViewController {
-  @Dependency var navigator: Navigator
-  @Dependency var barStylist: StatusBarStylist
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
   
   private lazy var screenView = ChatListView()
   private lazy var topLeftView = ChatListTopLeftNavView()
@@ -47,7 +49,7 @@ public final class ChatListController: UIViewController {
   
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    barStylist.styleSubject.send(.darkContent)
+    statusBar.set(.darkContent)
     navigationController?.navigationBar.customize(backgroundColor: Asset.neutralWhite.color)
   }
   
@@ -69,9 +71,15 @@ public final class ChatListController: UIViewController {
       .sink { [unowned self] in
         switch $0 {
         case .didTapSearch:
-          navigator.perform(PresentSearch(searching: nil, replacing: false, on: navigationController!))
+          navigator.perform(PresentSearch(
+            searching: nil,
+            replacing: false,
+            on: navigationController!
+          ))
         case .didTapNewGroup:
-          navigator.perform(PresentNewGroup(on: navigationController!))
+          navigator.perform(
+            PresentGroupDraft(on: navigationController!)
+          )
         }
       }.store(in: &cancellables)
     

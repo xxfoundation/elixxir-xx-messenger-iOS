@@ -1,13 +1,13 @@
-import DI
 import UIKit
 import Shared
 import Combine
-import Navigation
 import AppResources
+import AppNavigation
 import DrawerFeature
+import ComposableArchitecture
 
 public final class RestoreController: UIViewController {
-  @Dependency var navigator: Navigator
+  @Dependency(\.navigator) var navigator: Navigator
 
   private lazy var screenView = RestoreView()
 
@@ -56,8 +56,9 @@ public final class RestoreController: UIViewController {
       .sink { [unowned self] in
         screenView.updateFor(step: $0)
         if $0 == .wrongPass {
-          navigator.perform(PresentPassphrase(onCancel: {
-            navigator.perform(DismissModal(from: self))
+          navigator.perform(PresentPassphrase(onCancel: { [weak self] in
+            guard let self else { return }
+            self.navigator.perform(DismissModal(from: self))
           }, onPassphrase: { [weak self] passphrase in
             guard let self else { return }
             self.viewModel.retryWith(passphrase: passphrase)
@@ -87,8 +88,9 @@ public final class RestoreController: UIViewController {
       .restoreButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
-        navigator.perform(PresentPassphrase(onCancel: {
-          navigator.perform(DismissModal(from: self))
+        navigator.perform(PresentPassphrase(onCancel: { [weak self] in
+          guard let self else { return }
+          self.navigator.perform(DismissModal(from: self))
         }, onPassphrase: { [weak self] passphrase in
           guard let self else { return }
           self.viewModel.didTapRestore(passphrase: passphrase)

@@ -1,10 +1,10 @@
 import Combine
-import XXLogger
+import AppCore
 import Defaults
 import Foundation
-import CrashReporting
+import CrashReport
 import ReportingFeature
-import DI
+import ComposableArchitecture
 
 struct AdvancedViewState: Equatable {
   var isRecordingLogs = false
@@ -21,14 +21,19 @@ final class SettingsAdvancedViewModel {
   private var cancellables = Set<AnyCancellable>()
   private let isShowingUsernamesKey = "isShowingUsernames"
 
-  @Dependency private var logger: XXLogger
-  @Dependency private var crashReporter: CrashReporter
-  @Dependency private var reportingStatus: ReportingStatus
+  @Dependency(\.app.log) var logger: Logger
+  @Dependency(\.crashReport) var crashReport: CrashReport
+  @Dependency(\.reportingStatus) var reportingStatus: ReportingStatus
 
-  var sharePublisher: AnyPublisher<URL, Never> { shareRelay.eraseToAnyPublisher() }
+  var sharePublisher: AnyPublisher<URL, Never> {
+    shareRelay.eraseToAnyPublisher()
+  }
+
   private let shareRelay = PassthroughSubject<URL, Never>()
 
-  var state: AnyPublisher<AdvancedViewState, Never> { stateRelay.eraseToAnyPublisher() }
+  var state: AnyPublisher<AdvancedViewState, Never> {
+    stateRelay.eraseToAnyPublisher()
+  }
   private let stateRelay = CurrentValueSubject<AdvancedViewState, Never>(.init())
 
   func loadCachedSettings() {
@@ -67,9 +72,9 @@ final class SettingsAdvancedViewModel {
 
   func didToggleRecordLogs() {
     if isRecordingLogs == true {
-      XXLogger.stop()
+//      XXLogger.stop()
     } else {
-      XXLogger.start()
+//      XXLogger.start()
     }
 
     isRecordingLogs.toggle()
@@ -84,7 +89,7 @@ final class SettingsAdvancedViewModel {
   func didToggleCrashReporting() {
     isCrashReporting.toggle()
     stateRelay.value.isCrashReporting.toggle()
-    crashReporter.setEnabled(isCrashReporting)
+    crashReport.setEnabled(isCrashReporting)
   }
 
   func didSetReporting(enabled: Bool) {

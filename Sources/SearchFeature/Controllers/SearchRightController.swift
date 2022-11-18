@@ -1,10 +1,10 @@
 import UIKit
 import Combine
-import Navigation
-import DI
+import AppNavigation
+import ComposableArchitecture
 
 final class SearchRightController: UIViewController {
-  @Dependency var navigator: Navigator
+  @Dependency(\.navigator) var navigator: Navigator
 
   private lazy var screenView = SearchRightView()
 

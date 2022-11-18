@@ -1,11 +1,10 @@
 import UIKit
 import Combine
-import StatusBarFeature
-import ComposableArchitecture
+import Dependencies
 
 public final class RootViewController: UIViewController {
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
   @Dependency(\.app.hudManager) var hudManager: HUDManager
-  @Dependency(\.statusBar) var statusBar: StatusBarStyleManager
   @Dependency(\.app.toastManager) var toastManager: ToastManager
   
   var hud: HUDView?
@@ -24,7 +23,7 @@ public final class RootViewController: UIViewController {
   required init?(coder: NSCoder) { nil }
   
   public override var preferredStatusBarStyle: UIStatusBarStyle  {
-    statusBar.current()
+    statusBar.get()
   }
   
   public override func viewDidLoad() {
@@ -72,8 +71,6 @@ public final class RootViewController: UIViewController {
       }.store(in: &cancellables)
   }
 }
-
-// MARK: - Toaster
 
 extension RootViewController {
   @objc private func didPanToast(_ sender: UIPanGestureRecognizer) {
@@ -167,8 +164,6 @@ extension RootViewController {
   }
 }
 
-// MARK: - HUD
-
 extension RootViewController {
   private func add(hudView: HUDView) {
     if let hud {
@@ -196,62 +191,4 @@ extension RootViewController {
     
     hud = hudView
   }
-  
-  //    if statusSubject.value.isPresented == true && status.isPresented == true {
-  //      self.errorView = nil
-  //      self.animation = nil
-  //      self.window = nil
-  //      self.actionButton = nil
-  //      self.titleLabel = nil
-  //
-  //      switch status {
-  //      case .on:
-  //        animation = DotAnimation()
-  //
-  //      case .onTitle(let text):
-  //        animation = DotAnimation()
-  //        titleLabel = UILabel()
-  //        titleLabel!.text = text
-  //
-  //      case .onAction(let title):
-  //        animation = DotAnimation()
-  //        actionButton = CapsuleButton()
-  //        actionButton!.set(style: .seeThroughWhite, title: title)
-  //
-  //      case .error(let error):
-  //        errorView = ErrorView(with: error)
-  //      case .none:
-  //        break
-  //      }
-  //
-  //      showWindow()
-  //    }
-  
-  //    if statusSubject.value.isPresented == false && status.isPresented == true {
-  //        switch status {
-  //        case .on:
-  //          animation = DotAnimation()
-  //
-  //        case .onTitle(let text):
-  //          animation = DotAnimation()
-  //          titleLabel = UILabel()
-  //          titleLabel!.text = text
-  //
-  //        case .onAction(let title):
-  //          animation = DotAnimation()
-  //          actionButton = CapsuleButton()
-  //          actionButton!.set(style: .seeThroughWhite, title: title)
-  //
-  //        case .error(let error):
-  //          errorView = ErrorView(with: error)
-  //        case .none:
-  //          break
-  //        }
-  //
-  //        showWindow()
-  //    }
-  
-  //    if statusSubject.value.isPresented == true && status.isPresented == false {
-  //        hideWindow()
-  //    }
 }

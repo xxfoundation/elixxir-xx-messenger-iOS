@@ -1,19 +1,19 @@
 import UIKit
 import Shared
 import Combine
-import Permissions
-import Navigation
+import AppCore
+import AppNavigation
 import CombineSchedulers
-import DI
+import PermissionsFeature
+import ComposableArchitecture
 
 final class ScanController: UIViewController {
-  @Dependency var navigator: Navigator
-  @Dependency var permissions: PermissionHandling
-  
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.permissions) var permissions: PermissionsManager
+  @Dependency(\.app.bgQueue) var bgQueue: AnySchedulerOf<DispatchQueue>
+
   private lazy var screenView = ScanView()
-  
-  var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
-  
+
   private var status: ScanStatus?
   private let camera: CameraType
   private let viewModel = ScanViewModel()
@@ -54,18 +54,18 @@ final class ScanController: UIViewController {
   
   override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
-    backgroundScheduler.schedule { [weak self] in
+    bgQueue.schedule { [weak self] in
       guard let self else { return }
       self.camera.stop()
     }
   }
   
   private func startCamera() {
-    permissions.requestCamera { [weak self] granted in
+    permissions.camera.request { [weak self] granted in
       guard let self else { return }
       
       if granted {
-        self.backgroundScheduler.schedule {
+        self.bgQueue.schedule {
           self.camera.start()
         }
       } else {

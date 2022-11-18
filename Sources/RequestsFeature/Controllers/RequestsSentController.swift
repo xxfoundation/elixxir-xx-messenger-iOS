@@ -1,6 +1,5 @@
 import UIKit
 import Combine
-import DI
 
 final class RequestsSentController: UIViewController {
     var connectionsPublisher: AnyPublisher<Void, Never> {

@@ -1,12 +1,13 @@
 import UIKit
 import Shared
 import Combine
-import Navigation
+import AppResources
+import AppNavigation
 import DrawerFeature
-import DI
+import ComposableArchitecture
 
 public final class RestoreListController: UIViewController {
-  @Dependency var navigator: Navigator
+  @Dependency(\.navigator) var navigator: Navigator
 
   private lazy var screenView = RestoreListView()
 

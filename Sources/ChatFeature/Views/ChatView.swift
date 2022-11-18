@@ -1,5 +1,6 @@
 import UIKit
 import Shared
+import AppResources
 
 final class ChatView: UIView {
     let titleLabel = UILabel()

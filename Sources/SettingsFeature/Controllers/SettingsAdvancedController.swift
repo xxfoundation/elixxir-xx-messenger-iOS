@@ -1,11 +1,11 @@
 import UIKit
-import Shared
 import Combine
-import Navigation
-import DI
+import Dependencies
+import AppResources
+import AppNavigation
 
 public final class SettingsAdvancedController: UIViewController {
-  @Dependency var navigator: Navigator
+  @Dependency(\.navigator) var navigator: Navigator
 
   private lazy var screenView = SettingsAdvancedView()
 

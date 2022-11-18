@@ -1,6 +1,7 @@
 import UIKit
 import Shared
 import XXModels
+import AppResources
 
 final class Bubbler {
     static func build(

@@ -10,8 +10,8 @@ import XXMessengerClient
 import ComposableArchitecture
 
 public final class BackupService {
-  @Dependency(\.app.messenger) var messenger: Messenger
-  @Dependency(\.app.networkMonitor) var networkMonitor: NetworkMonitorManager
+  @Dependency(\.app.messenger) var messenger
+  @Dependency(\.app.networkMonitor) var networkMonitor
 
   @KeyObject(.email, defaultValue: nil) var email: String?
   @KeyObject(.phone, defaultValue: nil) var phone: String?
@@ -255,3 +255,4 @@ public final class BackupService {
       .appendingPathExtension("xxm")
   }
 }
+

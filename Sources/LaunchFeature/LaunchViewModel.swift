@@ -5,14 +5,24 @@ import XXModels
 import Keychain
 import XXClient
 import CloudFiles
-import Foundation
-import Permissions
+import CheckVersion
+import AppResources
 import BackupFeature
-import VersionChecking
 import ReportingFeature
-import CombineSchedulers
 import CloudFilesDropbox
 import XXMessengerClient
+
+import UpdateErrors
+import FetchBannedList
+import ProcessBannedList
+
+import AppCore
+import Foundation
+import PermissionsFeature
+import ComposableArchitecture
+
+import XXDatabase
+import XXLegacyDatabaseMigrator
 
 import class XXClient.Cancellable
 
@@ -32,36 +42,42 @@ final class LaunchViewModel {
     var shouldPushOnboarding = false
   }
 
-  @Dependency var database: Database
-  @Dependency var messenger: Messenger
-  @Dependency var versionCheck: VersionCheck
-  @Dependency var hudController: HUDController
-  @Dependency var backupService: BackupService
-  @Dependency var fetchBannedList: FetchBannedList
-  @Dependency var reportingStatus: ReportingStatus
-  @Dependency var toastController: ToastController
-  @Dependency var keychainHandler: KeychainHandling
-  @Dependency var networkMonitor: NetworkMonitoring
-  @Dependency var processBannedList: ProcessBannedList
-  @Dependency var permissionHandler: PermissionHandling
+  @Dependency(\.app.bgQueue) var bgQueue
+  @Dependency(\.permissions) var permissions
+  @Dependency(\.app.messenger) var messenger
+  @Dependency(\.app.dbManager) var dbManager
+  @Dependency(\.keychain) var keychainManager
+  @Dependency(\.updateErrors) var updateErrors
+  @Dependency(\.groupManager) var groupManager
+  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.checkVersion) var checkVersion
+  @Dependency(\.dummyTraffic) var dummyTraffic
+  @Dependency(\.backupService) var backupService
+  @Dependency(\.app.toastManager) var toastManager
+  @Dependency(\.fetchBannedList) var fetchBannedList
+  @Dependency(\.reportingStatus) var reportingStatus
+  @Dependency(\.app.networkMonitor) var networkMonitor
+  @Dependency(\.processBannedList) var processBannedList
+
+  @Dependency(\.app.authHandler) var authHandler
+  @Dependency(\.app.backupHandler) var backupHandler
+  @Dependency(\.app.messageListener) var messageListener
+  @Dependency(\.app.receiveFileHandler) var receiveFileHandler
+
+  var authHandlerCancellable: Cancellable?
+  var backupHandlerCancellable: Cancellable?
+  var networkHandlerCancellable: Cancellable?
+  var receiveFileHandlerCancellable: Cancellable?
+  var messageListenerHandlerCancellable: Cancellable?
 
   @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.biometrics, defaultValue: false) var isBiometricsOn: Bool
   @KeyObject(.acceptedTerms, defaultValue: false) var didAcceptTerms: Bool
   @KeyObject(.dummyTrafficOn, defaultValue: false) var dummyTrafficOn: Bool
 
-  var authCallbacksCancellable: Cancellable?
-  var backupCallbackCancellable: Cancellable?
-  var networkCallbacksCancellable: Cancellable?
-  var messageListenerCallbacksCancellable: Cancellable?
-
   var statePublisher: AnyPublisher<ViewState, Never> {
     stateSubject.eraseToAnyPublisher()
   }
-
-  private var scheduler: AnySchedulerOf<DispatchQueue> = {
-    DispatchQueue.global().eraseToAnyScheduler()
-  }()
 
   let dropboxManager = CloudFilesManager.dropbox(
     appKey: "ppx0de5f16p9aq2",
@@ -77,92 +93,209 @@ final class LaunchViewModel {
 
   let stateSubject = CurrentValueSubject <ViewState, Never>(.init())
 
-  func viewDidAppear() {
-    scheduler.schedule(after: .init(.now() + 1)) { [weak self] in
-      guard let self else { return }
-      self.startLaunch()
-    }
-  }
-
-  private func startLaunch() {
+  func startLaunch() {
     if !didAcceptTerms {
       stateSubject.value.shouldShowTerms = true
     }
-    hudController.show()
-    versionCheck.verify { [weak self] in
-      guard let self else { return }
+    hudManager.show()
+    checkVersion {
       switch $0 {
-      case .upToDate:
-        self.didVerifyVersion()
+      case .success(let result):
+        switch result {
+        case .updated:
+          self.didVerifyVersion()
+        case .outdated(let appUrl):
+          self.hudManager.hide()
+
+          self.stateSubject.value.shouldOfferUpdate = .init(
+            content: Localized.Launch.Version.Recommended.title,
+            urlString: appUrl,
+            positiveActionTitle: Localized.Launch.Version.Recommended.positive,
+            negativeActionTitle: Localized.Launch.Version.Recommended.negative,
+            actionStyle: .simplestColoredRed
+          )
+        case .wayTooOld(let appUrl, let minimumVersionMessage):
+          self.hudManager.hide()
+
+          self.stateSubject.value.shouldOfferUpdate = .init(
+            content: minimumVersionMessage,
+            urlString: appUrl,
+            positiveActionTitle: Localized.Launch.Version.Required.positive,
+            negativeActionTitle: nil,
+            actionStyle: .brandColored
+          )
+        }
       case .failure(let error):
-        self.hudController.show(.init(
+        self.hudManager.show(.init(
           title: Localized.Launch.Version.failed,
           content: error.localizedDescription
         ))
-      case .outdated(let info):
-        self.hudController.dismiss()
-        let isRequired = info.isRequired ?? false
-
-        let content = isRequired ?
-        info.minimumMessage :
-        Localized.Launch.Version.Recommended.title
-
-        let positiveActionTitle = isRequired ?
-        Localized.Launch.Version.Required.positive :
-        Localized.Launch.Version.Recommended.positive
-
-        self.stateSubject.value.shouldOfferUpdate = .init(
-          content: content,
-          urlString: info.appUrl,
-          positiveActionTitle: positiveActionTitle,
-          negativeActionTitle: isRequired ? nil : Localized.Launch.Version.Recommended.negative,
-          actionStyle: isRequired ? .brandColored : .simplestColoredRed
-        )
       }
     }
   }
 
   func didRefuseUpdating() {
-    hudController.show()
+    hudManager.show()
     didVerifyVersion()
   }
 
   private func didVerifyVersion() {
-    updateBannedList { [weak self] in
-      guard let self else { return }
+    updateBannedList {
       self.updateErrors {
         switch $0 {
         case .success:
-          self.didFinishAsyncWork()
+          do {
+            if !self.dbManager.hasDB() {
+              try self.dbManager.makeDB()
+            }
+            try self.setupMessenger()
+          } catch {
+            let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
+            self.hudManager.show(.init(content: xxError))
+          }
         case .failure(let error):
-          self.hudController.show(.init(error: error))
+          self.hudManager.show(.init(error: error))
         }
       }
     }
   }
+}
 
-  private func didFinishAsyncWork() {
-    do {
-      try setupDatabase()
-      try setupMessenger()
-    } catch {
-      let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
-      hudController.show(.init(content: xxError))
+extension LaunchViewModel {
+  func setupMessenger() throws {
+    authHandlerCancellable = authHandler {
+      print("\($0.localizedDescription)")
     }
-  }
+    backupHandlerCancellable = backupHandler {
+      print("\($0.localizedDescription)")
+    }
+    receiveFileHandlerCancellable = receiveFileHandler {
+      print("\($0.localizedDescription)")
+    }
+    messageListenerHandlerCancellable = messageListener {
+      print("\($0.localizedDescription)")
+    }
 
-  private func checkBiometrics(completion: @escaping (Result<Bool, Error>) -> Void) {
-    if permissionHandler.isBiometricsAvailable && isBiometricsOn {
-      permissionHandler.requestBiometrics {
-        switch $0 {
-        case .success(let granted):
-          completion(.success(granted))
-        case .failure(let error):
-          completion(.failure(error))
-        }
+    if messenger.isLoaded() == false {
+      if messenger.isCreated() == false {
+        try messenger.create()
+      }
+      try messenger.load()
+    }
+    try messenger.start()
+    if messenger.isConnected() == false {
+      try messenger.connect()
+      try messenger.listenForMessages()
+    }
+
+    let dummyTrafficManager = try NewDummyTrafficManager.live(
+      cMixId: messenger.e2e()!.getId()
+    )
+    dummyTraffic.set(dummyTrafficManager)
+
+    try dummyTrafficManager.setStatus(dummyTrafficOn)
+
+    if messenger.isLoggedIn() == false {
+      if try messenger.isRegistered() {
+        try messenger.logIn()
+        hudManager.hide()
+        stateSubject.value.shouldPushChats = true
+      } else {
+        try? sftpManager.unlink()
+        try? dropboxManager.unlink()
+        hudManager.hide()
+        stateSubject.value.shouldPushOnboarding = true
       }
     } else {
-      completion(.success(true))
+      hudManager.hide()
+      stateSubject.value.shouldPushChats = true
     }
+    if !messenger.isBackupRunning() {
+      try? messenger.resumeBackup()
+    }
+
+    try generateGroupManager()
+
+    try messenger.trackServices {
+      print("\($0.localizedDescription)")
+    }
+
+    try messenger.startFileTransfer()
+
+    networkMonitor.start()
+    networkHandlerCancellable = messenger.cMix.get()!.addHealthCallback(
+      HealthCallback {
+        self.networkMonitor.update($0)
+      }
+    )
+  }
+}
+
+extension LaunchViewModel {
+  func updateBannedList(completion: @escaping () -> Void) {
+    fetchBannedList { result in
+      switch result {
+      case .failure(_):
+        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+          self.updateBannedList(completion: completion)
+        }
+      case .success(let data):
+        self.processBannedList(data, completion: completion)
+      }
+    }
+  }
+
+  func processBannedList(_ data: Data, completion: @escaping () -> Void) {
+    processBannedList(
+      data: data,
+      forEach: { result in
+        switch result {
+        case .success(let userId):
+          let query = Contact.Query(id: [userId])
+          if var contact = try! dbManager.getDB().fetchContacts(query).first {
+            if contact.isBanned == false {
+              contact.isBanned = true
+              try! dbManager.getDB().saveContact(contact)
+              enqueueBanWarning(contact: contact)
+            }
+          } else {
+            try! dbManager.getDB().saveContact(.init(id: userId, isBanned: true))
+          }
+
+        case .failure(_):
+          break
+        }
+      },
+      completion: { result in
+        switch result {
+        case .failure(_):
+          DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+            self.updateBannedList(completion: completion)
+          }
+        case .success(_):
+          completion()
+        }
+      }
+    )
+  }
+
+  func enqueueBanWarning(contact: XXModels.Contact) {
+    let name = (contact.nickname ?? contact.username) ?? "One of your contacts"
+    toastManager.enqueue(.init(
+      title: "\(name) has been banned for offensive content.",
+      leftImage: Asset.requestSentToaster.image
+    ))
+  }
+
+  func getContactWith(userId: Data) -> XXModels.Contact? {
+    try? dbManager.getDB().fetchContacts(.init(
+      id: [userId],
+      isBlocked: reportingStatus.isEnabled() ? false : nil,
+      isBanned: reportingStatus.isEnabled() ? false : nil
+    )).first
+  }
+
+  func getGroupInfoWith(groupId: Data) -> GroupInfo? {
+    try? dbManager.getDB().fetchGroupInfos(.init(groupId: groupId)).first
   }
 }

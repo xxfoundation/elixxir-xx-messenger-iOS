@@ -1,6 +1,7 @@
 import Shared
 import Combine
 import InputField
+import AppResources
 
 struct NicknameViewState {
     var nickname: String = ""

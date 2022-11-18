@@ -5,7 +5,7 @@ import Combine
 import XXClient
 import Defaults
 import CloudFiles
-import Navigation
+import AppNavigation
 import ComposableArchitecture
 
 enum BackupActionState {
@@ -32,8 +32,8 @@ struct BackupConfigViewModel {
 extension BackupConfigViewModel {
   static func live() -> Self {
     class Context {
-      //@Dependency var service: BackupService
       @Dependency(\.navigator) var navigator: Navigator
+      @Dependency(\.backupService) var service: BackupService
       @Dependency(\.app.hudManager) var hudManager: HUDManager
     }
 
@@ -42,9 +42,9 @@ extension BackupConfigViewModel {
     return .init(
       didTapBackupNow: {
         context.service.didForceBackup()
-        context.hudController.show()
+        context.hudManager.show()
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-          context.hudController.dismiss()
+          context.hudManager.hide()
         }
       },
       didChooseWifiOnly: context.service.didSetWiFiOnly(enabled:),
@@ -58,12 +58,12 @@ extension BackupConfigViewModel {
         context.navigator.perform(PresentPassphrase(onCancel: {
           context.service.toggle(service: service, enabling: false)
         }, onPassphrase: { passphrase in
-          context.hudController.show(.init(
+          context.hudManager.show(.init(
             content: "Initializing and securing your backup file will take few seconds, please keep the app open."
           ))
           context.service.toggle(service: service, enabling: enabling)
           context.service.initializeBackup(passphrase: passphrase)
-          context.hudController.dismiss()
+          context.hudManager.hide()
         }))
       },
       didTapService: { service, controller in

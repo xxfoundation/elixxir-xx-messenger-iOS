@@ -1,9 +1,10 @@
 import UIKit
 import Shared
+import AppCore
 import Combine
 import CloudFiles
 import CloudFilesSFTP
-import DI
+import ComposableArchitecture
 
 public struct RestorationDetails {
   var provider: CloudService
@@ -11,7 +12,7 @@ public struct RestorationDetails {
 }
 
 final class RestoreListViewModel {
-  @Dependency var hudController: HUDController
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
 
   var sftpPublisher: AnyPublisher<Void, Never> {
     sftpSubject.eraseToAnyPublisher()
@@ -51,33 +52,33 @@ final class RestoreListViewModel {
         case .success:
           onSuccess()
         case .failure(let error):
-          self.hudController.show(.init(error: error))
+          self.hudManager.show(.init(error: error))
         }
       }
     } catch {
-      hudController.show(.init(error: error))
+      hudManager.show(.init(error: error))
     }
   }
 
   func fetch(provider: CloudService) {
-    hudController.show()
+    hudManager.show()
     do {
       try CloudFilesManager.all[provider]!.fetch { [weak self] in
         guard let self else { return }
 
         switch $0 {
         case .success(let metadata):
-          self.hudController.dismiss()
+          self.hudManager.hide()
           self.detailsSubject.send(.init(
             provider: provider,
             metadata: metadata
           ))
         case .failure(let error):
-          self.hudController.show(.init(error: error))
+          self.hudManager.show(.init(error: error))
         }
       }
     } catch {
-      hudController.show(.init(error: error))
+      hudManager.show(.init(error: error))
     }
   }
 }

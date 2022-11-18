@@ -2,6 +2,7 @@ import UIKit
 import Shared
 import SnapKit
 import Combine
+import AppResources
 
 final class SearchSegmentedControl: UIView {
     enum Item: Int {

@@ -1,8 +1,8 @@
-import Foundation
-import XCTestDynamicOverlay
-import XXClient
-import XXMessengerClient
 import XXModels
+import XXClient
+import Foundation
+import XXMessengerClient
+import XCTestDynamicOverlay
 
 public struct MessageListenerHandler {
   public typealias OnError = (Error) -> Void
@@ -32,6 +32,7 @@ extension MessageListenerHandler {
             status: .received,
             isUnread: true,
             text: payload.text,
+            replyMessageId: payload.replyingTo,
             roundURL: message.roundURL
           ))
         } catch {

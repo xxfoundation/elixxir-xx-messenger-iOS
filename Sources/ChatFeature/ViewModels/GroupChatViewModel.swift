@@ -1,13 +1,15 @@
 import UIKit
 import Shared
+import AppCore
 import Combine
 import XXModels
 import Defaults
 import Foundation
+import AppResources
 import DifferenceKit
 import ReportingFeature
-import DI
 import XXMessengerClient
+import ComposableArchitecture
 
 import struct XXModels.Message
 import XXClient
@@ -18,13 +20,13 @@ enum GroupChatNavigationRoutes: Equatable {
 }
 
 final class GroupChatViewModel {
-  @Dependency var database: Database
-  @Dependency var messenger: Messenger
-  @Dependency var sendReport: SendReport
-  @Dependency var groupManager: GroupChat
-  @Dependency var hudController: HUDController
-  @Dependency var reportingStatus: ReportingStatus
-  @Dependency var toastController: ToastController
+  @Dependency(\.sendReport) var sendReport
+  @Dependency(\.app.dbManager) var dbManager
+  @Dependency(\.app.messenger) var messenger
+  @Dependency(\.groupManager) var groupManager
+  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.app.toastManager) var toastManager
+  @Dependency(\.reportingStatus) var reportingStatus
 
   @KeyObject(.username, defaultValue: nil) var username: String?
 
@@ -52,7 +54,7 @@ final class GroupChatViewModel {
   private let routesSubject = PassthroughSubject<GroupChatNavigationRoutes, Never>()
 
   var messages: AnyPublisher<[ArraySection<ChatSection, Message>], Never> {
-    database.fetchMessagesPublisher(.init(chat: .group(info.group.id)))
+    try! dbManager.getDB().fetchMessagesPublisher(.init(chat: .group(info.group.id)))
       .replaceError(with: [])
       .map { messages -> [ArraySection<ChatSection, Message>] in
         let groupedByDate = Dictionary(grouping: messages) { domainModel -> Date in
@@ -78,153 +80,90 @@ final class GroupChatViewModel {
   func readAll() {
     let assignment = Message.Assignments(isUnread: false)
     let query = Message.Query(chat: .group(info.group.id))
-    _ = try? database.bulkUpdateMessages(query, assignment)
+    _ = try? dbManager.getDB().bulkUpdateMessages(query, assignment)
   }
 
   func didRequestDelete(_ messages: [Message]) {
-    _ = try? database.deleteMessages(.init(id: Set(messages.map(\.id))))
+    _ = try? dbManager.getDB().deleteMessages(.init(id: Set(messages.map(\.id))))
   }
 
   func didRequestReport(_ message: Message) {
-    if let contact = try? database.fetchContacts(.init(id: [message.senderId])).first {
+    if let contact = try? dbManager.getDB().fetchContacts(.init(id: [message.senderId])).first {
       reportPopupSubject.send(contact)
     }
   }
 
   func send(_ text: String) {
-    var message = Message(
-      senderId: myId,
-      recipientId: nil,
-      groupId: info.group.id,
-      date: Date(),
-      status: .sending,
-      isUnread: false,
-      text: text.trimmingCharacters(in: .whitespacesAndNewlines),
-      replyMessageId: stagedReply?.messageId
-    )
-
-    print("")
-    print("Outgoing GroupMessage:")
-    print("- groupId: \(info.group.id.base64EncodedString().prefix(10))...")
-    print("- senderId: \(myId.base64EncodedString().prefix(10))...")
-    print("- payload.text: \(message.text)")
-
     do {
-      message = try database.saveMessage(message)
-
-      let payload = Payload(
-        text: text.trimmingCharacters(in: .whitespacesAndNewlines),
-        reply: stagedReply
-      ).asData()
-
-      let report = try groupManager.send(
+      var message = Message(
+        senderId: try messenger.e2e.get()!.getContact().getId(),
+        recipientId: nil,
         groupId: info.group.id,
-        message: payload
+        date: Date(),
+        status: .sending,
+        isUnread: false,
+        text: text.trimmingCharacters(in: .whitespacesAndNewlines),
+        replyMessageId: stagedReply?.messageId
       )
-
-      print("- messageId: \(report.messageId.base64EncodedString().prefix(10))...")
-
-      if let foo = stagedReply {
-        print("- payload.reply.messageId: \(foo.messageId.base64EncodedString().prefix(10))...")
-        print("- payload.reply.senderId: \(foo.senderId.base64EncodedString().prefix(10))...")
-      } else {
-        print("- payload.reply: ∅")
-      }
-
-      message.networkId = report.messageId
-
-      try messenger.cMix.get()!.waitForRoundResult(
-        roundList: try report.encode(),
+      message = try dbManager.getDB().saveMessage(message)
+      let report = try groupManager.get()?.send(
+        groupId: info.id,
+        message: MessagePayload(
+          text: text.trimmingCharacters(in: .whitespacesAndNewlines),
+          replyingTo: stagedReply?.messageId
+        ).encode()
+      )
+      message.networkId = report!.messageId
+      message.date = Date.fromTimestamp(Int(report!.timestamp))
+      message = try dbManager.getDB().saveMessage(message)
+      try messenger.cMix.get()?.waitForRoundResult(
+        roundList: try report!.encode(),
         timeoutMS: 15_000,
-        callback: .init(handle: {
-          switch $0 {
+        callback: .init(handle: { result in
+          switch result {
           case .delivered:
             message.status = .sent
-            if let foo = try? self.database.saveMessage(message) {
-              message = foo
-            }
           case .notDelivered(timedOut: let timedOut):
-            if timedOut {
-              message.status = .sendingTimedOut
-            } else {
-              message.status = .sendingFailed
-            }
-
-            if let foo = try? self.database.saveMessage(message) {
-              message = foo
-            }
+            message.status = timedOut ? .sendingTimedOut : .sendingFailed
           }
+          _ = try? self.dbManager.getDB().saveMessage(message)
         })
       )
-
-      print("")
-
-      message.roundURL = report.roundURL
-      message.date = Date.fromTimestamp(Int(report.timestamp))
-      message = try database.saveMessage(message)
     } catch {
-      message.status = .sendingFailed
-      if let foo = try? database.saveMessage(message) {
-        message = foo
-      }
+      print(error.localizedDescription)
     }
-
-    stagedReply = nil
   }
 
   func retry(_ message: Message) {
-    var message = message
-
     do {
+      var message = message
       message.status = .sending
-      message = try database.saveMessage(message)
-
-      var reply: Reply?
-
-      if let replyId = message.replyMessageId {
-        reply = Reply(messageId: replyId, senderId: myId)
-      }
-
-      let report = try groupManager.send(
-        groupId: message.groupId!,
-        message: Payload(
-          text: message.text,
-          reply: reply
-        ).asData()
+      message = try dbManager.getDB().saveMessage(message)
+      let report = try groupManager.get()?.send(
+        groupId: info.id,
+        message: MessagePayload(
+          text: message.text.trimmingCharacters(in: .whitespacesAndNewlines),
+          replyingTo: stagedReply?.messageId
+        ).encode()
       )
-
-      try messenger.cMix.get()!.waitForRoundResult(
-        roundList: try report.encode(),
+      message.networkId = report!.messageId
+      message.date = Date.fromTimestamp(Int(report!.timestamp))
+      message = try dbManager.getDB().saveMessage(message)
+      try messenger.cMix.get()?.waitForRoundResult(
+        roundList: try report!.encode(),
         timeoutMS: 15_000,
-        callback: .init(handle: {
-          switch $0 {
+        callback: .init(handle: { result in
+          switch result {
           case .delivered:
             message.status = .sent
-            if let foo = try? self.database.saveMessage(message) {
-              message = foo
-            }
           case .notDelivered(timedOut: let timedOut):
-            if timedOut {
-              message.status = .sendingTimedOut
-            } else {
-              message.status = .sendingFailed
-            }
-
-            if let foo = try? self.database.saveMessage(message) {
-              message = foo
-            }
+            message.status = timedOut ? .sendingTimedOut : .sendingFailed
           }
+          _ = try? self.dbManager.getDB().saveMessage(message)
         })
       )
-
-      message.networkId = report.messageId
-      message.date = Date.fromTimestamp(Int(report.timestamp))
-      message = try database.saveMessage(message)
     } catch {
-      message.status = .sendingFailed
-      if let foo = try? database.saveMessage(message) {
-        message = foo
-      }
+      print(error.localizedDescription)
     }
   }
 
@@ -241,7 +180,7 @@ final class GroupChatViewModel {
   }
 
   func getReplyContent(for messageId: Data) -> (String, String) {
-    guard let message = try? database.fetchMessages(.init(networkId: messageId)).first else {
+    guard let message = try? dbManager.getDB().fetchMessages(.init(networkId: messageId)).first else {
       return ("[DELETED]", "[DELETED]")
     }
 
@@ -251,7 +190,7 @@ final class GroupChatViewModel {
   func getName(from senderId: Data) -> String {
     guard senderId != myId else { return "You" }
 
-    guard let contact = try? database.fetchContacts(.init(id: [senderId])).first else {
+    guard let contact = try? dbManager.getDB().fetchContacts(.init(id: [senderId])).first else {
       return "[DELETED]"
     }
 
@@ -290,18 +229,18 @@ final class GroupChatViewModel {
       }
     )
 
-    hudController.show()
+    hudManager.show()
     sendReport(report) { result in
       switch result {
       case .failure(let error):
         DispatchQueue.main.async {
-          self.hudController.show(.init(error: error))
+          self.hudManager.show(.init(error: error))
         }
 
       case .success(_):
         self.blockContact(contact)
         DispatchQueue.main.async {
-          self.hudController.dismiss()
+          self.hudManager.hide()
           self.presentReportConfirmation(contact: contact)
           completion()
         }
@@ -312,12 +251,12 @@ final class GroupChatViewModel {
   private func blockContact(_ contact: XXModels.Contact) {
     var contact = contact
     contact.isBlocked = true
-    _ = try? database.saveContact(contact)
+    _ = try? dbManager.getDB().saveContact(contact)
   }
 
   private func presentReportConfirmation(contact: XXModels.Contact) {
     let name = (contact.nickname ?? contact.username) ?? "the contact"
-    toastController.enqueueToast(model: .init(
+    toastManager.enqueue(.init(
       title: "Your report has been sent and \(name) is now blocked.",
       leftImage: Asset.requestSentToaster.image
     ))

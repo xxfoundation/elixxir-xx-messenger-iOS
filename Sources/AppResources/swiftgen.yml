@@ -1,0 +1,25 @@
+strings:
+  inputs: Resources/en.lproj
+  outputs:
+      templateName: structured-swift5
+      output: Strings.swift
+      params:
+        enumName: Localized
+        publicAccess: true
+
+xcassets:
+  inputs: Resources/Assets.xcassets
+  outputs:
+    templateName: swift5
+    output: Assets.swift
+    params:
+      publicAccess: true
+
+fonts:
+  inputs: Resources/Fonts
+  outputs:
+    templateName: swift5
+    output: Fonts.swift
+    params:
+      enumName: Fonts
+      publicAccess: true

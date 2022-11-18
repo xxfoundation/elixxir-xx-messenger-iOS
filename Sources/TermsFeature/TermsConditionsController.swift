@@ -1,14 +1,14 @@
-import DI
 import UIKit
 import WebKit
 import Shared
 import Combine
 import Defaults
-import Navigation
 import AppResources
+import AppNavigation
+import ComposableArchitecture
 
 public final class TermsConditionsController: UIViewController {
-  @Dependency var navigator: Navigator
+  @Dependency(\.navigator) var navigator: Navigator
 
   @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.acceptedTerms, defaultValue: false) var didAcceptTerms: Bool
@@ -72,12 +72,7 @@ public final class TermsConditionsController: UIViewController {
       .showTermsButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] _ in
-        let webView = WKWebView()
-        let webController = UIViewController()
-        webController.view.addSubview(webView)
-        webView.snp.makeConstraints { $0.edges.equalToSuperview() }
-        webView.load(URLRequest(url: URL(string: "https://elixxir.io/eula")!))
-        present(webController, animated: true)
+        navigator.perform(PresentWebsite(urlString: "https://elixxir.io/eula", from: self))
       }.store(in: &cancellables)
   }
 }

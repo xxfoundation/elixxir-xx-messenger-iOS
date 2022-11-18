@@ -1,5 +1,6 @@
 import UIKit
 import Shared
+import AppResources
 
 typealias OutgoingImageCell = CollectionCell<FlexibleSpace, ImageMessageView>
 typealias IncomingImageCell = CollectionCell<ImageMessageView, FlexibleSpace>

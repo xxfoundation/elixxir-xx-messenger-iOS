@@ -1,8 +1,8 @@
-import Foundation
-import XCTestDynamicOverlay
-import XXClient
-import XXMessengerClient
 import XXModels
+import XXClient
+import Foundation
+import XXMessengerClient
+import XCTestDynamicOverlay
 
 public struct AuthCallbackHandler {
   public typealias OnError = (Error) -> Void

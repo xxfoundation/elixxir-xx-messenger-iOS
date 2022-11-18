@@ -1,15 +1,15 @@
-import DI
 import UIKit
 import Shared
 import Combine
-import XXLogger
+import AppCore
 import XXModels
 import QuickLook
 import Voxophone
-import Navigation
 import ChatLayout
-import Navigation
+import Dependencies
+import AppResources
 import DrawerFeature
+import AppNavigation
 import DifferenceKit
 import ChatInputFeature
 import ReportingFeature
@@ -24,13 +24,15 @@ extension Message: Differentiable {
 }
 
 public final class SingleChatController: UIViewController {
-  @Dependency var logger: XXLogger
-  @Dependency var navigator: Navigator
-  @Dependency var voxophone: Voxophone
-  @Dependency var barStylist: StatusBarStylist
-  @Dependency var reportingStatus: ReportingStatus
-  @Dependency var makeReportDrawer: MakeReportDrawer
-  @Dependency var makeAppScreenshot: MakeAppScreenshot
+//  @Dependency var voxophone: Voxophone
+//  @Dependency var makeReportDrawer: MakeReportDrawer
+//  @Dependency var makeAppScreenshot: MakeAppScreenshot
+
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
+  @Dependency(\.reportingStatus) var reportingStatus: ReportingStatus
+
+  let voxophone = Voxophone()
 
   private lazy var infoView = UIControl()
   private lazy var nameLabel = UILabel()
@@ -66,7 +68,7 @@ public final class SingleChatController: UIViewController {
       initialState: .init(canAddAttachments: true),
       reducer: chatInputReducer,
       environment: .init(
-        voxophone: try! DI.Container.shared.resolve() as Voxophone,
+        voxophone: Voxophone(), //try! DI.Container.shared.resolve() as Voxophone,
         sendAudio: { viewModel.didSendAudio(url: $0) },
         didTapCamera: { viewModel.didTest(permission: .camera) },
         didTapLibrary: { viewModel.didTest(permission: .library) },
@@ -83,7 +85,7 @@ public final class SingleChatController: UIViewController {
 
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
-    barStylist.styleSubject.send(.darkContent)
+    statusBar.set(.darkContent)
     navigationController?.navigationBar.customize(
       backgroundColor: Asset.neutralWhite.color,
       shadowColor: Asset.neutralDisabled.color
@@ -213,49 +215,49 @@ public final class SingleChatController: UIViewController {
     viewModel.navigation
       .receive(on: DispatchQueue.main)
       .removeDuplicates()
-      .sink { [unowned self] _ in
-//        switch $0 {
-//        case .library:
-//          navigator.perform(PresentPhotoLibrary())
-//        case .camera:
-//          navigator.perform(PresentCamera())
-//        case .cameraPermission:
-//          navigator.perform(PresentPermissionRequest(type: .camera))
-//        case .microphonePermission:
-//          navigator.perform(PresentPermissionRequest(type: .microphone))
-//        case .libraryPermission:
-//          navigator.perform(PresentPermissionRequest(type: .library))
-//        case .webview(let urlString):
-//          navigator.perform(PresentWebsite(url: URL(string: urlString)!))
-//        case .waitingRound:
-//          let button = DrawerCapsuleButton(model: .init(
-//            title: Localized.Chat.RoundDrawer.action,
-//            style: .brandColored
-//          ))
-//
-//          button
-//            .action
-//            .receive(on: DispatchQueue.main)
-//            .sink { [unowned self] in
-//              navigator.perform(DismissModal(from: self)) { [weak self] in
-//                guard let self else { return }
-//                self.drawerCancellables.removeAll()
-//              }
-//            }.store(in: &drawerCancellables)
-//
-//          navigator.perform(PresentDrawer(items: [
-//            DrawerText(
-//              font: Fonts.Mulish.semiBold.font(size: 14.0),
-//              text: Localized.Chat.RoundDrawer.title,
-//              color: Asset.neutralWeak.color,
-//              lineHeightMultiple: 1.35,
-//              spacingAfter: 25
-//            ),
-//            button
-//          ]))
-//        case .none:
-//          break
-//        }
+      .sink { [unowned self] in
+        switch $0 {
+        case .library:
+          navigator.perform(PresentPhotoLibrary(from: self))
+        case .camera:
+          navigator.perform(PresentCamera(from: self))
+        case .cameraPermission:
+          navigator.perform(PresentPermissionRequest(type: .camera, from: self))
+        case .microphonePermission:
+          navigator.perform(PresentPermissionRequest(type: .microphone, from: self))
+        case .libraryPermission:
+          navigator.perform(PresentPermissionRequest(type: .library, from: self))
+        case .webview(let urlString):
+          navigator.perform(PresentWebsite(urlString: urlString, from: self))
+        case .waitingRound:
+          let button = DrawerCapsuleButton(model: .init(
+            title: Localized.Chat.RoundDrawer.action,
+            style: .brandColored
+          ))
+
+          button
+            .action
+            .receive(on: DispatchQueue.main)
+            .sink { [unowned self] in
+              navigator.perform(DismissModal(from: self)) { [weak self] in
+                guard let self else { return }
+                self.drawerCancellables.removeAll()
+              }
+            }.store(in: &drawerCancellables)
+
+          navigator.perform(PresentDrawer(items: [
+            DrawerText(
+              font: Fonts.Mulish.semiBold.font(size: 14.0),
+              text: Localized.Chat.RoundDrawer.title,
+              color: Asset.neutralWeak.color,
+              lineHeightMultiple: 1.35,
+              spacingAfter: 25
+            ),
+            button
+          ], isDismissable: true, from: self))
+        case .none:
+          break
+        }
 
         viewModel.didNavigateSomewhere()
       }.store(in: &cancellables)
@@ -408,11 +410,11 @@ public final class SingleChatController: UIViewController {
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self else { return }
           self.drawerCancellables.removeAll()
-          let screenshot = try! self.makeAppScreenshot()
-          self.viewModel.report(screenshot: screenshot) { success in
-            guard success else { return }
-            self.navigationController?.popViewController(animated: true)
-          }
+//          let screenshot = try! self.makeAppScreenshot()
+//          self.viewModel.report(screenshot: screenshot) { success in
+//            guard success else { return }
+//            self.navigationController?.popViewController(animated: true)
+//          }
         }
       }.store(in: &drawerCancellables)
 

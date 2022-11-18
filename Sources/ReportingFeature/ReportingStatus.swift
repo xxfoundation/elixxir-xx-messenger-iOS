@@ -20,14 +20,14 @@ extension ReportingStatus {
         if isOptional.get() == false {
           return true
         }
-
+        
         return isEnabled.get()
       },
       isEnabledPublisher: {
         if isOptional.get() == false {
           return Just(true).eraseToAnyPublisher()
         }
-
+        
         return isEnabled.publisher()
       },
       enable: { enabled in
@@ -35,7 +35,7 @@ extension ReportingStatus {
       }
     )
   }
-
+  
   public static func mock(
     isEnabled: Bool = false,
     isOptional: Bool = true
@@ -48,4 +48,11 @@ extension ReportingStatus {
       enable: { isEnabledSubject.send($0) }
     )
   }
+
+  public static let unimplemented = ReportingStatus(
+    isOptional: { fatalError() },
+    isEnabled: { fatalError() },
+    isEnabledPublisher: { fatalError() },
+    enable: { _ in }
+  )
 }

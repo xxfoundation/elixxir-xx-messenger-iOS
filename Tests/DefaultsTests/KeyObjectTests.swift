@@ -1,4 +1,3 @@
-import DI
 import XCTest
 
 @testable import Defaults

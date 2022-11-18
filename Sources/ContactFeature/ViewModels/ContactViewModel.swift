@@ -1,12 +1,13 @@
 import UIKit
 import Shared
 import Combine
+import AppCore
 import XXModels
 import Defaults
 import XXClient
+import Dependencies
 import CombineSchedulers
 import XXMessengerClient
-import DI
 
 struct ContactViewState: Equatable {
   var title: String?
@@ -18,10 +19,9 @@ struct ContactViewState: Equatable {
 }
 
 final class ContactViewModel {
-  @Dependency var database: Database
-  @Dependency var messenger: Messenger
-  @Dependency var hudController: HUDController
-  @Dependency var getFactsFromContact: GetFactsFromContact
+  @Dependency(\.app.dbManager) var dbManager: DBManager
+  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
   
   @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.sharingEmail, defaultValue: false) var sharingEmail: Bool
@@ -47,15 +47,11 @@ final class ContactViewModel {
   
   init(_ contact: XXModels.Contact) {
     self.contact = contact
-    
-    let facts = try? getFactsFromContact(contact.marshaled!)
-    let email = facts?.first(where: { $0.type == .email })?.value
-    let phone = facts?.first(where: { $0.type == .phone })?.value
-    
+
     stateRelay.value = .init(
       title: contact.nickname ?? contact.username,
-      email: email,
-      phone: phone,
+      email: contact.email,
+      phone: contact.phone,
       photo: contact.photo != nil ? UIImage(data: contact.photo!) : nil,
       username: contact.username,
       nickname: contact.nickname
@@ -65,50 +61,50 @@ final class ContactViewModel {
   func didChoosePhoto(_ photo: UIImage) {
     stateRelay.value.photo = photo
     contact.photo = photo.jpegData(compressionQuality: 0.0)
-    _ = try? database.saveContact(contact)
+    _ = try? dbManager.getDB().saveContact(contact)
   }
   
   func didTapDelete() {
-    hudController.show()
+    hudManager.show()
     
     do {
       try messenger.e2e.get()!.deleteRequest.partnerId(contact.id)
-      try database.deleteContact(contact)
+      try dbManager.getDB().deleteContact(contact)
       
-      hudController.dismiss()
+      hudManager.hide()
       popToRootRelay.send()
     } catch {
-      hudController.show(.init(error: error))
+      hudManager.show(.init(error: error))
     }
   }
   
   func didTapReject() {
     // TODO: Reject function on the API?
-    _ = try? database.deleteContact(contact)
+    _ = try? dbManager.getDB().deleteContact(contact)
     popRelay.send()
   }
   
   func didTapClear() {
-    _ = try? database.deleteMessages(.init(chat: .direct(myId, contact.id)))
+    _ = try? dbManager.getDB().deleteMessages(.init(chat: .direct(myId, contact.id)))
   }
   
   func didUpdateNickname(_ string: String) {
     contact.nickname = string.isEmpty ? nil : string
     stateRelay.value.title = string.isEmpty ? contact.username : string
-    _ = try? database.saveContact(contact)
+    _ = try? dbManager.getDB().saveContact(contact)
     
     stateRelay.value.nickname = contact.nickname
   }
   
   func didTapResend() {
-    hudController.show()
+    hudManager.show()
     contact.authStatus = .requesting
     
     backgroundScheduler.schedule { [weak self] in
       guard let self else { return }
       
       do {
-        try self.database.saveContact(self.contact)
+        try self.dbManager.getDB().saveContact(self.contact)
         
         var includedFacts: [Fact] = []
         let myFacts = try self.messenger.ud.get()!.getFacts()
@@ -131,20 +127,20 @@ final class ContactViewModel {
         )
         
         self.contact.authStatus = .requested
-        try self.database.saveContact(self.contact)
+        try self.dbManager.getDB().saveContact(self.contact)
         
-        self.hudController.dismiss()
+        self.hudManager.hide()
         self.popRelay.send()
       } catch {
         self.contact.authStatus = .requestFailed
-        _ = try? self.database.saveContact(self.contact)
-        self.hudController.show(.init(error: error))
+        _ = try? self.dbManager.getDB().saveContact(self.contact)
+        self.hudManager.show(.init(error: error))
       }
     }
   }
   
   func didTapRequest(with nickname: String) {
-    hudController.show()
+    hudManager.show()
     contact.nickname = nickname
     contact.authStatus = .requesting
     
@@ -152,7 +148,7 @@ final class ContactViewModel {
       guard let self else { return }
       
       do {
-        try self.database.saveContact(self.contact)
+        try self.dbManager.getDB().saveContact(self.contact)
         
         var includedFacts: [Fact] = []
         let myFacts = try self.messenger.ud.get()!.getFacts()
@@ -175,20 +171,20 @@ final class ContactViewModel {
         )
         
         self.contact.authStatus = .requested
-        try self.database.saveContact(self.contact)
+        try self.dbManager.getDB().saveContact(self.contact)
         
-        self.hudController.dismiss()
+        self.hudManager.hide()
         self.successRelay.send()
       } catch {
         self.contact.authStatus = .requestFailed
-        _ = try? self.database.saveContact(self.contact)
-        self.hudController.show(.init(error: error))
+        _ = try? self.dbManager.getDB().saveContact(self.contact)
+        self.hudManager.show(.init(error: error))
       }
     }
   }
   
   func didTapAccept(_ nickname: String) {
-    hudController.show()
+    hudManager.show()
     contact.nickname = nickname
     contact.authStatus = .confirming
     
@@ -196,19 +192,19 @@ final class ContactViewModel {
       guard let self else { return }
       
       do {
-        try self.database.saveContact(self.contact)
+        try self.dbManager.getDB().saveContact(self.contact)
         
         let _ = try self.messenger.e2e.get()!.confirmReceivedRequest(partner: XXClient.Contact.live(self.contact.marshaled!))
         
         self.contact.authStatus = .friend
-        try self.database.saveContact(self.contact)
+        try self.dbManager.getDB().saveContact(self.contact)
         
-        self.hudController.dismiss()
+        self.hudManager.hide()
         self.popRelay.send()
       } catch {
         self.contact.authStatus = .confirmationFailed
-        _ = try? self.database.saveContact(self.contact)
-        self.hudController.show(.init(error: error))
+        _ = try? self.dbManager.getDB().saveContact(self.contact)
+        self.hudManager.show(.init(error: error))
       }
     }
   }

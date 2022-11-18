@@ -1,16 +1,16 @@
 import UIKit
 import Shared
 import Combine
-import Navigation
+import AppCore
 import AppResources
+import Dependencies
+import AppNavigation
 import DrawerFeature
-import StatusBarFeature
 import ScrollViewController
-import ComposableArchitecture
 
 public final class OnboardingPhoneController: UIViewController {
   @Dependency(\.navigator) var navigator: Navigator
-  @Dependency(\.statusBar) var statusBar: StatusBarStyleManager
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
 
   private lazy var screenView = OnboardingPhoneView()
   private lazy var scrollViewController = ScrollViewController()
@@ -22,7 +22,7 @@ public final class OnboardingPhoneController: UIViewController {
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     navigationItem.backButtonTitle = ""
-    statusBar.update(.darkContent)
+    statusBar.set(.darkContent)
     navigationController?.navigationBar.customize(translucent: true)
   }
 

@@ -1,15 +1,15 @@
 import UIKit
 import Shared
+import AppCore
 import Combine
 import Defaults
 import XXClient
-import Foundation
-import Permissions
 import BackupFeature
 import XXMessengerClient
 import CombineSchedulers
 import CountryListFeature
-import DI
+import PermissionsFeature
+import ComposableArchitecture
 
 enum ProfileNavigationRoutes {
   case none
@@ -31,20 +31,23 @@ final class ProfileViewModel {
   @KeyObject(.sharingEmail, defaultValue: false) var isEmailSharing: Bool
   @KeyObject(.sharingPhone, defaultValue: false) var isPhoneSharing: Bool
 
-  @Dependency var messenger: Messenger
-  @Dependency var backupService: BackupService
-  @Dependency var hudController: HUDController
-  @Dependency var permissions: PermissionHandling
+  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
+  @Dependency(\.backupService) var backupService: BackupService
+  @Dependency(\.permissions) var permissions: PermissionsManager
+  @Dependency(\.app.bgQueue) var bgQueue: AnySchedulerOf<DispatchQueue>
 
   var name: String { username! }
 
-  var state: AnyPublisher<ProfileViewState, Never> { stateRelay.eraseToAnyPublisher() }
+  var state: AnyPublisher<ProfileViewState, Never> {
+    stateRelay.eraseToAnyPublisher()
+  }
   private let stateRelay = CurrentValueSubject<ProfileViewState, Never>(.init())
 
-  var navigation: AnyPublisher<ProfileNavigationRoutes, Never> { navigationRoutes.eraseToAnyPublisher() }
+  var navigation: AnyPublisher<ProfileNavigationRoutes, Never> {
+    navigationRoutes.eraseToAnyPublisher()
+  }
   private let navigationRoutes = PassthroughSubject<ProfileNavigationRoutes, Never>()
-
-  var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
 
   init() {
     refresh()
@@ -66,7 +69,7 @@ final class ProfileViewModel {
   }
 
   func didRequestLibraryAccess() {
-    if permissions.isPhotosAllowed {
+    if permissions.library.status() {
       navigationRoutes.send(.library)
     } else {
       navigationRoutes.send(.libraryPermission)
@@ -83,11 +86,10 @@ final class ProfileViewModel {
   }
 
   func didTapDelete(isEmail: Bool) {
-    hudController.show()
+    hudManager.show()
 
-    backgroundScheduler.schedule { [weak self] in
+    bgQueue.schedule { [weak self] in
       guard let self else { return }
-
       do {
         try self.messenger.ud.get()!.removeFact(
           .init(
@@ -95,7 +97,6 @@ final class ProfileViewModel {
             value: isEmail ? self.emailStored! : self.phoneStored!
           )
         )
-
         if isEmail {
           self.emailStored = nil
           self.isEmailSharing = false
@@ -103,13 +104,12 @@ final class ProfileViewModel {
           self.phoneStored = nil
           self.isPhoneSharing = false
         }
-
         self.backupService.didUpdateFacts()
-        self.hudController.dismiss()
+        self.hudManager.hide()
         self.refresh()
       } catch {
         let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
-        self.hudController.show(.init(content: xxError))
+        self.hudManager.show(.init(content: xxError))
       }
     }
   }

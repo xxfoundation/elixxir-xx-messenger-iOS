@@ -1,11 +1,12 @@
 import UIKit
+import AppCore
 import Defaults
 import XXClient
 import XXModels
 import XXDatabase
-import XXMessengerClient
 import ReportingFeature
-import DI
+import XXMessengerClient
+import ComposableArchitecture
 
 public final class PushHandler: PushHandling {
   private enum Constants {
@@ -13,7 +14,7 @@ public final class PushHandler: PushHandling {
     static let usernamesSetting = "isShowingUsernames"
   }
 
-  @Dependency var messenger: Messenger
+  @Dependency(\.app.messenger) var messenger: Messenger
 
   @KeyObject(.pushNotifications, defaultValue: false) var isPushEnabled: Bool
 

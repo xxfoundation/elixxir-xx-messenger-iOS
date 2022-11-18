@@ -1,5 +1,6 @@
 import UIKit
 import Shared
+import AppResources
 
 final class ChatListContainerView: UIView {
   let separatorView = UIView()
