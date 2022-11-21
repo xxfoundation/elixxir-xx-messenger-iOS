@@ -1,5 +1,5 @@
 import Foundation
-import ComposableArchitecture
+import Dependencies
 
 public enum Key: String {
   case email

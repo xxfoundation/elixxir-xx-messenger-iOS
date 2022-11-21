@@ -57,7 +57,7 @@ public final class LaunchController: UIViewController {
     case .search(username: let username):
       navigator.perform(PresentSearch(
         searching: username,
-        replacing: true,
+        fromOnboarding: true,
         on: navigationController!))
     case .groupChat(id: let groupId):
       if let info = viewModel.getGroupInfoWith(groupId: groupId) {

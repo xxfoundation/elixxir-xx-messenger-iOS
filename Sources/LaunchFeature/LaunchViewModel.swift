@@ -48,7 +48,6 @@ final class LaunchViewModel {
   @Dependency(\.app.dbManager) var dbManager
   @Dependency(\.keychain) var keychainManager
   @Dependency(\.updateErrors) var updateErrors
-  @Dependency(\.groupManager) var groupManager
   @Dependency(\.app.hudManager) var hudManager
   @Dependency(\.checkVersion) var checkVersion
   @Dependency(\.dummyTraffic) var dummyTraffic
@@ -60,14 +59,18 @@ final class LaunchViewModel {
   @Dependency(\.processBannedList) var processBannedList
 
   @Dependency(\.app.authHandler) var authHandler
+  @Dependency(\.app.groupRequest) var groupRequest
   @Dependency(\.app.backupHandler) var backupHandler
   @Dependency(\.app.messageListener) var messageListener
   @Dependency(\.app.receiveFileHandler) var receiveFileHandler
+  @Dependency(\.app.groupMessageHandler) var groupMessageHandler
 
   var authHandlerCancellable: Cancellable?
+  var groupRequestCancellable: Cancellable?
   var backupHandlerCancellable: Cancellable?
   var networkHandlerCancellable: Cancellable?
   var receiveFileHandlerCancellable: Cancellable?
+  var groupMessageHandlerCancellable: Cancellable?
   var messageListenerHandlerCancellable: Cancellable?
 
   @KeyObject(.username, defaultValue: nil) var username: String?
@@ -164,16 +167,16 @@ final class LaunchViewModel {
 extension LaunchViewModel {
   func setupMessenger() throws {
     authHandlerCancellable = authHandler {
-      print("\($0.localizedDescription)")
+      print($0.localizedDescription)
     }
     backupHandlerCancellable = backupHandler {
-      print("\($0.localizedDescription)")
+      print($0.localizedDescription)
     }
     receiveFileHandlerCancellable = receiveFileHandler {
-      print("\($0.localizedDescription)")
+      print($0.localizedDescription)
     }
     messageListenerHandlerCancellable = messageListener {
-      print("\($0.localizedDescription)")
+      print($0.localizedDescription)
     }
 
     if messenger.isLoaded() == false {
@@ -214,10 +217,18 @@ extension LaunchViewModel {
       try? messenger.resumeBackup()
     }
 
-    try generateGroupManager()
+    groupRequestCancellable = groupRequest {
+      print($0)
+    }
+
+    groupMessageHandlerCancellable = groupMessageHandler {
+      print($0)
+    }
+
+    try messenger.startGroupChat()
 
     try messenger.trackServices {
-      print("\($0.localizedDescription)")
+      print($0.localizedDescription)
     }
 
     try messenger.startFileTransfer()

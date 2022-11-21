@@ -107,7 +107,10 @@ public final class OnboardingCodeController: UIViewController {
         if isEmail {
           navigator.perform(PresentOnboardingPhone(on: navigationController!))
         } else {
-          navigator.perform(PresentChatList(on: navigationController!))
+          navigator.perform(PresentSearch(
+            fromOnboarding: true,
+            on: navigationController!
+          ))
         }
       }.store(in: &cancellables)
 

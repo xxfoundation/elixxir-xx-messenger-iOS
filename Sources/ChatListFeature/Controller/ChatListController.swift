@@ -71,11 +71,7 @@ public final class ChatListController: UIViewController {
       .sink { [unowned self] in
         switch $0 {
         case .didTapSearch:
-          navigator.perform(PresentSearch(
-            searching: nil,
-            replacing: false,
-            on: navigationController!
-          ))
+          navigator.perform(PresentSearch(on: navigationController!))
         case .didTapNewGroup:
           navigator.perform(
             PresentGroupDraft(on: navigationController!)
@@ -218,11 +214,7 @@ public final class ChatListController: UIViewController {
       .searchButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
-        navigator.perform(PresentSearch(
-          searching: nil,
-          replacing: false,
-          on: navigationController!
-        ))
+        navigator.perform(PresentSearch(on: navigationController!))
       }.store(in: &cancellables)
     
     screenView

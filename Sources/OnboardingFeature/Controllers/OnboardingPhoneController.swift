@@ -86,7 +86,10 @@ public final class OnboardingPhoneController: UIViewController {
       .skipButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
-        navigator.perform(PresentChatList(on: navigationController!))
+        navigator.perform(PresentSearch(
+          fromOnboarding: true,
+          on: navigationController!
+        ))
       }.store(in: &cancellables)
 
     screenView

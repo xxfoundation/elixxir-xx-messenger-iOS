@@ -196,7 +196,7 @@ public final class MenuController: UIViewController {
           guard let self, self.currentItem != .share else { return }
           self.navigator.perform(PresentActivitySheet(items: [
             Localized.Menu.shareContent(self.viewModel.referralDeeplink)
-          ], from: self))
+          ], from: self.navController!.topViewController!))
         }
       }.store(in: &cancellables)
 
@@ -247,6 +247,6 @@ public final class MenuController: UIViewController {
         spacingAfter: 39
       ),
       actionButton
-    ], isDismissable: true, from: self))
+    ], isDismissable: true, from: navController!.topViewController!))
   }
 }

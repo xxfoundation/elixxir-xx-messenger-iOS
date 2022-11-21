@@ -20,12 +20,10 @@ struct RequestReceived: Hashable, Equatable {
 }
 
 final class RequestsReceivedViewModel {
-  @Dependency(\.app.dbManager) var dbManager: DBManager
-  @Dependency(\.app.messenger) var messenger: Messenger
-  @Dependency(\.app.hudManager) var hudManager: HUDManager
-  @Dependency(\.reportingStatus) var reportingStatus: ReportingStatus
-
-  //@Dependency var groupManager: GroupChat
+  @Dependency(\.app.dbManager) var dbManager
+  @Dependency(\.app.messenger) var messenger
+  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.reportingStatus) var reportingStatus
   
   @KeyObject(.isShowingHiddenRequests, defaultValue: false) var isShowingHiddenRequests: Bool
 
@@ -193,8 +191,8 @@ final class RequestsReceivedViewModel {
       guard let self else { return }
       
       do {
-        //try self.groupManager.joinGroup(serializedGroupData: group.serialized)
-        
+        try self.messenger.groupChat()!.joinGroup(serializedGroupData: group.serialized)
+
         var group = group
         group.authStatus = .participating
         try self.dbManager.getDB().saveGroup(group)

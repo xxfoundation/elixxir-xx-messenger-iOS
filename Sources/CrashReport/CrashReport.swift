@@ -1,5 +1,4 @@
 import Firebase
-import CrashReporting
 import FirebaseCrashlytics
 import XCTestDynamicOverlay
 

@@ -27,7 +27,6 @@ typealias SearchSnapshot = NSDiffableDataSourceSnapshot<SearchSection, SearchIte
 final class ChatListViewModel {
   @Dependency(\.app.dbManager) var dbManager
   @Dependency(\.app.messenger) var messenger
-  @Dependency(\.groupManager) var groupManager
   @Dependency(\.app.hudManager) var hudManager
   @Dependency(\.reportingStatus) var reportingStatus
   
@@ -175,12 +174,9 @@ final class ChatListViewModel {
   }
   
   func leave(_ group: Group) {
-    guard let manager = groupManager.get() else {
-      return
-    }
     hudManager.show()
     do {
-      try manager.leaveGroup(groupId: group.id)
+      try messenger.groupChat()!.leaveGroup(groupId: group.id)
       try dbManager.getDB().deleteMessages(.init(chat: .group(group.id)))
       try dbManager.getDB().deleteGroup(group)
       hudManager.hide()

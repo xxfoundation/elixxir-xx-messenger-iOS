@@ -115,11 +115,7 @@ public final class ContactListController: UIViewController {
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentSearch(
-          searching: nil,
-          replacing: false,
-          on: navigationController!
-        ))
+        navigator.perform(PresentSearch(on: navigationController!))
       }.store(in: &cancellables)
 
     viewModel
@@ -141,11 +137,7 @@ public final class ContactListController: UIViewController {
   }
 
   @objc private func didTapSearch() {
-    navigator.perform(PresentSearch(
-      searching: nil,
-      replacing: false,
-      on: navigationController!
-    ))
+    navigator.perform(PresentSearch(on: navigationController!))
   }
 
   @objc private func didTapScan() {

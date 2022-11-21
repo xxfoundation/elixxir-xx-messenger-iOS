@@ -177,8 +177,21 @@ let package = Package(
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
       ]
     ),
-    .target(name: "CheckVersion"),
-    .target(name: "Voxophone"),
+    .target(
+      name: "CheckVersion",
+      dependencies: [
+        .product(
+          name: "Dependencies",
+          package: "swift-composable-architecture"
+        ),
+      ]
+    ),
+    .target(
+      name: "Voxophone",
+      dependencies: [
+        .target(name: "Shared"),
+      ]
+    ),
     .target(name: "WebsiteFeature"),
     .target(
       name: "CrashReport",
@@ -271,12 +284,24 @@ let package = Package(
     .target(
       name: "Keychain",
       dependencies: [
-        .product(name: "KeychainAccess", package: "KeychainAccess"),
+        .product(
+          name: "KeychainAccess",
+          package: "KeychainAccess"
+        ),
+        .product(
+          name: "Dependencies",
+          package: "swift-composable-architecture"
+        ),
       ]
     ),
     .target(
       name: "Defaults",
-      dependencies: []
+      dependencies: [
+        .product(
+          name: "Dependencies",
+          package: "swift-composable-architecture"
+        ),
+      ]
     ),
     .target(
       name: "CountryListFeature",

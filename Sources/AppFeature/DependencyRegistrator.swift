@@ -1,32 +1,12 @@
-// MARK: SDK
-
-import UIKit
-import Network
-import QuickLook
-import MobileCoreServices
-
-// MARK: Isolated features
-
-import Bindings
-import Keychain
-import Defaults
-import Voxophone
-import PushFeature
-import CrashReporting
-import VersionChecking
-import ReportingFeature
-import CountryListFeature
-
-// MARK: UI Features
-
 import ScanFeature
 import ChatFeature
 import MenuFeature
 import TermsFeature
+import Dependencies
+import AppNavigation
 import BackupFeature
 import DrawerFeature
 import SearchFeature
-import LaunchFeature
 import RestoreFeature
 import ContactFeature
 import WebsiteFeature
@@ -36,17 +16,10 @@ import SettingsFeature
 import RequestsFeature
 import GroupDraftFeature
 import OnboardingFeature
+import CountryListFeature
 import CreateGroupFeature
 import ContactListFeature
 import RequestPermissionFeature
-
-import Shared
-import XXClient
-import AppNavigation
-import KeychainAccess
-import XXMessengerClient
-
-import ComposableArchitecture
 
 extension NavigatorKey: DependencyKey {
   public static let liveValue: Navigator = CombinedNavigator(
@@ -114,6 +87,7 @@ extension NavigatorKey: DependencyKey {
       ProfilePhoneController.init
     ),
     PresentSearchNavigator(
+      ChatListController.init,
       SearchContainerController.init(_:)
     ),
     PresentRequestsNavigator(

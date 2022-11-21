@@ -10,6 +10,8 @@ public struct AppDependencies {
   public var backupHandler: BackupCallbackHandler
   public var hudManager: HUDManager
   public var dbManager: DBManager
+  public var groupRequest: GroupRequestHandler
+  public var groupMessageHandler: GroupMessageHandler
   public var statusBar: StatusBarStylist
   public var messenger: Messenger
   public var authHandler: AuthCallbackHandler
@@ -53,6 +55,14 @@ extension AppDependencies {
       ),
       hudManager: .live(),
       dbManager: dbManager,
+      groupRequest: .live(
+        messenger: messenger,
+        db: dbManager.getDB
+      ),
+      groupMessageHandler: .live(
+        messenger: messenger,
+        db: dbManager.getDB
+      ),
       statusBar: .live(),
       messenger: messenger,
       authHandler: .live(
@@ -67,7 +77,7 @@ extension AppDependencies {
       ),
       backupStorage: .onDisk(),
       mainQueue: DispatchQueue.main.eraseToAnyScheduler(),
-      bgQueue: DispatchQueue.global(qos: .background).eraseToAnyScheduler(),
+      bgQueue: DispatchQueue(label: "xx-messenger", qos: .userInitiated).eraseToAnyScheduler(),
       now: now,
       sendMessage: .live(
         messenger: messenger,
@@ -99,6 +109,8 @@ extension AppDependencies {
     backupHandler: .unimplemented,
     hudManager: .unimplemented,
     dbManager: .unimplemented,
+    groupRequest: .unimplemented,
+    groupMessageHandler: .unimplemented,
     statusBar: .unimplemented,
     messenger: .unimplemented,
     authHandler: .unimplemented,
@@ -169,17 +181,5 @@ extension DependencyValues {
   public var dummyTraffic: Stored<DummyTraffic?> {
     get { self[StoredDummyTrafficKey.self] }
     set { self[StoredDummyTrafficKey.self] = newValue }
-  }
-}
-
-private enum StoredNewGroupChatKey: DependencyKey {
-  static var liveValue = Stored<GroupChat?>.inMemory()
-  static var testValue = Stored<GroupChat?>.unimplemented()
-}
-
-extension DependencyValues {
-  public var groupManager: Stored<GroupChat?> {
-    get { self[StoredNewGroupChatKey.self] }
-    set { self[StoredNewGroupChatKey.self] = newValue }
   }
 }

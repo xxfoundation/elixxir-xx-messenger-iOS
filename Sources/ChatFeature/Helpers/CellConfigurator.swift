@@ -198,7 +198,7 @@ extension CellFactory {
           return false
         }
         
-        return transfer(item.fileTransferId!).type == "jpeg"
+        return transfer(item.fileTransferId!).type == "image"
         
       }, build: { item, collectionView, indexPath in
         let ft = transfer(item.fileTransferId!)
@@ -228,7 +228,7 @@ extension CellFactory {
           return false
         }
         
-        return transfer(item.fileTransferId!).type == "jpeg"
+        return transfer(item.fileTransferId!).type == "image"
         
       }, build: { item, collectionView, indexPath in
         let ft = transfer(item.fileTransferId!)

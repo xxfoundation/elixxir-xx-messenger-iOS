@@ -11,17 +11,14 @@ public final class WebsiteController: UIViewController {
     super.init(nibName: nil, bundle: nil)
   }
 
+  public override func loadView() {
+    view = webView
+  }
+
   required init?(coder: NSCoder) { nil }
 
   public override func viewDidLoad() {
     super.viewDidLoad()
-    view.backgroundColor = .white
-    view.addSubview(webView)
-
-    webView.topAnchor.constraint(equalTo: view.topAnchor).isActive = true
-    webView.leftAnchor.constraint(equalTo: view.leftAnchor).isActive = true
-    webView.rightAnchor.constraint(equalTo: view.rightAnchor).isActive = true
-    webView.bottomAnchor.constraint(equalTo: view.bottomAnchor).isActive = true
 
     DispatchQueue.main.async { [weak self] in
       guard let self else { return }

@@ -19,7 +19,6 @@ struct CreateGroupViewModel {
   @Dependency(\.app.bgQueue) var bgQueue
   @Dependency(\.app.dbManager) var dbManager
   @Dependency(\.app.messenger) var messenger
-  @Dependency(\.groupManager) var groupManager
   @Dependency(\.app.hudManager) var hudManager
 
   var statePublisher: AnyPublisher<ViewState, Never> {
@@ -44,10 +43,7 @@ struct CreateGroupViewModel {
 
     bgQueue.schedule {
       do {
-        guard let manager = groupManager.get() else {
-          fatalError("Can't create a group w/out a manager")
-        }
-        let report = try manager.makeGroup(
+        let report = try messenger.groupChat()!.makeGroup(
           membership: members.map(\.id),
           message: welcome?.data(using: .utf8),
           name: name.data(using: .utf8)

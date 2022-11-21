@@ -79,11 +79,7 @@ public final class RequestsContainerController: UIViewController {
       .connectionsPublisher
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        navigator.perform(PresentSearch(
-          searching: nil,
-          replacing: false,
-          on: navigationController!
-        ))
+        navigator.perform(PresentSearch(on: navigationController!))
       }.store(in: &cancellables)
 
     screenView

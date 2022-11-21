@@ -23,7 +23,6 @@ final class GroupChatViewModel {
   @Dependency(\.sendReport) var sendReport
   @Dependency(\.app.dbManager) var dbManager
   @Dependency(\.app.messenger) var messenger
-  @Dependency(\.groupManager) var groupManager
   @Dependency(\.app.hudManager) var hudManager
   @Dependency(\.app.toastManager) var toastManager
   @Dependency(\.reportingStatus) var reportingStatus
@@ -106,18 +105,18 @@ final class GroupChatViewModel {
         replyMessageId: stagedReply?.messageId
       )
       message = try dbManager.getDB().saveMessage(message)
-      let report = try groupManager.get()?.send(
+      let report = try messenger.groupChat()!.send(
         groupId: info.id,
         message: MessagePayload(
           text: text.trimmingCharacters(in: .whitespacesAndNewlines),
           replyingTo: stagedReply?.messageId
         ).encode()
       )
-      message.networkId = report!.messageId
-      message.date = Date.fromTimestamp(Int(report!.timestamp))
+      message.networkId = report.messageId
+      message.date = Date.fromTimestamp(Int(report.timestamp))
       message = try dbManager.getDB().saveMessage(message)
       try messenger.cMix.get()?.waitForRoundResult(
-        roundList: try report!.encode(),
+        roundList: try report.encode(),
         timeoutMS: 15_000,
         callback: .init(handle: { result in
           switch result {
@@ -139,18 +138,18 @@ final class GroupChatViewModel {
       var message = message
       message.status = .sending
       message = try dbManager.getDB().saveMessage(message)
-      let report = try groupManager.get()?.send(
+      let report = try messenger.groupChat()!.send(
         groupId: info.id,
         message: MessagePayload(
           text: message.text.trimmingCharacters(in: .whitespacesAndNewlines),
           replyingTo: stagedReply?.messageId
         ).encode()
       )
-      message.networkId = report!.messageId
-      message.date = Date.fromTimestamp(Int(report!.timestamp))
+      message.networkId = report.messageId
+      message.date = Date.fromTimestamp(Int(report.timestamp))
       message = try dbManager.getDB().saveMessage(message)
       try messenger.cMix.get()?.waitForRoundResult(
-        roundList: try report!.encode(),
+        roundList: try report.encode(),
         timeoutMS: 15_000,
         callback: .init(handle: { result in
           switch result {
