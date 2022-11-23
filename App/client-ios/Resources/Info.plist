@@ -67,6 +67,10 @@
 		<key>NSAllowsArbitraryLoadsInWebContent</key>
 		<true/>
 	</dict>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_pulse._tcp</string>
+	</array>
 	<key>NSCameraUsageDescription</key>
 	<string>This permission is required for scanning qr codes</string>
 	<key>NSFaceIDUsageDescription</key>

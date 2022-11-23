@@ -49,14 +49,6 @@ let package = Package(
   ],
   dependencies: [
     .package(
-      url: "https://github.com/Quick/Quick",
-      .upToNextMajor(from: "3.0.0")
-    ),
-    .package(
-      url: "https://github.com/Quick/Nimble",
-      .upToNextMajor(from: "9.0.0")
-    ),
-    .package(
       url: "https://github.com/SnapKit/SnapKit",
       .upToNextMajor(from: "5.0.1")
     ),
@@ -89,16 +81,16 @@ let package = Package(
       .upToNextMajor(from: "4.2.1")
     ),
     .package(
-      path: "../elixxir-dapps-sdk-swift"
-      //url: "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
-      //branch: "development"
-    ),
-    .package(
-      path: "../xxm-cloud-providers"
+      url: "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
+      .upToNextMajor(from: "1.0.0")
     ),
     .package(
       url: "https://git.xx.network/elixxir/client-ios-db.git",
       .upToNextMajor(from: "1.1.0")
+    ),
+    .package(
+      url: "https://git.xx.network/elixxir/xxm-cloud-providers.git",
+      .upToNextMajor(from: "1.0.2")
     ),
     .package(
       url: "https://github.com/firebase/firebase-ios-sdk.git",
@@ -107,10 +99,6 @@ let package = Package(
     .package(
       url: "https://github.com/pointfreeco/swift-composable-architecture.git",
       .upToNextMajor(from: "0.43.0")
-    ),
-    .package(
-      url: "https://github.com/pointfreeco/swift-custom-dump.git",
-      .upToNextMajor(from: "0.5.0")
     ),
     .package(
       url: "https://github.com/swiftcsv/SwiftCSV.git",
@@ -250,6 +238,9 @@ let package = Package(
     ),
     .target(
       name: "AppResources",
+      exclude: [
+        "swiftgen.yml",
+      ],
       resources: [
         .process("Resources")
       ]
@@ -318,9 +309,6 @@ let package = Package(
         .product(name: "ChatLayout", package: "ChatLayout"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
         .product(name: "SwiftProtobuf", package: "swift-protobuf"),
-      ],
-      exclude: [
-        "swiftgen.yml",
       ],
       resources: [
         .process("Resources"),
@@ -417,6 +405,10 @@ let package = Package(
         .target(name: "Shared"),
         .target(name: "Defaults"),
         .target(name: "AppNavigation"),
+        .product(
+          name: "ComposableArchitecture",
+          package: "swift-composable-architecture"
+        ),
       ]
     ),
     .target(

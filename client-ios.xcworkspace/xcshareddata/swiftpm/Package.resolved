@@ -14,8 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/Alamofire/Alamofire.git",
       "state" : {
-        "revision" : "8dd85aee02e39dd280c75eef88ffdb86eed4b07b",
-        "version" : "5.6.2"
+        "revision" : "78424be314842833c04bc3bef5b72e85fff99204",
+        "version" : "5.6.4"
       }
     },
     {
@@ -73,30 +73,21 @@
       }
     },
     {
-      "identity" : "cwlcatchexception",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mattgallagher/CwlCatchException.git",
-      "state" : {
-        "revision" : "35f9e770f54ce62dd8526470f14c6e137cef3eea",
-        "version" : "2.1.1"
-      }
-    },
-    {
-      "identity" : "cwlpreconditiontesting",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/mattgallagher/CwlPreconditionTesting.git",
-      "state" : {
-        "revision" : "c21f7bab5ca8eee0a9998bbd17ca1d0eb45d4688",
-        "version" : "2.1.0"
-      }
-    },
-    {
       "identity" : "differencekit",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/ra1028/DifferenceKit",
       "state" : {
         "revision" : "073b9671ce2b9b5b96398611427a1f929927e428",
         "version" : "1.3.0"
+      }
+    },
+    {
+      "identity" : "elixxir-dapps-sdk-swift",
+      "kind" : "remoteSourceControl",
+      "location" : "https://git.xx.network/elixxir/elixxir-dapps-sdk-swift",
+      "state" : {
+        "revision" : "c433b384a1bd49627bb8e15bc1dc0ae4cb9a8ec1",
+        "version" : "1.0.0"
       }
     },
     {
@@ -208,30 +199,12 @@
       }
     },
     {
-      "identity" : "libssh2prebuild",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/DimaRU/Libssh2Prebuild.git",
-      "state" : {
-        "branch" : "1.10.0+OpenSSL_1_1_1o",
-        "revision" : "a91bcf205a6cbc84144f840c44145656abbd266a"
-      }
-    },
-    {
       "identity" : "nanopb",
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/firebase/nanopb.git",
       "state" : {
         "revision" : "7ee9ef9f627d85cbe1b8c4f49a3ed26eed216c77",
         "version" : "2.30908.0"
-      }
-    },
-    {
-      "identity" : "nimble",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/Quick/Nimble",
-      "state" : {
-        "revision" : "c93f16c25af5770f0d3e6af27c9634640946b068",
-        "version" : "9.2.1"
       }
     },
     {
@@ -250,15 +223,6 @@
       "state" : {
         "revision" : "6b682c529d98a38e6fdffee2a8bfa40c8de30821",
         "version" : "2.1.3"
-      }
-    },
-    {
-      "identity" : "quick",
-      "kind" : "remoteSourceControl",
-      "location" : "https://github.com/Quick/Quick",
-      "state" : {
-        "revision" : "8cce6acd38f965f5baa3167b939f86500314022b",
-        "version" : "3.1.2"
       }
     },
     {
@@ -284,8 +248,8 @@
       "kind" : "remoteSourceControl",
       "location" : "https://github.com/darrarski/Shout.git",
       "state" : {
-        "branch" : "master",
-        "revision" : "df5a662293f0ac15eeb4f2fd3ffd0c07b73d0de0"
+        "revision" : "cda197619ac395b9a2c3ddd1c6c8fad16114b830",
+        "version" : "0.5.5"
       }
     },
     {
@@ -394,6 +358,15 @@
       "state" : {
         "revision" : "16e6409ee82e1b81390bdffbf217b9c08ab32784",
         "version" : "0.5.0"
+      }
+    },
+    {
+      "identity" : "xxm-cloud-providers",
+      "kind" : "remoteSourceControl",
+      "location" : "https://git.xx.network/elixxir/xxm-cloud-providers.git",
+      "state" : {
+        "revision" : "7e2fe50560f4c9c477d549e9c68a4c87d686d44c",
+        "version" : "1.0.2"
       }
     }
   ],

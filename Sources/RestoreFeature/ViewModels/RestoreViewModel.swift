@@ -146,8 +146,6 @@ final class RestoreViewModel {
         let multilookup = try self.messenger.lookupContacts(ids: result.restoredContacts)
 
         multilookup.contacts.forEach {
-          print(">>> Found \(try! $0.getFact(.username)?.value)")
-
           try! self.dbManager.getDB().saveContact(.init(
             id: try $0.getId(),
             marshaled: $0.data,

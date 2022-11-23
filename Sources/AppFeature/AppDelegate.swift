@@ -19,7 +19,7 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
   private var backgroundTimer: Timer?
   private var backgroundTask: UIBackgroundTaskIdentifier?
 
-  @Dependency(\.app.log) var logger
+  @Dependency(\.app.log) var log
   @Dependency(\.navigator) var navigator
   @Dependency(\.app.messenger) var messenger
   @Dependency(\.pushNotificationRouter) var pushNotificationRouter
@@ -31,6 +31,8 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
     _ application: UIApplication,
     didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?
   ) -> Bool {
+    LoggingSystem.bootstrap(PersistentLogHandler.init)
+
     UNUserNotificationCenter.current().delegate = self
 
     let navController = UINavigationController(rootViewController: LaunchController())
@@ -40,9 +42,7 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
 
     pushNotificationRouter.set(.live(navigationController: navController))
 
-    // MARK: - TO REMOVE FROM PRODUCTION:
-    LoggingSystem.bootstrap(PersistentLogHandler.init)
-
+//    #if DEBUG
     NotificationCenter.default.addObserver(
       forName: UIApplication.userDidTakeScreenshotNotification,
       object: nil,
@@ -57,7 +57,7 @@ public class AppDelegate: UIResponder, UIApplicationDelegate {
         )
       )
     }
-    // MARK: -
+//    #endif
 
     return true
   }
@@ -122,7 +122,7 @@ extension AppDelegate: UNUserNotificationCenterDelegate {
         isPushNotificationsEnabled = true
       } catch {
         isPushNotificationsEnabled = false
-        logger(.error(error as NSError))
+        log(.error(error as NSError))
         print(error.localizedDescription)
       }
     }
@@ -213,7 +213,7 @@ extension AppDelegate {
         try messenger.start()
       }
     } catch {
-      logger(.error(error as NSError))
+      log(.error(error as NSError))
       print(error.localizedDescription)
     }
   }
@@ -230,7 +230,7 @@ extension AppDelegate {
           self.backgroundTimer?.invalidate()
           try self.messenger.stop()
         } catch {
-          self.logger(.error(error as NSError))
+          self.log(.error(error as NSError))
           print(error.localizedDescription)
         }
         if let backgroundTask = self.backgroundTask {

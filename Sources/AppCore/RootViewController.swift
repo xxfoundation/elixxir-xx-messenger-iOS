@@ -3,9 +3,9 @@ import Combine
 import Dependencies
 
 public final class RootViewController: UIViewController {
-  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
-  @Dependency(\.app.hudManager) var hudManager: HUDManager
-  @Dependency(\.app.toastManager) var toastManager: ToastManager
+  @Dependency(\.app.statusBar) var statusBar
+  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.app.toastManager) var toastManager
   
   var hud: HUDView?
   var cancellables = Set<AnyCancellable>()
