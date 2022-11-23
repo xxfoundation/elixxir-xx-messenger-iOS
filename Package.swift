@@ -18,7 +18,6 @@ let package = Package(
     .library(name: "ScanFeature", targets: ["ScanFeature"]),
     .library(name: "MenuFeature", targets: ["MenuFeature"]),
     .library(name: "ChatFeature", targets: ["ChatFeature"]),
-    .library(name: "PushFeature", targets: ["PushFeature"]),
     .library(name: "CrashReport", targets: ["CrashReport"]),
     .library(name: "UpdateErrors", targets: ["UpdateErrors"]),
     .library(name: "CheckVersion", targets: ["CheckVersion"]),
@@ -122,6 +121,10 @@ let package = Package(
       .upToNextMajor(from: "1.4.4")
     ),
     .package(
+      url: "https://github.com/kean/Pulse.git",
+      .upToNextMajor(from: "2.1.3")
+    ),
+    .package(
       url: "https://github.com/pointfreeco/xctest-dynamic-overlay.git",
       .upToNextMajor(from: "0.3.3")
     ),
@@ -136,7 +139,6 @@ let package = Package(
         .target(name: "ChatFeature"),
         .target(name: "MenuFeature"),
         .target(name: "CrashReport"),
-        .target(name: "PushFeature"),
         .target(name: "TermsFeature"),
         .target(name: "BackupFeature"),
         .target(name: "SearchFeature"),
@@ -154,6 +156,8 @@ let package = Package(
         .target(name: "CreateGroupFeature"),
         .target(name: "ContactListFeature"),
         .target(name: "RequestPermissionFeature"),
+        .product(name: "PulseUI", package: "Pulse"), // TO REMOVE
+        .product(name: "PulseLogHandler", package: "Pulse"), // TO REMOVE
       ]
     ),
     .testTarget(
@@ -271,17 +275,6 @@ let package = Package(
       ]
     ),
     .target(
-      name: "PushFeature",
-      dependencies: [
-        .target(name: "AppCore"),
-        .target(name: "Defaults"),
-        .target(name: "ReportingFeature"),
-        .product(name: "XXDatabase", package: "client-ios-db"),
-        .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
-        .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
-      ]
-    ),
-    .target(
       name: "Keychain",
       dependencies: [
         .product(
@@ -392,7 +385,6 @@ let package = Package(
       name: "SearchFeature",
       dependencies: [
         .target(name: "Shared"),
-        .target(name: "PushFeature"),
         .target(name: "ContactFeature"),
         .target(name: "CountryListFeature"),
         .product(name: "Retry", package: "Retry"),
@@ -404,7 +396,6 @@ let package = Package(
       dependencies: [
         .target(name: "Shared"),
         .target(name: "Defaults"),
-        .target(name: "PushFeature"),
         .target(name: "UpdateErrors"),
         .target(name: "CheckVersion"),
         .target(name: "BackupFeature"),
@@ -525,7 +516,6 @@ let package = Package(
         .target(name: "Defaults"),
         .target(name: "Keychain"),
         .target(name: "InputField"),
-        .target(name: "PushFeature"),
         .target(name: "DrawerFeature"),
         .target(name: "AppNavigation"),
         .target(name: "CountryListFeature"),
@@ -611,7 +601,6 @@ let package = Package(
         .target(name: "Defaults"),
         .target(name: "Keychain"),
         .target(name: "InputField"),
-        .target(name: "PushFeature"),
         .target(name: "MenuFeature"),
         .target(name: "CrashReport"),
         .target(name: "DrawerFeature"),

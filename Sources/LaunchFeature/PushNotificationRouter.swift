@@ -1,6 +1,7 @@
 import Foundation
+import XCTestDynamicOverlay
 
-public struct PushRouter {
+public struct PushNotificationRouter {
   public typealias NavigateTo = (Route, @escaping () -> Void) -> Void
 
   public enum Route {
@@ -17,7 +18,8 @@ public struct PushRouter {
   }
 }
 
-public extension PushRouter {
-  static let noop = PushRouter { _, _ in }
+public extension PushNotificationRouter {
+  static let unimplemented = PushNotificationRouter(
+    navigateTo: XCTUnimplemented("\(Self.self)")
+  )
 }
-

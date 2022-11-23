@@ -1,7 +1,6 @@
 import UIKit
 import Shared
 import Combine
-import PushFeature
 import Dependencies
 import AppResources
 import DrawerFeature
@@ -14,6 +13,8 @@ public final class LaunchController: UIViewController {
   private let viewModel = LaunchViewModel()
   private var cancellables = Set<AnyCancellable>()
   private var drawerCancellables = Set<AnyCancellable>()
+
+  public var pendingPushNotificationRoute: PushNotificationRouter.Route?
 
   public override func loadView() {
     view = screenView
@@ -31,10 +32,10 @@ public final class LaunchController: UIViewController {
             navigator.perform(PresentTermsAndConditions(replacing: true, on: navigationController!))
             return
           }
-//          if let route = pendingPushRoute {
-//            hasPendingPushRoute(route)
-//            return
-//          }
+          if let route = pendingPushNotificationRoute {
+            hasPendingPushRoute(route)
+            return
+          }
           navigator.perform(PresentChatList(on: navigationController!))
           return
         }
@@ -50,7 +51,7 @@ public final class LaunchController: UIViewController {
     viewModel.startLaunch()
   }
 
-  private func hasPendingPushRoute(_ route: PushRouter.Route) {
+  private func hasPendingPushRoute(_ route: PushNotificationRouter.Route) {
     switch route {
     case .requests:
       navigator.perform(PresentRequests(on: navigationController!))

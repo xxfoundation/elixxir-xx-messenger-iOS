@@ -131,3 +131,18 @@ extension NavigatorKey: DependencyKey {
     )
   )
 }
+
+import LaunchFeature
+import XXMessengerClient
+
+private enum PushNotificationRouterKey: DependencyKey {
+  static var liveValue = Stored<PushNotificationRouter?>.inMemory()
+  static var testValue = Stored<PushNotificationRouter?>.unimplemented()
+}
+
+extension DependencyValues {
+  public var pushNotificationRouter: Stored<PushNotificationRouter?> {
+    get { self[PushNotificationRouterKey.self] }
+    set { self[PushNotificationRouterKey.self] = newValue }
+  }
+}

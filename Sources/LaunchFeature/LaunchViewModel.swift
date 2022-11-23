@@ -26,6 +26,8 @@ import XXLegacyDatabaseMigrator
 
 import class XXClient.Cancellable
 
+import PulseLogHandler
+
 final class LaunchViewModel {
   struct UpdateModel {
     let content: String
@@ -42,16 +44,15 @@ final class LaunchViewModel {
     var shouldPushOnboarding = false
   }
 
+  @Dependency(\.app.log) var log
   @Dependency(\.app.bgQueue) var bgQueue
   @Dependency(\.permissions) var permissions
   @Dependency(\.app.messenger) var messenger
   @Dependency(\.app.dbManager) var dbManager
-  @Dependency(\.keychain) var keychainManager
   @Dependency(\.updateErrors) var updateErrors
   @Dependency(\.app.hudManager) var hudManager
   @Dependency(\.checkVersion) var checkVersion
   @Dependency(\.dummyTraffic) var dummyTraffic
-  @Dependency(\.backupService) var backupService
   @Dependency(\.app.toastManager) var toastManager
   @Dependency(\.fetchBannedList) var fetchBannedList
   @Dependency(\.reportingStatus) var reportingStatus
@@ -166,17 +167,20 @@ final class LaunchViewModel {
 
 extension LaunchViewModel {
   func setupMessenger() throws {
-    authHandlerCancellable = authHandler {
-      print($0.localizedDescription)
+    _ = try messenger.setLogLevel(.trace)
+    messenger.startLogging()
+
+    authHandlerCancellable = authHandler { [weak self] in
+      self?.log(.error($0 as NSError))
     }
-    backupHandlerCancellable = backupHandler {
-      print($0.localizedDescription)
+    backupHandlerCancellable = backupHandler { [weak self] in
+      self?.log(.error($0 as NSError))
     }
-    receiveFileHandlerCancellable = receiveFileHandler {
-      print($0.localizedDescription)
+    receiveFileHandlerCancellable = receiveFileHandler { [weak self] in
+      self?.log(.error($0 as NSError))
     }
-    messageListenerHandlerCancellable = messageListener {
-      print($0.localizedDescription)
+    messageListenerHandlerCancellable = messageListener { [weak self] in
+      self?.log(.error($0 as NSError))
     }
 
     if messenger.isLoaded() == false {
@@ -217,18 +221,18 @@ extension LaunchViewModel {
       try? messenger.resumeBackup()
     }
 
-    groupRequestCancellable = groupRequest {
-      print($0)
+    groupRequestCancellable = groupRequest { [weak self] in
+      self?.log(.error($0 as NSError))
     }
 
-    groupMessageHandlerCancellable = groupMessageHandler {
-      print($0)
+    groupMessageHandlerCancellable = groupMessageHandler { [weak self] in
+      self?.log(.error($0 as NSError))
     }
 
     try messenger.startGroupChat()
 
-    try messenger.trackServices {
-      print($0.localizedDescription)
+    try messenger.trackServices { [weak self] in
+      self?.log(.error($0 as NSError))
     }
 
     try messenger.startFileTransfer()
@@ -239,10 +243,19 @@ extension LaunchViewModel {
         self.networkMonitor.update($0)
       }
     )
+
+    try failPendingProcessesFromLastSession()
   }
 }
 
 extension LaunchViewModel {
+  func failPendingProcessesFromLastSession() throws {
+    try dbManager.getDB().bulkUpdateMessages(
+      .init(status: [.sending]),
+      .init(status: .sendingFailed)
+    )
+  }
+
   func updateBannedList(completion: @escaping () -> Void) {
     fetchBannedList { result in
       switch result {
