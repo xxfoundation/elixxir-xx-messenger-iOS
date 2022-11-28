@@ -1,162 +1,137 @@
-import HUD
 import UIKit
 import Shared
 import Combine
-import Defaults
-import PushFeature
-import DependencyInjection
+import Dependencies
+import AppResources
+import DrawerFeature
+import AppNavigation
 
 public final class LaunchController: UIViewController {
-    @Dependency private var hud: HUD
-    @Dependency private var coordinator: LaunchCoordinating
+  @Dependency(\.navigator) var navigator: Navigator
 
-    @KeyObject(.acceptedTerms, defaultValue: false) var didAcceptTerms: Bool
+  private lazy var screenView = LaunchView()
+  private let viewModel = LaunchViewModel()
+  private var cancellables = Set<AnyCancellable>()
+  private var drawerCancellables = Set<AnyCancellable>()
 
-    lazy private var screenView = LaunchView()
+  public var pendingPushNotificationRoute: PushNotificationRouter.Route?
 
-    private let blocker = UpdateBlocker()
-    private let viewModel = LaunchViewModel()
-    public var pendingPushRoute: PushRouter.Route?
-    private var cancellables = Set<AnyCancellable>()
+  public override func loadView() {
+    view = screenView
+  }
 
-    public override func viewDidAppear(_ animated: Bool) {
-        super.viewDidAppear(animated)
-        viewModel.viewDidAppear()
-    }
+  public override func viewDidLoad() {
+    super.viewDidLoad()
 
-    public override func loadView() {
-        view = screenView
-    }
-
-    public override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        navigationController?
-            .navigationBar
-            .customize(translucent: true)
-    }
-
-    public override func viewDidLayoutSubviews() {
-        super.viewDidLayoutSubviews()
-        screenView.setupGradient()
-    }
-
-    public override func viewDidLoad() {
-        super.viewDidLoad()
-
-        viewModel.hudPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [hud] in hud.update(with: $0) }
-            .store(in: &cancellables)
-
-        viewModel.routePublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in
-                switch $0 {
-                case .chats:
-                    guard didAcceptTerms == true else {
-                        coordinator.toTerms(from: self)
-                        return
-                    }
-
-                    if let pushRoute = pendingPushRoute {
-                        switch pushRoute {
-                        case .requests:
-                            coordinator.toRequests(from: self)
-
-                        case .search(username: let username):
-                            coordinator.toSearch(searching: username, from: self)
-
-                        case .groupChat(id: let groupId):
-                            if let groupInfo = viewModel.getGroupInfoWith(groupId: groupId) {
-                                coordinator.toGroupChat(with: groupInfo, from: self)
-                                return
-                            }
-                            coordinator.toChats(from: self)
-
-                        case .contactChat(id: let userId):
-                            if let contact = viewModel.getContactWith(userId: userId) {
-                                coordinator.toSingleChat(with: contact, from: self)
-                                return
-                            }
-                            coordinator.toChats(from: self)
-                        }
-
-                        return
-                    }
-
-                    coordinator.toChats(from: self)
-
-                case .onboarding(let ndf):
-                    coordinator.toOnboarding(with: ndf, from: self)
-
-                case .update(let model):
-                    offerUpdate(model: model)
-                }
-            }.store(in: &cancellables)
-    }
-
-    private func offerUpdate(model: Update) {
-        let drawerView = UIView()
-        drawerView.backgroundColor = Asset.neutralSecondary.color
-        drawerView.layer.cornerRadius = 5
-
-        let vStack = UIStackView()
-        vStack.axis = .vertical
-        vStack.spacing = 10
-        drawerView.addSubview(vStack)
-
-        vStack.snp.makeConstraints {
-            $0.top.equalToSuperview().offset(18)
-            $0.left.equalToSuperview().offset(18)
-            $0.right.equalToSuperview().offset(-18)
-            $0.bottom.equalToSuperview().offset(-18)
+    viewModel
+      .statePublisher
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        guard $0.shouldPushChats == false else {
+          guard $0.shouldShowTerms == false else {
+            navigator.perform(PresentTermsAndConditions(replacing: true, on: navigationController!))
+            return
+          }
+          if let route = pendingPushNotificationRoute {
+            hasPendingPushRoute(route)
+            return
+          }
+          navigator.perform(PresentChatList(on: navigationController!))
+          return
         }
-
-        let title = UILabel()
-        title.text = "App Update"
-        title.textAlignment = .center
-        title.textColor = Asset.neutralDark.color
-
-        let body = UILabel()
-        body.numberOfLines = 0
-        body.textAlignment = .center
-        body.textColor = Asset.neutralDark.color
-
-        let update = CapsuleButton()
-        update.publisher(for: .touchUpInside)
-            .sink { UIApplication.shared.open(.init(string: model.urlString)!, options: [:]) }
-            .store(in: &cancellables)
-
-        vStack.addArrangedSubview(title)
-        vStack.addArrangedSubview(body)
-        vStack.addArrangedSubview(update)
-
-        body.text = model.content
-        update.set(
-            style: model.actionStyle,
-            title: model.positiveActionTitle
-        )
-
-        if let negativeTitle = model.negativeActionTitle {
-            let negativeButton = CapsuleButton()
-            negativeButton.set(style: .simplestColoredRed, title: negativeTitle)
-
-            negativeButton.publisher(for: .touchUpInside)
-                .sink { [unowned self] in
-                    blocker.hideWindow()
-                    viewModel.versionApproved()
-                }.store(in: &cancellables)
-
-            vStack.addArrangedSubview(negativeButton)
+        guard $0.shouldPushOnboarding == false else {
+          navigator.perform(PresentOnboardingStart(on: navigationController!))
+          return
         }
-
-        blocker.window?.addSubview(drawerView)
-        drawerView.snp.makeConstraints {
-            $0.left.equalToSuperview().offset(18)
-            $0.center.equalToSuperview()
-            $0.right.equalToSuperview().offset(-18)
+        if let update = $0.shouldOfferUpdate {
+          offerUpdate(model: update)
         }
+      }.store(in: &cancellables)
 
-        blocker.showWindow()
+    viewModel.startLaunch()
+  }
+
+  private func hasPendingPushRoute(_ route: PushNotificationRouter.Route) {
+    switch route {
+    case .requests:
+      navigator.perform(PresentRequests(on: navigationController!))
+    case .search(username: let username):
+      navigator.perform(PresentSearch(
+        searching: username,
+        fromOnboarding: true,
+        on: navigationController!))
+    case .groupChat(id: let groupId):
+      if let info = viewModel.getGroupInfoWith(groupId: groupId) {
+        navigator.perform(PresentGroupChat(groupInfo: info, on: navigationController!))
+        return
+      }
+      navigator.perform(PresentChatList(on: navigationController!))
+    case .contactChat(id: let userId):
+      if let model = viewModel.getContactWith(userId: userId) {
+        navigator.perform(PresentChat(contact: model, on: navigationController!))
+        return
+      }
+      navigator.perform(PresentChatList(on: navigationController!))
     }
+  }
+
+  private func offerUpdate(model: LaunchViewModel.UpdateModel) {
+    let updateButton = CapsuleButton()
+    updateButton.set(
+      style: .brandColored,
+      title: model.positiveActionTitle
+    )
+    let notNowButton = CapsuleButton()
+    if let negativeTitle = model.negativeActionTitle {
+      notNowButton.set(
+        style: .red,
+        title: negativeTitle
+      )
+    }
+    updateButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) {
+          self.drawerCancellables.removeAll()
+          UIApplication.shared.open(.init(string: model.urlString)!)
+        }
+      }.store(in: &drawerCancellables)
+
+    notNowButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) {
+          self.drawerCancellables.removeAll()
+          self.viewModel.didRefuseUpdating()
+        }
+      }.store(in: &drawerCancellables)
+
+    var actions: [UIView] = [updateButton]
+    if model.negativeActionTitle != nil {
+      actions.append(notNowButton)
+    }
+
+    navigator.perform(PresentDrawer(items: [
+      DrawerText(
+        font: Fonts.Mulish.bold.font(size: 26.0),
+        text: "App Update",
+        color: Asset.neutralActive.color,
+        alignment: .center,
+        spacingAfter: 19
+      ),
+      DrawerText(
+        font: Fonts.Mulish.regular.font(size: 16.0),
+        text: model.content,
+        color: Asset.neutralBody.color,
+        alignment: .center,
+        spacingAfter: 19
+      ),
+      DrawerStack(
+        axis: .vertical,
+        views: actions
+      )
+    ], isDismissable: false, from: self))
+  }
 }

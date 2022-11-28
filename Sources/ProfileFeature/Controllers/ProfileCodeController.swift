@@ -1,123 +1,137 @@
-import HUD
 import UIKit
-import Models
 import Shared
 import Combine
-import Countries
-import DependencyInjection
+import AppCore
+import AppResources
+import Dependencies
+import AppNavigation
 import ScrollViewController
 
-public typealias ControllerClosure = (UIViewController, AttributeConfirmation) -> Void
-
 public final class ProfileCodeController: UIViewController {
-    @Dependency private var hud: HUD
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
 
-    lazy private var screenView = ProfileCodeView()
-    lazy private var scrollViewController = ScrollViewController()
+  private lazy var screenView = ProfileCodeView()
+  private lazy var scrollViewController = ScrollViewController()
 
-    private let completion: ControllerClosure
-    private let confirmation: AttributeConfirmation
-    private var cancellables = Set<AnyCancellable>()
-    lazy private var viewModel = ProfileCodeViewModel(confirmation)
+  private let isEmail: Bool
+  private let content: String
+  private let viewModel: ProfileCodeViewModel
+  private var cancellables = Set<AnyCancellable>()
 
-    public override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        navigationItem.backButtonTitle = ""
-        navigationController?.navigationBar
-            .customize(backgroundColor: Asset.neutralWhite.color)
+  public init(
+    _ isEmail: Bool,
+    _ content: String,
+    _ confirmationId: String
+  ) {
+    self.viewModel = .init(
+      isEmail: isEmail,
+      content: content,
+      confirmationId: confirmationId
+    )
+    self.isEmail = isEmail
+    self.content = content
+    super.init(nibName: nil, bundle: nil)
+  }
+
+  required init?(coder: NSCoder) { nil }
+
+  public override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+    navigationItem.backButtonTitle = ""
+    navigationController?.navigationBar
+      .customize(backgroundColor: Asset.neutralWhite.color)
+  }
+
+  public override func viewDidLoad() {
+    super.viewDidLoad()
+    setupScrollView()
+    setupBindings()
+
+    if isEmail {
+      screenView.set(content, isEmail: true)
+    } else {
+      let country = Country.findFrom(content)
+      screenView.set(
+        "\(country.prefix)\(content.dropLast(2))",
+        isEmail: false
+      )
     }
+  }
 
-    public init(
-        _ confirmation: AttributeConfirmation,
-        _ completion: @escaping ControllerClosure
-    ) {
-        self.completion = completion
-        self.confirmation = confirmation
-        super.init(nibName: nil, bundle: nil)
+  private func setupScrollView() {
+    addChild(scrollViewController)
+    view.addSubview(scrollViewController.view)
+    scrollViewController.view.snp.makeConstraints {
+      $0.edges.equalToSuperview()
     }
+    scrollViewController.didMove(toParent: self)
+    scrollViewController.contentView = screenView
+    scrollViewController.scrollView.backgroundColor = Asset.neutralWhite.color
+  }
 
-    required init?(coder: NSCoder) { nil }
+  private func setupBindings() {
+    screenView
+      .inputField
+      .textPublisher
+      .sink { [unowned self] in
+        viewModel.didInput($0)
+      }.store(in: &cancellables)
 
-    public override func viewDidLoad() {
-        super.viewDidLoad()
-        setupScrollView()
-        setupBindings()
-        setupDetail()
-    }
-
-    private func setupScrollView() {
-        addChild(scrollViewController)
-        view.addSubview(scrollViewController.view)
-        scrollViewController.view.snp.makeConstraints { $0.edges.equalToSuperview() }
-        scrollViewController.didMove(toParent: self)
-        scrollViewController.contentView = screenView
-        scrollViewController.scrollView.backgroundColor = Asset.neutralWhite.color
-    }
-
-    private func setupBindings() {
-        viewModel.hud
-            .receive(on: DispatchQueue.main)
-            .sink { [hud] in hud.update(with: $0) }
-            .store(in: &cancellables)
-
-        screenView.inputField.textPublisher
-            .sink { [unowned self] in viewModel.didInput($0) }
-            .store(in: &cancellables)
-
-        viewModel.state
-            .map(\.status)
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in
-                switch $0 {
-                case .valid:
-                    screenView.saveButton.isEnabled = true
-                case .invalid, .unknown:
-                    screenView.saveButton.isEnabled = false
-                }
-            }.store(in: &cancellables)
-
-        screenView.saveButton
-            .publisher(for: .touchUpInside)
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in viewModel.didTapNext() }
-            .store(in: &cancellables)
-
-        viewModel.state
-            .map(\.resendDebouncer)
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in
-                screenView.resendButton.isEnabled = $0 == 0
-
-                if $0 == 0 {
-                    screenView.resendButton.setTitle(Localized.Profile.Code.resend(""), for: .normal)
-                } else {
-                    screenView.resendButton.setTitle(Localized.Profile.Code.resend("(\($0))"), for: .disabled)
-                }
-            }.store(in: &cancellables)
-
-        screenView.resendButton
-            .publisher(for: .touchUpInside)
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in viewModel.didTapResend() }
-            .store(in: &cancellables)
-
-        viewModel.completionPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in completion(self, $0) }
-            .store(in: &cancellables)
-    }
-
-    private func setupDetail() {
-        var content: String!
-
-        if confirmation.isEmail {
-            content = confirmation.content
-        } else {
-            let country = Country.findFrom(confirmation.content)
-            content = "\(country.prefix)\(confirmation.content.dropLast(2))"
+    viewModel
+      .statePublisher
+      .map(\.status)
+      .removeDuplicates()
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        switch $0 {
+        case .valid:
+          screenView.saveButton.isEnabled = true
+        case .invalid, .unknown:
+          screenView.saveButton.isEnabled = false
         }
+      }.store(in: &cancellables)
 
-        screenView.set(content, isEmail: confirmation.isEmail)
-    }
+    screenView
+      .saveButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        viewModel.didTapNext()
+      }.store(in: &cancellables)
+
+    viewModel
+      .statePublisher
+      .map(\.resendDebouncer)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        screenView.resendButton.isEnabled = $0 == 0
+        if $0 == 0 {
+          screenView.resendButton.setTitle(
+            Localized.Profile.Code.resend(""), for: .normal
+          )
+        } else {
+          screenView.resendButton.setTitle(
+            Localized.Profile.Code.resend("(\($0))"), for: .disabled
+          )
+        }
+      }.store(in: &cancellables)
+
+    screenView
+      .resendButton
+      .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        viewModel.didTapResend()
+      }.store(in: &cancellables)
+
+    viewModel
+      .statePublisher
+      .map(\.didConfirm)
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        guard let navigationController, $0 == true else { return }
+        navigator.perform(PopToRoot(on: navigationController))
+      }.store(in: &cancellables)
+  }
 }

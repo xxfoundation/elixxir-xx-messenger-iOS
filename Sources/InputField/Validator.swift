@@ -1,5 +1,6 @@
 import Shared
 import Foundation
+import AppResources
 
 private enum Constants {
     static let codeMinimum = Localized.Validator.Code.minimum
@@ -58,7 +59,7 @@ public extension Validator where T == String {
                 return .failure("")
             }
 
-            let regex = try? NSRegularExpression(pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d!@#$%^&*]{8,}$")
+            let regex = try? NSRegularExpression(pattern: "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d\\W_]{8,}$")
 
             guard let regex = regex, regex.firstMatch(in: passphrase, options: [], range: passphrase.fullRange()) != nil else {
                 return .failure("")

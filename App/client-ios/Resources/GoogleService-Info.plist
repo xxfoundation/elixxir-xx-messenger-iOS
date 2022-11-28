@@ -3,34 +3,34 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string></string>
+	<string>662236151640-r1lrlppqdcmhb4p8urq32fo7784cdoal.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string></string>
+	<string>com.googleusercontent.apps.662236151640-r1lrlppqdcmhb4p8urq32fo7784cdoal</string>
 	<key>ANDROID_CLIENT_ID</key>
-	<string></string>
+	<string>662236151640-2ughgo2dvc59dm4o39b45lbdungp2mct.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
-	<string></string>
+	<string>AIzaSyCbI2yQ7pbuVSRvraqanjGcS9CDrjD7lNU</string>
 	<key>GCM_SENDER_ID</key>
-	<string></string>
+	<string>662236151640</string>
 	<key>PLIST_VERSION</key>
-	<string></string>
+	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string></string>
+	<string>io.xxlabs.messenger</string>
 	<key>PROJECT_ID</key>
-	<string></string>
+	<string>xx-messenger-6e03e</string>
 	<key>STORAGE_BUCKET</key>
-	<string></string>
+	<string>xx-messenger-6e03e.appspot.com</string>
 	<key>IS_ADS_ENABLED</key>
 	<false/>
 	<key>IS_ANALYTICS_ENABLED</key>
 	<false/>
 	<key>IS_APPINVITE_ENABLED</key>
-	<false/>
+	<true/>
 	<key>IS_GCM_ENABLED</key>
-	<false/>
+	<true/>
 	<key>IS_SIGNIN_ENABLED</key>
-	<false/>
+	<true/>
 	<key>GOOGLE_APP_ID</key>
-	<string></string>
+	<string>1:662236151640:ios:24badb58ab07515d8cef2d</string>
 </dict>
 </plist>

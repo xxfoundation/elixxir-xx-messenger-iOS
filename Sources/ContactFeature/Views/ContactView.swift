@@ -1,7 +1,7 @@
 import UIKit
 import Shared
-import Models
 import XXModels
+import AppResources
 
 final class ContactView: UIView {
     let container = UIView()

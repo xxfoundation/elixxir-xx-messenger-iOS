@@ -1,5 +1,6 @@
 import UIKit
 import Shared
+import AppResources
 
 final class SheetView: UIView {
     let stackView = UIStackView()

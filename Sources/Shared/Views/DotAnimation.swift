@@ -1,100 +1,73 @@
 import UIKit
-import SnapKit
+import AppResources
 
 public final class DotAnimation: UIView {
-    // MARK: UI
+  let leftDot = UIView()
+  let rightDot = UIView()
+  let middleDot = UIView()
+  var displayLink: CADisplayLink?
 
-    let leftDot = UIView()
-    let middleDot = UIView()
-    let rightDot = UIView()
+  var leftInvert = false
+  var rightInvert = false
+  var middleInvert = false
+  var leftValue: CGFloat = 20
+  var rightValue: CGFloat = 70
+  var middleValue: CGFloat = 45
 
-    // MARK: Properties
+  public init() {
+    super.init(frame: .zero)
+    leftDot.layer.cornerRadius = 7.5
+    middleDot.layer.cornerRadius = 7.5
+    rightDot.layer.cornerRadius = 7.5
 
-    var leftInvert = false
-    var middleInvert = false
-    var rightInvert = false
+    setColor()
 
-    var leftValue: CGFloat = 20
-    var middleValue: CGFloat = 45
-    var rightValue: CGFloat = 70
+    addSubview(leftDot)
+    addSubview(middleDot)
+    addSubview(rightDot)
 
-    var displayLink: CADisplayLink?
-
-    // MARK: Lifecycle
-
-    public init() {
-        super.init(frame: .zero)
-        setup()
+    leftDot.snp.makeConstraints {
+      $0.centerY.equalTo(middleDot)
+      $0.right.equalTo(middleDot.snp.left).offset(-5)
+      $0.width.height.equalTo(15)
     }
 
-    required init?(coder: NSCoder) { nil }
-
-    // MARK: Public
-
-    func setColor(_ color: UIColor = Asset.brandPrimary.color) {
-        leftDot.backgroundColor = color
-        middleDot.backgroundColor = color
-        rightDot.backgroundColor = color
+    middleDot.snp.makeConstraints {
+      $0.center.equalToSuperview()
+      $0.width.height.equalTo(15)
     }
 
-    // MARK: Private
-
-    private func setup() {
-        setupCornerRadius()
-        setColor()
-        addSubviews()
-        setupConstraints()
-
-        displayLink = CADisplayLink(target: self, selector: #selector(handleAnimations))
-        displayLink!.add(to: RunLoop.main, forMode: .default)
+    rightDot.snp.makeConstraints {
+      $0.centerY.equalTo(middleDot)
+      $0.left.equalTo(middleDot.snp.right).offset(5)
+      $0.width.height.equalTo(15)
     }
 
-    private func setupCornerRadius() {
-        leftDot.layer.cornerRadius = 4.5
-        middleDot.layer.cornerRadius = 4.5
-        rightDot.layer.cornerRadius = 4.5
-    }
+    displayLink = CADisplayLink(target: self, selector: #selector(handleAnimations))
+    displayLink!.add(to: RunLoop.main, forMode: .default)
+  }
 
-    private func addSubviews() {
-        addSubview(leftDot)
-        addSubview(middleDot)
-        addSubview(rightDot)
-    }
+  required init?(coder: NSCoder) { nil }
 
-    private func setupConstraints() {
-        leftDot.snp.makeConstraints { make in
-            make.centerY.equalTo(middleDot)
-            make.right.equalTo(middleDot.snp.left).offset(-2)
-            make.width.height.equalTo(9)
-        }
+  public func setColor(_ color: UIColor = Asset.brandPrimary.color) {
+    leftDot.backgroundColor = color
+    middleDot.backgroundColor = color
+    rightDot.backgroundColor = color
+  }
 
-        middleDot.snp.makeConstraints { make in
-            make.center.equalToSuperview()
-            make.width.height.equalTo(9)
-        }
+  @objc private func handleAnimations() {
+    let factor: CGFloat = 70
 
-        rightDot.snp.makeConstraints { make in
-            make.centerY.equalTo(middleDot)
-            make.left.equalTo(middleDot.snp.right).offset(2)
-            make.width.height.equalTo(9)
-        }
-    }
+    leftInvert ? (leftValue -= 1) : (leftValue += 1)
+    middleInvert ? (middleValue -= 1) : (middleValue += 1)
+    rightInvert ? (rightValue -= 1) : (rightValue += 1)
 
-    // MARK: Selectors
+    leftDot.layer.transform = CATransform3DMakeScale(leftValue/factor, leftValue/factor, 1)
+    middleDot.layer.transform = CATransform3DMakeScale(middleValue/factor, middleValue/factor, 1)
+    rightDot.layer.transform = CATransform3DMakeScale(rightValue/factor, rightValue/factor, 1)
 
-    @objc private func handleAnimations() {
-        let factor: CGFloat = 70
-
-        leftInvert ? (leftValue -= 1) : (leftValue += 1)
-        middleInvert ? (middleValue -= 1) : (middleValue += 1)
-        rightInvert ? (rightValue -= 1) : (rightValue += 1)
-
-        leftDot.layer.transform = CATransform3DMakeScale(leftValue/factor, leftValue/factor, 1)
-        middleDot.layer.transform = CATransform3DMakeScale(middleValue/factor, middleValue/factor, 1)
-        rightDot.layer.transform = CATransform3DMakeScale(rightValue/factor, rightValue/factor, 1)
-
-        if leftValue > factor || leftValue < 10 { leftInvert.toggle() }
-        if middleValue > factor || middleValue < 10 { middleInvert.toggle() }
-        if rightValue > factor || rightValue < 10 { rightInvert.toggle() }
-    }
+    if leftValue > factor || leftValue < 10 { leftInvert.toggle() }
+    if middleValue > factor || middleValue < 10 { middleInvert.toggle() }
+    if rightValue > factor || rightValue < 10 { rightInvert.toggle() }
+  }
 }

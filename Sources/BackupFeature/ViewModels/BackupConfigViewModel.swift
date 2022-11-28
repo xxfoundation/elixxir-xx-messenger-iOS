@@ -1,107 +1,115 @@
 import UIKit
-import Models
 import Shared
+import AppCore
 import Combine
-import Foundation
-import DependencyInjection
-import HUD
+import XXClient
+import Defaults
+import CloudFiles
+import AppNavigation
+import ComposableArchitecture
 
 enum BackupActionState {
-    case backupFinished
-    case backupAllowed(Bool)
-    case backupInProgress(Float, Float)
+  case backupFinished
+  case backupAllowed(Bool)
+  case backupInProgress(Float, Float)
 }
 
 struct BackupConfigViewModel {
-    var didTapBackupNow: () -> Void
-    var didChooseWifiOnly: (Bool) -> Void
-    var didChooseAutomatic: (Bool) -> Void
-    var didToggleService: (UIViewController, CloudService, Bool) -> Void
-    var didTapService: (CloudService, UIViewController) -> Void
+  var didTapBackupNow: () -> Void
+  var didChooseWifiOnly: (Bool) -> Void
+  var didChooseAutomatic: (Bool) -> Void
+  var didToggleService: (UIViewController, CloudService, Bool) -> Void
+  var didTapService: (CloudService, UIViewController) -> Void
 
-    var wifiOnly: () -> AnyPublisher<Bool, Never>
-    var automatic: () -> AnyPublisher<Bool, Never>
-    var lastBackup: () -> AnyPublisher<Backup?, Never>
-    var actionState: () -> AnyPublisher<BackupActionState, Never>
-    var enabledService: () -> AnyPublisher<CloudService?, Never>
-    var connectedServices: () -> AnyPublisher<Set<CloudService>, Never>
+  var wifiOnly: () -> AnyPublisher<Bool, Never>
+  var automatic: () -> AnyPublisher<Bool, Never>
+  var lastBackup: () -> AnyPublisher<Fetch.Metadata?, Never>
+  var actionState: () -> AnyPublisher<BackupActionState, Never>
+  var enabledService: () -> AnyPublisher<CloudService?, Never>
+  var connectedServices: () -> AnyPublisher<Set<CloudService>, Never>
 }
 
 extension BackupConfigViewModel {
-    static func live() -> Self {
-        class Context {
-            @Dependency var hud: HUD
-            @Dependency var service: BackupService
-            @Dependency var coordinator: BackupCoordinating
+  static func live() -> Self {
+    class Context {
+      @Dependency(\.navigator) var navigator: Navigator
+      @Dependency(\.backupService) var service: BackupService
+      @Dependency(\.app.hudManager) var hudManager: HUDManager
+    }
+
+    let context = Context()
+
+    return .init(
+      didTapBackupNow: {
+        context.service.didForceBackup()
+        context.hudManager.show()
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+          context.hudManager.hide()
+        }
+      },
+      didChooseWifiOnly: context.service.didSetWiFiOnly(enabled:),
+      didChooseAutomatic: context.service.didSetAutomaticBackup(enabled:),
+      didToggleService: { controller, service, enabling in
+        guard enabling == true else {
+          context.service.toggle(service: service, enabling: false)
+          context.service.stopBackups()
+          return
+        }
+        context.navigator.perform(PresentPassphrase(onCancel: {
+          context.service.toggle(service: service, enabling: false)
+        }, onPassphrase: { passphrase in
+          context.hudManager.show(.init(
+            content: "Initializing and securing your backup file will take few seconds, please keep the app open."
+          ))
+          context.service.toggle(service: service, enabling: enabling)
+          context.service.initializeBackup(passphrase: passphrase)
+          context.hudManager.hide()
+        }))
+      },
+      didTapService: { service, controller in
+        if service == .sftp {
+          context.navigator.perform(PresentSFTP(completion: { host, username, password in
+            context.service.setupSFTP(host: host, username: username, password: password)
+          }, on: controller.navigationController!))
+          return
         }
 
-        let context = Context()
-
-        return .init(
-            didTapBackupNow: {
-                context.service.performBackup()
-                context.hud.update(with: .on)
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
-                    context.hud.update(with: .none)
-                }
-            },
-            didChooseWifiOnly: context.service.setBackupOnlyOnWifi(_:),
-            didChooseAutomatic: context.service.setBackupAutomatically(_:),
-            didToggleService: { controller, service, enabling in
-                guard enabling == true else {
-                    context.service.toggle(service: service, enabling: enabling)
-                    return
-                }
-
-                context.coordinator.toPassphrase(from: controller, cancelClosure: {
-                    context.service.toggle(service: service, enabling: false)
-                }, passphraseClosure: { passphrase in
-                    context.service.passphrase = passphrase
-                    context.hud.update(with: .onTitle("Initializing and securing your backup file will take few seconds, please keep the app open."))
-                    DispatchQueue.global().async {
-                        context.service.toggle(service: service, enabling: enabling)
-
-                        DispatchQueue.main.async {
-                            context.hud.update(with: .none)
-                        }
-                    }
-                })
-            },
-            didTapService: context.service.authorize,
-            wifiOnly: {
-                context.service.settingsPublisher
-                    .map(\.wifiOnlyBackup)
-                    .eraseToAnyPublisher()
-            },
-            automatic: {
-                context.service.settingsPublisher
-                    .map(\.automaticBackups)
-                    .eraseToAnyPublisher()
-            },
-            lastBackup: {
-                context.service.settingsPublisher
-                    .map {
-                        guard let enabledService = $0.enabledService else { return nil }
-                        return $0.backups[enabledService]
-                    }.eraseToAnyPublisher()
-            },
-            actionState: {
-                context.service.settingsPublisher
-                    .map(\.enabledService)
-                    .map { BackupActionState.backupAllowed($0 != nil) }
-                    .eraseToAnyPublisher()
-            },
-            enabledService: {
-                context.service.settingsPublisher
-                    .map(\.enabledService)
-                    .eraseToAnyPublisher()
-            },
-            connectedServices: {
-                context.service.settingsPublisher
-                    .map(\.connectedServices)
-                    .removeDuplicates()
-                    .eraseToAnyPublisher()
-            }
-        )
-    }
+        context.service.authorize(service: service, presenting: controller)
+      },
+      wifiOnly: {
+        context.service.settingsPublisher
+          .map(\.wifiOnlyBackup)
+          .eraseToAnyPublisher()
+      },
+      automatic: {
+        context.service.settingsPublisher
+          .map(\.automaticBackups)
+          .eraseToAnyPublisher()
+      },
+      lastBackup: {
+        context.service.settingsPublisher
+          .combineLatest(context.service.backupsPublisher)
+          .map { settings, backups in
+            guard let enabled = settings.enabledService else { return nil }
+            return backups[enabled]
+          }.eraseToAnyPublisher()
+      },
+      actionState: {
+        context.service.settingsPublisher
+          .map(\.enabledService)
+          .map { BackupActionState.backupAllowed($0 != nil) }
+          .eraseToAnyPublisher()
+      },
+      enabledService: {
+        context.service.settingsPublisher
+          .map(\.enabledService)
+          .eraseToAnyPublisher()
+      },
+      connectedServices: {
+        context.service.connectedServicesPublisher
+          .removeDuplicates()
+          .eraseToAnyPublisher()
+      }
+    )
+  }
 }

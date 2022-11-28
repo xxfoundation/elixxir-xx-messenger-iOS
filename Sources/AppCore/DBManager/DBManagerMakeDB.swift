@@ -1,0 +1,37 @@
+import XXModels
+import Foundation
+import XXDatabase
+import XCTestDynamicOverlay
+
+public struct DBManagerMakeDB {
+  public var run: () throws -> Void
+
+  public func callAsFunction() throws -> Void {
+    try run()
+  }
+}
+
+extension DBManagerMakeDB {
+  public static func live(
+    url: URL,
+    setDB: @escaping (Database) -> Void
+  ) -> DBManagerMakeDB {
+    DBManagerMakeDB {
+      try? FileManager.default
+        .createDirectory(at: url, withIntermediateDirectories: true)
+
+      let dbFilePath = url
+        .appendingPathComponent("xxm_database")
+        .appendingPathExtension("sqlite")
+        .path
+
+      setDB(try Database.onDisk(path: dbFilePath))
+    }
+  }
+}
+
+extension DBManagerMakeDB {
+  public static let unimplemented = DBManagerMakeDB(
+    run: XCTUnimplemented("\(Self.self)")
+  )
+}

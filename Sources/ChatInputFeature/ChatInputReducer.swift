@@ -1,3 +1,4 @@
+import Foundation
 import ComposableArchitecture
 
 public let chatInputReducer = Reducer<ChatInputState, ChatInputAction, ChatInputEnvironment> { state, action, env in

@@ -1,5 +1,6 @@
 import UIKit
 import Shared
+import AppResources
 
 final class ChatView: UIView {
     let titleLabel = UILabel()
@@ -28,10 +29,10 @@ final class ChatView: UIView {
         networkIssueInvisibleConstraint?.isActive = true
         snackBar.translatesAutoresizingMaskIntoConstraints = false
 
-        titleLabel.snp.makeConstraints { make in
-            make.top.equalTo(safeAreaLayoutGuide).offset(45)
-            make.left.equalToSuperview().offset(48)
-            make.right.equalToSuperview().offset(-61)
+        titleLabel.snp.makeConstraints {
+            $0.top.equalTo(safeAreaLayoutGuide).offset(45)
+            $0.left.equalToSuperview().offset(48)
+            $0.right.equalToSuperview().offset(-61)
         }
     }
 

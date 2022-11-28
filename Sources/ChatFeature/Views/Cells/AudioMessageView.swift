@@ -1,6 +1,7 @@
 import UIKit
 import Shared
 import Combine
+import AppResources
 
 typealias OutgoingAudioCell = CollectionCell<FlexibleSpace, AudioMessageView>
 typealias IncomingAudioCell = CollectionCell<AudioMessageView, FlexibleSpace>

@@ -1,5 +1,6 @@
 import UIKit
 import Shared
+import AppResources
 
 typealias IncomingReplyCell = CollectionCell<ReplyStackMessageView, FlexibleSpace>
 typealias OutgoingReplyCell = CollectionCell<FlexibleSpace, ReplyStackMessageView>

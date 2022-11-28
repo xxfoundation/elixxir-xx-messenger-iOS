@@ -1,17 +1,12 @@
-import HUD
 import UIKit
-import Shared
 import Combine
-import DependencyInjection
 
 final class RequestsSentController: UIViewController {
-    @Dependency private var hud: HUD
-
     var connectionsPublisher: AnyPublisher<Void, Never> {
         connectionSubject.eraseToAnyPublisher()
     }
 
-    lazy private var screenView = RequestsSentView()
+    private lazy var screenView = RequestsSentView()
     private let viewModel = RequestsSentViewModel()
     private var cancellables = Set<AnyCancellable>()
     private let tapSubject = PassthroughSubject<Request, Never>()
@@ -33,7 +28,7 @@ final class RequestsSentController: UIViewController {
             let cell: RequestCell = collectionView.dequeueReusableCell(forIndexPath: indexPath)
             cell.setupFor(requestSent: requestSent)
             cell.didTapStateButton = { [weak self] in
-                guard let self = self else { return }
+                guard let self else { return }
                 self.viewModel.didTapStateButtonFor(request: requestSent)
             }
             return cell
@@ -45,11 +40,6 @@ final class RequestsSentController: UIViewController {
                 dataSource?.apply($0, animatingDifferences: false)
                 screenView.collectionView.isHidden = $0.numberOfItems == 0
             }.store(in: &cancellables)
-
-        viewModel.hudPublisher
-            .receive(on: DispatchQueue.main)
-            .sink { [hud] in hud.update(with: $0) }
-            .store(in: &cancellables)
 
         screenView.connectionsButton
             .publisher(for: .touchUpInside)

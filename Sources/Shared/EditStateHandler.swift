@@ -1,18 +1,15 @@
 import Combine
 
 public final class EditStateHandler {
-    // MARK: Properties
+  public var isEditing: AnyPublisher<Bool, Never> {
+    stateSubject.eraseToAnyPublisher()
+  }
 
-    public var isEditing: AnyPublisher<Bool, Never> { stateRelay.eraseToAnyPublisher() }
-    private let stateRelay = CurrentValueSubject<Bool, Never>(false)
+  private let stateSubject = CurrentValueSubject<Bool, Never>(false)
 
-    // MARK: Lifecycle
+  public init() {}
 
-    public init() {}
-
-    // MARK: Public
-
-    public func didSwitchEditing() {
-        stateRelay.value.toggle()
-    }
+  public func didSwitchEditing() {
+    stateSubject.value.toggle()
+  }
 }

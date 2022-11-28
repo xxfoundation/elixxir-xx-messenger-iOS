@@ -1,76 +1,63 @@
-import HUD
-import Models
 import Shared
 import Combine
+import AppCore
+import XXClient
+import Foundation
 import InputField
-import Integration
 import CombineSchedulers
-import DependencyInjection
-
-struct ProfileEmailViewState: Equatable {
-    var input: String = ""
-    var confirmation: AttributeConfirmation? = nil
-    var status: InputField.ValidationStatus = .unknown(nil)
-}
+import XXMessengerClient
+import ComposableArchitecture
 
 final class ProfileEmailViewModel {
-    // MARK: Injected
+  struct ViewState: Equatable {
+    var input: String = ""
+    var confirmationId: String?
+    var status: InputField.ValidationStatus = .unknown(nil)
+  }
 
-    @Dependency private var session: SessionType
+  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
+  @Dependency(\.app.bgQueue) var bgQueue: AnySchedulerOf<DispatchQueue>
 
-    // MARK: Properties
+  var statePublisher: AnyPublisher<ViewState, Never> {
+    stateSubject.eraseToAnyPublisher()
+  }
 
-    var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
-    private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
+  private let stateSubject = CurrentValueSubject<ViewState, Never>(.init())
 
-    var state: AnyPublisher<ProfileEmailViewState, Never> { stateRelay.eraseToAnyPublisher() }
-    private let stateRelay = CurrentValueSubject<ProfileEmailViewState, Never>(.init())
+  func clearUp() {
+    stateSubject.value.confirmationId = nil
+  }
 
-    var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
+  func didInput(_ string: String) {
+    stateSubject.value.input = string
+    validate()
+  }
 
-    // MARK: Public
-
-    func didInput(_ string: String) {
-        stateRelay.value.input = string
-        validate()
+  func didTapNext() {
+    hudManager.show()
+    bgQueue.schedule { [weak self] in
+      guard let self else { return }
+      do {
+        let confirmationId = try self.messenger.ud.get()!.sendRegisterFact(
+          .init(type: .email, value: self.stateSubject.value.input)
+        )
+        self.hudManager.hide()
+        self.stateSubject.value.confirmationId = confirmationId
+      } catch {
+        self.hudManager.hide()
+        let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
+        self.stateSubject.value.status = .invalid(xxError)
+      }
     }
+  }
 
-    func clearUp() {
-        stateRelay.value.confirmation = nil
+  private func validate() {
+    switch Validator.email.validate(stateSubject.value.input) {
+    case .success:
+      stateSubject.value.status = .valid(nil)
+    case .failure(let error):
+      stateSubject.value.status = .invalid(error)
     }
-
-    func didTapNext() {
-        hudRelay.send(.on)
-
-        backgroundScheduler.schedule { [weak self] in
-            guard let self = self else { return }
-
-            self.session.register(.email, value: self.stateRelay.value.input) { [weak self] in
-                guard let self = self else { return }
-
-                switch $0 {
-                case .success(let confirmationId):
-                    self.hudRelay.send(.none)
-                    self.stateRelay.value.confirmation = .init(
-                        content: self.stateRelay.value.input,
-                        isEmail: true,
-                        confirmationId: confirmationId
-                    )
-                case .failure(let error):
-                    self.hudRelay.send(.error(.init(with: error)))
-                }
-            }
-        }
-    }
-
-    // MARK: Private
-
-    private func validate() {
-        switch Validator.email.validate(stateRelay.value.input) {
-        case .success:
-            stateRelay.value.status = .valid(nil)
-        case .failure(let error):
-            stateRelay.value.status = .invalid(error)
-        }
-    }
+  }
 }

@@ -13,10 +13,10 @@
 		02FDD07021EDA39B000F1286 /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 02FDD06E21EDA39B000F1286 /* LaunchScreen.storyboard */; };
 		32179BA826410149008B26EC /* NotificationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 32179BA726410149008B26EC /* NotificationService.swift */; };
 		32179BAC26410149008B26EC /* NotificationExtension.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = 32179BA526410149008B26EC /* NotificationExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		3273327126C7391D0027D79D /* App in Frameworks */ = {isa = PBXBuildFile; productRef = 3273327026C7391D0027D79D /* App */; };
+		3242BD412921DC950045E647 /* AppFeature in Frameworks */ = {isa = PBXBuildFile; productRef = 3242BD402921DC950045E647 /* AppFeature */; };
+		3242BD432921DC9E0045E647 /* AppFeature in Frameworks */ = {isa = PBXBuildFile; productRef = 3242BD422921DC9E0045E647 /* AppFeature */; };
 		32C194E02808C65500876917 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 32C194DF2808C65500876917 /* GoogleService-Info.plist */; };
 		32C194E12808C65500876917 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 32C194DF2808C65500876917 /* GoogleService-Info.plist */; };
-		32CAAFAE2845836100446BB9 /* App in Frameworks */ = {isa = PBXBuildFile; productRef = 32CAAFAD2845836100446BB9 /* App */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -64,8 +64,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				3273327126C7391D0027D79D /* App in Frameworks */,
 				026135B321F2729900038B5E /* libsqlite3.tbd in Frameworks */,
+				3242BD432921DC9E0045E647 /* AppFeature in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -73,7 +73,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				32CAAFAE2845836100446BB9 /* App in Frameworks */,
+				3242BD412921DC950045E647 /* AppFeature in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -159,7 +159,7 @@
 			);
 			name = "client-ios";
 			packageProductDependencies = (
-				3273327026C7391D0027D79D /* App */,
+				3242BD422921DC9E0045E647 /* AppFeature */,
 			);
 			productName = "client-ios";
 			productReference = 02FDD06221EDA39A000F1286 /* client-ios.app */;
@@ -179,7 +179,7 @@
 			);
 			name = NotificationExtension;
 			packageProductDependencies = (
-				32CAAFAD2845836100446BB9 /* App */,
+				3242BD402921DC950045E647 /* AppFeature */,
 			);
 			productName = NotificationExtension;
 			productReference = 32179BA526410149008B26EC /* NotificationExtension.appex */;
@@ -448,7 +448,7 @@
 				CODE_SIGN_ENTITLEMENTS = "client-ios/Resources/client-ios.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 167;
+				CURRENT_PROJECT_VERSION = 294;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = S6JDM2WW29;
 				ENABLE_BITCODE = NO;
@@ -463,7 +463,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.2;
+				MARKETING_VERSION = 1.1.8;
 				OTHER_SWIFT_FLAGS = "$(inherited)";
 				PRODUCT_BUNDLE_IDENTIFIER = xx.messenger.mock;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -487,7 +487,7 @@
 				CODE_SIGN_ENTITLEMENTS = "client-ios/Resources/client-ios.entitlements";
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 167;
+				CURRENT_PROJECT_VERSION = 294;
 				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
 				DEVELOPMENT_TEAM = S6JDM2WW29;
 				ENABLE_BITCODE = NO;
@@ -503,7 +503,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.1.2;
+				MARKETING_VERSION = 1.1.8;
 				OTHER_SWIFT_FLAGS = "";
 				PRODUCT_BUNDLE_IDENTIFIER = xx.messenger;
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -522,7 +522,7 @@
 				CODE_SIGN_ENTITLEMENTS = NotificationExtension/NotificationExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 167;
+				CURRENT_PROJECT_VERSION = 294;
 				DEVELOPMENT_TEAM = S6JDM2WW29;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -536,7 +536,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.1.3;
+				MARKETING_VERSION = 1.1.8;
 				PRODUCT_BUNDLE_IDENTIFIER = xx.messenger.mock.notifications;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -553,7 +553,7 @@
 				CODE_SIGN_ENTITLEMENTS = NotificationExtension/NotificationExtension.entitlements;
 				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 167;
+				CURRENT_PROJECT_VERSION = 294;
 				DEVELOPMENT_TEAM = S6JDM2WW29;
 				ENABLE_BITCODE = NO;
 				FRAMEWORK_SEARCH_PATHS = (
@@ -567,7 +567,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.1.3;
+				MARKETING_VERSION = 1.1.8;
 				PRODUCT_BUNDLE_IDENTIFIER = xx.messenger.notifications;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
@@ -610,13 +610,13 @@
 /* End XCConfigurationList section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		3273327026C7391D0027D79D /* App */ = {
+		3242BD402921DC950045E647 /* AppFeature */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = App;
+			productName = AppFeature;
 		};
-		32CAAFAD2845836100446BB9 /* App */ = {
+		3242BD422921DC9E0045E647 /* AppFeature */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = App;
+			productName = AppFeature;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

@@ -1,81 +1,73 @@
-import HUD
+import AppCore
 import Shared
-import Models
 import Combine
-import Countries
+import XXClient
 import InputField
-import Integration
+import Foundation
 import CombineSchedulers
-import DependencyInjection
-
-struct OnboardingPhoneViewState: Equatable {
-    var input: String = ""
-    var confirmation: AttributeConfirmation?
-    var status: InputField.ValidationStatus = .unknown(nil)
-    var country: Country = .fromMyPhone()
-}
+import XXMessengerClient
+import CountryListFeature
+import ComposableArchitecture
 
 final class OnboardingPhoneViewModel {
-    @Dependency private var session: SessionType
+  struct ViewState: Equatable {
+    var input: String = ""
+    var content: String?
+    var confirmationId: String?
+    var status: InputField.ValidationStatus = .unknown(nil)
+    var country: Country = .fromMyPhone()
+  }
 
-    var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
-    private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
+  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
+  @Dependency(\.app.bgQueue) var bgQueue: AnySchedulerOf<DispatchQueue>
 
-    var state: AnyPublisher<OnboardingPhoneViewState, Never> { stateRelay.eraseToAnyPublisher() }
-    private let stateRelay = CurrentValueSubject<OnboardingPhoneViewState, Never>(.init())
+  var statePublisher: AnyPublisher<ViewState, Never> {
+    stateSubject.eraseToAnyPublisher()
+  }
 
-    var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
+  private let stateSubject = CurrentValueSubject<ViewState, Never>(.init())
 
-    // MARK: Public
+  func clearUp() {
+    stateSubject.value.confirmationId = nil
+  }
 
-    func clearUp() {
-        stateRelay.value.confirmation = nil
+  func didInput(_ string: String) {
+    stateSubject.value.input = string
+    validate()
+  }
+
+  func didChooseCountry(_ country: Country) {
+    stateSubject.value.country = country
+    validate()
+  }
+
+  func didTapNext() {
+    hudManager.show()
+    bgQueue.schedule { [weak self] in
+      guard let self else { return }
+      let content = "\(self.stateSubject.value.input)\(self.stateSubject.value.country.code)"
+      do {
+        let confirmationId = try self.messenger.ud.get()!.sendRegisterFact(
+          .init(type: .phone, value: content)
+        )
+        self.hudManager.hide()
+        self.stateSubject.value.content = content
+        self.stateSubject.value.confirmationId = confirmationId
+      } catch {
+        self.hudManager.hide()
+        let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
+        self.stateSubject.value.status = .invalid(xxError)
+      }
     }
+  }
 
-    func didInput(_ string: String) {
-        stateRelay.value.input = string
-        validate()
+  private func validate() {
+    switch Validator.phone.validate((stateSubject.value.country.regex, stateSubject.value.input)) {
+    case .success:
+      stateSubject.value.status = .valid(nil)
+    case .failure(let error):
+      stateSubject.value.status = .invalid(error)
     }
-
-    func didChooseCountry(_ country: Country) {
-        stateRelay.value.country = country
-        validate()
-    }
-
-    func didGoForward() {
-        stateRelay.value.confirmation = nil
-    }
-
-    func didTapNext() {
-        hudRelay.send(.on)
-
-        backgroundScheduler.schedule { [weak self] in
-            guard let self = self else { return }
-
-            let content = "\(self.stateRelay.value.input)\(self.stateRelay.value.country.code)"
-            self.session.register(.phone, value: content) { [weak self] in
-                guard let self = self else { return }
-
-                switch $0 {
-                case .success(let confirmationId):
-                    self.hudRelay.send(.none)
-                    self.stateRelay.value.confirmation = .init(
-                        content: content,
-                        confirmationId: confirmationId
-                    )
-                case .failure(let error):
-                    self.hudRelay.send(.error(.init(with: error)))
-                }
-            }
-        }
-    }
-
-    private func validate() {
-        switch Validator.phone.validate((stateRelay.value.country.regex, stateRelay.value.input)) {
-        case .success:
-            stateRelay.value.status = .valid(nil)
-        case .failure(let error):
-            stateRelay.value.status = .invalid(error)
-        }
-    }
+  }
 }

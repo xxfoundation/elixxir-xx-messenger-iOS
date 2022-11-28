@@ -1,9 +1,11 @@
 import UIKit
+import Shared
 import Combine
 import Defaults
-import Countries
-import Integration
-import DependencyInjection
+import XXClient
+import AppCore
+import Dependencies
+import XXMessengerClient
 
 struct ScanDisplayViewState: Equatable {
     var image: CIImage?
@@ -14,12 +16,13 @@ struct ScanDisplayViewState: Equatable {
 }
 
 final class ScanDisplayViewModel {
-    @Dependency private var session: SessionType
+    @Dependency(\.app.messenger) var messenger: Messenger
 
-    @KeyObject(.email, defaultValue: nil) private var email: String?
-    @KeyObject(.phone, defaultValue: nil) private var phone: String?
-    @KeyObject(.sharingEmail, defaultValue: false) private var sharingEmail: Bool
-    @KeyObject(.sharingPhone, defaultValue: false) private var sharingPhone: Bool
+    @KeyObject(.email, defaultValue: nil) var email: String?
+    @KeyObject(.phone, defaultValue: nil) var phone: String?
+    @KeyObject(.username, defaultValue: nil) var username: String?
+    @KeyObject(.sharingEmail, defaultValue: false) var sharingEmail: Bool
+    @KeyObject(.sharingPhone, defaultValue: false) var sharingPhone: Bool
 
     var statePublisher: AnyPublisher<ScanDisplayViewState, Never> {
         stateSubject.eraseToAnyPublisher()
@@ -58,7 +61,21 @@ final class ScanDisplayViewModel {
     func generateQR() {
         guard let filter = CIFilter(name: "CIQRCodeGenerator") else { return }
 
-        filter.setValue(session.myQR, forKey: "inputMessage")
+        var facts: [Fact] = [.init(type: .username, value: username!)]
+
+        if sharingPhone {
+            facts.append(.init(type: .phone, value: phone!))
+        }
+
+        if sharingEmail {
+            facts.append(.init(type: .email, value: email!))
+        }
+
+        let e2e = messenger.e2e.get()!
+        var contact = e2e.getContact()
+        try! contact.setFacts(facts)
+
+        filter.setValue(contact.data, forKey: "inputMessage")
         let transform = CGAffineTransform(scaleX: 5, y: 5)
 
         if let output = filter.outputImage?.transformed(by: transform) {

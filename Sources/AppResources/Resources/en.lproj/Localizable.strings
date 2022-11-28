@@ -1,0 +1,1222 @@
+// MenuFeature
+
+"menu.title"
+= "Hello";
+"menu.chats"
+= "Chats";
+"menu.contacts"
+= "Connections";
+"menu.requests"
+= "Requests";
+"menu.join"
+= "Join xx network";
+"menu.share"
+= "Share my profile";
+"menu.viewProfile"
+= "View Profile";
+"menu.profile"
+= "Profile";
+"menu.scan"
+= "Scan QR";
+"menu.dashboard"
+= "Dashboard";
+"menu.settings"
+= "Settings";
+"menu.build"
+= "Build %@";
+"menu.version"
+= "Version %@";
+"menu.shareContent"
+= "Hi, I'm using xx messenger, you can download it here:\nhttps://invite.xx.network\n\nAnd you can add me using this link:\n%@";
+
+// ChatListFeature
+
+"chatList.search.title"
+= "Search chats";
+"chatList.navigationBar.cancel"
+= "Cancel";
+"chatList.title"
+= "Chats";
+"chatList.emptyTitle"
+= "Start chatting with your contacts";
+"chatList.action"
+= "Go to contacts";
+"chatList.menu.deleteAll"
+= "Delete All";
+
+"chatList.traffic.title"
+= "Enable Cover Traffic";
+"chatList.traffic.subtitle"
+= "Hide when you send messages, providing you with extra privacy; This will consume more battery, but you can always turn it off in settings.";
+"chatList.traffic.positive"
+= "Enable";
+"chatList.traffic.negative"
+= "Not now";
+
+// ChatListFeature - DeleteAll
+
+"chatList.deleteAll.title"
+= "Delete All Chats?";
+"chatList.deleteAll.subtitle"
+= "All chats will be deleted from this phone. However, your contacts and their copies of your chats will remain unchanged. Encrypted copies may remain on the decentralized network for up to three weeks.\n\nThis will only delete chats locally—they can remain on the network (only decryptable by you) for up to three weeks, and they will also remain on the recipient(s) device(s).";
+"chatList.deleteAll.delete"
+= "Delete All Chats";
+
+// ChatListFeature - Delete
+
+"chatList.delete.title"
+= "Are you sure you want to delete one or more chats?";
+"chatList.delete.subtitle"
+= "This action will only delete these messages locally";
+"chatList.delete.delete"
+= "Delete";
+"chatList.delete.cancel"
+= "Cancel";
+"chatList.deleteGroup.title"
+= "Are you sure you want to delete a group?";
+"chatList.deleteGroup.subtitle"
+= "You will exit this group and you won’t receive any more messages from this group and your group messages will be lost.";
+"chatList.deleteGroup.action"
+= "Leave group";
+
+// ChatListFeature - Dashboard
+
+"chatList.dashboard.title"
+= "Do you want to open the dashboard?";
+"chatList.dashboard.subtitle"
+= "The dashboard will be opened using your default browser";
+"chatList.dashboard.open"
+= "Open";
+"chatList.dashboard.cancel"
+= "Cancel";
+
+"chatList.join.title"
+= "Do you want to open the default browser?";
+"chatList.join.subtitle"
+= "The xx network webpage will be opened using your default browser";
+
+// ChatFeature
+
+"chat.roundDrawer.title"
+= "The mix for this message will be available shortly, please check again later.";
+"chat.roundDrawer.action"
+= "OK";
+
+"chat.cancel"
+= "Cancel";
+"chat.bubbleMenu.copy"
+= "Copy";
+"chat.bubbleMenu.reply"
+= "Reply";
+"chat.bubbleMenu.delete"
+= "Delete";
+"chat.bubbleMenu.select"
+= "Select";
+"chat.bubbleMenu.retry"
+= "Retry";
+"chat.bubbleMenu.report"
+= "Report";
+
+"chat.e2e.placeholder"
+= "You and %@ now have a #quantum-secure#, completely private channel for messaging.\n#Say hello#!";
+
+"chat.menu.deleteAll"
+= "Delete\nAll";
+
+"chat.sheetMenu.clear"
+= "Clear chat";
+"chat.sheetMenu.details"
+= "View contact profile";
+"chat.sheetMenu.report"
+= "Report user";
+"chat.retrySheet.retry"
+= "Try again";
+"chat.retrySheet.delete"
+= "Delete";
+"chat.retrySheet.cancel"
+= "Cancel";
+
+"chat.placeholder"
+= "Type your message here...";
+
+// ChatFeature - More
+
+"chat.actions.camera"
+= "Camera";
+"chat.actions.gallery"
+= "Gallery";
+"chat.actions.files"
+= "Files";
+
+"chat.actions.permission.notnow"
+= "Not now";
+"chat.actions.permission.continue"
+= "Continue";
+
+"chat.actions.permission.camera.title"
+= "Camera Permission";
+"chat.actions.permission.camera.subtitle"
+= "To take and send photos, xx messenger needs access to your camera.";
+"chat.actions.permission.microphone.title"
+= "Microphone Permission";
+"chat.actions.permission.microphone.subtitle"
+= "To record and send audio messages, xx messenger needs access to your microphone.";
+"chat.actions.permission.library.title"
+= "Photos Permission";
+"chat.actions.permission.library.subtitle"
+= "To attach existing photos, xx messenger needs access to your camera roll / photo library.";
+
+
+// ChatFeature - Clear
+
+"chat.clear.title"
+= "Warning";
+"chat.clear.subtitle"
+= "This action will delete all stored messages related to this contact and it can’t be undone";
+"chat.clear.action"
+= "Clear";
+"chat.clear.cancel"
+= "Cancel";
+
+// ChatFeature - Report
+
+"chat.report.title"
+= "Report user";
+"chat.report.subtitle"
+= "Reporting this user will block them, delete them from your connections and you won’t see direct messages from them again. In case this user is marked as banned user by us you also won’t see any new group chat messages from this user";
+"chat.report.action"
+= "Confirm and Report";
+"chat.report.cancel"
+= "Cancel";
+
+// ScanFeature
+
+"scan.status.reading"
+= "Place QR code inside frame to scan";
+"scan.status.processing"
+= "Processing...";
+"scan.status.success"
+= "Success";
+"scan.display.copied"
+= "Copied!";
+
+"scan.display.share.title"
+= "Select what you'd like to share";
+"scan.display.share.email"
+= "EMAIL ADDRESS";
+"scan.display.share.phone"
+= "PHONE NUMBER";
+"scan.display.share.add"
+= "Add";
+"scan.display.share.notAdded"
+= "Not added";
+"scan.display.share.hidden"
+= "・・・・・・・・・・";
+"scan.display.copy"
+= "Tap code to copy";
+"scan.sendingAs"
+= "Sending as\n#%@#";
+"scan.segmentedControl.left"
+= "Scan Code";
+"scan.segmentedControl.right"
+= "My Code";
+"scan.error.cameraPermissionNeeded"
+= "Camera needs permission to be used";
+"scan.error.invalid"
+= "Invalid QR code";
+"scan.error.general"
+= "Something’s gone wrong. Please try again.";
+"scan.error.requested"
+= "You already have a request open with this contact.";
+"scan.error.alreadyFriends"
+= "You've already added \n#%@#";
+"scan.error.pending"
+= "This user is already pending in your contact list";
+"scan.requests"
+= "Check requests";
+"scan.settings"
+= "Go to settings";
+"scan.contact"
+= "Go to contact";
+"scan.info.title"
+= "QR Code";
+"scan.info.subtitle"
+= "Personal Information shared with the QR Code. The recipient will be able to see this info on the profile on their device.";
+
+// ContactFeature
+"contact.edit"
+= "Edit";
+"contact.email"
+= "Email";
+"contact.phone"
+= "Phone Number";
+"contact.username"
+= "Username";
+"contact.nickname"
+= "Nickname";
+
+// ContactFeature - Delete
+
+"contact.delete.info.title"
+= "Delete and block connection";
+"contact.delete.drawer.title"
+= "Delete and block connection?";
+"contact.delete.drawer.description"
+= "This is a silent deletion, %@ will not know you deleted them. This action will remove all information on your phone about this user, including your communications. You #cannot undo this step, and cannot re-add them unless they delete you as a connection as well.#";
+
+// ContactFeature - Confirmed
+
+"contact.confirmed.clear"
+= "Clear chat";
+"contact.confirmed.send"
+= "Send message";
+"contact.confirmed.delete"
+= "Delete contact";
+
+// ContactFeature - Scanned
+
+"contact.scanned.title"
+= "Request Contact";
+"contact.scanned.subtitle"
+= "Once they've accepted your request, you're ready to message!";
+"contact.scanned.action"
+= "Request";
+
+// ContactFeature - Nickname
+
+"contact.nickname.title"
+= "Create a Contact";
+"contact.nickname.input"
+= "Contact Nickname";
+"contact.nickname.save"
+= "Save Contact";
+"contact.nickname.minimum"
+= "Nickname can't be empty";
+
+// ContactFeature - Received
+
+"contact.received.accept"
+= "Accept";
+"contact.received.reject"
+= "Reject";
+"contact.received.title"
+= "Accept Contact?";
+
+// ContactFeature - InProgress
+
+"contact.inprogress.pending"
+= "Pending";
+"contact.inprogress.failed"
+= "Your request failed to send";
+"contact.inprogress.resend"
+= "Resend";
+
+// ContactFeature - Success
+
+"contact.success.keepAdding"
+= "Keep adding";
+"contact.success.sentRequests"
+= "Go to requests";
+
+// ContactFeature - Clear
+
+"contact.clear.title"
+= "Warning";
+"contact.clear.subtitle"
+= "This action will delete all stored messages related to this contact and it can’t be undone";
+"contact.clear.action"
+= "Clear";
+"contact.clear.cancel"
+= "Cancel";
+
+"contact.sendMessage.info.title"
+= "Send Message";
+"contact.sendMessage.info.subtitle"
+= "Messages are sent over the #xx network cMix protocol# ensuring that no one can link the sender and recipient. Furthermore, they are encrypted with quantum-secure, end-to-end encryption, with forward secrecy.";
+
+// RequestsFeature
+
+"requests.title"
+= "Requests";
+"requests.cell.resent"
+= "Resent";
+"requests.cell.verifying"
+= "Verifying";
+"requests.cell.failedVerification"
+= "Failed to verify";
+"requests.cell.requested"
+= "Resend";
+"requests.cell.failedRequest"
+= "Retry";
+
+// RequestsFeature - Received
+
+"requests.received.title"
+= "Received";
+"requests.received.placeholder"
+= "No recent requests received";
+"requests.received.hidden"
+= "Show hidden requests";
+
+"requests.received.verifying.title"
+= "Verifying";
+"requests.received.verifying.subtitle"
+= "We are working on verifying the request to make sure it is not a spam. Please check again shortly.";
+"requests.received.verifying.action"
+= "OK";
+
+"requests.confirmations.toaster"
+= "Accepted your request";
+
+// RequestsFeature - Sent
+
+"requests.sent.title"
+= "Sent";
+"requests.sent.action"
+= "Search for connections";
+"requests.sent.empty"
+= "You haven't sent any requests";
+"requests.sent.toast.sent"
+= "Request successfully sent to %@";
+"requests.sent.toast.resent"
+= "Request successfully resent to %@";
+"requests.sent.toast.resentFailed"
+= "Request couldn't be resent to %@";
+
+// RequestsFeature - Failed
+
+"requests.failed.title"
+= "Failed";
+"requests.failed.empty"
+= "There are no failed requests";
+"requests.failed.toast"
+= "Your contact request to %@ has failed.";
+
+"requests.drawer.single.title"
+= "REQUEST FROM";
+"requests.drawer.single.email"
+= "EMAIL ADDRESS";
+"requests.drawer.single.phone"
+= "PHONE NUMBER";
+"requests.drawer.single.nickname"
+= "Edit your new contact’s nickname.";
+"requests.drawer.single.accept"
+= "Accept and Save";
+"requests.drawer.single.hide"
+= "Hide Request";
+
+"requests.drawer.group.title"
+= "GROUP CHAT REQUEST";
+"requests.drawer.group.accept"
+= "Accept";
+"requests.drawer.group.hide"
+= "Hide Request";
+
+"requests.drawer.single.success.title"
+= "NEW CONNECTION";
+"requests.drawer.single.success.subtitle"
+= "Is now a connection, would you like to send a message?";
+"requests.drawer.single.success.send"
+= "Send a Message";
+"requests.drawer.single.success.later"
+= "Later";
+
+"requests.drawer.group.success.title"
+= "ACCEPTED";
+"requests.drawer.group.success.subtitle"
+= "You are now part of the group chat. Would you like to check it out?";
+"requests.drawer.group.success.send"
+= "Go to Chat";
+"requests.drawer.group.success.later"
+= "Later";
+
+"requests.drawer.single.title"
+= "REQUEST FROM";
+"requests.drawer.single.email"
+= "EMAIL ADDRESS";
+"requests.drawer.single.phone"
+= "PHONE NUMBER";
+"requests.drawer.single.nickname"
+= "Edit your new contact’s nickname.";
+"requests.drawer.single.accept"
+= "Accept and Save";
+"requests.drawer.single.hide"
+= "Hide Request";
+
+"requests.drawer.group.title"
+= "GROUP CHAT REQUEST";
+"requests.drawer.group.accept"
+= "Accept";
+"requests.drawer.group.hide"
+= "Hide Request";
+
+"requests.drawer.single.success.title"
+= "NEW CONNECTION";
+"requests.drawer.single.success.subtitle"
+= "Is now a connection, would you like to send a message?";
+"requests.drawer.single.success.send"
+= "Send a Message";
+"requests.drawer.single.success.later"
+= "Later";
+
+"requests.drawer.group.success.title"
+= "ACCEPTED";
+"requests.drawer.group.success.subtitle"
+= "You are now part of the group chat. Would you like to check it out?";
+"requests.drawer.group.success.send"
+= "Go to Chat";
+"requests.drawer.group.success.later"
+= "Later";
+
+"requests.drawer.single.title"
+= "REQUEST FROM";
+"requests.drawer.single.email"
+= "EMAIL ADDRESS";
+"requests.drawer.single.phone"
+= "PHONE NUMBER";
+"requests.drawer.single.nickname"
+= "Edit your new contact’s nickname.";
+"requests.drawer.single.accept"
+= "Accept and Save";
+"requests.drawer.single.hide"
+= "Hide Request";
+
+"requests.drawer.group.title"
+= "GROUP CHAT REQUEST";
+"requests.drawer.group.accept"
+= "Accept";
+"requests.drawer.group.hide"
+= "Hide Request";
+
+"requests.drawer.single.success.title"
+= "NEW CONNECTION";
+"requests.drawer.single.success.subtitle"
+= "Is now a connection, would you like to send a message?";
+"requests.drawer.single.success.send"
+= "Send a Message";
+"requests.drawer.single.success.later"
+= "Later";
+
+"requests.drawer.group.success.title"
+= "ACCEPTED";
+"requests.drawer.group.success.subtitle"
+= "You are now part of the group chat. Would you like to check it out?";
+"requests.drawer.group.success.send"
+= "Go to Chat";
+"requests.drawer.group.success.later"
+= "Later";
+
+// ProfileFeature
+
+"profile.email.title"
+= "Email Address";
+"profile.email.placeholder"
+= "Add email address";
+"profile.phone.title"
+= "Phone Number";
+"profile.phone.placeholder"
+= "Add phone number";
+
+// ProfileFeature - Delete
+
+"profile.delete.title"
+= "Delete %@?";
+"profile.delete.subtitle"
+= "You will no longer be found by this %@. You can add your %@ back later.";
+"profile.delete.action"
+= "Delete %@";
+
+// ProfileFeature - Email
+
+"profile.emailScreen.title"
+= "Add Email";
+"profile.emailScreen.input"
+= "Email";
+"profile.emailScreen.action"
+= "Save";
+
+// ProfileFeature - Phone
+
+"profile.phoneScreen.title"
+= "Add Phone";
+"profile.phoneScreen.input"
+= "Phone Number";
+"profile.phoneScreen.action"
+= "Save";
+
+// ProfileFeature - Photo
+
+"profile.photo.title"
+= "Alert";
+"profile.photo.subtitle"
+= "This avatar will only be visible to you";
+"profile.photo.continue"
+= "OK";
+"profile.photo.cancel"
+= "Not now";
+
+// ProfileFeature - Code
+
+"profile.code.title"
+= "Enter Code";
+"profile.code.subtitle"
+= "Enter the code we just sent to\n%@";
+"profile.code.resend"
+= "Resend Code %@";
+"profile.code.action"
+= "Save";
+
+// SettingsFeature
+
+"settings.title"
+= "Settings";
+
+"settings.general"
+= "General Settings";
+"settings.biometrics.title"
+= "Biometric Authentication";
+"settings.biometrics.description"
+= "Enable unlocking with your device biometrics.";
+"settings.inAppNotifications.title"
+= "In-App Notifications";
+"settings.inAppNotifications.description"
+= "Enable local in-app notifications.";
+"settings.remoteNotifications.title"
+= "Push Notifications";
+"settings.remoteNotifications.description"
+= "Enable remote push notifications.";
+"settings.traffic.title"
+= "Cover Traffic";
+"settings.traffic.subtitle"
+= "Enable cover traffic";
+
+"settings.chat"
+= "Chat Settings";
+"settings.hideActiveApps.title"
+= "Hide Screen";
+"settings.hideActiveApps.description"
+= "Hide screen in recent apps list";
+"settings.icognitoKeyboard.title"
+= "Predictive Text";
+"settings.icognitoKeyboard.description"
+= "While using the app, allow keyboard to use activity for predictive text.";
+
+"settings.privacyPolicy"
+= "Privacy policy";
+"settings.disclosures"
+= "Disclosures";
+"settings.advanced"
+= "Advanced Settings";
+"settings.delete"
+= "Delete account";
+
+"settings.advanced.showUsername.title"
+= "Rich notifications";
+"settings.advanced.showUsername.description"
+= "Allow us to show a more detailed push notification";
+
+"settings.drawer.title"
+= "Do you want to open %@?";
+"settings.drawer.subtitle"
+= "%@ will be opened using your default browser";
+
+"settings.advanced.title"
+= "Advanced Settings";
+"settings.advanced.logs.title"
+= "Record logs";
+"settings.advanced.logs.description"
+= "Record your logs to submit for debugging.";
+"settings.advanced.crashes.title"
+= "Enable crash reporting";
+"settings.advanced.crashes.description"
+= "Automatically sends anonymous reports containing crash data";
+"settings.advanced.reporting.title"
+= "Enable user reporting feature";
+"settings.advanced.reporting.description"
+= "Allows you to report users sending innapropriate content";
+"settings.advanced.accountBackup.title"
+= "Account Backup";
+
+"backup.header"
+= "Account Backup";
+"backup.setup.title"
+= "Setup your #backup service#.";
+"backup.config.title"
+= "Backup settings";
+"backup.subtitle"
+= "Back up your account to a cloud storage service, you can restore it along with only your contacts when you reinstall xx Messenger on another device.";
+"backup.config.backupNow"
+= "Backup now";
+"backup.config.disclaimer"
+= "Content backed up in %@ is encrypted with your passphrase in a brute force resistant manner";
+"backup.config.latestBackup"
+= "LATEST BACKUP";
+"backup.config.frequency"
+= "Backup to %@";
+"backup.config.infrastructure"
+= "Backup over";
+
+"backup.passphrase.title"
+= "Secure your backup";
+"backup.passphrase.subtitle"
+= "Please select a password for your backup. If you lose this password, you will not be able to restore your account. Make sure to keep a record somewhere safe. Your password needs to be at least 8 characters with at least 1 uppercase, 1 lowercase and 1 number characters";
+"backup.passphrase.input.title"
+= "Passphrase";
+"backup.passphrase.input.placeholder"
+= "* * * * * *";
+"backup.passphrase.continue"
+= "Set password and continue";
+"backup.passphrase.cancel"
+= "Cancel";
+"backup.restore.passphrase.title"
+= "Backup password";
+"backup.restore.passphrase.subtitle"
+= "Please enter your backup password that you used when you did the backup setup";
+
+"backup.iCloud"
+= "iCloud";
+"backup.dropbox"
+= "Dropbox";
+"backup.googleDrive"
+= "Google Drive";
+"backup.SFTP"
+= "SFTP";
+
+// Terms & Conditions
+
+"terms.title"
+= "Terms #&# Conditions";
+"terms.radio"
+= "By enabling the checkbox on the left, you agree with the terms and conditions.";
+"terms.accept"
+= "Accept and proceed";
+"terms.show"
+= "Show terms and conditions";
+
+// Settings - Delete Account
+
+"settings.delete.title"
+= "Delete Account";
+"settings.delete.subtitle"
+= "A deleted account cannot be recovered. The username associated with this account cannot be reused in the future.\n\nTo confirm your account deletion, type in your username.";
+"settings.delete.delete"
+= "Confirm Delete";
+"settings.delete.input"
+= "Your username";
+"settings.delete.cancel"
+= "Cancel";
+
+"settings.delete.info.title"
+= "Deleting Your Account";
+"settings.delete.info.subtitle"
+= "On deletion, all keys for your account are purged from your phone. This action will not notify your contacts. Your keys and any registered emails or phone numbers are removed from the user discovery system.";
+
+"settings.infoDrawer.notifications.title"
+= "Notifications";
+"settings.infoDrawer.notifications.subtitle"
+= "Selecting this setting will share your account ID and unique phone identifiers with a notification service run by the xx network team. However, these details are obfuscated via an #ID collision system# when you receive a notification. As a result, both the notifications service and your notifications provider (Firebase on Android, Apple on iOS) cannot tell exactly when you receive a message.";
+"settings.infoDrawer.biometrics.title"
+= "Biometric Authentication";
+"settings.infoDrawer.biometrics.subtitle"
+= "Biometric authentication is stored through the native system on your phone, not by the xx messenger app. The xx network cannot access your biometric authentication data.";
+"settings.infoDrawer.icognito.title"
+= "Predictive Text";
+"settings.infoDrawer.icognito.subtitle"
+= "Predictive text is a feature offered by your phone’s operating system. It involves storing entered text within your phone’s operating system and may involve sending it to remote servers. As a result, it may significantly degrade your privacy.";
+"settings.infoDrawer.traffic.title"
+= "Cover Traffic";
+"settings.infoDrawer.traffic.subtitle"
+= "Cover Traffic hides when you are sending messages by randomly sending messages to random users.  Other user’s phones will pick up these messages but they will not see them or know you sent them. As a result, it not only hides when you send messages, but helps hide who you are talking to. #Read more about it#";
+"settings.infoDrawer.privacy.title"
+= "Please note";
+"settings.infoDrawer.privacy.subtitle"
+= "Because xx messenger does not capture your personal data or save your private keys, we will not be able to, at this time, help new users recover their account in case of being locked out, changing devices, etc. Account recovery support that continues to protect your privacy and personal data will be coming soon.";
+"settings.infoDrawer.action"
+= "Got it";
+
+// Validator
+
+"validator.username.maximum"
+= "Max character limit reached.";
+"validator.username.minimum"
+= "Username must be at least 4 characters";
+"validator.username.regex"
+= "^[a-zA-Z0-9][a-zA-Z0-9_\\-+@.#]*[a-zA-Z0-9]$";
+
+"validator.username.invalid"
+= "The username provided contains one or more forbidden chars";
+"validator.username.startEnd"
+= "Username must start and end with alphanumeric characters";
+"validator.username.empty"
+= "Username can't be empty";
+"validator.username.approved"
+= "Character requirement met";
+
+"validator.email.invalid"
+= "The email provided is invalid";
+"validator.email.regex"
+= "^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(?:\\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$";
+
+"validator.phone.maximum"
+= "Phone length should be maximum 32 chars";
+"validator.phone.minimum"
+= "Phone length should be at least 4 chars";
+"validator.phone.regexIssue"
+= "This phone format doesn't fit the country";
+
+"validator.code.minimum"
+= "Code length should be at least 4 chars";
+
+// OnboardingFeature
+
+"onboarding.username.title"
+= "Choose your #username#.";
+"onboarding.username.subtitle"
+= "Your unique username is the first name your contacts will see in their searches and contact lists. This cannot be changed.";
+"onboarding.username.next"
+= "Next";
+"onboarding.username.input"
+= "Username";
+"onboarding.username.info.title"
+= "Your Username";
+"onboarding.username.info.subtitle"
+= "Your chosen username will be registered with the #User Discovery Service# allowing your public keys to be accessible to anyone who knows your username. They will then be able to send a request to create an authenticated channel with you. You will then be able to reject unwanted requests.";
+"onboarding.username.restore.title"
+= "Already have an account?";
+"onboarding.username.restore.action"
+= "Restore From Backup";
+
+// OnboardingFeature - Email
+
+"onboarding.email.skip"
+= "Skip. Do not add an email ";
+"onboarding.email.title"
+= "Add your #email#.";
+"onboarding.email.subtitle"
+= "You can add, remove, or edit this email in your profile settings. Adding an email is optional.";
+"onboarding.email.input"
+= "Email Address";
+"onboarding.email.action"
+= "Next";
+"onboarding.email.info.title"
+= "Your Email";
+"onboarding.email.info.subtitle"
+= "This email will be shared with our third-party provider, Twilio, to verify your ownership through a confirmation code. However, it will be immediately removed from the xx network’s systems and only a salted hash of the email will be stored in the #User Discovery Service.#";
+
+// OnboardingFeature - EmailConfirmation
+
+"onboarding.emailConfirmation.title"
+= "Please enter the #code# sent to your email.";
+"onboarding.emailConfirmation.subtitle"
+= "We sent a verification code to %@.";
+"onboarding.emailConfirmation.input"
+= "Code";
+"onboarding.emailConfirmation.next"
+= "Next";
+"onboarding.emailConfirmation.resend"
+= "Resend Code %@";
+"onboarding.emailConfirmation.info.title"
+= "2-Factor Authentication";
+"onboarding.emailConfirmation.info.subtitle"
+= "xx messenger uses Twilio’s two-factor authentication to prevent someone from fraudulently registering your email on the xx messenger.";
+
+// OnboardingFeature - Phone
+
+"onboarding.phone.skip"
+= "Skip. Do not add a phone number";
+"onboarding.phone.title"
+= "Add your #phone number#.";
+"onboarding.phone.subtitle"
+= "You can add, remove, or edit this phone number in your profile settings. Adding a phone number is optional.";
+"onboarding.phone.input"
+= "Phone Number";
+"onboarding.phone.action"
+= "Next";
+"onboarding.phone.info.title"
+= "Your Phone Number";
+"onboarding.phone.info.subtitle"
+= "This phone number will be shared with our third-party provider, Twilio, to verify your ownership through a confirmation code. However, it will be immediately removed from the xx network’s systems and only a salted hash of the phone number will be stored in the #User Discovery Service.#";
+
+// OnboardingFeature - PhoneConfirmation
+
+"onboarding.phoneConfirmation.title"
+= "Please enter the #code# sent to your phone through #SMS#.";
+"onboarding.phoneConfirmation.subtitle"
+= "We sent a verification code to %@.";
+"onboarding.phoneConfirmation.input"
+= "Code";
+"onboarding.phoneConfirmation.next"
+= "Next";
+"onboarding.phoneConfirmation.resend"
+= "Resend Code %@";
+"onboarding.phoneConfirmation.info.title"
+= "2-Factor Authentication";
+"onboarding.phoneConfirmation.info.subtitle"
+= "xx messenger uses Twilio’s two-factor authentication to prevent someone from fraudulently registering your phone on the xx messenger.";
+
+// OnboardingFeature - Success
+
+"onboarding.success.email.title"
+= "Your #email# has been successfully #added#.";
+"onboarding.success.phone.title"
+= "Your #phone# has been successfully #added#.";
+"onboarding.success.action"
+= "Next";
+
+// OnboardingFeature - Start
+
+"onboarding.start.title"
+= "A quantum leap in privacy";
+"onboarding.start.action"
+= "Get Started";
+
+// OnboardingFeature - Welcome
+
+"onboarding.welcome.title"
+= "%@,\nwelcome to\n#xx network#";
+"onboarding.welcome.subtitle"
+= "Would you like to register an email or phone number to help other users find your account? If not, you can still be found by your username, or completely off the grid using QR codes.";
+"onboarding.welcome.continue"
+= "Yes, continue";
+"onboarding.welcome.skip"
+= "No, skip this step";
+"onboarding.welcome.info.title"
+= "Welcome";
+"onboarding.welcome.info.subtitle"
+= "Registration is completely optional. When registering an email or phone number, they will be evaluated by twilio, a 3rd party partner. Afterwards, salted hashes will be registered in #User Discovery# to allow other uses to search for you using the registered data completely privately.";
+
+"accountRestore.warning.title"
+= "Warning";
+"accountRestore.warning.subtitle"
+= "xx messenger account can only run on a single device at a time. Using the same account on multiple devices may permanently damage your account and make it impossible to converse with your contacts";
+"accountRestore.warning.action"
+= "I understand";
+
+"accountRestore.list.title"
+= "Restore your #account#.";
+"accountRestore.list.firstSubtitle"
+= "Restore your account from a previous backup. You’ll be able to have access to all your contacts.";
+"accountRestore.list.secondSubtitle"
+= "Select the cloud storage service you previously used to create a backup.";
+"accountRestore.list.cancel"
+= "Cancel";
+
+"accountRestore.sftp.title"
+= "Login to your SFTP";
+"accountRestore.sftp.subtitle"
+= "Login to your server. Your credentials will be automatically and securely saved locally on your device. Your backups are encrypted and protected by your backup password which is stored separately from these credentials.\n\n*Please Note: at this time, host key fingerprint checking is not implemented. If the server's fingerprint changes you will not be notified.*";
+"accountRestore.sftp.host"
+= "Host";
+"accountRestore.sftp.username"
+= "Username";
+"accountRestore.sftp.password"
+= "Password";
+"accountRestore.sftp.login"
+= "Login";
+
+"accountRestore.header"
+= "Account restore";
+"accountRestore.found.title"
+= "Backup found";
+"accountRestore.found.subtitle"
+= "Restore your contacts from the following backup.";
+"accountRestore.found.date"
+= "BACKUP DATE";
+"accountRestore.found.size"
+= "FILE SIZE";
+"accountRestore.found.restore"
+= "Restore account";
+"accountRestore.found.cancel"
+= "Cancel";
+"accountRestore.found.next"
+= "Next";
+"accountRestore.notFound.title"
+= "Backup not found";
+"accountRestore.notFound.subtitle"
+= "No account backup was found in %@";
+"accountRestore.notFound.back"
+= "Go back";
+"accountRestore.success.title"
+= "Your #account# has been successfully #restored#.";
+"accountRestore.success.subtitle"
+= "You now have access to all your contacts.";
+
+// Shared
+
+"shared.search.placeholder"
+= "Search";
+"shared.requestFailed"
+= "#Your request failed#";
+"shared.networkIssue"
+= "#No internet connection.# Connect to a network to continue receiving messages.";
+"shared.resend"
+= "Resend";
+"shared.done"
+= "Done";
+"shared.snackBar.title"
+= "Connecting to xx network...";
+
+// HUD
+
+"hud.error.title"
+= "Error";
+"hud.error.action"
+= "OK";
+
+// ContactListFeature
+
+"contactList.newGroup"
+= "New Group";
+"contactList.userSearch"
+= "User Search";
+"contactList.title"
+= "Connections";
+"contactList.empty.title"
+= "Add a contact to start messaging";
+"contactList.empty.action"
+= "Add contact";
+
+// CreateGroupFeature
+
+"createGroup.title"
+= "Add members #(%@/10)#";
+"createGroup.contacts"
+= "Contacts";
+"createGroup.create"
+= "Create";
+"createGroup.drawer.title"
+= "Create Group";
+"createGroup.drawer.subtitle"
+= "You are about to create a group message with other %@ users. The information below will be visible to all members of the group.";
+"createGroup.drawer.input"
+= "Group Name";
+"createGroup.drawer.otherInput"
+= "Initial Message";
+"createGroup.drawer.placeholder"
+= "Secret Family";
+"createGroup.drawer.otherPlaceholder"
+= "Say hi to your friends!";
+"createGroup.drawer.minimum"
+= "Needs to be at least 4 chars";
+"createGroup.drawer.maximum"
+= "Needs to be 20 chars max or 256 bytes";
+"createGroup.drawer.action"
+= "Create Group";
+"createGroup.drawer.cancel"
+= "Cancel";
+
+// SearchFeature
+
+"ud.title"
+= "Search";
+"ud.tab.username"
+= "Username";
+"ud.tab.email"
+= "Email";
+"ud.tab.phone"
+= "Phone";
+"ud.tab.qr"
+= "QR Code";
+"ud.placeholder.drawer.title"
+= "Search";
+"ud.placeholder.drawer.subtitle"
+= "You can search for users by their username, email, or phone number using the xx network’s #Anonymous Data Retrieval protocol# which keeps a user’s identity anonymous while requesting data. All sent requests contain salted hashes of what you are searching for. Raw data on emails, usernames, and phone numbers do not leave your phone.";
+"ud.placeholder.drawer.action"
+= "Got it";
+"ud.noneFound"
+= "There are no users with that %@.";
+"ud.requestDrawer.title"
+= "Request Contact";
+"ud.requestDrawer.email"
+= "EMAIL ADDRESS";
+"ud.requestDrawer.phone"
+= "PHONE NUMBER";
+"ud.requestDrawer.send"
+= "Send Contact Request";
+"ud.requestDrawer.cancel"
+= "Cancel";
+"ud.nicknameDrawer.title"
+= "Add a nickname";
+"ud.nicknameDrawer.subtitle"
+= "Edit your new contact’s nickname so you know who they are.";
+"ud.nicknameDrawer.save"
+= "Save";
+
+"ud.search.input"
+= "Search by %@";
+"ud.search.empty"
+= "There are no users with that %@.";
+"ud.search.cancel"
+= "Cancel search";
+
+"ud.search.placeholder.title"
+= "Search for #friends# privately, add them to your #connections# to start a completely private messaging channel.";
+"ud.search.placeholder.subtitle"
+= "Your searches are private. Search information is never linked to your account or personally identifiable.";
+
+// LaunchFeature
+
+"launch.version.failed"
+= "Failed checking app version";
+"launch.version.required.positive"
+= "Okay";
+"launch.version.recommended.title"
+= "There is a new version available that enhance the current performance and usability.";
+"launch.version.recommended.positive"
+= "Update";
+"launch.version.recommended.negative"
+= "Not now";
+
+// Countries
+
+"countries.title"
+= "Country Code";
+
+// -----------------------------------------------------
+
+// Accessibility Identifiers
+
+// - Onboarding
+
+"accessibility.onboarding.username.button"
+= "onboarding.username.button";
+"accessibility.onboarding.username.textfield"
+= "onboarding.username.textfield";
+"accessibility.onboarding.username.subtitle"
+= "onboarding.username.subtitle";
+
+"accessibility.onboarding.email.textfield"
+= "onboarding.email.textfield";
+"accessibility.onboarding.email.subtitle"
+= "onboarding.email.subtitle";
+"accessibility.onboarding.email.next"
+= "onboarding.email.next";
+"accessibility.onboarding.email.skip"
+= "onboarding.email.skip";
+
+"accessibility.onboarding.phone.textfield"
+= "onboarding.phone.textfield";
+"accessibility.onboarding.phone.subtitle"
+= "onboarding.phone.subtitle";
+"accessibility.onboarding.phone.code"
+= "onboarding.phone.code";
+"accessibility.onboarding.phone.next"
+= "onboarding.phone.next";
+"accessibility.onboarding.phone.skip"
+= "onboarding.phone.skip";
+
+"accessibility.onboarding.code.textfield"
+= "onboarding.code.textfield";
+"accessibility.onboarding.code.finish"
+= "onboarding.code.finish";
+"accessibility.onboarding.code.resend"
+= "onboarding.code.resend";
+
+"accessibility.onboarding.success.action"
+= "onboarding.success.action";
+
+// - Countries
+
+"accessibility.countries.search.field"
+= "countries.search.field";
+"accessibility.countries.search.right"
+= "countries.search.right";
+
+// - ChatList
+
+"accessibility.chatList.menu"
+= "chatList.menu";
+"accessibility.chatList.new"
+= "chatList.new";
+
+// - QR
+
+"accessibility.qr.left"
+= "qr.left";
+"accessibility.qr.right"
+= "qr.right";
+
+// - Menu
+
+"accessibility.menu.header"
+= "menu.header";
+"accessibility.menu.contacts"
+= "menu.contacts";
+"accessibility.menu.requests"
+= "menu.requests";
+"accessibility.menu.settings"
+= "menu.settings";
+"accessibility.menu.dashboard"
+= "menu.dashboard";
+"accessibility.menu.scan"
+= "menu.scan";
+"accessibility.menu.chats"
+= "menu.chats";
+"accessibility.menu.profile"
+= "menu.profile";
+
+// - Profile
+
+"accessibility.profile.email.button"
+= "profile.email.button";
+"accessibility.profile.phone.button"
+= "profile.phone.button";
+"accessibility.profile.email.content"
+= "profile.email.content";
+"accessibility.profile.phone.content"
+= "profile.phone.content";
+
+// - Shared
+
+"accessibility.shared.search.textField"
+= "shared.search.textField";
+"accessibility.shared.search.rightButton"
+= "shared.search.rightButton";
+
+// - Requests
+
+"accessibility.requests.received.tab"
+= "requests.received.tab";
+"accessibility.requests.sent.tab"
+= "requests.sent.tab";
+"accessibility.requests.failed.tab"
+= "requests.failed.tab";
+
+// - ContactList
+
+"accessibility.contactList.search"
+= "contactList.search";
+"accessibility.contactList.newGroup"
+= "contactList.newGroup";
+
+// - CreateGroup
+
+"accessibility.createGroup.create"
+= "createGroup.create";
+"accessibility.createGroup.drawer.input"
+= "createGroup.drawer.input";
+"accessibility.createGroup.drawer.otherInput"
+= "createGroup.drawer.otherInput";
+"accessibility.createGroup.drawer.create"
+= "createGroup.drawer.create";
+
+// - Search
+
+"accessibility.search.username"
+= "search.username";
+"accessibility.search.email"
+= "search.email";
+"accessibility.search.phone"
+= "search.phone";
+"accessibility.search.input"
+= "search.input";
+"accessibility.search.phoneInput"
+= "search.phoneInput";
+"accessibility.search.countryCode"
+= "search.countryCode";
+"accessibility.search.placeholder.text"
+= "search.placeholder.text";
+"accessibility.search.placeholder.image"
+= "search.placeholder.image";
+"accessibility.search.placeholder.action"
+= "search.placeholder.action";

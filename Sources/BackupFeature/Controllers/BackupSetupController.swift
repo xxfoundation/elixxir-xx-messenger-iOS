@@ -1,10 +1,8 @@
 import UIKit
-import Models
 import Combine
-import DependencyInjection
 
 final class BackupSetupController: UIViewController {
-    lazy private var screenView = BackupSetupView()
+    private lazy var screenView = BackupSetupView()
 
     private let viewModel: BackupSetupViewModel
     private var cancellables = Set<AnyCancellable>()

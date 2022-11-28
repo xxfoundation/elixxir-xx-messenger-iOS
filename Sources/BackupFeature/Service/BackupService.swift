@@ -1,337 +1,258 @@
+import AppCore
 import UIKit
-import Models
 import Combine
+import XXClient
 import Defaults
-import Keychain
-import SFTPFeature
-import iCloudFeature
-import DropboxFeature
-import NetworkMonitor
-import GoogleDriveFeature
-import DependencyInjection
+import CloudFiles
+import CloudFilesSFTP
+import KeychainAccess
+import XXMessengerClient
+import ComposableArchitecture
 
 public final class BackupService {
-    @Dependency private var sftpService: SFTPService
-    @Dependency private var icloudService: iCloudInterface
-    @Dependency private var dropboxService: DropboxInterface
-    @Dependency private var networkManager: NetworkMonitoring
-    @Dependency private var keychainHandler: KeychainHandling
-    @Dependency private var driveService: GoogleDriveInterface
+  @Dependency(\.app.messenger) var messenger
+  @Dependency(\.app.networkMonitor) var networkMonitor
 
-    @KeyObject(.backupSettings, defaultValue: Data()) private var storedSettings: Data
+  @KeyObject(.email, defaultValue: nil) var email: String?
+  @KeyObject(.phone, defaultValue: nil) var phone: String?
+  @KeyObject(.username, defaultValue: nil) var username: String?
+  @KeyObject(.backupSettings, defaultValue: nil) var storedSettings: Data?
 
-    public var passphrase: String?
+  public var backupsPublisher: AnyPublisher<[CloudService: Fetch.Metadata], Never> {
+    backupSubject.eraseToAnyPublisher()
+  }
 
-    public var settingsPublisher: AnyPublisher<BackupSettings, Never> {
-        settings.handleEvents(receiveSubscription: { [weak self] _ in
-            guard let self = self else { return }
+  public var connectedServicesPublisher: AnyPublisher<Set<CloudService>, Never> {
+    connectedServicesSubject.eraseToAnyPublisher()
+  }
 
-            let lastRefreshDate = self.settingsLastRefreshedDate ?? Date.distantPast
+  public var settingsPublisher: AnyPublisher<CloudSettings, Never> {
+    settings.handleEvents(receiveSubscription: { [weak self] _ in
+      guard let self else { return }
+      self.connectedServicesSubject.send(CloudFilesManager.all.linkedServices())
+      self.fetchBackupOnAllProviders()
+    }).eraseToAnyPublisher()
+  }
 
-            if Date().timeIntervalSince(lastRefreshDate) < 10 { return }
+  private var cancellables = Set<AnyCancellable>()
+  private let connectedServicesSubject = CurrentValueSubject<Set<CloudService>, Never>([])
+  private let backupSubject = CurrentValueSubject<[CloudService: Fetch.Metadata], Never>([:])
+  private lazy var settings = CurrentValueSubject<CloudSettings, Never>(.init(fromData: storedSettings))
 
-            self.settingsLastRefreshedDate = Date()
-            self.refreshConnections()
-            self.refreshBackups()
-        }).eraseToAnyPublisher()
+  public init() {
+    settings
+      .dropFirst()
+      .removeDuplicates()
+      .sink { [unowned self] in
+        storedSettings = $0.toData()
+      }.store(in: &cancellables)
+  }
+
+  func didSetWiFiOnly(enabled: Bool) {
+    settings.value.wifiOnlyBackup = enabled
+  }
+
+  func didSetAutomaticBackup(enabled: Bool) {
+    settings.value.automaticBackups = enabled
+    shouldBackupIfSetAutomatic()
+  }
+
+  func toggle(service: CloudService, enabling: Bool) {
+    settings.value.enabledService = enabling ? service : nil
+  }
+
+  func didForceBackup() {
+    if let lastBackup = try? Data(contentsOf: getBackupURL()) {
+      performUpload(of: lastBackup)
     }
+  }
 
-    private var connType: ConnectionType = .wifi
-    private var settingsLastRefreshedDate: Date?
-    private var cancellables = Set<AnyCancellable>()
-    private lazy var settings = CurrentValueSubject<BackupSettings, Never>(.init(fromData: storedSettings))
+  public func didUpdateFacts() {
+    storeFacts()
+  }
 
-    public init() {
-        settings
-            .dropFirst()
-            .removeDuplicates()
-            .sink { [unowned self] in storedSettings = $0.toData() }
-            .store(in: &cancellables)
-
-        networkManager.connType
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in connType = $0 }
-            .store(in: &cancellables)
+  public func updateLocalBackup(_ data: Data) {
+    do {
+      try data.write(to: getBackupURL())
+      shouldBackupIfSetAutomatic()
+    } catch {
+      fatalError("Couldn't write backup to fileurl")
     }
+  }
+
+  private func shouldBackupIfSetAutomatic() {
+    guard let lastBackup = try? Data(contentsOf: getBackupURL()) else {
+      return // No stored backup so won't upload anything
+    }
+    guard settings.value.automaticBackups else {
+      return // Backups are not set to automatic
+    }
+    guard settings.value.enabledService != nil else {
+      return // No service enabled to upload
+    }
+    if settings.value.wifiOnlyBackup {
+      guard networkMonitor.connType() == .wifi else {
+        return // WiFi only backups, and connType != Wifi
+      }
+    } else {
+      guard networkMonitor.connType() != .unknown else {
+        return // Connectivity is unknown
+      }
+    }
+    performUpload(of: lastBackup)
+  }
+
+  // MARK: - Messenger
+
+  func initializeBackup(passphrase: String) {
+    do {
+      try messenger.startBackup(
+        password: passphrase
+      )
+    } catch {
+      print(">>> Exception when calling `messenger.startBackup`: \(error.localizedDescription)")
+    }
+  }
+
+  func stopBackups() {
+    if messenger.isBackupRunning() == true {
+      do {
+        try messenger.stopBackup()
+      } catch {
+        print(">>> Exception when calling `messenger.stopBackup`: \(error.localizedDescription)")
+      }
+    }
+  }
+
+  func storeFacts() {
+    var facts: [String: String] = [:]
+    facts["username"] = username!
+    facts["email"] = email
+    facts["phone"] = phone
+    facts["timestamp"] = "\(Date.asTimestamp)"
+    guard let backupManager = messenger.backup.get() else {
+      print(">>> Tried to store facts in JSON but there's no backup manager instance")
+      return
+    }
+    guard let data = try? JSONSerialization.data(withJSONObject: facts) else {
+      print(">>> Tried to generate data with json dictionary but failed")
+      return
+    }
+    guard let string = String(data: data, encoding: .utf8) else {
+      print(">>> Tried to extract string from json dict object but failed")
+      return
+    }
+    backupManager.addJSON(string)
+  }
+
+  func setupSFTP(host: String, username: String, password: String) {
+    let sftpManager = CloudFilesManager.sftp(
+      host: host,
+      username: username,
+      password: password,
+      fileName: "backup.xxm"
+    )
+
+    CloudFilesManager.all[.sftp] = sftpManager
+
+    do {
+      try sftpManager.fetch { [weak self] in
+        guard let self else { return }
+        switch $0 {
+        case .success(let metadata):
+          self.backupSubject.value[.sftp] = metadata
+        case .failure(let error):
+          print(">>> Error fetching sftp: \(error.localizedDescription)")
+        }
+      }
+    } catch {
+      print(">>> Exception fetching sftp: \(error.localizedDescription)")
+    }
+  }
+
+  func authorize(
+    service: CloudService,
+    presenting screen: UIViewController
+  ) {
+    guard let manager = CloudFilesManager.all[service] else {
+      print(">>> Tried to link/auth but the enabled service is not set")
+      return
+    }
+    do {
+      try manager.link(screen) { [weak self] in
+        guard let self else { return }
+        switch $0 {
+        case .success:
+          self.connectedServicesSubject.value.insert(service)
+          self.fetchBackupOnAllProviders()
+        case .failure(let error):
+          self.connectedServicesSubject.value.remove(service)
+          print(">>> Failed to link/auth \(service): \(error.localizedDescription)")
+        }
+      }
+    } catch {
+      print(">>> Exception trying to link/auth \(service): \(error.localizedDescription)")
+    }
+  }
+
+  func fetchBackupOnAllProviders() {
+    CloudFilesManager.all.lastBackups { [weak self] in
+      guard let self else { return }
+      self.backupSubject.send($0)
+    }
+  }
+
+  func performUpload(of data: Data) {
+    guard let enabledService = settings.value.enabledService else {
+      fatalError(">>> Trying to backup but nothing is enabled")
+    }
+    if enabledService == .sftp {
+      let keychain = Keychain(service: "SFTP-XXM")
+      guard let host = try? keychain.get("host"),
+            let password = try? keychain.get("pwd"),
+            let username = try? keychain.get("username") else {
+        fatalError(">>> Tried to perform an sftp backup but its not configured")
+      }
+      CloudFilesManager.all[.sftp] = .sftp(
+        host: host,
+        username: username,
+        password: password,
+        fileName: "backup.xxm"
+      )
+    }
+    guard let manager = CloudFilesManager.all[enabledService] else {
+      return // Tried to upload but the enabled service is not set
+    }
+    do {
+      try manager.upload(data) { [weak self] in
+        guard let self else { return }
+
+        switch $0 {
+        case .success(let metadata):
+          self.backupSubject.value[enabledService] = .init(
+            size: metadata.size,
+            lastModified: metadata.lastModified
+          )
+        case .failure(let error):
+          print(">>> Failed to perform a backup upload: \(error.localizedDescription)")
+        }
+      }
+    } catch {
+      print(">>> Exception performing a backup upload: \(error.localizedDescription)")
+    }
+  }
+
+  private func getBackupURL() -> URL {
+    guard let folderURL = try? FileManager.default.url(
+      for: .applicationSupportDirectory,
+      in: .userDomainMask,
+      appropriateFor: nil,
+      create: true
+    ) else { fatalError(">>> Couldn't generate the URL for backup") }
+
+    return folderURL
+      .appendingPathComponent("backup")
+      .appendingPathExtension("xxm")
+  }
 }
 
-extension BackupService {
-    public func performBackupIfAutomaticIsEnabled() {
-        guard settings.value.automaticBackups == true else { return }
-        performBackup()
-    }
-
-    public func performBackup() {
-        guard let directoryUrl = try? FileManager.default.url(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask,
-            appropriateFor: nil,
-            create: true
-        ) else { fatalError("Couldn't generate the URL to persist the backup") }
-
-        let fileUrl = directoryUrl
-            .appendingPathComponent("backup")
-            .appendingPathExtension("xxm")
-
-        guard let data = try? Data(contentsOf: fileUrl) else {
-            print(">>> Tried to backup arbitrarily but there was nothing to be backed up. Aborting...")
-            return
-        }
-
-        performBackup(data: data)
-    }
-
-    public func updateBackup(data: Data) {
-        guard let directoryUrl = try? FileManager.default.url(
-            for: .applicationSupportDirectory,
-            in: .userDomainMask,
-            appropriateFor: nil,
-            create: true
-        ) else { fatalError("Couldn't generate the URL to persist the backup") }
-
-        let fileUrl = directoryUrl
-            .appendingPathComponent("backup")
-            .appendingPathExtension("xxm")
-
-        do {
-            try data.write(to: fileUrl)
-        } catch {
-            fatalError("Couldn't write backup to fileurl")
-        }
-
-        let isWifiOnly = settings.value.wifiOnlyBackup
-        let isAutomaticEnabled = settings.value.automaticBackups
-        let hasEnabledService = settings.value.enabledService != nil
-
-        if isWifiOnly {
-            guard connType == .wifi else { return }
-        } else {
-            guard connType != .unknown else { return }
-        }
-
-        if isAutomaticEnabled && hasEnabledService {
-            performBackup()
-        }
-    }
-
-    public func setBackupOnlyOnWifi(_ enabled: Bool) {
-        settings.value.wifiOnlyBackup = enabled
-    }
-
-    public func setBackupAutomatically(_ enabled: Bool) {
-        settings.value.automaticBackups = enabled
-
-        guard enabled else { return }
-        performBackup()
-    }
-
-    public func toggle(service: CloudService, enabling: Bool) {
-        settings.value.enabledService = enabling ? service : nil
-    }
-
-    public func authorize(service: CloudService, presenting screen: UIViewController) {
-        switch service {
-        case .drive:
-            driveService.authorize(presenting: screen) { [weak self] _ in
-                guard let self = self else { return }
-                self.refreshConnections()
-                self.refreshBackups()
-            }
-        case .icloud:
-            if !icloudService.isAuthorized() {
-                icloudService.openSettings()
-            } else {
-                refreshConnections()
-                refreshBackups()
-            }
-        case .dropbox:
-            if !dropboxService.isAuthorized() {
-                dropboxService.authorize(presenting: screen)
-                    .sink { [weak self] _ in
-                        guard let self = self else { return }
-                        self.refreshConnections()
-                        self.refreshBackups()
-                    }.store(in: &cancellables)
-            }
-        case .sftp:
-            if !sftpService.isAuthorized() {
-                sftpService.authorizeFlow((screen, { [weak self] in
-                    guard let self = self else { return }
-                    screen.navigationController?.popViewController(animated: true)
-                    self.refreshConnections()
-                    self.refreshBackups()
-                }))
-            }
-        }
-    }
-}
-
-extension BackupService {
-    private func refreshConnections() {
-        if icloudService.isAuthorized() && !settings.value.connectedServices.contains(.icloud) {
-            settings.value.connectedServices.insert(.icloud)
-        } else if !icloudService.isAuthorized() && settings.value.connectedServices.contains(.icloud) {
-            settings.value.connectedServices.remove(.icloud)
-        }
-
-        if dropboxService.isAuthorized() && !settings.value.connectedServices.contains(.dropbox) {
-            settings.value.connectedServices.insert(.dropbox)
-        } else if !dropboxService.isAuthorized() && settings.value.connectedServices.contains(.dropbox) {
-            settings.value.connectedServices.remove(.dropbox)
-        }
-
-        if sftpService.isAuthorized() && !settings.value.connectedServices.contains(.sftp) {
-            settings.value.connectedServices.insert(.sftp)
-        } else if !sftpService.isAuthorized() && settings.value.connectedServices.contains(.sftp) {
-            settings.value.connectedServices.remove(.sftp)
-        }
-
-        driveService.isAuthorized { [weak settings] isAuthorized in
-            guard let settings = settings else { return }
-
-            if isAuthorized && !settings.value.connectedServices.contains(.drive) {
-                settings.value.connectedServices.insert(.drive)
-            } else if !isAuthorized && settings.value.connectedServices.contains(.drive) {
-                settings.value.connectedServices.remove(.drive)
-            }
-        }
-    }
-
-    private func refreshBackups() {
-        if icloudService.isAuthorized() {
-            icloudService.downloadMetadata { [weak settings] in
-                guard let settings = settings else { return }
-
-                guard let metadata = try? $0.get() else {
-                    settings.value.backups[.icloud] = nil
-                    return
-                }
-
-                settings.value.backups[.icloud] = Backup(
-                    id: metadata.path,
-                    date: metadata.modifiedDate,
-                    size: metadata.size
-                )
-            }
-        }
-
-        if sftpService.isAuthorized() {
-            sftpService.fetchMetadata { [weak settings] in
-                guard let settings = settings else { return }
-
-                guard let metadata = try? $0.get()?.backup else {
-                    settings.value.backups[.sftp] = nil
-                    return
-                }
-
-                settings.value.backups[.sftp] = Backup(
-                    id: metadata.id,
-                    date: metadata.date,
-                    size: metadata.size
-                )
-            }
-        }
-
-        if dropboxService.isAuthorized() {
-            dropboxService.downloadMetadata { [weak settings] in
-                guard let settings = settings else { return }
-
-                guard let metadata = try? $0.get() else {
-                    settings.value.backups[.dropbox] = nil
-                    return
-                }
-
-                settings.value.backups[.dropbox] = Backup(
-                    id: metadata.path,
-                    date: metadata.modifiedDate,
-                    size: metadata.size
-                )
-            }
-        }
-
-        driveService.isAuthorized { [weak settings] isAuthorized  in
-            guard let settings = settings else { return }
-
-            if isAuthorized {
-                self.driveService.downloadMetadata {
-                    guard let metadata = try? $0.get() else { return }
-
-                    settings.value.backups[.drive] = Backup(
-                        id: metadata.identifier,
-                        date: metadata.modifiedDate,
-                        size: metadata.size
-                    )
-                }
-            } else {
-                settings.value.backups[.drive] = nil
-            }
-        }
-    }
-
-    private func performBackup(data: Data) {
-        guard let enabledService = settings.value.enabledService else {
-            fatalError("Trying to backup but nothing is enabled")
-        }
-
-        let url = URL(fileURLWithPath: NSTemporaryDirectory())
-            .appendingPathComponent(UUID().uuidString)
-
-        do {
-            try data.write(to: url, options: .atomic)
-        } catch {
-            print("Couldn't write to temp: \(error.localizedDescription)")
-            return
-        }
-
-        switch enabledService {
-        case .drive:
-            driveService.uploadBackup(url) {
-                switch $0 {
-                case .success(let metadata):
-                    self.settings.value.backups[.drive] = .init(
-                        id: metadata.identifier,
-                        date: metadata.modifiedDate,
-                        size: metadata.size
-                    )
-                case .failure(let error):
-                    print(error.localizedDescription)
-                }
-            }
-        case .icloud:
-            icloudService.uploadBackup(url) {
-                switch $0 {
-                case .success(let metadata):
-                    self.settings.value.backups[.icloud] = .init(
-                        id: metadata.path,
-                        date: metadata.modifiedDate,
-                        size: metadata.size
-                    )
-                case .failure(let error):
-                    print(error.localizedDescription)
-                }
-            }
-        case .dropbox:
-            dropboxService.uploadBackup(url) {
-                switch $0 {
-                case .success(let metadata):
-                    self.settings.value.backups[.dropbox] = .init(
-                        id: metadata.path,
-                        date: metadata.modifiedDate,
-                        size: metadata.size
-                    )
-                case .failure(let error):
-                    print(error.localizedDescription)
-                }
-            }
-        case .sftp:
-            sftpService.uploadBackup(url: url) {
-                switch $0 {
-                case .success(let backup):
-                    self.settings.value.backups[.sftp] = backup
-                case .failure(let error):
-                    print(error.localizedDescription)
-                }
-            }
-        }
-    }
-}

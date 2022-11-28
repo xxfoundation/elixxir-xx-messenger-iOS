@@ -1,38 +1,39 @@
 import UIKit
 import Shared
+import AppResources
 
 final class ContactConfirmedView: UIView {
-    let stackView = UIStackView()
-    let clearButton = CapsuleButton()
-    let buttons = SheetCardComponent()
+  let stackView = UIStackView()
+  let clearButton = CapsuleButton()
+  let buttons = SheetCardComponent()
 
-    init() {
-        super.init(frame: .zero)
+  init() {
+    super.init(frame: .zero)
 
-        clearButton.setStyle(.seeThrough)
-        clearButton.setTitle(Localized.Contact.Confirmed.clear, for: .normal)
-        
-        buttons.set(buttons: [clearButton])
+    clearButton.setStyle(.seeThrough)
+    clearButton.setTitle(Localized.Contact.Confirmed.clear, for: .normal)
 
-        stackView.axis = .vertical
-        stackView.spacing = 25
+    buttons.set(buttons: [clearButton])
 
-        addSubview(stackView)
-        addSubview(buttons)
-        
-        stackView.snp.makeConstraints { make in
-            make.top.equalToSuperview().offset(24)
-            make.left.equalToSuperview().offset(24)
-            make.right.equalToSuperview().offset(-24)
-        }
+    stackView.axis = .vertical
+    stackView.spacing = 25
 
-        buttons.snp.makeConstraints { make in
-            make.top.greaterThanOrEqualTo(stackView.snp.bottom).offset(24)
-            make.left.equalToSuperview()
-            make.right.equalToSuperview()
-            make.bottom.equalToSuperview()
-        }
+    addSubview(stackView)
+    addSubview(buttons)
+
+    stackView.snp.makeConstraints {
+      $0.top.equalToSuperview().offset(24)
+      $0.left.equalToSuperview().offset(24)
+      $0.right.equalToSuperview().offset(-24)
     }
 
-    required init?(coder: NSCoder) { nil }
+    buttons.snp.makeConstraints {
+      $0.top.greaterThanOrEqualTo(stackView.snp.bottom).offset(24)
+      $0.left.equalToSuperview()
+      $0.right.equalToSuperview()
+      $0.bottom.equalToSuperview()
+    }
+  }
+
+  required init?(coder: NSCoder) { nil }
 }

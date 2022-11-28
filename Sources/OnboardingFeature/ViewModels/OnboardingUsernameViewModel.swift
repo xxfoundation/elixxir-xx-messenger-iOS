@@ -1,78 +1,74 @@
-import HUD
+import AppCore
 import Shared
 import Combine
+import Defaults
+import XXModels
+import XXClient
 import InputField
-import Integration
-import CombineSchedulers
-import DependencyInjection
-
-struct OnboardingUsernameViewState: Equatable {
-    var input: String = ""
-    var status: InputField.ValidationStatus = .unknown(nil)
-}
+import Foundation
+import XXMessengerClient
+import ComposableArchitecture
 
 final class OnboardingUsernameViewModel {
+  struct ViewState: Equatable {
+    var input: String = ""
+    var status: InputField.ValidationStatus = .unknown(nil)
+    var didConfirm: Bool = false
+  }
 
-    let ndf: String
+  @Dependency(\.app.dbManager) var dbManager: DBManager
+  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
+  @Dependency(\.app.bgQueue) var bgQueue: AnySchedulerOf<DispatchQueue>
 
-    var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
+  @KeyObject(.username, defaultValue: "") var username: String
 
-    var greenPublisher: AnyPublisher<Void, Never> { greenRelay.eraseToAnyPublisher() }
-    private let greenRelay = PassthroughSubject<Void, Never>()
+  var statePublisher: AnyPublisher<ViewState, Never> {
+    stateSubject.eraseToAnyPublisher()
+  }
 
-    var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
-    private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
+  private let stateSubject = CurrentValueSubject<ViewState, Never>(.init())
 
-    var state: AnyPublisher<OnboardingUsernameViewState, Never> { stateRelay.eraseToAnyPublisher() }
-    private let stateRelay = CurrentValueSubject<OnboardingUsernameViewState, Never>(.init())
-
-    init(ndf: String) {
-        self.ndf = ndf
+  func didInput(_ string: String) {
+    stateSubject.value.input = string.trimmingCharacters(in: .whitespacesAndNewlines)
+    switch Validator.username.validate(stateSubject.value.input) {
+    case .success(let text):
+      stateSubject.value.status = .valid(text)
+    case .failure(let error):
+      stateSubject.value.status = .invalid(error)
     }
+  }
 
-    func didInput(_ string: String) {
-        stateRelay.value.input = string.trimmingCharacters(in: .whitespacesAndNewlines)
-
-        switch Validator.username.validate(stateRelay.value.input) {
-        case .success(let text):
-            stateRelay.value.status = .valid(text)
-        case .failure(let error):
-            stateRelay.value.status = .invalid(error)
-        }
+  func didTapRegister() {
+    hudManager.show()
+    bgQueue.schedule { [weak self] in
+      guard let self else { return }
+      do {
+        try self.messenger.register(
+          username: self.stateSubject.value.input
+        )
+        try self.dbManager.getDB().saveContact(.init(
+          id: self.messenger.e2e.get()!.getContact().getId(),
+          marshaled: self.messenger.e2e.get()!.getContact().data,
+          username: self.stateSubject.value.input,
+          email: nil,
+          phone: nil,
+          nickname: nil,
+          photo: nil,
+          authStatus: .friend,
+          isRecent: false,
+          isBlocked: false,
+          isBanned: false,
+          createdAt: Date()
+        ))
+        self.username = self.stateSubject.value.input
+        self.hudManager.hide()
+        self.stateSubject.value.didConfirm = true
+      } catch {
+        self.hudManager.hide()
+        let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
+        self.stateSubject.value.status = .invalid(xxError)
+      }
     }
-
-    func didTapRegister() {
-        hudRelay.send(.on)
-
-        backgroundScheduler.schedule { [weak self] in
-            guard let self = self else { return }
-
-            do {
-                var session: SessionType!
-
-                if let injectedSession = try? DependencyInjection.Container.shared.resolve() as SessionType {
-                    session = injectedSession
-                } else {
-                    session = try Session(ndf: self.ndf)
-                    DependencyInjection.Container.shared.register(session as SessionType)
-                }
-
-                session.register(.username, value: self.stateRelay.value.input) { [weak self] in
-                    guard let self = self else { return }
-
-                    switch $0 {
-                    case .success(_):
-                        self.hudRelay.send(.none)
-                        self.greenRelay.send()
-                    case .failure(let error):
-                        self.hudRelay.send(.none)
-                        self.stateRelay.value.status = .invalid(error.localizedDescription)
-                    }
-                }
-            } catch {
-                self.hudRelay.send(.none)
-                self.stateRelay.value.status = .invalid(error.localizedDescription)
-            }
-        }
-    }
+  }
 }

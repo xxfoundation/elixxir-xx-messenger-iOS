@@ -10,7 +10,7 @@ public final class RetrySheetController: UIViewController {
 
     // MARK: UI
 
-    lazy private var screenView = RetrySheetView()
+    private lazy var screenView = RetrySheetView()
 
     // MARK: Properties
 

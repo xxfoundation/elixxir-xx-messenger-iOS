@@ -1,21 +1,20 @@
 import UIKit
-import Models
 import Shared
 import Combine
-import GoogleDriveFeature
-import DependencyInjection
+import CloudFiles
+import ComposableArchitecture
 
 struct BackupSetupViewModel {
-    var didTapService: (CloudService, UIViewController) -> Void
+  var didTapService: (CloudService, UIViewController) -> Void
 }
 
 extension BackupSetupViewModel {
-    static func live() -> Self {
-        class Context {
-            @Dependency var service: BackupService
-        }
-
-        let context = Context()
-        return .init(didTapService: context.service.authorize)
+  static func live() -> Self {
+    class Context {
+      @Dependency(\.backupService) var service: BackupService
     }
+
+    let context = Context()
+    return .init(didTapService: context.service.authorize)
+  }
 }

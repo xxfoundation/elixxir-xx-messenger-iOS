@@ -1,93 +1,98 @@
 import Combine
-import XXLogger
+import AppCore
 import Defaults
 import Foundation
-import CrashReporting
+import CrashReport
 import ReportingFeature
-import DependencyInjection
+import ComposableArchitecture
 
 struct AdvancedViewState: Equatable {
-    var isRecordingLogs = false
-    var isCrashReporting = false
-    var isShowingUsernames = false
-    var isReportingEnabled = false
-    var isReportingOptional = false
+  var isRecordingLogs = false
+  var isCrashReporting = false
+  var isShowingUsernames = false
+  var isReportingEnabled = false
+  var isReportingOptional = false
 }
 
 final class SettingsAdvancedViewModel {
-    @KeyObject(.recordingLogs, defaultValue: true) var isRecordingLogs: Bool
-    @KeyObject(.crashReporting, defaultValue: true) var isCrashReporting: Bool
+  @KeyObject(.recordingLogs, defaultValue: true) var isRecordingLogs: Bool
+  @KeyObject(.crashReporting, defaultValue: true) var isCrashReporting: Bool
 
-    private var cancellables = Set<AnyCancellable>()
-    private let isShowingUsernamesKey = "isShowingUsernames"
+  private var cancellables = Set<AnyCancellable>()
+  private let isShowingUsernamesKey = "isShowingUsernames"
 
-    @Dependency private var logger: XXLogger
-    @Dependency private var crashReporter: CrashReporter
-    @Dependency private var reportingStatus: ReportingStatus
+  @Dependency(\.app.log) var logger: Logger
+  @Dependency(\.crashReport) var crashReport: CrashReport
+  @Dependency(\.reportingStatus) var reportingStatus: ReportingStatus
 
-    var sharePublisher: AnyPublisher<URL, Never> { shareRelay.eraseToAnyPublisher() }
-    private let shareRelay = PassthroughSubject<URL, Never>()
+  var sharePublisher: AnyPublisher<URL, Never> {
+    shareRelay.eraseToAnyPublisher()
+  }
 
-    var state: AnyPublisher<AdvancedViewState, Never> { stateRelay.eraseToAnyPublisher() }
-    private let stateRelay = CurrentValueSubject<AdvancedViewState, Never>(.init())
+  private let shareRelay = PassthroughSubject<URL, Never>()
 
-    func loadCachedSettings() {
-        stateRelay.value.isRecordingLogs = isRecordingLogs
-        stateRelay.value.isCrashReporting = isCrashReporting
-        stateRelay.value.isReportingOptional = reportingStatus.isOptional()
+  var state: AnyPublisher<AdvancedViewState, Never> {
+    stateRelay.eraseToAnyPublisher()
+  }
+  private let stateRelay = CurrentValueSubject<AdvancedViewState, Never>(.init())
 
-        reportingStatus
-            .isEnabledPublisher()
-            .sink { [weak stateRelay] in stateRelay?.value.isReportingEnabled = $0 }
-            .store(in: &cancellables)
+  func loadCachedSettings() {
+    stateRelay.value.isRecordingLogs = isRecordingLogs
+    stateRelay.value.isCrashReporting = isCrashReporting
+    stateRelay.value.isReportingOptional = reportingStatus.isOptional()
 
-        guard let defaults = UserDefaults(suiteName: "group.elixxir.messenger") else {
-            print("^^^ Couldn't access user defaults in the app group container \(#file):\(#line)")
-            return
-        }
+    reportingStatus
+      .isEnabledPublisher()
+      .sink { [weak stateRelay] in stateRelay?.value.isReportingEnabled = $0 }
+      .store(in: &cancellables)
 
-        guard let isShowingUsernames = defaults.value(forKey: isShowingUsernamesKey) as? Bool else {
-            defaults.set(false, forKey: isShowingUsernamesKey)
-            return
-        }
-
-        stateRelay.value.isShowingUsernames = isShowingUsernames
+    guard let defaults = UserDefaults(suiteName: "group.elixxir.messenger") else {
+      print("^^^ Couldn't access user defaults in the app group container \(#file):\(#line)")
+      return
     }
 
-    func didToggleShowUsernames() {
-        stateRelay.value.isShowingUsernames.toggle()
-
-        guard let defaults = UserDefaults(suiteName: "group.elixxir.messenger") else {
-            print("^^^ Couldn't access user defaults in the app group container \(#file):\(#line)")
-            return
-        }
-
-        defaults.set(stateRelay.value.isShowingUsernames, forKey: isShowingUsernamesKey)
+    guard let isShowingUsernames = defaults.value(forKey: isShowingUsernamesKey) as? Bool else {
+      defaults.set(false, forKey: isShowingUsernamesKey)
+      return
     }
 
-    func didToggleRecordLogs() {
-        if isRecordingLogs == true {
-            XXLogger.stop()
-        } else {
-            XXLogger.start()
-        }
+    stateRelay.value.isShowingUsernames = isShowingUsernames
+  }
 
-        isRecordingLogs.toggle()
-        stateRelay.value.isRecordingLogs.toggle()
+  func didToggleShowUsernames() {
+    stateRelay.value.isShowingUsernames.toggle()
+
+    guard let defaults = UserDefaults(suiteName: "group.elixxir.messenger") else {
+      print("^^^ Couldn't access user defaults in the app group container \(#file):\(#line)")
+      return
     }
 
-    func didTapDownloadLogs() {
-        let url = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
-        shareRelay.send(url.appendingPathComponent("swiftybeaver.log"))
+    defaults.set(stateRelay.value.isShowingUsernames, forKey: isShowingUsernamesKey)
+  }
+
+  func didToggleRecordLogs() {
+    if isRecordingLogs == true {
+//      XXLogger.stop()
+    } else {
+//      XXLogger.start()
     }
 
-    func didToggleCrashReporting() {
-        isCrashReporting.toggle()
-        stateRelay.value.isCrashReporting.toggle()
-        crashReporter.setEnabled(isCrashReporting)
-    }
+    isRecordingLogs.toggle()
+    stateRelay.value.isRecordingLogs.toggle()
+  }
 
-    func didSetReporting(enabled: Bool) {
-        reportingStatus.enable(enabled)
-    }
+  func didTapDownloadLogs() {
+    let url = FileManager.default.urls(for: .cachesDirectory, in: .userDomainMask)[0]
+    shareRelay.send(url.appendingPathComponent("swiftybeaver.log"))
+  }
+
+  func didToggleCrashReporting() {
+    isCrashReporting.toggle()
+    stateRelay.value.isCrashReporting.toggle()
+    crashReport.setEnabled(isCrashReporting)
+  }
+
+  func didSetReporting(enabled: Bool) {
+    reportingStatus.enable(enabled)
+  }
 }

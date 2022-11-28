@@ -1,128 +1,138 @@
 import UIKit
-import Models
 import Shared
-import DrawerFeature
 import Combine
-import DependencyInjection
+import AppResources
+import AppNavigation
+import DrawerFeature
+import ComposableArchitecture
 
 public final class RestoreController: UIViewController {
-    @Dependency private var coordinator: RestoreCoordinating
+  @Dependency(\.navigator) var navigator: Navigator
 
-    lazy private var screenView = RestoreView()
+  private lazy var screenView = RestoreView()
 
-    private let viewModel: RestoreViewModel
-    private var cancellables = Set<AnyCancellable>()
-    private var drawerCancellables = Set<AnyCancellable>()
+  private let viewModel: RestoreViewModel
+  private var cancellables = Set<AnyCancellable>()
+  private var drawerCancellables = Set<AnyCancellable>()
 
-    public init(_ ndf: String, _ settings: RestoreSettings) {
-        viewModel = .init(ndf: ndf, settings: settings)
-        super.init(nibName: nil, bundle: nil)
-    }
+  public init(_ details: RestorationDetails) {
+    viewModel = .init(details: details)
+    super.init(nibName: nil, bundle: nil)
+  }
 
-    required init?(coder: NSCoder) { nil }
+  required init?(coder: NSCoder) { nil }
 
-    public override func loadView() {
-        view = screenView
-        presentWarning()
-    }
+  public override func loadView() {
+    view = screenView
+    presentWarning()
+  }
 
-    public override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        navigationItem.backButtonTitle = ""
-        navigationController?.navigationBar.customize()
-    }
+  public override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+    navigationItem.backButtonTitle = ""
+    navigationController?.navigationBar.customize(translucent: true)
+  }
 
-    public override func viewDidLoad() {
-        super.viewDidLoad()
-        setupNavigationBar()
-        setupBindings()
-    }
+  public override func viewDidLoad() {
+    super.viewDidLoad()
+    setupNavigationBar()
+    setupBindings()
+  }
 
-    private func setupNavigationBar() {
-        let title = UILabel()
-        title.text = Localized.AccountRestore.header
-        title.textColor = Asset.neutralActive.color
-        title.font = Fonts.Mulish.semiBold.font(size: 18.0)
+  private func setupNavigationBar() {
+    let title = UILabel()
+    title.text = Localized.AccountRestore.header
+    title.textColor = Asset.neutralActive.color
+    title.font = Fonts.Mulish.semiBold.font(size: 18.0)
+    navigationItem.leftBarButtonItem = UIBarButtonItem(customView: title)
+    navigationItem.leftItemsSupplementBackButton = true
+  }
 
-        navigationItem.leftBarButtonItem = UIBarButtonItem(customView: title)
-        navigationItem.leftItemsSupplementBackButton = true
-    }
+  private func setupBindings() {
+    viewModel
+      .stepPublisher
+      .receive(on: DispatchQueue.main)
+      .removeDuplicates()
+      .sink { [unowned self] in
+        screenView.updateFor(step: $0)
+        if $0 == .wrongPass {
+          navigator.perform(PresentPassphrase(onCancel: { [weak self] in
+            guard let self else { return }
+            self.navigator.perform(DismissModal(from: self))
+          }, onPassphrase: { [weak self] passphrase in
+            guard let self else { return }
+            self.viewModel.retryWith(passphrase: passphrase)
+          }))
+          return
+        }
+        if $0 == .done {
+//          coordinator.toSuccess(from: self)
+        }
+      }.store(in: &cancellables)
 
-    private func setupBindings() {
-        viewModel.step
-            .receive(on: DispatchQueue.main)
-            .removeDuplicates()
-            .sink { [unowned self] in
-                screenView.updateFor(step: $0)
+    screenView
+      .backButton
+      .publisher(for: .touchUpInside)
+      .sink { [unowned self] in
+        didTapBack()
+      }.store(in: &cancellables)
 
-                if $0 == .wrongPass {
-                    coordinator.toPassphrase(from: self) { pass in
-                        self.viewModel.retryWith(passphrase: pass)
-                    }
+    screenView
+      .cancelButton
+      .publisher(for: .touchUpInside)
+      .sink { [unowned self] in
+        didTapBack()
+      }.store(in: &cancellables)
 
-                    return
-                }
+    screenView
+      .restoreButton
+      .publisher(for: .touchUpInside)
+      .sink { [unowned self] in
+        navigator.perform(PresentPassphrase(onCancel: { [weak self] in
+          guard let self else { return }
+          self.navigator.perform(DismissModal(from: self))
+        }, onPassphrase: { [weak self] passphrase in
+          guard let self else { return }
+          self.viewModel.didTapRestore(passphrase: passphrase)
+        }))
+      }.store(in: &cancellables)
+  }
 
-                if $0 == .done {
-                    coordinator.toSuccess(from: self)
-                }
-            }.store(in: &cancellables)
-
-        screenView.backButton
-            .publisher(for: .touchUpInside)
-            .sink { [unowned self] in didTapBack() }
-            .store(in: &cancellables)
-
-        screenView.cancelButton
-            .publisher(for: .touchUpInside)
-            .sink { [unowned self] in didTapBack() }
-            .store(in: &cancellables)
-
-        screenView.restoreButton
-            .publisher(for: .touchUpInside)
-            .sink { [unowned self] in
-                coordinator.toPassphrase(from: self) { passphrase in
-                    self.viewModel.didTapRestore(passphrase: passphrase)
-                }
-            }.store(in: &cancellables)
-    }
-
-    @objc private func didTapBack() {
-        navigationController?.popViewController(animated: true)
-    }
+  @objc private func didTapBack() {
+    navigationController?.popViewController(animated: true)
+  }
 }
 
 extension RestoreController {
-    private func presentWarning() {
-        let actionButton = DrawerCapsuleButton(model: .init(
-            title: Localized.AccountRestore.Warning.action,
-            style: .brandColored
-        ))
+  private func presentWarning() {
+    let actionButton = DrawerCapsuleButton(model: .init(
+      title: Localized.AccountRestore.Warning.action,
+      style: .brandColored
+    ))
 
-        let drawer = DrawerController(with: [
-            DrawerText(
-                font: Fonts.Mulish.bold.font(size: 26.0),
-                text: Localized.AccountRestore.Warning.title,
-                color: Asset.neutralActive.color,
-                alignment: .left,
-                spacingAfter: 19
-            ),
-            DrawerText(
-                text: Localized.AccountRestore.Warning.subtitle,
-                spacingAfter: 37
-            ),
-            actionButton
-        ])
+    actionButton
+      .action
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
+          self.drawerCancellables.removeAll()
+        }
+      }.store(in: &drawerCancellables)
 
-        actionButton.action
-            .receive(on: DispatchQueue.main)
-            .sink {
-                drawer.dismiss(animated: true) { [weak self] in
-                    guard let self = self else { return }
-                    self.drawerCancellables.removeAll()
-                }
-            }.store(in: &drawerCancellables)
-
-        coordinator.toDrawer(drawer, from: self)
-    }
+    navigator.perform(PresentDrawer(items: [
+      DrawerText(
+        font: Fonts.Mulish.bold.font(size: 26.0),
+        text: Localized.AccountRestore.Warning.title,
+        color: Asset.neutralActive.color,
+        alignment: .left,
+        spacingAfter: 19
+      ),
+      DrawerText(
+        text: Localized.AccountRestore.Warning.subtitle,
+        spacingAfter: 37
+      ),
+      actionButton
+    ], isDismissable: true, from: self))
+  }
 }

@@ -1,5 +1,6 @@
 import UIKit
 import Shared
+import AppResources
 
 /// UITextView avoiding selection
 

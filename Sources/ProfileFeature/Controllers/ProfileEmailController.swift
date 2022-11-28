@@ -1,84 +1,91 @@
-import HUD
 import UIKit
 import Shared
 import Combine
-import Theme
-import DependencyInjection
+import AppCore
+import AppResources
+import AppNavigation
 import ScrollViewController
+import ComposableArchitecture
 
 public final class ProfileEmailController: UIViewController {
-    @Dependency private var hud: HUD
-    @Dependency private var coordinator: ProfileCoordinating
-    @Dependency private var statusBarController: StatusBarStyleControlling
+  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
 
-    lazy private var screenView = ProfileEmailView()
-    lazy private var scrollViewController = ScrollViewController()
+  private lazy var screenView = ProfileEmailView()
+  private lazy var scrollViewController = ScrollViewController()
 
-    private let viewModel = ProfileEmailViewModel()
-    private var cancellables = Set<AnyCancellable>()
+  private let viewModel = ProfileEmailViewModel()
+  private var cancellables = Set<AnyCancellable>()
 
-    public override func viewWillAppear(_ animated: Bool) {
-        super.viewWillAppear(animated)
-        navigationItem.backButtonTitle = ""
-        statusBarController.style.send(.darkContent)
-        navigationController?.navigationBar
-            .customize(backgroundColor: Asset.neutralWhite.color)
+  public override func viewWillAppear(_ animated: Bool) {
+    super.viewWillAppear(animated)
+    navigationItem.backButtonTitle = ""
+    statusBar.set(.darkContent)
+    navigationController?.navigationBar.customize(backgroundColor: Asset.neutralWhite.color)
+  }
+
+  public override func viewDidLoad() {
+    super.viewDidLoad()
+    setupScrollView()
+    setupBindings()
+  }
+
+  private func setupScrollView() {
+    addChild(scrollViewController)
+    view.addSubview(scrollViewController.view)
+    scrollViewController.view.snp.makeConstraints {
+      $0.edges.equalToSuperview()
     }
+    scrollViewController.didMove(toParent: self)
+    scrollViewController.contentView = screenView
+    scrollViewController.scrollView.backgroundColor = Asset.neutralWhite.color
+  }
 
-    public override func viewDidLoad() {
-        super.viewDidLoad()
-        setupScrollView()
-        setupBindings()
-    }
+  private func setupBindings() {
+    screenView
+      .inputField
+      .textPublisher
+      .sink { [unowned self] in
+        viewModel.didInput($0)
+      }.store(in: &cancellables)
 
-    private func setupScrollView() {
-        addChild(scrollViewController)
-        view.addSubview(scrollViewController.view)
-        scrollViewController.view.snp.makeConstraints { $0.edges.equalToSuperview() }
-        scrollViewController.didMove(toParent: self)
-        scrollViewController.contentView = screenView
-        scrollViewController.scrollView.backgroundColor = Asset.neutralWhite.color
-    }
+    screenView
+      .inputField
+      .returnPublisher
+      .sink { [unowned self] in
+        screenView.inputField.endEditing(true)
+      }.store(in: &cancellables)
 
-    private func setupBindings() {
-        viewModel.hud
-            .receive(on: DispatchQueue.main)
-            .sink { [hud] in hud.update(with: $0) }
-            .store(in: &cancellables)
+    viewModel
+      .statePublisher
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        guard let id = $0.confirmationId else { return }
+        viewModel.clearUp()
+        navigator.perform(
+          PresentProfileCode(
+            isEmail: true,
+            content: $0.input,
+            confirmationId: id,
+            on: navigationController!
+          )
+        )
+      }.store(in: &cancellables)
 
-        screenView.inputField.textPublisher
-            .sink { [unowned self] in viewModel.didInput($0) }
-            .store(in: &cancellables)
+    viewModel
+      .statePublisher
+      .map(\.status)
+      .removeDuplicates()
+      .receive(on: DispatchQueue.main)
+      .sink { [unowned self] in
+        screenView.update(status: $0)
+      }.store(in: &cancellables)
 
-        screenView.inputField.returnPublisher
-            .sink { [unowned self] in screenView.inputField.endEditing(true) }
-            .store(in: &cancellables)
-
-        viewModel.state
-            .map(\.confirmation)
-            .receive(on: DispatchQueue.main)
-            .compactMap { $0 }
-            .sink { [unowned self] in
-                viewModel.clearUp()
-                coordinator.toCode(with: $0, from: self) { _, _ in
-                    if let viewControllers = navigationController?.viewControllers {
-                        navigationController?.popToViewController(
-                            viewControllers[viewControllers.count - 3],
-                            animated: true
-                        )
-                    }
-                }
-            }
-            .store(in: &cancellables)
-
-        viewModel.state.map(\.status)
-            .removeDuplicates()
-            .receive(on: DispatchQueue.main)
-            .sink { [unowned self] in screenView.update(status: $0) }
-            .store(in: &cancellables)
-
-        screenView.saveButton.publisher(for: .touchUpInside)
-            .sink { [unowned self] in viewModel.didTapNext() }
-            .store(in: &cancellables)
-    }
+    screenView
+      .saveButton
+      .publisher(for: .touchUpInside)
+      .sink { [unowned self] in
+        viewModel.didTapNext()
+      }.store(in: &cancellables)
+  }
 }

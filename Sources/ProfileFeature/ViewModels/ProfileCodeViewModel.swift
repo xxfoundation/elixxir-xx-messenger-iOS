@@ -1,88 +1,96 @@
-import HUD
 import Shared
-import Models
 import Combine
+import AppCore
+import Defaults
+import XXClient
 import InputField
-import Integration
-import CombineSchedulers
-import DependencyInjection
+import Foundation
+import XXMessengerClient
+import ComposableArchitecture
 
-struct ProfileCodeViewState: Equatable {
+final class ProfileCodeViewModel {
+  struct ViewState: Equatable {
     var input: String = ""
     var status: InputField.ValidationStatus = .unknown(nil)
     var resendDebouncer: Int = 0
-}
+    var didConfirm: Bool = false
+  }
 
-final class ProfileCodeViewModel {
-    @Dependency private var session: SessionType
+  var statePublisher: AnyPublisher<ViewState, Never> {
+    stateSubject.eraseToAnyPublisher()
+  }
 
-    let confirmation: AttributeConfirmation
+  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
+  @Dependency(\.app.bgQueue) var bgQueue: AnySchedulerOf<DispatchQueue>
 
-    var timer: Timer?
+  @KeyObject(.email, defaultValue: nil) var email: String?
+  @KeyObject(.phone, defaultValue: nil) var phone: String?
 
-    var completionPublisher: AnyPublisher<AttributeConfirmation, Never> { completionRelay.eraseToAnyPublisher() }
-    private let completionRelay = PassthroughSubject<AttributeConfirmation, Never>()
+  private var timer: Timer?
+  private let isEmail: Bool
+  private let content: String
+  private let confirmationId: String
+  private let stateSubject = CurrentValueSubject<ViewState, Never>(.init())
 
-    var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
-    private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
+  init(
+    isEmail: Bool,
+    content: String,
+    confirmationId: String
+  ) {
+    self.isEmail = isEmail
+    self.content = content
+    self.confirmationId = confirmationId
+    didTapResend()
+  }
 
-    var state: AnyPublisher<ProfileCodeViewState, Never> { stateRelay.eraseToAnyPublisher() }
-    private let stateRelay = CurrentValueSubject<ProfileCodeViewState, Never>(.init())
+  func didInput(_ string: String) {
+    stateSubject.value.input = string
+    validate()
+  }
 
-    var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
-
-    init(_ confirmation: AttributeConfirmation) {
-        self.confirmation = confirmation
-        didTapResend()
+  func didTapResend() {
+    guard stateSubject.value.resendDebouncer == 0 else { return }
+    stateSubject.value.resendDebouncer = 60
+    timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {  [weak self] in
+      guard let self, self.stateSubject.value.resendDebouncer > 0 else {
+        $0.invalidate()
+        return
+      }
+      self.stateSubject.value.resendDebouncer -= 1
     }
+  }
 
-    func didInput(_ string: String) {
-        stateRelay.value.input = string
-        validate()
-    }
-
-    func didTapResend() {
-        guard stateRelay.value.resendDebouncer == 0 else { return }
-
-        stateRelay.value.resendDebouncer = 60
-
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) {  [weak self] in
-            guard let self = self, self.stateRelay.value.resendDebouncer > 0 else {
-                $0.invalidate()
-                return
-            }
-
-            self.stateRelay.value.resendDebouncer -= 1
+  func didTapNext() {
+    hudManager.show()
+    bgQueue.schedule { [weak self] in
+      guard let self else { return }
+      do {
+        try self.messenger.ud.get()!.confirmFact(
+          confirmationId: self.confirmationId,
+          code: self.stateSubject.value.input
+        )
+        if self.isEmail {
+          self.email = self.content
+        } else {
+          self.phone = self.content
         }
+        self.timer?.invalidate()
+        self.hudManager.hide()
+        self.stateSubject.value.didConfirm = true
+      } catch {
+        let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
+        self.hudManager.show(.init(content: xxError))
+      }
     }
+  }
 
-    func didTapNext() {
-        hudRelay.send(.on)
-
-        backgroundScheduler.schedule { [weak self] in
-            guard let self = self else { return }
-
-            do {
-                try self.session.confirm(
-                    code: self.stateRelay.value.input,
-                    confirmation: self.confirmation
-                )
-
-                self.timer?.invalidate()
-                self.hudRelay.send(.none)
-                self.completionRelay.send(self.confirmation)
-            } catch {
-                self.hudRelay.send(.error(.init(with: error)))
-            }
-        }
+  private func validate() {
+    switch Validator.code.validate(stateSubject.value.input) {
+    case .success:
+      stateSubject.value.status = .valid(nil)
+    case .failure(let error):
+      stateSubject.value.status = .invalid(error)
     }
-
-    private func validate() {
-        switch Validator.code.validate(stateRelay.value.input) {
-        case .success:
-            stateRelay.value.status = .valid(nil)
-        case .failure(let error):
-            stateRelay.value.status = .invalid(error)
-        }
-    }
+  }
 }

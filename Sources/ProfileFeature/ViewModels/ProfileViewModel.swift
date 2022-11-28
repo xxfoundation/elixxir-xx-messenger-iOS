@@ -1,101 +1,116 @@
-import HUD
 import UIKit
 import Shared
+import AppCore
 import Combine
 import Defaults
-import Countries
-import Foundation
-import Permissions
-import Integration
+import XXClient
+import BackupFeature
+import XXMessengerClient
 import CombineSchedulers
-import DependencyInjection
+import CountryListFeature
+import PermissionsFeature
+import ComposableArchitecture
 
 enum ProfileNavigationRoutes {
-    case none
-    case library
-    case libraryPermission
+  case none
+  case library
+  case libraryPermission
 }
 
 struct ProfileViewState: Equatable {
-    var email: String?
-    var phone: String?
-    var photo: UIImage?
+  var email: String?
+  var phone: String?
+  var photo: UIImage?
 }
 
 final class ProfileViewModel {
-    @KeyObject(.avatar, defaultValue: nil) var avatar: Data?
-    @KeyObject(.email, defaultValue: nil) var emailStored: String?
-    @KeyObject(.phone, defaultValue: nil) var phoneStored: String?
-    @KeyObject(.username, defaultValue: nil) var username: String?
-    @KeyObject(.sharingEmail, defaultValue: false) var isEmailSharing: Bool
-    @KeyObject(.sharingPhone, defaultValue: false) var isPhoneSharing: Bool
+  @KeyObject(.avatar, defaultValue: nil) var avatar: Data?
+  @KeyObject(.email, defaultValue: nil) var emailStored: String?
+  @KeyObject(.phone, defaultValue: nil) var phoneStored: String?
+  @KeyObject(.username, defaultValue: nil) var username: String?
+  @KeyObject(.sharingEmail, defaultValue: false) var isEmailSharing: Bool
+  @KeyObject(.sharingPhone, defaultValue: false) var isPhoneSharing: Bool
 
-    @Dependency private var session: SessionType
-    @Dependency private var permissions: PermissionHandling
+  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.hudManager) var hudManager: HUDManager
+  @Dependency(\.backupService) var backupService: BackupService
+  @Dependency(\.permissions) var permissions: PermissionsManager
+  @Dependency(\.app.bgQueue) var bgQueue: AnySchedulerOf<DispatchQueue>
 
-    var name: String { username! }
+  var name: String { username! }
 
-    var state: AnyPublisher<ProfileViewState, Never> { stateRelay.eraseToAnyPublisher() }
-    private let stateRelay = CurrentValueSubject<ProfileViewState, Never>(.init())
+  var state: AnyPublisher<ProfileViewState, Never> {
+    stateRelay.eraseToAnyPublisher()
+  }
+  private let stateRelay = CurrentValueSubject<ProfileViewState, Never>(.init())
 
-    var hud: AnyPublisher<HUDStatus, Never> { hudRelay.eraseToAnyPublisher() }
-    private let hudRelay = CurrentValueSubject<HUDStatus, Never>(.none)
+  var navigation: AnyPublisher<ProfileNavigationRoutes, Never> {
+    navigationRoutes.eraseToAnyPublisher()
+  }
+  private let navigationRoutes = PassthroughSubject<ProfileNavigationRoutes, Never>()
 
-    var navigation: AnyPublisher<ProfileNavigationRoutes, Never> { navigationRoutes.eraseToAnyPublisher() }
-    private let navigationRoutes = PassthroughSubject<ProfileNavigationRoutes, Never>()
+  init() {
+    refresh()
+  }
 
-    var backgroundScheduler: AnySchedulerOf<DispatchQueue> = DispatchQueue.global().eraseToAnyScheduler()
+  func refresh() {
+    var cleanPhone = phoneStored
 
-    init() {
-        refresh()
+    if let phone = cleanPhone {
+      let country = Country.findFrom(phone)
+      cleanPhone = "\(country.prefix)\(phone.dropLast(2))"
     }
 
-    func refresh() {
-        var cleanPhone = phoneStored
+    stateRelay.value = .init(
+      email: emailStored,
+      phone: cleanPhone,
+      photo: avatar != nil ? UIImage(data: avatar!) : nil
+    )
+  }
 
-        if let phone = cleanPhone {
-            let country = Country.findFrom(phone)
-            cleanPhone = "\(country.prefix)\(phone.dropLast(2))"
-        }
+  func didRequestLibraryAccess() {
+    if permissions.library.status() {
+      navigationRoutes.send(.library)
+    } else {
+      navigationRoutes.send(.libraryPermission)
+    }
+  }
 
-        stateRelay.value = .init(
-            email: emailStored,
-            phone: cleanPhone,
-            photo: avatar != nil ? UIImage(data: avatar!) : nil
+  func didNavigateSomewhere() {
+    navigationRoutes.send(.none)
+  }
+
+  func didChoosePhoto(_ photo: UIImage) {
+    stateRelay.value.photo = photo
+    avatar = photo.jpegData(compressionQuality: 0.0)
+  }
+
+  func didTapDelete(isEmail: Bool) {
+    hudManager.show()
+
+    bgQueue.schedule { [weak self] in
+      guard let self else { return }
+      do {
+        try self.messenger.ud.get()!.removeFact(
+          .init(
+            type: isEmail ? .email : .phone,
+            value: isEmail ? self.emailStored! : self.phoneStored!
+          )
         )
-    }
-
-    func didRequestLibraryAccess() {
-        if permissions.isPhotosAllowed {
-            navigationRoutes.send(.library)
+        if isEmail {
+          self.emailStored = nil
+          self.isEmailSharing = false
         } else {
-            navigationRoutes.send(.libraryPermission)
+          self.phoneStored = nil
+          self.isPhoneSharing = false
         }
+        self.backupService.didUpdateFacts()
+        self.hudManager.hide()
+        self.refresh()
+      } catch {
+        let xxError = CreateUserFriendlyErrorMessage.live(error.localizedDescription)
+        self.hudManager.show(.init(content: xxError))
+      }
     }
-
-    func didNavigateSomewhere() {
-        navigationRoutes.send(.none)
-    }
-
-    func didChoosePhoto(_ photo: UIImage) {
-        stateRelay.value.photo = photo
-        avatar = photo.jpegData(compressionQuality: 0.0)
-    }
-
-    func didTapDelete(isEmail: Bool) {
-        hudRelay.send(.on)
-
-        backgroundScheduler.schedule { [weak self] in
-            guard let self = self else { return }
-
-            do {
-                try self.session.unregister(fact: isEmail ? .email : .phone)
-
-                self.hudRelay.send(.none)
-                self.refresh()
-            } catch {
-                self.hudRelay.send(.error(.init(with: error)))
-            }
-        }
-    }
+  }
 }
