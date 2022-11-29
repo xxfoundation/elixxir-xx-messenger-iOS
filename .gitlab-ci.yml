@@ -18,5 +18,5 @@ unit-testing:
  tags:
   - ios
  script:
-  - set -o pipefail && xcodebuild -workspace 'client-ios.xcworkspace' -scheme 'Release' -sdk iphonesimulator -destination 'platform=iOS Simulator,OS=16.0,name=iPhone 14' test
+  - set -o pipefail && xcodebuild -workspace 'client-ios.xcworkspace' -scheme 'Mock' -sdk iphonesimulator -destination 'platform=iOS Simulator,OS=16.0,name=iPhone 14' test
  retry: 1
