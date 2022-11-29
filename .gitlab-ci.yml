@@ -1,61 +1,22 @@
 stages:
 - test
-#- archive
-#- deploy
-
-variables:
- LANG: "en_US.UTF-8"
- LC_ALL: "en_US.UTF-8"
- REPO_DIR: gitlab.com/elixxir
- REPO_NAME: client-ios
 
 before_script:
-  - bundle install
-  - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
-  - mkdir -p ~/.ssh
-  - chmod 700 ~/.ssh
-  - ssh-keyscan -t rsa $GITLAB_SERVER > ~/.ssh/known_hosts
-  
-Unit tests:
- tags: 
-     - ios
+ - echo $CI_BUILD_REF
+ - echo $CI_PROJECT_DIR
+ - echo $PWD
+ - swift --version
+ - xcodebuild -version
+ - eval $(ssh-agent -s)
+ - echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+ - mkdir -p ~/.ssh
+ - chmod 700 ~/.ssh
+ - ssh-keyscan -t rsa $GITLAB_SERVER > ~/.ssh/known_hosts
+
+unit-testing:
  stage: test
+ tags:
+  - ios
  script:
-    - echo test
-#   - bundle exec fastlane test scheme:'Mock'
-#   - cp -R /Users/elixxir/Library/Developer/Xcode/DerivedData/client-ios*/Build/Products/Debug-iphonesimulator/client-ios.app ./
-#   - cp -R /Users/elixxir/Library/Developer/Xcode/DerivedData/client-ios*/Build/Products/Debug-iphonesimulator/client-ios.app.dSYM ./
-# artifacts:
-#   paths: 
-#       - ./client-ios.app
-#       - ./client-ios.app.dSYM
-
-#Mock:
-# tags: 
-#  - ios
-# stage: archive
-# script: 
-#  - bundle exec fastlane archive scheme:'Mock' app_id:'xx.messenger.mock' notifications_app_id:'xx.messenger.mock.notifications' gym_method:'development' method:'development'
-# needs: ['Unit tests']
-# artifacts:
-#  paths:
-#   - ./Mock.ipa
-
-#Release:
-# tags: 
-#  - ios
-# stage: archive
-# script: 
-#  - bundle exec fastlane archive scheme:'Release' app_id:'xx.messenger' notifications_app_id:'xx.messenger.notifications' gym_method:'app-store' method:'appstore'
-# needs: ['Unit tests']
-# artifacts:
-#  paths:
-#   - ./Release.ipa
-
-#TestFlight:
-# tags:
-#  - ios
-# stage: deploy
-# script:
-#  - bundle exec fastlane deploy scheme:'Release'
-# needs: ['Release']
+  - set -o pipefail && xcodebuild -workspace 'client-ios.xcworkspace' -scheme 'Mock' -sdk iphonesimulator -destination 'platform=iOS Simulator,OS=16.0,name=iPhone 14' test
+ retry: 1
