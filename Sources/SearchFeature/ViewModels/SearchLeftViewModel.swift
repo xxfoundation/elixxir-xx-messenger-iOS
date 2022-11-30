@@ -66,6 +66,7 @@ final class SearchLeftViewModel {
       hudManager.show(.init(
         actionTitle: Localized.Ud.Search.cancel,
         hasDotAnimation: true,
+        isAutoDismissable: false,
         onTapClosure: { [weak self] in
           guard let self else { return }
           self.didTapCancelSearch()
@@ -114,6 +115,7 @@ final class SearchLeftViewModel {
     hudManager.show(.init(
       actionTitle: Localized.Ud.Search.cancel,
       hasDotAnimation: true,
+      isAutoDismissable: false,
       onTapClosure: { [weak self] in
         guard let self else { return }
         self.didTapCancelSearch()

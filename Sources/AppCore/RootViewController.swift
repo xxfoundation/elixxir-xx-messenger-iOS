@@ -68,6 +68,7 @@ public final class RootViewController: UIViewController {
           return
         }
         add(hudView: HUDView().setup(model: model))
+        view.endEditing(true)
       }.store(in: &cancellables)
   }
 }
