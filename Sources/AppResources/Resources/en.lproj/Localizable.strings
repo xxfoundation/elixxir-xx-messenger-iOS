@@ -710,6 +710,10 @@
 = "Deleting Your Account";
 "settings.delete.info.subtitle"
 = "On deletion, all keys for your account are purged from your phone. This action will not notify your contacts. Your keys and any registered emails or phone numbers are removed from the user discovery system.";
+"settings.delete.success.title"
+= "Account deleted";
+"settings.delete.success.subtitle"
+= "Now, kill the app and re-open.";
 
 "settings.infoDrawer.notifications.title"
 = "Notifications";

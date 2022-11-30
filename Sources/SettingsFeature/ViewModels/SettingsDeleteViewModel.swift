@@ -3,6 +3,7 @@ import Defaults
 import Keychain
 import Foundation
 import Dependencies
+import AppResources
 import XXMessengerClient
 
 final class SettingsDeleteViewModel {
@@ -25,15 +26,14 @@ final class SettingsDeleteViewModel {
       try messenger.destroy()
       try keychain.destroy()
       try dbManager.removeDB()
-      try deleteDatabase()
-      
+
       UserDefaults.resetStandardUserDefaults()
       UserDefaults.standard.removePersistentDomain(forName: Bundle.main.bundleIdentifier!)
       UserDefaults.standard.synchronize()
-      
+
       hudManager.show(.init(
-        title: "Account deleted",
-        content: "Now kill the app and re-open"
+        title: Localized.Settings.Delete.Success.title,
+        content: Localized.Settings.Delete.Success.subtitle
       ))
     } catch {
       DispatchQueue.main.async { [weak self] in
@@ -47,14 +47,5 @@ final class SettingsDeleteViewModel {
     try messenger.ud.get()!.permanentDeleteAccount(
       username: .init(type: .username, value: username!)
     )
-  }
-  
-  private func deleteDatabase() throws {
-    let dbPath = FileManager.default
-      .containerURL(forSecurityApplicationGroupIdentifier: "group.elixxir.messenger")!
-      .appendingPathComponent("xxm_database")
-      .appendingPathExtension("sqlite").path
-    
-    try FileManager.default.removeItem(atPath: dbPath)
   }
 }
