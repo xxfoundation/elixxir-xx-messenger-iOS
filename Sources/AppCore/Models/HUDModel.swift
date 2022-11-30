@@ -14,6 +14,7 @@ public struct HUDModel {
     content: String? = nil,
     actionTitle: String? = nil,
     hasDotAnimation: Bool = false,
+    isAutoDismissable: Bool = false,
     onTapClosure: (() -> Void)? = nil
   ) {
     self.title = title
@@ -21,7 +22,7 @@ public struct HUDModel {
     self.actionTitle = actionTitle
     self.onTapClosure = onTapClosure
     self.hasDotAnimation = hasDotAnimation
-    self.isAutoDismissable = onTapClosure == nil && !hasDotAnimation
+    self.isAutoDismissable = isAutoDismissable
   }
 
   public init(
