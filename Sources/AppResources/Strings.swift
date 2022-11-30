@@ -1172,6 +1172,12 @@ public enum Localized {
         /// Deleting Your Account
         public static let title = Localized.tr("Localizable", "settings.delete.info.title")
       }
+      public enum Success {
+        /// Now, kill the app and re-open.
+        public static let subtitle = Localized.tr("Localizable", "settings.delete.success.subtitle")
+        /// Account deleted
+        public static let title = Localized.tr("Localizable", "settings.delete.success.title")
+      }
     }
     public enum Drawer {
       /// %@ will be opened using your default browser
