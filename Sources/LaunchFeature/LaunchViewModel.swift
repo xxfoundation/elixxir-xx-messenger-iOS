@@ -29,6 +29,10 @@ import class XXClient.Cancellable
 import PulseLogHandler
 
 final class LaunchViewModel {
+  enum Destination {
+    case chats, onboarding
+  }
+
   struct UpdateModel {
     let content: String
     let urlString: String
@@ -39,9 +43,8 @@ final class LaunchViewModel {
 
   struct ViewState {
     var shouldShowTerms = false
-    var shouldPushChats = false
     var shouldOfferUpdate: UpdateModel?
-    var shouldPushOnboarding = false
+    var shouldPushEndDestination: Destination?
   }
 
   @Dependency(\.app.log) var log
@@ -202,41 +205,41 @@ extension LaunchViewModel {
 
     try dummyTrafficManager.setStatus(dummyTrafficOn)
 
-    var shouldPushChats = false
-    var shouldPushOnboarding = false
-
-    defer {
-      hudManager.hide()
-      if shouldPushChats {
-        if isBiometricsOn, permissions.biometrics.status() {
-          permissions.biometrics.request { [weak self] granted in
-            guard let self else { return }
-            if granted {
-              self.stateSubject.value.shouldPushChats = true
-            } else {
-              // DO WHAT?
-            }
-          }
-        } else {
-          stateSubject.value.shouldPushChats = true
-        }
-      } else {
-        stateSubject.value.shouldPushOnboarding = shouldPushOnboarding
-      }
-    }
+    let endDestination: Destination
 
     if messenger.isLoggedIn() == false {
       if try messenger.isRegistered() {
         try messenger.logIn()
-        shouldPushChats = true
+        endDestination = .chats
       } else {
         try? sftpManager.unlink()
         try? dropboxManager.unlink()
-        shouldPushOnboarding = true
+        endDestination = .onboarding
       }
     } else {
-      shouldPushChats = true
+      endDestination = .chats
     }
+
+    defer {
+      hudManager.hide()
+      if endDestination == .chats {
+        if isBiometricsOn, permissions.biometrics.status() {
+          permissions.biometrics.request { [weak self] granted in
+            guard let self else { return }
+            if granted {
+              self.stateSubject.value.shouldPushEndDestination = .chats
+            } else {
+              // TODO: A fallback state for failing biometrics
+            }
+          }
+        } else {
+          stateSubject.value.shouldPushEndDestination = .chats
+        }
+      } else {
+        stateSubject.value.shouldPushEndDestination = .onboarding
+      }
+    }
+
     if !messenger.isBackupRunning() {
       try? messenger.resumeBackup()
     }
