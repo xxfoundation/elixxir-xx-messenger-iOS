@@ -202,20 +202,40 @@ extension LaunchViewModel {
 
     try dummyTrafficManager.setStatus(dummyTrafficOn)
 
+    var shouldPushChats = false
+    var shouldPushOnboarding = false
+
+    defer {
+      hudManager.hide()
+      if shouldPushChats {
+        if isBiometricsOn, permissions.biometrics.status() {
+          permissions.biometrics.request { [weak self] granted in
+            guard let self else { return }
+            if granted {
+              self.stateSubject.value.shouldPushChats = true
+            } else {
+              // DO WHAT?
+            }
+          }
+        } else {
+          stateSubject.value.shouldPushChats = true
+        }
+      } else {
+        stateSubject.value.shouldPushOnboarding = shouldPushOnboarding
+      }
+    }
+
     if messenger.isLoggedIn() == false {
       if try messenger.isRegistered() {
         try messenger.logIn()
-        hudManager.hide()
-        stateSubject.value.shouldPushChats = true
+        shouldPushChats = true
       } else {
         try? sftpManager.unlink()
         try? dropboxManager.unlink()
-        hudManager.hide()
-        stateSubject.value.shouldPushOnboarding = true
+        shouldPushOnboarding = true
       }
     } else {
-      hudManager.hide()
-      stateSubject.value.shouldPushChats = true
+      shouldPushChats = true
     }
     if !messenger.isBackupRunning() {
       try? messenger.resumeBackup()
