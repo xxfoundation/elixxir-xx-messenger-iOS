@@ -28,9 +28,9 @@ public final class SingleChatController: UIViewController {
 //  @Dependency var makeReportDrawer: MakeReportDrawer
 //  @Dependency var makeAppScreenshot: MakeAppScreenshot
 
-  @Dependency(\.navigator) var navigator: Navigator
-  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
-  @Dependency(\.reportingStatus) var reportingStatus: ReportingStatus
+  @Dependency(\.navigator) var navigator
+  @Dependency(\.app.statusBar) var statusBar
+  @Dependency(\.reportingStatus) var reportingStatus
 
   let voxophone = Voxophone()
 

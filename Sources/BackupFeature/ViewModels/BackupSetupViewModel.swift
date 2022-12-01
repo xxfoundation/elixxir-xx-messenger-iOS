@@ -11,7 +11,7 @@ struct BackupSetupViewModel {
 extension BackupSetupViewModel {
   static func live() -> Self {
     class Context {
-      @Dependency(\.backupService) var service: BackupService
+      @Dependency(\.backupService) var service
     }
 
     let context = Context()

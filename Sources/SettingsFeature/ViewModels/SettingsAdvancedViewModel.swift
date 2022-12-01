@@ -21,9 +21,9 @@ final class SettingsAdvancedViewModel {
   private var cancellables = Set<AnyCancellable>()
   private let isShowingUsernamesKey = "isShowingUsernames"
 
-  @Dependency(\.app.log) var logger: Logger
-  @Dependency(\.crashReport) var crashReport: CrashReport
-  @Dependency(\.reportingStatus) var reportingStatus: ReportingStatus
+  @Dependency(\.app.log) var logger
+  @Dependency(\.crashReport) var crashReport
+  @Dependency(\.reportingStatus) var reportingStatus
 
   var sharePublisher: AnyPublisher<URL, Never> {
     shareRelay.eraseToAnyPublisher()

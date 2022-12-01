@@ -8,8 +8,8 @@ import AppNavigation
 import ContactFeature
 
 public final class RequestsContainerController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
-  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
+  @Dependency(\.navigator) var navigator
+  @Dependency(\.app.statusBar) var statusBar
 
   private lazy var screenView = RequestsContainerView()
   private var cancellables = Set<AnyCancellable>()

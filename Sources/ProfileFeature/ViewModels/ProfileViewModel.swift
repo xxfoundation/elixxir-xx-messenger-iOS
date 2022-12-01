@@ -31,11 +31,11 @@ final class ProfileViewModel {
   @KeyObject(.sharingEmail, defaultValue: false) var isEmailSharing: Bool
   @KeyObject(.sharingPhone, defaultValue: false) var isPhoneSharing: Bool
 
-  @Dependency(\.app.messenger) var messenger: Messenger
-  @Dependency(\.app.hudManager) var hudManager: HUDManager
-  @Dependency(\.backupService) var backupService: BackupService
-  @Dependency(\.permissions) var permissions: PermissionsManager
-  @Dependency(\.app.bgQueue) var bgQueue: AnySchedulerOf<DispatchQueue>
+  @Dependency(\.app.bgQueue) var bgQueue
+  @Dependency(\.permissions) var permissions
+  @Dependency(\.app.messenger) var messenger
+  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.backupService) var backupService
 
   var name: String { username! }
 

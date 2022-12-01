@@ -8,7 +8,7 @@ import AppNavigation
 import ComposableArchitecture
 
 public final class TermsConditionsController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.navigator) var navigator
 
   @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.acceptedTerms, defaultValue: false) var didAcceptTerms: Bool

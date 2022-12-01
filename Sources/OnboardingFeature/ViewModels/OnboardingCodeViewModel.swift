@@ -21,9 +21,9 @@ final class OnboardingCodeViewModel {
     stateSubject.eraseToAnyPublisher()
   }
 
-  @Dependency(\.app.messenger) var messenger: Messenger
-  @Dependency(\.app.hudManager) var hudManager: HUDManager
-  @Dependency(\.app.bgQueue) var bgQueue: AnySchedulerOf<DispatchQueue>
+  @Dependency(\.app.bgQueue) var bgQueue
+  @Dependency(\.app.messenger) var messenger
+  @Dependency(\.app.hudManager) var hudManager
 
   @KeyObject(.email, defaultValue: nil) var email: String?
   @KeyObject(.phone, defaultValue: nil) var phone: String?

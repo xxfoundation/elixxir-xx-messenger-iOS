@@ -17,7 +17,7 @@ class ChatSearchListTableViewDiffableDataSource: UITableViewDiffableDataSource<S
 }
 
 final class ChatSearchTableController: UITableViewController {
-  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.navigator) var navigator
 
   private let viewModel: ChatListViewModel
   private let cellHeight: CGFloat = 83.0

@@ -9,7 +9,7 @@ import DrawerFeature
 import ScrollViewController
 
 public final class SettingsDeleteController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.navigator) var navigator
 
   @KeyObject(.username, defaultValue: "") var username: String
 

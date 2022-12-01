@@ -8,8 +8,8 @@ import ScrollViewController
 import ComposableArchitecture
 
 public final class ProfileEmailController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
-  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
+  @Dependency(\.navigator) var navigator
+  @Dependency(\.app.statusBar) var statusBar
 
   private lazy var screenView = ProfileEmailView()
   private lazy var scrollViewController = ScrollViewController()

@@ -6,8 +6,8 @@ import Dependencies
 import AppNavigation
 
 public final class RestoreSuccessController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
-  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
+  @Dependency(\.navigator) var navigator
+  @Dependency(\.app.statusBar) var statusBar
 
   private lazy var screenView = RestoreSuccessView()
   private var cancellables = Set<AnyCancellable>()

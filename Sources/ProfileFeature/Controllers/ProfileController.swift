@@ -8,8 +8,8 @@ import DrawerFeature
 import ComposableArchitecture
 
 public final class ProfileController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
-  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
+  @Dependency(\.navigator) var navigator
+  @Dependency(\.app.statusBar) var statusBar
 
   private lazy var screenView = ProfileView()
 

@@ -8,7 +8,7 @@ import DrawerFeature
 import ComposableArchitecture
 
 final class BackupConfigController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.navigator) var navigator
 
   private lazy var screenView = BackupConfigView()
 

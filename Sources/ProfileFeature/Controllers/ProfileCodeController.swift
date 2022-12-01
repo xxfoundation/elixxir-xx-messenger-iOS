@@ -8,8 +8,8 @@ import AppNavigation
 import ScrollViewController
 
 public final class ProfileCodeController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
-  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
+  @Dependency(\.navigator) var navigator
+  @Dependency(\.app.statusBar) var statusBar
 
   private lazy var screenView = ProfileCodeView()
   private lazy var scrollViewController = ScrollViewController()

@@ -6,7 +6,7 @@ import PermissionsFeature
 import ComposableArchitecture
 
 final class SearchContainerViewModel {
-  @Dependency(\.permissions) var permissions: PermissionsManager
+  @Dependency(\.permissions) var permissions
   //@Dependency(\.app.dummyTraffic) var dummyTraffic: DummyTraffic
 
   @KeyObject(.dummyTrafficOn, defaultValue: false) var dummyTrafficOn

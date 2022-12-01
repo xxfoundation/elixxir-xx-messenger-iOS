@@ -8,8 +8,8 @@ import ReportingFeature
 import ComposableArchitecture
 
 final class MenuViewModel {
-  @Dependency(\.app.dbManager) var dbManager: DBManager
-  @Dependency(\.reportingStatus) var reportingStatus: ReportingStatus
+  @Dependency(\.app.dbManager) var dbManager
+  @Dependency(\.reportingStatus) var reportingStatus
 
   @KeyObject(.avatar, defaultValue: nil) var avatar: Data?
   @KeyObject(.username, defaultValue: "") var username: String

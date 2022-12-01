@@ -38,8 +38,8 @@ extension Step: Equatable {
 }
 
 final class RestoreViewModel {
-  @Dependency(\.app.dbManager) var dbManager: DBManager
-  @Dependency(\.app.messenger) var messenger: Messenger
+  @Dependency(\.app.dbManager) var dbManager
+  @Dependency(\.app.messenger) var messenger
 
   @KeyObject(.phone, defaultValue: nil) var phone: String?
   @KeyObject(.email, defaultValue: nil) var email: String?

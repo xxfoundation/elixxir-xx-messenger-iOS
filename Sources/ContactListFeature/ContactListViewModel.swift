@@ -11,9 +11,9 @@ import AppCore
 import Dependencies
 
 final class ContactListViewModel {
-  @Dependency(\.app.dbManager) var dbManager: DBManager
-  @Dependency(\.app.messenger) var messenger: Messenger
-  @Dependency(\.reportingStatus) var reportingStatus: ReportingStatus
+  @Dependency(\.app.dbManager) var dbManager
+  @Dependency(\.app.messenger) var messenger
+  @Dependency(\.reportingStatus) var reportingStatus
 
   var myId: Data {
     try! messenger.e2e.get()!.getContact().getId()

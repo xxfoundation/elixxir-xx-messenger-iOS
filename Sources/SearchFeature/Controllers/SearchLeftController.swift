@@ -10,7 +10,7 @@ import DrawerFeature
 import CountryListFeature
 
 final class SearchLeftController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.navigator) var navigator
   @KeyObject(.email, defaultValue: nil) var email: String?
   @KeyObject(.phone, defaultValue: nil) var phone: String?
   @KeyObject(.sharingEmail, defaultValue: false) var isSharingEmail: Bool

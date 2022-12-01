@@ -18,11 +18,11 @@ struct RequestSent: Hashable, Equatable {
 }
 
 final class RequestsSentViewModel {
-  @Dependency(\.app.dbManager) var dbManager: DBManager
-  @Dependency(\.app.messenger) var messenger: Messenger
-  @Dependency(\.app.hudManager) var hudManager: HUDManager
-  @Dependency(\.app.toastManager) var toastManager: ToastManager
-  @Dependency(\.reportingStatus) var reportingStatus: ReportingStatus
+  @Dependency(\.app.dbManager) var dbManager
+  @Dependency(\.app.messenger) var messenger
+  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.app.toastManager) var toastManager
+  @Dependency(\.reportingStatus) var reportingStatus
   
   @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.sharingEmail, defaultValue: false) var sharingEmail: Bool

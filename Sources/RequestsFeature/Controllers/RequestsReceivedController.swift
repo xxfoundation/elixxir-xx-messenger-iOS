@@ -10,8 +10,8 @@ import DrawerFeature
 import CountryListFeature
 
 final class RequestsReceivedController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
-  @Dependency(\.app.toastManager) var toaster: ToastManager
+  @Dependency(\.navigator) var navigator
+  @Dependency(\.app.toastManager) var toaster
 
   private lazy var screenView = RequestsReceivedView()
   private var cancellables = Set<AnyCancellable>()
