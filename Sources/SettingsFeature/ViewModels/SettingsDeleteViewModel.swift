@@ -8,6 +8,7 @@ import XXMessengerClient
 
 final class SettingsDeleteViewModel {
   @Dependency(\.keychain) var keychain
+  @Dependency(\.app.bgQueue) var bgQueue
   @Dependency(\.app.dbManager) var dbManager
   @Dependency(\.app.messenger) var messenger
   @Dependency(\.app.hudManager) var hudManager
@@ -20,25 +21,29 @@ final class SettingsDeleteViewModel {
     isCurrentlyDeleting = true
 
     hudManager.show()
-    
-    do {
-      try cleanUD()
-      try messenger.destroy()
-      try keychain.destroy()
-      try dbManager.removeDB()
 
-      UserDefaults.resetStandardUserDefaults()
-      UserDefaults.standard.removePersistentDomain(forName: Bundle.main.bundleIdentifier!)
-      UserDefaults.standard.synchronize()
+    bgQueue.schedule { [weak self] in
+      guard let self else { return }
 
-      hudManager.show(.init(
-        title: Localized.Settings.Delete.Success.title,
-        content: Localized.Settings.Delete.Success.subtitle
-      ))
-    } catch {
-      DispatchQueue.main.async { [weak self] in
-        guard let self else { return }
-        self.hudManager.show(.init(error: error))
+      do {
+        try self.cleanUD()
+        try self.messenger.destroy()
+        try self.keychain.destroy()
+        try self.dbManager.removeDB()
+
+        UserDefaults.resetStandardUserDefaults()
+        UserDefaults.standard.removePersistentDomain(forName: Bundle.main.bundleIdentifier!)
+        UserDefaults.standard.synchronize()
+
+        self.hudManager.show(.init(
+          title: Localized.Settings.Delete.Success.title,
+          content: Localized.Settings.Delete.Success.subtitle
+        ))
+      } catch {
+        DispatchQueue.main.async { [weak self] in
+          guard let self else { return }
+          self.hudManager.show(.init(error: error))
+        }
       }
     }
   }
