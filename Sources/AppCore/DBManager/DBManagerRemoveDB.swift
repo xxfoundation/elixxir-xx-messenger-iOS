@@ -22,8 +22,14 @@ extension DBManagerRemoveDB {
       unsetDB()
       try db?.drop()
       let fm = FileManager.default
-      if fm.fileExists(atPath: url.path) {
-        try fm.removeItem(atPath: url.path)
+      if fm.fileExists(atPath: url.path), url.startAccessingSecurityScopedResource() {
+        do {
+          try fm.removeItem(atPath: url.path)
+          url.stopAccessingSecurityScopedResource()
+        } catch {
+          url.stopAccessingSecurityScopedResource()
+          throw error
+        }
       }
     }
   }
