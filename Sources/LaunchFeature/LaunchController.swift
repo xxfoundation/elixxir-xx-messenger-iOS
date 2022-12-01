@@ -27,7 +27,7 @@ public final class LaunchController: UIViewController {
       .statePublisher
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        guard $0.shouldPushChats == false else {
+        guard $0.shouldPushEndDestination != .some(.chats) else {
           guard $0.shouldShowTerms == false else {
             navigator.perform(PresentTermsAndConditions(replacing: true, on: navigationController!))
             return
@@ -39,7 +39,7 @@ public final class LaunchController: UIViewController {
           navigator.perform(PresentChatList(on: navigationController!))
           return
         }
-        guard $0.shouldPushOnboarding == false else {
+        guard $0.shouldPushEndDestination != .some(.onboarding) else {
           navigator.perform(PresentOnboardingStart(on: navigationController!))
           return
         }
