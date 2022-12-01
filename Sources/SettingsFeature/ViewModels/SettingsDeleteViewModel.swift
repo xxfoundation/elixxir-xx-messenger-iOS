@@ -1,4 +1,5 @@
 import AppCore
+import Combine
 import Defaults
 import Keychain
 import Foundation
@@ -7,6 +8,12 @@ import AppResources
 import XXMessengerClient
 
 final class SettingsDeleteViewModel {
+  struct ViewState: Equatable {
+    var input = ""
+    var username: String
+    var isButtonEnabled = false
+  }
+
   @Dependency(\.keychain) var keychain
   @Dependency(\.app.bgQueue) var bgQueue
   @Dependency(\.app.dbManager) var dbManager
@@ -14,19 +21,34 @@ final class SettingsDeleteViewModel {
   @Dependency(\.app.hudManager) var hudManager
   @KeyObject(.username, defaultValue: nil) var username: String?
 
-  private var isCurrentlyDeleting = false
-  
-  func didTapDelete() {
-    guard isCurrentlyDeleting == false else { return }
-    isCurrentlyDeleting = true
+  var statePublisher: AnyPublisher<ViewState, Never> {
+    stateSubject.eraseToAnyPublisher()
+  }
 
+  private let stateSubject: CurrentValueSubject<ViewState, Never>
+
+  init() {
+    @KeyObject(.username, defaultValue: nil) var username: String?
+    self.stateSubject = .init(.init(username: username!))
+  }
+
+  func didEnterText(_ string: String) {
+    stateSubject.value.input = string
+    stateSubject.value.isButtonEnabled = string == stateSubject.value.username
+  }
+
+  func didTapDelete() {
     hudManager.show()
 
     bgQueue.schedule { [weak self] in
       guard let self else { return }
-
       do {
-        try self.cleanUD()
+        try self.messenger.ud.tryGet().permanentDeleteAccount(
+          username: .init(
+            type: .username,
+            value: self.stateSubject.value.username
+          )
+        )
         try self.messenger.destroy()
         try self.keychain.destroy()
         try self.dbManager.removeDB()
@@ -46,11 +68,5 @@ final class SettingsDeleteViewModel {
         }
       }
     }
-  }
-  
-  private func cleanUD() throws {
-    try messenger.ud.get()!.permanentDeleteAccount(
-      username: .init(type: .username, value: username!)
-    )
   }
 }

@@ -99,19 +99,4 @@ final class SettingsDeleteView: UIView {
   func setInfoClosure(_ closure: @escaping () -> Void) {
     didTapInfo = closure
   }
-
-  func update(username: String) {
-    inputField.update(placeholder: username)
-  }
-
-  func update(status: InputField.ValidationStatus) {
-    inputField.update(status: status)
-
-    switch status {
-    case .valid:
-      confirmButton.isEnabled = true
-    case .invalid, .unknown:
-      confirmButton.isEnabled = false
-    }
-  }
 }

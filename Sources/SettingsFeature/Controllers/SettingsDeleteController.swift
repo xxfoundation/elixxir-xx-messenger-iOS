@@ -1,7 +1,6 @@
 import UIKit
 import Shared
 import Combine
-import Defaults
 import Dependencies
 import AppResources
 import AppNavigation
@@ -10,8 +9,6 @@ import ScrollViewController
 
 public final class SettingsDeleteController: UIViewController {
   @Dependency(\.navigator) var navigator
-
-  @KeyObject(.username, defaultValue: "") var username: String
 
   private lazy var screenView = SettingsDeleteView()
   private lazy var scrollViewController = ScrollViewController()
@@ -30,8 +27,6 @@ public final class SettingsDeleteController: UIViewController {
     super.viewDidLoad()
     setupScrollView()
     setupBindings()
-
-    screenView.update(username: username)
 
     screenView.setInfoClosure { [weak self] in
       guard let self else { return }
@@ -55,21 +50,40 @@ public final class SettingsDeleteController: UIViewController {
 
   private func setupBindings() {
     screenView
-      .cancelButton
-      .publisher(for: .touchUpInside)
+      .inputField
+      .textPublisher
+      .sink { [unowned self] in
+        viewModel.didEnterText($0)
+      }.store(in: &cancellables)
+
+    viewModel
+      .statePublisher
+      .map(\.username)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        dismiss(animated: true)
+        screenView.inputField.update(placeholder: $0)
+      }.store(in: &cancellables)
+
+    viewModel
+      .statePublisher
+      .map(\.isButtonEnabled)
+      .receive(on: DispatchQueue.main)
+      .dropFirst()
+      .sink { [unowned self] in
+        screenView.confirmButton.isEnabled = $0
+        screenView.inputField.update(
+          status: $0 ? .valid("") : .invalid("")
+        )
       }.store(in: &cancellables)
 
     screenView
       .inputField
-      .textPublisher
+      .returnPublisher
+      .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        screenView.update(
-          status: $0 == username ?
-            .valid("") : .invalid("")
-        )
+        if screenView.confirmButton.isEnabled {
+          viewModel.didTapDelete()
+        }
       }.store(in: &cancellables)
 
     screenView
@@ -82,6 +96,7 @@ public final class SettingsDeleteController: UIViewController {
     screenView
       .cancelButton
       .publisher(for: .touchUpInside)
+      .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
         navigationController?.popViewController(animated: true)
       }.store(in: &cancellables)
