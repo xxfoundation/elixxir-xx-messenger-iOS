@@ -16,7 +16,7 @@ struct ScanDisplayViewState: Equatable {
 }
 
 final class ScanDisplayViewModel {
-    @Dependency(\.app.messenger) var messenger: Messenger
+    @Dependency(\.app.messenger) var messenger
 
     @KeyObject(.email, defaultValue: nil) var email: String?
     @KeyObject(.phone, defaultValue: nil) var phone: String?

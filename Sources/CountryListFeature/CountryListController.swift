@@ -6,7 +6,7 @@ import AppResources
 import Dependencies
 
 public final class CountryListController: UIViewController, UITableViewDelegate {
-  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
+  @Dependency(\.app.statusBar) var statusBar
 
   private lazy var screenView = CountryListView()
 

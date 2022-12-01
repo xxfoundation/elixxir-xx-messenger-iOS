@@ -4,7 +4,7 @@ import AppNavigation
 import ComposableArchitecture
 
 final class SearchRightController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.navigator) var navigator
 
   private lazy var screenView = SearchRightView()
 

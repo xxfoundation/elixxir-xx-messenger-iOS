@@ -5,7 +5,7 @@ import AppResources
 import AppNavigation
 
 public final class SettingsAdvancedController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.navigator) var navigator
 
   private lazy var screenView = SettingsAdvancedView()
 

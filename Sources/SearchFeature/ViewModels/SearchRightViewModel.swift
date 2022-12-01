@@ -26,9 +26,9 @@ enum ScanningError: Equatable {
 }
 
 final class SearchRightViewModel {
-  @Dependency(\.app.dbManager) var dbManager: DBManager
-  @Dependency(\.permissions) var permissions: PermissionsManager
-  @Dependency(\.reportingStatus) var reportingStatus: ReportingStatus
+  @Dependency(\.permissions) var permissions
+  @Dependency(\.app.dbManager) var dbManager
+  @Dependency(\.reportingStatus) var reportingStatus
 
   var foundPublisher: AnyPublisher<XXModels.Contact, Never> {
     foundSubject.eraseToAnyPublisher()

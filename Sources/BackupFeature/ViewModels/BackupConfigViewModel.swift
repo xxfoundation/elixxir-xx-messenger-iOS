@@ -32,9 +32,9 @@ struct BackupConfigViewModel {
 extension BackupConfigViewModel {
   static func live() -> Self {
     class Context {
-      @Dependency(\.navigator) var navigator: Navigator
-      @Dependency(\.backupService) var service: BackupService
-      @Dependency(\.app.hudManager) var hudManager: HUDManager
+      @Dependency(\.navigator) var navigator
+      @Dependency(\.backupService) var service
+      @Dependency(\.app.hudManager) var hudManager
     }
 
     let context = Context()

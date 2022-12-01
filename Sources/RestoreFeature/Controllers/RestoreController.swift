@@ -7,7 +7,7 @@ import DrawerFeature
 import ComposableArchitecture
 
 public final class RestoreController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.navigator) var navigator
 
   private lazy var screenView = RestoreView()
 

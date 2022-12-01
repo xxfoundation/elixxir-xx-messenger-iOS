@@ -4,7 +4,7 @@ import AppNavigation
 import ComposableArchitecture
 
 public final class OnboardingStartController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.navigator) var navigator
 
   private lazy var screenView = OnboardingStartView()
 

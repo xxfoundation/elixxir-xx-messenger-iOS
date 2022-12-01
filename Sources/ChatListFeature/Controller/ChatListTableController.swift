@@ -13,7 +13,7 @@ extension ChatInfo: Differentiable {
 }
 
 final class ChatListTableController: UITableViewController {
-  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.navigator) var navigator
 
   private var rows = [ChatInfo]()
   private let viewModel: ChatListViewModel

@@ -7,7 +7,7 @@ import Dependencies
 import AppNavigation
 
 public final class GroupDraftController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
+  @Dependency(\.navigator) var navigator
 
   private lazy var titleLabel = UILabel()
   private lazy var createButton = UIButton()

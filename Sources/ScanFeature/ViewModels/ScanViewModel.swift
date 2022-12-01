@@ -23,8 +23,8 @@ enum ScanError: Equatable {
 }
 
 final class ScanViewModel {
-  @Dependency(\.app.dbManager) var dbManager: DBManager
-  @Dependency(\.reportingStatus) var reportingStatus: ReportingStatus
+  @Dependency(\.app.dbManager) var dbManager
+  @Dependency(\.reportingStatus) var reportingStatus
 
   var contactPublisher: AnyPublisher<XXModels.Contact, Never> {
     contactSubject.eraseToAnyPublisher()

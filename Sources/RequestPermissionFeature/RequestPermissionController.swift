@@ -8,8 +8,8 @@ import AppNavigation
 import PermissionsFeature
 
 public final class RequestPermissionController: UIViewController {
-  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
-  @Dependency(\.permissions) var permissions: PermissionsManager
+  @Dependency(\.permissions) var permissions
+  @Dependency(\.app.statusBar) var statusBar
 
   private lazy var screenView = RequestPermissionView()
 

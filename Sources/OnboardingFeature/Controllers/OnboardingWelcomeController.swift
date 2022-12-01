@@ -9,8 +9,8 @@ import AppNavigation
 import DrawerFeature
 
 public final class OnboardingWelcomeController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
-  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
+  @Dependency(\.navigator) var navigator
+  @Dependency(\.app.statusBar) var statusBar
 
   @KeyObject(.username, defaultValue: "") var username: String
 

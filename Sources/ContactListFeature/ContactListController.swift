@@ -7,8 +7,8 @@ import AppResources
 import AppNavigation
 
 public final class ContactListController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
-  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
+  @Dependency(\.navigator) var navigator
+  @Dependency(\.app.statusBar) var statusBar
 
   private lazy var screenView = ContactListView()
   private lazy var tableController = ContactListTableController(viewModel)

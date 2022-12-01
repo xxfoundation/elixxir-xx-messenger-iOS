@@ -10,9 +10,9 @@ import CombineSchedulers
 import XXMessengerClient
 
 final class RequestsFailedViewModel {
-  @Dependency(\.app.dbManager) var dbManager: DBManager
-  @Dependency(\.app.messenger) var messenger: Messenger
-  @Dependency(\.app.hudManager) var hudManager: HUDManager
+  @Dependency(\.app.dbManager) var dbManager
+  @Dependency(\.app.messenger) var messenger
+  @Dependency(\.app.hudManager) var hudManager
   
   @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.sharingEmail, defaultValue: false) var sharingEmail: Bool

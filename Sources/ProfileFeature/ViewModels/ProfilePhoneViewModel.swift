@@ -18,9 +18,9 @@ final class ProfilePhoneViewModel {
     var country: Country = .fromMyPhone()
   }
 
-  @Dependency(\.app.messenger) var messenger: Messenger
-  @Dependency(\.app.hudManager) var hudManager: HUDManager
-  @Dependency(\.app.bgQueue) var bgQueue: AnySchedulerOf<DispatchQueue>
+  @Dependency(\.app.bgQueue) var bgQueue
+  @Dependency(\.app.messenger) var messenger
+  @Dependency(\.app.hudManager) var hudManager
 
   var statePublisher: AnyPublisher<ViewState, Never> {
     stateSubject.eraseToAnyPublisher()

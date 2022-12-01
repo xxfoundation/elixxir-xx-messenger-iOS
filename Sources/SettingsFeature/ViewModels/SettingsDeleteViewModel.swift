@@ -7,10 +7,10 @@ import AppResources
 import XXMessengerClient
 
 final class SettingsDeleteViewModel {
-  @Dependency(\.keychain) var keychain: KeychainManager
-  @Dependency(\.app.dbManager) var dbManager: DBManager
-  @Dependency(\.app.messenger) var messenger: Messenger
-  @Dependency(\.app.hudManager) var hudManager: HUDManager
+  @Dependency(\.keychain) var keychain
+  @Dependency(\.app.dbManager) var dbManager
+  @Dependency(\.app.messenger) var messenger
+  @Dependency(\.app.hudManager) var hudManager
   @KeyObject(.username, defaultValue: nil) var username: String?
 
   private var isCurrentlyDeleting = false

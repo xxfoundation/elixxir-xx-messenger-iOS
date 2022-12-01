@@ -8,9 +8,9 @@ import PermissionsFeature
 import ComposableArchitecture
 
 final class ScanController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
-  @Dependency(\.permissions) var permissions: PermissionsManager
-  @Dependency(\.app.bgQueue) var bgQueue: AnySchedulerOf<DispatchQueue>
+  @Dependency(\.navigator) var navigator
+  @Dependency(\.app.bgQueue) var bgQueue
+  @Dependency(\.permissions) var permissions
 
   private lazy var screenView = ScanView()
 

@@ -9,8 +9,8 @@ import DrawerFeature
 import ScrollViewController
 
 public final class SettingsMainController: UIViewController {
-  @Dependency(\.navigator) var navigator: Navigator
-  @Dependency(\.app.statusBar) var statusBar: StatusBarStylist
+  @Dependency(\.navigator) var navigator
+  @Dependency(\.app.statusBar) var statusBar
 
   private lazy var scrollViewController = ScrollViewController()
   private lazy var screenView = SettingsMainView {
