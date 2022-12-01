@@ -153,7 +153,13 @@ public final class InputField: UIView {
   }
 
   public func update(placeholder: String) {
-    field.placeholder = placeholder
+    field.attributedPlaceholder = NSAttributedString(
+      string: placeholder,
+      attributes: [
+        .font: Fonts.Mulish.semiBold.font(size: 14.0),
+        .foregroundColor: Asset.neutralDisabled.color
+      ]
+    )
   }
 
   public func update(status: ValidationStatus) {
