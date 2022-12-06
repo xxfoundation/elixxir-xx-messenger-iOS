@@ -34,6 +34,7 @@ let package = Package(
     .library(name: "ContactFeature", targets: ["ContactFeature"]),
     .library(name: "FetchBannedList", targets: ["FetchBannedList"]),
     .library(name: "SettingsFeature", targets: ["SettingsFeature"]),
+    .library(name: "ChatMoreFeature", targets: ["ChatMoreFeature"]),
     .library(name: "ChatListFeature", targets: ["ChatListFeature"]),
     .library(name: "RequestsFeature", targets: ["RequestsFeature"]),
     .library(name: "ReportingFeature", targets: ["ReportingFeature"]),
@@ -45,6 +46,7 @@ let package = Package(
     .library(name: "CountryListFeature", targets: ["CountryListFeature"]),
     .library(name: "PermissionsFeature", targets: ["PermissionsFeature"]),
     .library(name: "ContactListFeature", targets: ["ContactListFeature"]),
+    .library(name: "RetryMessageFeature", targets: ["RetryMessageFeature"]),
     .library(name: "RequestPermissionFeature", targets: ["RequestPermissionFeature"]),
   ],
   dependencies: [
@@ -135,6 +137,7 @@ let package = Package(
         .target(name: "WebsiteFeature"),
         .target(name: "RestoreFeature"),
         .target(name: "ProfileFeature"),
+        .target(name: "ChatMoreFeature"),
         .target(name: "ChatListFeature"),
         .target(name: "SettingsFeature"),
         .target(name: "RequestsFeature"),
@@ -143,6 +146,7 @@ let package = Package(
         .target(name: "OnboardingFeature"),
         .target(name: "CreateGroupFeature"),
         .target(name: "ContactListFeature"),
+        .target(name: "RetryMessageFeature"),
         .target(name: "RequestPermissionFeature"),
         .product(name: "PulseUI", package: "Pulse"), // TO REMOVE
         .product(name: "PulseLogHandler", package: "Pulse"), // TO REMOVE
@@ -288,6 +292,20 @@ let package = Package(
       ]
     ),
     .target(
+      name: "ChatMoreFeature",
+      dependencies: [
+        .target(name: "Shared"),
+        .target(name: "AppResources"),
+      ]
+    ),
+    .target(
+      name: "RetryMessageFeature",
+      dependencies: [
+        .target(name: "Shared"),
+        .target(name: "AppResources"),
+      ]
+    ),
+    .target(
       name: "CountryListFeature",
       dependencies: [
         .target(name: "Shared"),
@@ -358,8 +376,10 @@ let package = Package(
         .target(name: "Keychain"),
         .target(name: "Voxophone"),
         .target(name: "DrawerFeature"),
+        .target(name: "ChatMoreFeature"),
         .target(name: "ChatInputFeature"),
         .target(name: "ReportingFeature"),
+        .target(name: "RetryMessageFeature"),
         .target(name: "RequestPermissionFeature"),
         .product(name: "ChatLayout", package: "ChatLayout"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
