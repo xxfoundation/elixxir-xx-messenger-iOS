@@ -23,7 +23,7 @@ final class OnboardingCodeViewModel {
 
   @Dependency(\.app.bgQueue) var bgQueue
   @Dependency(\.app.messenger) var messenger
-  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.hudManager) var hudManager
 
   @KeyObject(.email, defaultValue: nil) var email: String?
   @KeyObject(.phone, defaultValue: nil) var phone: String?

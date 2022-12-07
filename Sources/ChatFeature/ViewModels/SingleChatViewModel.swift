@@ -33,7 +33,7 @@ final class SingleChatViewModel: NSObject {
   @Dependency(\.app.dbManager) var dbManager
   @Dependency(\.app.sendImage) var sendImage
   @Dependency(\.app.messenger) var messenger
-  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.hudManager) var hudManager
   @Dependency(\.app.sendMessage) var sendMessage
   @Dependency(\.app.toastManager) var toastManager
   @Dependency(\.app.networkMonitor) var networkMonitor

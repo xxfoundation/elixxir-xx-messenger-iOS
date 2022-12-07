@@ -12,7 +12,7 @@ public struct RestorationDetails {
 }
 
 final class RestoreListViewModel {
-  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.hudManager) var hudManager
 
   var sftpPublisher: AnyPublisher<Void, Never> {
     sftpSubject.eraseToAnyPublisher()

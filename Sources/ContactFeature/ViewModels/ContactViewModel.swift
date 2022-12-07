@@ -21,7 +21,7 @@ struct ContactViewState: Equatable {
 final class ContactViewModel {
   @Dependency(\.app.dbManager) var dbManager
   @Dependency(\.app.messenger) var messenger
-  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.hudManager) var hudManager
   
   @KeyObject(.username, defaultValue: nil) var username: String?
   @KeyObject(.sharingEmail, defaultValue: false) var sharingEmail: Bool

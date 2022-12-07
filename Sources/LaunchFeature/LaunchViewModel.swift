@@ -53,7 +53,7 @@ final class LaunchViewModel {
   @Dependency(\.app.messenger) var messenger
   @Dependency(\.app.dbManager) var dbManager
   @Dependency(\.updateErrors) var updateErrors
-  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.hudManager) var hudManager
   @Dependency(\.checkVersion) var checkVersion
   @Dependency(\.dummyTraffic) var dummyTraffic
   @Dependency(\.app.toastManager) var toastManager

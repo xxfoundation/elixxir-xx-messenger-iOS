@@ -22,7 +22,7 @@ final class SettingsMainViewModel {
   @Dependency(\.permissions) var permissions
   @Dependency(\.app.messenger) var messenger
   @Dependency(\.dummyTraffic) var dummyTraffic
-  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.hudManager) var hudManager
 
   @KeyObject(.biometrics, defaultValue: false) var biometrics
   @KeyObject(.hideAppList, defaultValue: false) var hideAppList

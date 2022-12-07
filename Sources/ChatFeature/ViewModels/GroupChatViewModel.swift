@@ -23,7 +23,7 @@ final class GroupChatViewModel {
   @Dependency(\.sendReport) var sendReport
   @Dependency(\.app.dbManager) var dbManager
   @Dependency(\.app.messenger) var messenger
-  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.hudManager) var hudManager
   @Dependency(\.app.toastManager) var toastManager
   @Dependency(\.reportingStatus) var reportingStatus
 

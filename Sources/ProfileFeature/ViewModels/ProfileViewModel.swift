@@ -34,7 +34,7 @@ final class ProfileViewModel {
   @Dependency(\.app.bgQueue) var bgQueue
   @Dependency(\.permissions) var permissions
   @Dependency(\.app.messenger) var messenger
-  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.hudManager) var hudManager
   @Dependency(\.backupService) var backupService
 
   var name: String { username! }
