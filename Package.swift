@@ -1,6 +1,12 @@
 // swift-tools-version:5.6
 import PackageDescription
 
+let swiftSettings: [SwiftSetting] = [
+  //.unsafeFlags(["-Xfrontend", "-warn-concurrency"]),
+  // .unsafeFlags(["-Xfrontend", "-debug-time-function-bodies"]),
+  // .unsafeFlags(["-Xfrontend", "-debug-time-expression-type-checking"]),
+]
+
 let package = Package(
   name: "client-ios",
   defaultLocalization: "en",
@@ -146,13 +152,15 @@ let package = Package(
         .target(name: "RequestPermissionFeature"),
         .product(name: "PulseUI", package: "Pulse"), // TO REMOVE
         .product(name: "PulseLogHandler", package: "Pulse"), // TO REMOVE
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .testTarget(
       name: "AppFeatureTests",
       dependencies: [
         .target(name: "AppFeature"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "AppCore",
@@ -167,7 +175,8 @@ let package = Package(
         .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "CheckVersion",
@@ -176,15 +185,20 @@ let package = Package(
           name: "Dependencies",
           package: "swift-composable-architecture"
         ),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "Voxophone",
       dependencies: [
         .target(name: "Shared"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
-    .target(name: "WebsiteFeature"),
+    .target(
+      name: "WebsiteFeature",
+      swiftSettings: swiftSettings
+    ),
     .target(
       name: "CrashReport",
       dependencies: [
@@ -196,7 +210,8 @@ let package = Package(
           name: "Dependencies",
           package: "swift-composable-architecture"
         ),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "AppNavigation",
@@ -209,19 +224,22 @@ let package = Package(
           name: "Dependencies",
           package: "swift-composable-architecture"
         ),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "CreateGroupFeature",
       dependencies: [
         .target(name: "AppCore")
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "GroupDraftFeature",
       dependencies: [
         .target(name: "AppCore")
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "PermissionsFeature",
@@ -234,7 +252,8 @@ let package = Package(
           name: "Dependencies",
           package: "swift-composable-architecture"
         ),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "AppResources",
@@ -243,13 +262,15 @@ let package = Package(
       ],
       resources: [
         .process("Resources")
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "InputField",
       dependencies: [
         .target(name: "Shared"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "RequestPermissionFeature",
@@ -263,7 +284,8 @@ let package = Package(
           name: "Dependencies",
           package: "swift-composable-architecture"
         ),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "Keychain",
@@ -276,7 +298,8 @@ let package = Package(
           name: "Dependencies",
           package: "swift-composable-architecture"
         ),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "Defaults",
@@ -285,14 +308,16 @@ let package = Package(
           name: "Dependencies",
           package: "swift-composable-architecture"
         ),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "CountryListFeature",
       dependencies: [
         .target(name: "Shared"),
         .target(name: "AppCore")
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "DrawerFeature",
@@ -300,7 +325,8 @@ let package = Package(
         .target(name: "Shared"),
         .target(name: "InputField"),
         .product(name: "ScrollViewController", package: "ScrollViewController"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "Shared",
@@ -312,7 +338,8 @@ let package = Package(
       ],
       resources: [
         .process("Resources"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "ChatInputFeature",
@@ -324,7 +351,8 @@ let package = Package(
           name: "ComposableArchitecture",
           package: "swift-composable-architecture"
         ),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "RestoreFeature",
@@ -337,7 +365,8 @@ let package = Package(
         .product(name: "CloudFilesDropbox", package: "xxm-cloud-providers"),
         .product(name: "CloudFilesSFTP", package: "xxm-cloud-providers"),
         .product(name: "CloudFilesICloud", package: "xxm-cloud-providers"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "ContactFeature",
@@ -347,7 +376,8 @@ let package = Package(
         .target(name: "ChatFeature"),
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "ScrollViewController", package: "ScrollViewController"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "ChatFeature",
@@ -367,7 +397,8 @@ let package = Package(
         .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
         .product(name: "ScrollViewController", package: "ScrollViewController"),
         .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "SearchFeature",
@@ -377,7 +408,8 @@ let package = Package(
         .target(name: "CountryListFeature"),
         .product(name: "Retry", package: "Retry"),
         .product(name: "XXDatabase", package: "client-ios-db"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "LaunchFeature",
@@ -397,7 +429,8 @@ let package = Package(
         .product(name: "CloudFilesDropbox", package: "xxm-cloud-providers"),
         .product(name: "XXLegacyDatabaseMigrator", package: "client-ios-db"),
         .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "TermsFeature",
@@ -409,7 +442,8 @@ let package = Package(
           name: "ComposableArchitecture",
           package: "swift-composable-architecture"
         ),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "UpdateErrors",
@@ -426,7 +460,8 @@ let package = Package(
           name: "Dependencies",
           package: "swift-composable-architecture"
         ),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "ProcessBannedList",
@@ -443,7 +478,8 @@ let package = Package(
           name: "Dependencies",
           package: "swift-composable-architecture"
         ),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "FetchBannedList",
@@ -456,7 +492,8 @@ let package = Package(
           name: "Dependencies",
           package: "swift-composable-architecture"
         ),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "RequestsFeature",
@@ -467,7 +504,8 @@ let package = Package(
           name: "DifferenceKit",
           package: "DifferenceKit"
         ),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "ProfileFeature",
@@ -485,7 +523,8 @@ let package = Package(
         .product(name: "ScrollViewController", package: "ScrollViewController"),
         .product(name: "XXClient", package: "elixxir-dapps-sdk-swift"),
         .product(name: "XXMessengerClient", package: "elixxir-dapps-sdk-swift"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "ChatListFeature",
@@ -498,7 +537,8 @@ let package = Package(
         .target(name: "SettingsFeature"),
         .target(name: "ContactListFeature"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "OnboardingFeature",
@@ -515,7 +555,8 @@ let package = Package(
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "ScrollViewController", package: "ScrollViewController"),
         .product(name: "ComposableArchitecture", package: "swift-composable-architecture"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "MenuFeature",
@@ -529,7 +570,8 @@ let package = Package(
           name: "XXClient",
           package: "elixxir-dapps-sdk-swift"
         ),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "BackupFeature",
@@ -566,7 +608,8 @@ let package = Package(
           name: "ComposableArchitecture",
           package: "swift-composable-architecture"
         ),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "ScanFeature",
@@ -576,7 +619,8 @@ let package = Package(
         .target(name: "CountryListFeature"),
         .target(name: "RequestPermissionFeature"),
         .product(name: "SnapKit", package: "SnapKit"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "ContactListFeature",
@@ -584,7 +628,8 @@ let package = Package(
         .target(name: "Shared"),
         .target(name: "ContactFeature"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "SettingsFeature",
@@ -599,7 +644,8 @@ let package = Package(
         .target(name: "RequestPermissionFeature"),
         .product(name: "CombineSchedulers", package: "combine-schedulers"),
         .product(name: "ScrollViewController", package: "ScrollViewController"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
     .target(
       name: "ReportingFeature",
@@ -610,7 +656,8 @@ let package = Package(
       ],
       resources: [
         .process("Resources"),
-      ]
+      ],
+      swiftSettings: swiftSettings
     ),
   ]
 )
