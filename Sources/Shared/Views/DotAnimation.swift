@@ -1,5 +1,6 @@
-import UIKit
 import AppResources
+import SwiftUI
+import UIKit
 
 public final class DotAnimation: UIView {
   let leftDot = UIView()
@@ -69,5 +70,23 @@ public final class DotAnimation: UIView {
     if leftValue > factor || leftValue < 10 { leftInvert.toggle() }
     if middleValue > factor || middleValue < 10 { middleInvert.toggle() }
     if rightValue > factor || rightValue < 10 { rightInvert.toggle() }
+  }
+}
+
+extension DotAnimation {
+  public struct SwiftUIView: UIViewRepresentable {
+    public init(color: UIColor = Asset.brandPrimary.color) {
+      self.color = color
+    }
+
+    public var color: UIColor
+
+    public func makeUIView(context: Context) -> DotAnimation {
+      DotAnimation()
+    }
+
+    public func updateUIView(_ uiView: DotAnimation, context: Context) {
+      uiView.setColor(color)
+    }
   }
 }
