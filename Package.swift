@@ -52,6 +52,7 @@ let package = Package(
     .library(name: "PermissionsFeature", targets: ["PermissionsFeature"]),
     .library(name: "ContactListFeature", targets: ["ContactListFeature"]),
     .library(name: "RequestPermissionFeature", targets: ["RequestPermissionFeature"]),
+    .library(name: "HUDFeature", targets: ["HUDFeature"]),
   ],
   dependencies: [
     .package(
@@ -656,6 +657,14 @@ let package = Package(
       ],
       resources: [
         .process("Resources"),
+      ],
+      swiftSettings: swiftSettings
+    ),
+    .target(
+      name: "HUDFeature",
+      dependencies: [
+        .target(name: "AppResources"),
+        .target(name: "Shared"),
       ],
       swiftSettings: swiftSettings
     ),
