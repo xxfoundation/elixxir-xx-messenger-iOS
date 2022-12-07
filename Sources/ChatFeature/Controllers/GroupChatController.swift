@@ -29,8 +29,10 @@ public final class GroupChatController: UIViewController {
 //  @Dependency var makeReportDrawer: MakeReportDrawer
 //  @Dependency var makeAppScreenshot: MakeAppScreenshot
 
+  private lazy var moreButton = UIButton()
+  private lazy var headerView = GroupHeaderView()
+
   private var collectionView: UICollectionView!
-  private lazy var header = GroupHeaderView()
   private let inputComponent: ChatInputView
 
   private var animator: ManualAnimator?
@@ -65,14 +67,18 @@ public final class GroupChatController: UIViewController {
 
     super.init(nibName: nil, bundle: nil)
 
-    let memberList = info.members.map {
-      Member(
-        title: ($0.nickname ?? $0.username) ?? "Fetching username...",
-        photo: $0.photo
-      )
+    headerView.titleLabel.text = info.group.name
+    info.members.forEach {
+      let contactTitle = ($0.nickname ?? $0.username) ?? "Fetching username..."
+      let avatarView = AvatarView()
+      avatarView.layer.borderWidth = 2
+      avatarView.layer.borderColor = UIColor.white.cgColor
+      avatarView.setupProfile(title: contactTitle, image: $0.photo, size: .small)
+      avatarView.snp.makeConstraints {
+        $0.width.height.equalTo(26.0)
+      }
+      headerView.avatarStackView.addArrangedSubview(avatarView)
     }
-
-    header.setup(title: info.group.name, memberList: memberList)
   }
 
   public required init?(coder: NSCoder) { nil }
@@ -127,12 +133,11 @@ public final class GroupChatController: UIViewController {
   }
 
   private func setupNavigationBar() {
-    let more = UIButton()
-    more.setImage(Asset.chatMore.image, for: .normal)
-    more.addTarget(self, action: #selector(didTapDots), for: .touchUpInside)
+    moreButton.setImage(Asset.chatMore.image, for: .normal)
+    moreButton.addTarget(self, action: #selector(didTapDots), for: .touchUpInside)
 
-    navigationItem.titleView = header
-    navigationItem.rightBarButtonItem = UIBarButtonItem(customView: more)
+    navigationItem.titleView = headerView
+    navigationItem.rightBarButtonItem = UIBarButtonItem(customView: moreButton)
   }
 
   private func setupCollectionView() {
@@ -317,7 +322,10 @@ public final class GroupChatController: UIViewController {
   }
 
   @objc private func didTapDots() {
-    navigator.perform(PresentMemberList(members: viewModel.info.members))
+    navigator.perform(PresentGroupMembers(
+      groupInfo: viewModel.info,
+      from: self
+    ))
   }
 
   func scrollToBottom(completion: (() -> Void)? = nil) {

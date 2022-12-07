@@ -62,7 +62,7 @@ public final class AvatarView: UIView {
     switch size {
     case .small:
       layer.cornerRadius = 13.0
-      monogramLabel.font = Fonts.Mulish.semiBold.font(size: 14.0)
+      monogramLabel.font = Fonts.Mulish.semiBold.font(size: 12.0)
     case .medium:
       layer.cornerRadius = 13.0
       monogramLabel.font = Fonts.Mulish.semiBold.font(size: 14.0)
