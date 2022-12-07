@@ -40,7 +40,6 @@ public final class SingleChatController: UIViewController {
 
   private lazy var moreButton = UIButton()
   private lazy var screenView = ChatView()
-  private lazy var sheet = SheetController()
 
   private let inputComponent: ChatInputView
   private var collectionView: UICollectionView!
@@ -264,23 +263,6 @@ public final class SingleChatController: UIViewController {
   }
 
   private func setupBindings() {
-    sheet
-      .actionPublisher
-      .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in
-        switch $0 {
-        case .clear:
-          presentDeleteAllDrawer()
-        case .details:
-          navigator.perform(PresentContact(
-            contact: viewModel.contact,
-            on: navigationController!
-          ))
-        case .report:
-          presentReportDrawer()
-        }
-      }.store(in: &cancellables)
-
     viewModel
       .shouldDisplayEmptyView
       .removeDuplicates()
@@ -517,7 +499,30 @@ public final class SingleChatController: UIViewController {
   }
 
   @objc private func didTapDots() {
-    //coordinator.toMenuSheet(sheet, from: self)
+    navigator.perform(PresentChatMore(
+      didTapClear: { [weak self] in
+        guard let self else { return }
+        self.navigator.perform(DismissModal(from: self)) {
+          self.presentDeleteAllDrawer()
+        }
+      },
+      didTapReport: { [weak self] in
+        guard let self else { return }
+        self.navigator.perform(DismissModal(from: self)) {
+          self.presentReportDrawer()
+        }
+      },
+      didTapDetails: { [weak self] in
+        guard let self else { return }
+        self.navigator.perform(DismissModal(from: self)) {
+          self.navigator.perform(PresentContact(
+            contact: self.viewModel.contact,
+            on: self.navigationController!
+          ))
+        }
+      },
+      from: self
+    ))
   }
 
   @objc private func didTapInfo() {

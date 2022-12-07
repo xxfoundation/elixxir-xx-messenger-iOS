@@ -14,11 +14,13 @@ import ProfileFeature
 import ChatListFeature
 import SettingsFeature
 import RequestsFeature
+import ChatMoreFeature
 import GroupDraftFeature
 import OnboardingFeature
 import CountryListFeature
 import CreateGroupFeature
 import ContactListFeature
+import RetryMessageFeature
 import RequestPermissionFeature
 
 extension NavigatorKey: DependencyKey {
@@ -35,6 +37,12 @@ extension NavigatorKey: DependencyKey {
     PresentPhotoLibraryNavigator(),
     PresentActivitySheetNavigator(),
 
+    PresentChatMoreNavigator(
+      ChatMoreController.init(_:_:_:)
+    ),
+    PresentRetryMessageNavigator(
+      RetryMessageController.init(_:_:_:)
+    ),
     PresentWebsiteNavigator(
       WebsiteController.init(_:)
     ),

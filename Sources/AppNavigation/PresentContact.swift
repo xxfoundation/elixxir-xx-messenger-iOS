@@ -17,7 +17,7 @@ public struct PresentContact: Action {
     self.animated = animated
   }
 
-  /// Model to build the view controller which will be pushed
+  /// Model to build the view controller which will be opened up
   public var contact: Contact
 
   /// Navigation controller on which push should happen
