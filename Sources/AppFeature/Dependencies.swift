@@ -104,6 +104,9 @@ extension NavigatorKey: DependencyKey {
     PresentCountryListNavigator(
       CountryListController.init(_:)
     ),
+    PresentGroupMembersNavigator(
+      GroupMembersController.init(_:)
+    ),
     PresentOnboardingEmailNavigator(
       OnboardingEmailController.init
     ),
