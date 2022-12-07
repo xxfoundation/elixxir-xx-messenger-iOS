@@ -665,6 +665,8 @@ let package = Package(
       dependencies: [
         .target(name: "AppResources"),
         .target(name: "Shared"),
+        .product(name: "Dependencies", package: "swift-composable-architecture"),
+        .product(name: "XCTestDynamicOverlay", package: "xctest-dynamic-overlay"),
       ],
       swiftSettings: swiftSettings
     ),
