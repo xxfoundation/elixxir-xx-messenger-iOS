@@ -34,7 +34,7 @@ extension BackupConfigViewModel {
     class Context {
       @Dependency(\.navigator) var navigator
       @Dependency(\.backupService) var service
-      @Dependency(\.app.hudManager) var hudManager
+      @Dependency(\.hudManager) var hudManager
     }
 
     let context = Context()

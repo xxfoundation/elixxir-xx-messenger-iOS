@@ -16,7 +16,7 @@ struct SFTPViewState {
 }
 
 final class RestoreSFTPViewModel {
-  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.hudManager) var hudManager
 
   var statePublisher: AnyPublisher<SFTPViewState, Never> {
     stateSubject.eraseToAnyPublisher()

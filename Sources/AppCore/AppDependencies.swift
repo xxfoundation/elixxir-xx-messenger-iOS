@@ -8,7 +8,6 @@ public struct AppDependencies {
   public var networkMonitor: NetworkMonitor
   public var toastManager: ToastManager
   public var backupHandler: BackupCallbackHandler
-  public var hudManager: HUDManager
   public var dbManager: DBManager
   public var groupRequest: GroupRequestHandler
   public var groupMessageHandler: GroupMessageHandler
@@ -53,7 +52,6 @@ extension AppDependencies {
       backupHandler: .live(
         messenger: messenger
       ),
-      hudManager: .live(),
       dbManager: dbManager,
       groupRequest: .live(
         messenger: messenger,
@@ -107,7 +105,6 @@ extension AppDependencies {
     networkMonitor: .unimplemented,
     toastManager: .unimplemented,
     backupHandler: .unimplemented,
-    hudManager: .unimplemented,
     dbManager: .unimplemented,
     groupRequest: .unimplemented,
     groupMessageHandler: .unimplemented,

@@ -19,7 +19,7 @@ final class OnboardingUsernameViewModel {
   @Dependency(\.app.bgQueue) var bgQueue
   @Dependency(\.app.dbManager) var dbManager
   @Dependency(\.app.messenger) var messenger
-  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.hudManager) var hudManager
 
   @KeyObject(.username, defaultValue: "") var username: String
 

@@ -20,7 +20,7 @@ final class OnboardingPhoneViewModel {
 
   @Dependency(\.app.bgQueue) var bgQueue
   @Dependency(\.app.messenger) var messenger
-  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.hudManager) var hudManager
 
   var statePublisher: AnyPublisher<ViewState, Never> {
     stateSubject.eraseToAnyPublisher()

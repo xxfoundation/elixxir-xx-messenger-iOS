@@ -168,6 +168,7 @@ let package = Package(
       dependencies: [
         .target(name: "Shared"),
         .target(name: "AppResources"),
+        .target(name: "HUDFeature"),
         .product(name: "SnapKit", package: "SnapKit"),
         .product(name: "Logging", package: "swift-log"),
         .product(name: "XXModels", package: "client-ios-db"),

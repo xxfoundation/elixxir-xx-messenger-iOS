@@ -22,7 +22,7 @@ struct RequestReceived: Hashable, Equatable {
 final class RequestsReceivedViewModel {
   @Dependency(\.app.dbManager) var dbManager
   @Dependency(\.app.messenger) var messenger
-  @Dependency(\.app.hudManager) var hudManager
+  @Dependency(\.hudManager) var hudManager
   @Dependency(\.reportingStatus) var reportingStatus
   
   @KeyObject(.isShowingHiddenRequests, defaultValue: false) var isShowingHiddenRequests: Bool
