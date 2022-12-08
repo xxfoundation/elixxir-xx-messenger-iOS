@@ -48,10 +48,12 @@ final class ProfilePhoneViewModel {
       guard let self else { return }
       let content = "\(self.stateSubject.value.input)\(self.stateSubject.value.country.code)"
       do {
-        let confirmationId = try self.messenger.ud.get()!.sendRegisterFact(
-          .init(type: .phone, value: content)
+        let confirmationId = try self.messenger.ud.tryGet()
+          .sendRegisterFact(.init(
+            type: .phone,
+            value: content
+          )
         )
-
         self.hudManager.hide()
         self.stateSubject.value.content = content
         self.stateSubject.value.confirmationId = confirmationId

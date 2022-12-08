@@ -731,7 +731,7 @@ public enum Localized {
       public static func resend(_ p1: Any) -> String {
         return Localized.tr("Localizable", "onboarding.emailConfirmation.resend", String(describing: p1))
       }
-      /// We sent a verification code to %@.
+      /// We sent a verification code to %@
       public static func subtitle(_ p1: Any) -> String {
         return Localized.tr("Localizable", "onboarding.emailConfirmation.subtitle", String(describing: p1))
       }
@@ -771,7 +771,7 @@ public enum Localized {
       public static func resend(_ p1: Any) -> String {
         return Localized.tr("Localizable", "onboarding.phoneConfirmation.resend", String(describing: p1))
       }
-      /// We sent a verification code to %@.
+      /// We sent a verification code to %@
       public static func subtitle(_ p1: Any) -> String {
         return Localized.tr("Localizable", "onboarding.phoneConfirmation.subtitle", String(describing: p1))
       }

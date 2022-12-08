@@ -91,7 +91,7 @@ final class ProfileViewModel {
     bgQueue.schedule { [weak self] in
       guard let self else { return }
       do {
-        try self.messenger.ud.get()!.removeFact(
+        try self.messenger.ud.tryGet().removeFact(
           .init(
             type: isEmail ? .email : .phone,
             value: isEmail ? self.emailStored! : self.phoneStored!

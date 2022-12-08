@@ -812,7 +812,7 @@
 "onboarding.emailConfirmation.title"
 = "Please enter the #code# sent to your email.";
 "onboarding.emailConfirmation.subtitle"
-= "We sent a verification code to %@.";
+= "We sent a verification code to %@";
 "onboarding.emailConfirmation.input"
 = "Code";
 "onboarding.emailConfirmation.next"
@@ -846,7 +846,7 @@
 "onboarding.phoneConfirmation.title"
 = "Please enter the #code# sent to your phone through #SMS#.";
 "onboarding.phoneConfirmation.subtitle"
-= "We sent a verification code to %@.";
+= "We sent a verification code to %@";
 "onboarding.phoneConfirmation.input"
 = "Code";
 "onboarding.phoneConfirmation.next"

@@ -39,8 +39,11 @@ final class ProfileEmailViewModel {
     bgQueue.schedule { [weak self] in
       guard let self else { return }
       do {
-        let confirmationId = try self.messenger.ud.get()!.sendRegisterFact(
-          .init(type: .email, value: self.stateSubject.value.input)
+        let confirmationId = try self.messenger.ud.tryGet()
+          .sendRegisterFact(.init(
+            type: .email,
+            value: self.stateSubject.value.input
+          )
         )
         self.hudManager.hide()
         self.stateSubject.value.confirmationId = confirmationId
