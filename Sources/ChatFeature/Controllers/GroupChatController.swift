@@ -25,9 +25,9 @@ public final class GroupChatController: UIViewController {
   @Dependency(\.app.dbManager) var dbManager
   @Dependency(\.app.statusBar) var statusBar
   @Dependency(\.reportingStatus) var reportingStatus
+  @Dependency(\.makeAppScreenshot) var makeAppScreenshot
 
 //  @Dependency var makeReportDrawer: MakeReportDrawer
-//  @Dependency var makeAppScreenshot: MakeAppScreenshot
 
   private lazy var moreButton = UIButton()
   private lazy var headerView = GroupHeaderView()
@@ -230,10 +230,10 @@ public final class GroupChatController: UIViewController {
             navigator.perform(DismissModal(from: self)) { [weak self] in
               guard let self else { return }
               self.drawerCancellables.removeAll()
-//              let screenshot = try! self.makeAppScreenshot()
-//              self.viewModel.report(contact: contact, screenshot: screenshot) {
-//                self.collectionView.reloadData()
-//              }
+              let screenshot = try! self.makeAppScreenshot()
+              self.viewModel.report(contact: contact, screenshot: screenshot) {
+                self.collectionView.reloadData()
+              }
             }
           }.store(in: &drawerCancellables)
 
