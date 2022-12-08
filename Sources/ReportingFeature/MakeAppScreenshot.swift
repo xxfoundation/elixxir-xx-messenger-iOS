@@ -1,5 +1,6 @@
-import Foundation
 import UIKit
+import Foundation
+import Dependencies
 import XCTestDynamicOverlay
 
 public struct MakeAppScreenshot {
@@ -50,4 +51,16 @@ extension MakeAppScreenshot {
   public static let unimplemented = MakeAppScreenshot(
     run: XCTUnimplemented("\(Self.self)")
   )
+}
+
+private enum MakeAppScreenshotDependencyKey: DependencyKey {
+  static let liveValue: MakeAppScreenshot = .live
+  static let testValue: MakeAppScreenshot = .unimplemented
+}
+
+extension DependencyValues {
+  public var makeAppScreenshot: MakeAppScreenshot {
+    get { self[MakeAppScreenshotDependencyKey.self] }
+    set { self[MakeAppScreenshotDependencyKey.self]  = newValue }
+  }
 }

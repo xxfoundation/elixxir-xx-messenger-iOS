@@ -26,11 +26,11 @@ extension Message: Differentiable {
 public final class SingleChatController: UIViewController {
 //  @Dependency var voxophone: Voxophone
 //  @Dependency var makeReportDrawer: MakeReportDrawer
-//  @Dependency var makeAppScreenshot: MakeAppScreenshot
 
   @Dependency(\.navigator) var navigator
   @Dependency(\.app.statusBar) var statusBar
   @Dependency(\.reportingStatus) var reportingStatus
+  @Dependency(\.makeAppScreenshot) var makeAppScreenshot
 
   let voxophone = Voxophone()
 
@@ -392,11 +392,11 @@ public final class SingleChatController: UIViewController {
         navigator.perform(DismissModal(from: self)) { [weak self] in
           guard let self else { return }
           self.drawerCancellables.removeAll()
-//          let screenshot = try! self.makeAppScreenshot()
-//          self.viewModel.report(screenshot: screenshot) { success in
-//            guard success else { return }
-//            self.navigationController?.popViewController(animated: true)
-//          }
+          let screenshot = try! self.makeAppScreenshot()
+          self.viewModel.report(screenshot: screenshot) { success in
+            guard success else { return }
+            self.navigationController?.popViewController(animated: true)
+          }
         }
       }.store(in: &drawerCancellables)
 
