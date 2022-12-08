@@ -351,6 +351,7 @@ let package = Package(
     .target(
       name: "Shared",
       dependencies: [
+        .target(name: "AppResources"),
         .product(name: "SnapKit", package: "SnapKit"),
         .product(name: "ChatLayout", package: "ChatLayout"),
         .product(name: "DifferenceKit", package: "DifferenceKit"),
