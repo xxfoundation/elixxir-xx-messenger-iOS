@@ -73,12 +73,20 @@ public final class OnboardingCodeController: UIViewController {
   }
 
   private func setupScrollView() {
-    addChild(scrollViewController)
-    view.addSubview(scrollViewController.view)
-    scrollViewController.view.snp.makeConstraints { $0.edges.equalToSuperview() }
-    scrollViewController.didMove(toParent: self)
     scrollViewController.contentView = screenView
     scrollViewController.scrollView.backgroundColor = Asset.neutralWhite.color
+    addChild(scrollViewController)
+    view.addSubview(scrollViewController.view)
+    scrollViewController.view.translatesAutoresizingMaskIntoConstraints = false
+    NSLayoutConstraint.activate([
+      scrollViewController.view.topAnchor.constraint(equalTo: view.topAnchor),
+      scrollViewController.view.bottomAnchor.constraint(equalTo: view.bottomAnchor),
+      scrollViewController.view.leftAnchor.constraint(equalTo: view.leftAnchor),
+      scrollViewController.view.rightAnchor.constraint(equalTo: view.rightAnchor),
+    ])
+    view.setNeedsLayout()
+    view.layoutIfNeeded()
+    scrollViewController.didMove(toParent: self)
   }
 
   private func setupBindings() {
