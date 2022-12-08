@@ -107,6 +107,7 @@ public final class ProfilePhoneController: UIViewController {
       .saveButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
+        view.endEditing(true)
         viewModel.didTapNext()
       }.store(in: &cancellables)
   }
