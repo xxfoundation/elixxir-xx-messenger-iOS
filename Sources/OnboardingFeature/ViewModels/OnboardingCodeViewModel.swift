@@ -31,7 +31,7 @@ final class OnboardingCodeViewModel {
   private var timer: Timer?
   private let isEmail: Bool
   private let content: String
-  private let confirmationId: String
+  private var confirmationId: String
   private let stateSubject = CurrentValueSubject<ViewState, Never>(.init())
 
   init(
@@ -60,6 +60,18 @@ final class OnboardingCodeViewModel {
       }
       self.stateSubject.value.resendDebouncer -= 1
     }
+    bgQueue.schedule { [weak self] in
+      guard let self else { return }
+      do {
+        self.confirmationId = try self.messenger.ud.tryGet()
+          .sendRegisterFact(.init(
+            type: self.isEmail ? .email : .phone,
+            value: self.content
+          ))
+      } catch {
+        self.hudManager.show(.init(error: error))
+      }
+    }
   }
 
   func didTapNext() {
@@ -67,7 +79,7 @@ final class OnboardingCodeViewModel {
     bgQueue.schedule { [weak self] in
       guard let self else { return }
       do {
-        try self.messenger.ud.get()!.confirmFact(
+        try self.messenger.ud.tryGet().confirmFact(
           confirmationId: self.confirmationId,
           code: self.stateSubject.value.input
         )

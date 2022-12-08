@@ -6,6 +6,7 @@ import AppResources
 import Dependencies
 import AppNavigation
 import DrawerFeature
+import CountryListFeature
 import ScrollViewController
 
 public final class OnboardingCodeController: UIViewController {
@@ -53,7 +54,9 @@ public final class OnboardingCodeController: UIViewController {
     screenView.setupSubtitle(
       isEmail ?
       Localized.Onboarding.EmailConfirmation.subtitle(content) :
-      Localized.Onboarding.PhoneConfirmation.subtitle(content)
+      Localized.Onboarding.PhoneConfirmation.subtitle(
+        "\(Country.findFrom(content).prefix)\(content.dropLast(2))"
+      )
     )
 
     screenView.didTapInfo = { [weak self] in
