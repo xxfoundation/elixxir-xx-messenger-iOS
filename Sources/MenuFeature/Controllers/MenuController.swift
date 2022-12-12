@@ -37,9 +37,29 @@ public final class MenuController: UIViewController {
 
   public override func viewDidLoad() {
     super.viewDidLoad()
-    screenView.headerView.set(
-      username: viewModel.username,
-      image: viewModel.avatar
+
+    let paragraphStyle = NSMutableParagraphStyle()
+    paragraphStyle.lineSpacing = 10
+
+    let attrString = NSMutableAttributedString(
+      string: "\(Localized.Menu.title)\n*\(viewModel.username)*",
+      attributes: [
+        .paragraphStyle: paragraphStyle,
+        .foregroundColor: Asset.neutralWeak.color,
+        .font: Fonts.Mulish.semiBold.font(size: 14.0) as UIFont
+      ]
+    )
+    attrString.addAttributes(attributes: [
+      .foregroundColor: Asset.neutralLine.color,
+      .font: Fonts.Mulish.bold.font(size: 18.0) as UIFont
+    ], betweenCharacters: "*")
+
+    screenView.headerView.textLabel.attributedText = attrString
+
+    screenView.headerView.avatarView.setupProfile(
+      title: viewModel.username,
+      image: viewModel.avatar,
+      size: .large
     )
 
     switch currentItem {
@@ -88,7 +108,7 @@ public final class MenuController: UIViewController {
 
     screenView
       .headerView
-      .nameButton
+      .profileButton
       .publisher(for: .touchUpInside)
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
