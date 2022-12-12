@@ -20,6 +20,11 @@ public final class LaunchController: UIViewController {
     view = screenView
   }
 
+  public override func viewDidLayoutSubviews() {
+    super.viewDidLayoutSubviews()
+    screenView.gradientLayer.frame = screenView.bounds
+  }
+
   public override func viewDidLoad() {
     super.viewDidLoad()
 

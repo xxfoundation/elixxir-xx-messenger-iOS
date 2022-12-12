@@ -6,6 +6,7 @@ final class OnboardingSuccessView: UIView {
   let titleLabel = UILabel()
   let imageView = UIImageView()
   let nextButton = CapsuleButton()
+  let gradientLayer = CAGradientLayer.xxGradient()
 
   init() {
     super.init(frame: .zero)
@@ -14,6 +15,8 @@ final class OnboardingSuccessView: UIView {
     addSubview(imageView)
     addSubview(titleLabel)
     addSubview(nextButton)
+
+    layer.insertSublayer(gradientLayer, at: 0)
 
     imageView.snp.makeConstraints {
       $0.top.equalTo(safeAreaLayoutGuide).offset(40)
