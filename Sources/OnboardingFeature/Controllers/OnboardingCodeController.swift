@@ -115,14 +115,10 @@ public final class OnboardingCodeController: UIViewController {
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
         guard $0 == true else { return }
-        if isEmail {
-          navigator.perform(PresentOnboardingPhone(on: navigationController!))
-        } else {
-          navigator.perform(PresentSearch(
-            fromOnboarding: true,
-            on: navigationController!
-          ))
-        }
+        navigator.perform(PresentOnboardingSuccess(
+          isEmail: isEmail,
+          on: navigationController!
+        ))
       }.store(in: &cancellables)
 
     screenView

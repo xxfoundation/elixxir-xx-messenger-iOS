@@ -864,8 +864,10 @@
 = "Your #email# has been successfully #added#.";
 "onboarding.success.phone.title"
 = "Your #phone# has been successfully #added#.";
-"onboarding.success.action"
+"onboarding.success.action.next"
 = "Next";
+"onboarding.success.action.done"
+= "Done";
 
 // OnboardingFeature - Start
 

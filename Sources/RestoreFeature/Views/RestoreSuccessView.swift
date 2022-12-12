@@ -13,7 +13,7 @@ final class RestoreSuccessView: UIView {
 
     iconImageView.contentMode = .center
     iconImageView.image = Asset.onboardingSuccess.image
-    nextButton.set(style: .white, title: Localized.Onboarding.Success.action)
+    nextButton.set(style: .white, title: Localized.Onboarding.Success.Action.next)
 
     subtitleLabel.numberOfLines = 0
     subtitleLabel.textColor = Asset.neutralWhite.color
