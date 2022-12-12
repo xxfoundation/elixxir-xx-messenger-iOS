@@ -7,6 +7,7 @@ final class TermsConditionsView: UIView {
   let logoImageView = UIImageView()
   let showTermsButton = CapsuleButton()
   let radioComponent = RadioTextComponent()
+  let gradientLayer = CAGradientLayer.xxGradient()
 
   init() {
     super.init(frame: .zero)
@@ -25,33 +26,28 @@ final class TermsConditionsView: UIView {
     addSubview(radioComponent)
     addSubview(showTermsButton)
 
-    setupConstraints()
-  }
+    layer.insertSublayer(gradientLayer, at: 0)
 
-  required init?(coder: NSCoder) { nil }
-
-  private func setupConstraints() {
     logoImageView.snp.makeConstraints {
       $0.top.equalTo(safeAreaLayoutGuide).offset(30)
       $0.centerX.equalToSuperview()
     }
-
     radioComponent.snp.makeConstraints {
       $0.left.equalToSuperview().offset(40)
       $0.right.equalToSuperview().offset(-40)
       $0.bottom.equalTo(nextButton.snp.top).offset(-20)
     }
-
     nextButton.snp.makeConstraints {
       $0.left.equalToSuperview().offset(40)
       $0.right.equalToSuperview().offset(-40)
       $0.bottom.equalTo(showTermsButton.snp.top).offset(-10)
     }
-
     showTermsButton.snp.makeConstraints {
       $0.left.equalToSuperview().offset(40)
       $0.right.equalToSuperview().offset(-40)
       $0.bottom.equalTo(safeAreaLayoutGuide).offset(-40)
     }
   }
+
+  required init?(coder: NSCoder) { nil }
 }

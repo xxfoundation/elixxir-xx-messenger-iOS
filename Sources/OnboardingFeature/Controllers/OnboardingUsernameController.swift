@@ -90,9 +90,10 @@ public final class OnboardingUsernameController: UIViewController {
 
     viewModel
       .statePublisher
+      .filter(\.didConfirm)
+      .removeDuplicates()
       .receive(on: DispatchQueue.main)
-      .sink { [unowned self] in
-        guard $0.didConfirm == true else { return }
+      .sink { [unowned self] _ in
         navigator.perform(PresentOnboardingWelcome(on: navigationController!))
       }.store(in: &cancellables)
 

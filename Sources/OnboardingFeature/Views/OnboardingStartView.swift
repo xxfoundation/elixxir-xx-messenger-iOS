@@ -8,6 +8,7 @@ final class OnboardingStartView: UIView {
   let logoImageView = UIImageView()
   let startButton = CapsuleButton()
   let bottomImageView = UIImageView()
+  let gradientLayer = CAGradientLayer.xxGradient()
 
   init() {
     super.init(frame: .zero)
@@ -33,6 +34,8 @@ final class OnboardingStartView: UIView {
 
     addSubview(logoImageView)
     addSubview(stackView)
+
+    layer.insertSublayer(gradientLayer, at: 0)
 
     logoImageView.snp.makeConstraints {
       $0.top.equalToSuperview().offset(130)

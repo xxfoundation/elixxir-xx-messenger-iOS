@@ -791,8 +791,12 @@ public enum Localized {
       public static let title = Localized.tr("Localizable", "onboarding.start.title")
     }
     public enum Success {
-      /// Next
-      public static let action = Localized.tr("Localizable", "onboarding.success.action")
+      public enum Action {
+        /// Done
+        public static let done = Localized.tr("Localizable", "onboarding.success.action.done")
+        /// Next
+        public static let next = Localized.tr("Localizable", "onboarding.success.action.next")
+      }
       public enum Email {
         /// Your #email# has been successfully #added#.
         public static let title = Localized.tr("Localizable", "onboarding.success.email.title")
