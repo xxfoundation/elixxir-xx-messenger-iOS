@@ -6,6 +6,7 @@ import SwiftUI
 public final class HUDPresenter {
   public init() {
     hudManager.observe()
+      .receive(on: DispatchQueue.main)
       .sink { [unowned self] model in
         if let model = model {
           show(model)
