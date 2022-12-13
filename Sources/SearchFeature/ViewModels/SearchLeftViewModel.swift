@@ -63,31 +63,8 @@ final class SearchLeftViewModel {
     if let pendingInvitation = invitation {
       invitation = nil
       stateSubject.value.input = pendingInvitation
-      hudManager.show(.init(
-        actionTitle: Localized.Ud.Search.cancel,
-        hasDotAnimation: true,
-        isAutoDismissable: false,
-        onTapClosure: { [weak self] in
-          guard let self else { return }
-          self.didTapCancelSearch()
-        }
-      ))
-
       networkCancellable.removeAll()
-
-//      networkMonitor
-//        .statusPublisher
-//        .first { $0 == .available }
-//        .eraseToAnyPublisher()
-//        .flatMap { _ in
-//          self.waitForNodes(timeout: 5)
-//        }.sink(receiveCompletion: {
-//          if case .failure(let error) = $0 {
-//            self.hudManager.show(.init(error: error))
-//          }
-//        }, receiveValue: {
-//          self.didStartSearching()
-//        }).store(in: &networkCancellable)
+      didStartSearching()
     }
   }
 
