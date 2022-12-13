@@ -110,6 +110,9 @@ extension NavigatorKey: DependencyKey {
     PresentOnboardingEmailNavigator(
       OnboardingEmailController.init
     ),
+    PresentNicknameNavigator(
+      NicknameController.init(_:_:)
+    ),
     PresentOnboardingSuccessNavigator(
       OnboardingSuccessController.init(_:)
     ),
