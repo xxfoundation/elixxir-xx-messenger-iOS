@@ -1,87 +1,61 @@
 import UIKit
-import Shared
 import Combine
-import InputField
-import ScrollViewController
 
 public final class NicknameController: UIViewController {
   private lazy var screenView = NicknameView()
 
-  private let prefilled: String
+  private let viewModel: NicknameViewModel
   private let completion: (String) -> Void
-  private let viewModel = NicknameViewModel()
   private var cancellables = Set<AnyCancellable>()
-  private let keyboardListener = KeyboardFrameChangeListener(notificationCenter: .default)
 
-  public init(_ prefilled: String, _ completion: @escaping (String) -> Void) {
-    self.prefilled = prefilled
+  public init(
+    _ prefilled: String,
+    _ completion: @escaping (String) -> Void
+  ) {
     self.completion = completion
+    self.viewModel = .init(prefilled: prefilled)
     super.init(nibName: nil, bundle: nil)
   }
 
   required init?(coder: NSCoder) { nil }
 
   public override func loadView() {
-    let view = UIView()
-    view.addSubview(screenView)
-
-    screenView.snp.makeConstraints {
-      $0.top.equalToSuperview()
-      $0.left.equalToSuperview()
-      $0.right.equalToSuperview()
-      $0.bottom.equalToSuperview().offset(0)
-    }
-
-    self.view = view
+    view = screenView
   }
 
   public override func viewDidLoad() {
     super.viewDidLoad()
-    setupKeyboard()
-    setupBindings()
 
-    screenView.inputField.update(content: prefilled)
-    viewModel.didInput(prefilled)
-  }
-
-  private func setupKeyboard() {
-    keyboardListener.keyboardFrameWillChange = { [weak self] keyboard in
-      guard let self else { return }
-
-      let inset = self.view.frame.height - self.view.convert(keyboard.frame, from: nil).minY
-
-      self.screenView.snp.updateConstraints {
-        $0.bottom.equalToSuperview().offset(-inset)
-      }
-
-      self.view.setNeedsLayout()
-
-      UIView.animate(withDuration: keyboard.animationDuration) {
-        self.view.layoutIfNeeded()
-      }
-    }
-  }
-
-  private func setupBindings() {
-    viewModel.state
-      .map(\.status)
-      .receive(on: DispatchQueue.main)
-      .sink { [weak screenView] in screenView?.update(status: $0) }
-      .store(in: &cancellables)
-
-    viewModel.done
+    viewModel
+      .statePublisher
+      .removeDuplicates()
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
-        dismiss(animated: true)
-        completion($0)
+        screenView.inputField.update(status: $0.status)
+        screenView.inputField.update(content: $0.input)
+
+        if case .valid = $0.status {
+          screenView.saveButton.isEnabled = true
+        } else {
+          screenView.saveButton.isEnabled = false
+        }
       }.store(in: &cancellables)
 
-    screenView.inputField.textPublisher
-      .sink { [weak viewModel] in viewModel?.didInput($0) }
-      .store(in: &cancellables)
+    screenView
+      .inputField
+      .textPublisher
+      .sink { [unowned self] in
+        viewModel.didInput($0)
+      }.store(in: &cancellables)
 
-    screenView.saveButton.publisher(for: .touchUpInside)
-      .sink { [weak viewModel] in viewModel?.didTapSave() }
-      .store(in: &cancellables)
+    screenView
+      .saveButton
+      .publisher(for: .touchUpInside)
+      .sink { [unowned self] in
+        dismiss(animated: true) { [weak self] in
+          guard let self else { return }
+          self.completion(self.viewModel.getInput())
+        }
+      }.store(in: &cancellables)
   }
 }

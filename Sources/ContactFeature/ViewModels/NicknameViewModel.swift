@@ -1,45 +1,36 @@
-import Shared
 import Combine
 import InputField
 import AppResources
 
-struct NicknameViewState {
-    var nickname: String = ""
-    var status: InputField.ValidationStatus = .unknown(nil)
-}
-
 final class NicknameViewModel {
-    // MARK: Properties
+  struct ViewState: Equatable {
+    var input: String
+    var status: InputField.ValidationStatus
+  }
 
-    var state: AnyPublisher<NicknameViewState, Never> {
-        stateRelay.eraseToAnyPublisher()
-    }
+  var statePublisher: AnyPublisher<ViewState, Never> {
+    stateSubject.eraseToAnyPublisher()
+  }
 
-    var done: AnyPublisher<String, Never> {
-        doneRelay.eraseToAnyPublisher()
-    }
+  private let stateSubject: CurrentValueSubject<ViewState, Never>
 
-    private let doneRelay = PassthroughSubject<String, Never>()
-    private let stateRelay = CurrentValueSubject<NicknameViewState, Never>(.init())
+  init(prefilled: String) {
+    self.stateSubject = .init(.init(
+      input: prefilled,
+      status: .valid(nil)
+    ))
+  }
 
-    // MARK: Public
+  func getInput() -> String {
+    stateSubject.value.input
+  }
 
-    func didInput(_ string: String) {
-        stateRelay.value.nickname = string
-        validate()
-    }
+  func didInput(_ string: String) {
+    let input = string.trimmingCharacters(in: .whitespacesAndNewlines)
 
-    func didTapSave() {
-        doneRelay.send(stateRelay.value.nickname.trimmingCharacters(in: .whitespacesAndNewlines))
-    }
-
-    // MARK: Private
-
-    private func validate() {
-        if stateRelay.value.nickname.trimmingCharacters(in: .whitespacesAndNewlines).count >= 1 {
-            stateRelay.value.status = .valid(nil)
-        } else {
-            stateRelay.value.status = .invalid(Localized.Contact.Nickname.minimum)
-        }
-    }
+    stateSubject.value.input = input
+    stateSubject.value.status = input.count >= 1 ?
+      .valid(nil) :
+      .invalid(Localized.Contact.Nickname.minimum)
+  }
 }

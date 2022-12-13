@@ -8,7 +8,7 @@ public struct PresentNickname: Action {
   ///   - parent: Parent view controller from which presentation should happen
   ///   - animated: Animate the transition
   public init(
-    prefilled: String?,
+    prefilled: String,
     completion: @escaping (String) -> Void,
     from parent: UIViewController,
     animated: Bool = true
@@ -19,8 +19,8 @@ public struct PresentNickname: Action {
     self.animated = animated
   }
 
-  /// Optional value to be set as placeholder/pre-existent text
-  public var prefilled: String?
+  /// Value to be set as placeholder/pre-existent text
+  public var prefilled: String
 
   /// Closure that passes the value of the text set
   public var completion: (String) -> Void
@@ -38,16 +38,19 @@ public struct PresentNicknameNavigator: TypedNavigator {
   let transitioningDelegate = BottomTransitioningDelegate()
 
   /// View controller which should be opened up
-  var viewController: () -> UIViewController
+  var viewController: (String, @escaping (String) -> Void) -> UIViewController
 
   /// - Parameters:
   ///   - viewController: view controller which should be presented
-  public init(_ viewController: @escaping () -> UIViewController) {
+  public init(_ viewController: @escaping (
+    String, @escaping (String) -> Void
+  ) -> UIViewController
+  ) {
     self.viewController = viewController
   }
 
   public func perform(_ action: PresentNickname, completion: @escaping () -> Void) {
-    let controller = viewController()
+    let controller = viewController(action.prefilled, action.completion)
     controller.transitioningDelegate = transitioningDelegate
     controller.modalPresentationStyle = .overFullScreen
 
