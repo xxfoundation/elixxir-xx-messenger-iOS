@@ -89,60 +89,60 @@ final class SearchLeftViewModel {
   func didStartSearching() {
     guard stateSubject.value.input.isEmpty == false else { return }
 
-    hudManager.show(.init(
-      actionTitle: Localized.Ud.Search.cancel,
-      hasDotAnimation: true,
-      isAutoDismissable: false,
-      onTapClosure: { [weak self] in
-        guard let self else { return }
-        self.didTapCancelSearch()
-      }
-    ))
-
-    var content = stateSubject.value.input
-
-    if stateSubject.value.item == .phone {
-      content += stateSubject.value.country.code
-    }
-
-    enum NodeRegistrationError: Error {
-      case unhealthyNet
-      case belowMinimum
-    }
-
-    retry(max: 5, retryStrategy: .delay(seconds: 2)) { [weak self] in
-      guard let self else { return }
-
-      do {
-        let nrr = try self.messenger.cMix.get()!.getNodeRegistrationStatus()
-        if nrr.ratio < 0.8 { throw NodeRegistrationError.belowMinimum }
-      } catch {
-        throw NodeRegistrationError.unhealthyNet
-      }
-    }.finalCatch { [weak self] in
-      guard let self else { return }
-
-      if case .unhealthyNet = $0 as? NodeRegistrationError {
-        self.hudManager.show(.init(content: "Network is not healthy yet, try again within the next minute or so."))
-      } else if case .belowMinimum = $0 as? NodeRegistrationError {
-        self.hudManager.show(.init(content:"Node registration ratio is still below 80%, try again within the next minute or so."))
-      } else {
-        self.hudManager.show(.init(error: $0))
-      }
-
-      return
-    }
-
-    var factType: FactType = .username
-
-    if stateSubject.value.item == .phone {
-      factType = .phone
-    } else if stateSubject.value.item == .email {
-      factType = .email
-    }
-
     backgroundScheduler.schedule { [weak self] in
       guard let self else { return }
+
+      self.hudManager.show(.init(
+        actionTitle: Localized.Ud.Search.cancel,
+        hasDotAnimation: true,
+        isAutoDismissable: false,
+        onTapClosure: { [weak self] in
+          guard let self else { return }
+          self.didTapCancelSearch()
+        }
+      ))
+
+      var content = self.stateSubject.value.input
+
+      if self.stateSubject.value.item == .phone {
+        content += self.stateSubject.value.country.code
+      }
+
+      enum NodeRegistrationError: Error {
+        case unhealthyNet
+        case belowMinimum
+      }
+
+      retry(max: 5, retryStrategy: .delay(seconds: 2)) { [weak self] in
+        guard let self else { return }
+
+        do {
+          let nrr = try self.messenger.cMix.get()!.getNodeRegistrationStatus()
+          if nrr.ratio < 0.8 { throw NodeRegistrationError.belowMinimum }
+        } catch {
+          throw NodeRegistrationError.unhealthyNet
+        }
+      }.finalCatch { [weak self] in
+        guard let self else { return }
+
+        if case .unhealthyNet = $0 as? NodeRegistrationError {
+          self.hudManager.show(.init(content: "Network is not healthy yet, try again within the next minute or so."))
+        } else if case .belowMinimum = $0 as? NodeRegistrationError {
+          self.hudManager.show(.init(content:"Node registration ratio is still below 80%, try again within the next minute or so."))
+        } else {
+          self.hudManager.show(.init(error: $0))
+        }
+
+        return
+      }
+
+      var factType: FactType = .username
+
+      if self.stateSubject.value.item == .phone {
+        factType = .phone
+      } else if self.stateSubject.value.item == .email {
+        factType = .email
+      }
 
       do {
         let report = try SearchUD.live(
