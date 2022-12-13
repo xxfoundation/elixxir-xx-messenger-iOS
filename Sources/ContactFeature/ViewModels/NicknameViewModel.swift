@@ -26,8 +26,7 @@ final class NicknameViewModel {
   }
 
   func didInput(_ string: String) {
-    let input = stateSubject.value.input
-      .trimmingCharacters(in: .whitespacesAndNewlines)
+    let input = string.trimmingCharacters(in: .whitespacesAndNewlines)
 
     stateSubject.value.input = input
     stateSubject.value.status = input.count >= 1 ?

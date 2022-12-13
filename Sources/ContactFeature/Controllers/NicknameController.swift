@@ -52,8 +52,10 @@ public final class NicknameController: UIViewController {
       .saveButton
       .publisher(for: .touchUpInside)
       .sink { [unowned self] in
-        dismiss(animated: true)
-        completion(viewModel.getInput())
+        dismiss(animated: true) { [weak self] in
+          guard let self else { return }
+          self.completion(self.viewModel.getInput())
+        }
       }.store(in: &cancellables)
   }
 }
