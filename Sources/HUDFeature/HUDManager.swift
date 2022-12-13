@@ -19,18 +19,23 @@ public struct HUDManager {
 extension HUDManager {
   public static func live() -> HUDManager {
     let subject = PassthroughSubject<HUDModel?, Never>()
+    @Dependency(\.mainQueue) var mainQueue
     return HUDManager(
       show: .init { model in
-        let model = model ?? HUDModel(hasDotAnimation: true)
-        subject.send(model)
-        if model.isAutoDismissable {
-          DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            subject.send(nil)
+        mainQueue.schedule {
+          let model = model ?? HUDModel(hasDotAnimation: true)
+          subject.send(model)
+          if model.isAutoDismissable {
+            mainQueue.schedule(after: mainQueue.now.advanced(by: 2)) {
+              subject.send(nil)
+            }
           }
         }
       },
       hide: {
-        subject.send(nil)
+        mainQueue.schedule {
+          subject.send(nil)
+        }
       },
       observe: {
         subject.eraseToAnyPublisher()
