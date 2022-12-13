@@ -52,24 +52,6 @@
       migratedStopOnEveryIssue = "YES"
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
-      <PreActions>
-         <ExecutionAction
-            ActionType = "Xcode.IDEStandardExecutionActionsCore.ExecutionActionType.ShellScriptAction">
-            <ActionContent
-               title = "Run Script"
-               scriptText = "#!/bin/sh&#10;/usr/libexec/PlistBuddy -c &quot;Set :isReportingOptional YES&quot; &quot;${SRCROOT}/client-ios/Resources/Info.plist&quot;&#10;">
-               <EnvironmentBuildable>
-                  <BuildableReference
-                     BuildableIdentifier = "primary"
-                     BlueprintIdentifier = "02FDD06121EDA39A000F1286"
-                     BuildableName = "client-ios.app"
-                     BlueprintName = "client-ios"
-                     ReferencedContainer = "container:client-ios.xcodeproj">
-                  </BuildableReference>
-               </EnvironmentBuildable>
-            </ActionContent>
-         </ExecutionAction>
-      </PreActions>
       <BuildableProductRunnable
          runnableDebuggingMode = "0">
          <BuildableReference
