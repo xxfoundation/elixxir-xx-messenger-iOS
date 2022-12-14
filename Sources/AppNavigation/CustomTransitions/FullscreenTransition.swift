@@ -1,12 +1,11 @@
 import UIKit
 
-final class BottomTransition: NSObject, UIViewControllerAnimatedTransitioning {
+final class FullscreenTransition: NSObject, UIViewControllerAnimatedTransitioning {
   enum Direction {
     case present
     case dismiss
   }
 
-  let isDismissableOnBackground: Bool
   var direction: Direction = .present
   private let onDismissal: () -> Void
   private weak var darkOverlayView: UIControl?
@@ -17,12 +16,8 @@ final class BottomTransition: NSObject, UIViewControllerAnimatedTransitioning {
   private var dismissedConstraints: [NSLayoutConstraint] = []
   private var presentingController: UIViewController?
 
-  init(
-    _ isDismissableOnBackground: Bool = true,
-    onDismissal: @escaping () -> Void
-  ) {
+  init(onDismissal: @escaping () -> Void) {
     self.onDismissal = onDismissal
-    self.isDismissableOnBackground = isDismissableOnBackground
     super.init()
   }
 
@@ -56,28 +51,24 @@ final class BottomTransition: NSObject, UIViewControllerAnimatedTransitioning {
     context.containerView.addSubview(darkOverlayView)
     darkOverlayView.frame = context.containerView.bounds
 
-    if isDismissableOnBackground {
-      darkOverlayView.addTarget(self, action: #selector(didTapOverlay), for: .touchUpInside)
-      self.presentingController = presentingController
-    }
+    darkOverlayView.addTarget(self, action: #selector(didTapOverlay), for: .touchUpInside)
+    self.presentingController = presentingController
 
     context.containerView.addSubview(presentedView)
     presentedView.translatesAutoresizingMaskIntoConstraints = false
 
     presentedConstraints = [
+      presentedView.topAnchor.constraint(equalTo: context.containerView.topAnchor),
       presentedView.leftAnchor.constraint(equalTo: context.containerView.leftAnchor),
       presentedView.rightAnchor.constraint(equalTo: context.containerView.rightAnchor),
-      presentedView.bottomAnchor.constraint(equalTo: context.containerView.bottomAnchor),
-      presentedView.topAnchor.constraint(
-        greaterThanOrEqualTo: context.containerView.safeAreaLayoutGuide.topAnchor,
-        constant: 60
-      )
+      presentedView.bottomAnchor.constraint(equalTo: context.containerView.bottomAnchor)
     ]
 
     dismissedConstraints = [
       presentedView.leftAnchor.constraint(equalTo: context.containerView.leftAnchor),
       presentedView.rightAnchor.constraint(equalTo: context.containerView.rightAnchor),
-      presentedView.topAnchor.constraint(equalTo: context.containerView.bottomAnchor)
+      presentedView.topAnchor.constraint(equalTo: context.containerView.bottomAnchor),
+      presentedView.heightAnchor.constraint(equalTo: context.containerView.heightAnchor)
     ]
 
     NSLayoutConstraint.activate(dismissedConstraints)
@@ -122,12 +113,11 @@ final class BottomTransition: NSObject, UIViewControllerAnimatedTransitioning {
       completion: { [weak self] _ in
         context.completeTransition(true)
         self?.onDismissal()
-      }
-    )
+      })
   }
 
   @objc private func didTapOverlay() {
-    if let presentingController, isDismissableOnBackground {
+    if let presentingController {
       presentingController.dismiss(animated: true)
     }
   }
