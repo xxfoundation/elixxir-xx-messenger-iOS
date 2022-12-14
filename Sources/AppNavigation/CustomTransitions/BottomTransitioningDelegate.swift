@@ -23,3 +23,26 @@ final class BottomTransitioningDelegate: NSObject, UIViewControllerTransitioning
     return transition
   }
 }
+
+final class FullscreenTransitioningDelegate: NSObject, UIViewControllerTransitioningDelegate {
+  private var transition: FullscreenTransition?
+
+  func animationController(
+    forPresented presented: UIViewController,
+    presenting: UIViewController,
+    source: UIViewController
+  ) -> UIViewControllerAnimatedTransitioning? {
+    transition = FullscreenTransition { [weak self] in
+      guard let self else { return }
+      self.transition = nil
+    }
+    return transition
+  }
+
+  func animationController(
+    forDismissed dismissed: UIViewController
+  ) -> UIViewControllerAnimatedTransitioning? {
+    transition?.direction = .dismiss
+    return transition
+  }
+}

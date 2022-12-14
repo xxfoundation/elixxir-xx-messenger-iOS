@@ -227,6 +227,10 @@ let package = Package(
           package: "client-ios-db"
         ),
         .product(
+          name: "ScrollViewController",
+          package: "ScrollViewController"
+        ),
+        .product(
           name: "Dependencies",
           package: "swift-composable-architecture"
         ),

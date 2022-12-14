@@ -1,4 +1,5 @@
 import UIKit
+import ScrollViewController
 
 /// Opens up `Nickname` on a given parent view controller
 public struct PresentNickname: Action {
@@ -35,27 +36,31 @@ public struct PresentNickname: Action {
 /// Performs `PresentNickname` action
 public struct PresentNicknameNavigator: TypedNavigator {
   /// Custom transitioning delegate
-  let transitioningDelegate = BottomTransitioningDelegate()
+  let transitioningDelegate = FullscreenTransitioningDelegate()
 
   /// View controller which should be opened up
   var viewController: (String, @escaping (String) -> Void) -> UIViewController
 
   /// - Parameters:
   ///   - viewController: view controller which should be presented
-  public init(_ viewController: @escaping (
-    String, @escaping (String) -> Void
-  ) -> UIViewController
-  ) {
+  public init(_ viewController: @escaping (String, @escaping (String) -> Void) -> UIViewController) {
     self.viewController = viewController
   }
 
   public func perform(_ action: PresentNickname, completion: @escaping () -> Void) {
+    let scrollViewController = ScrollViewController()
     let controller = viewController(action.prefilled, action.completion)
-    controller.transitioningDelegate = transitioningDelegate
-    controller.modalPresentationStyle = .overFullScreen
+    scrollViewController.addChild(controller)
+    scrollViewController.contentView = controller.view
+    scrollViewController.wrapperView.handlesTouchesOutsideContent = false
+    scrollViewController.wrapperView.alignContentToBottom = true
+    scrollViewController.scrollView.bounces = false
+    controller.didMove(toParent: scrollViewController)
+    scrollViewController.transitioningDelegate = transitioningDelegate
+    scrollViewController.modalPresentationStyle = .overFullScreen
 
     action.parent.present(
-      controller,
+      scrollViewController,
       animated: action.animated,
       completion: completion
     )
