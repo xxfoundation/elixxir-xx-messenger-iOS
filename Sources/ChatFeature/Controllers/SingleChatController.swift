@@ -84,6 +84,7 @@ public final class SingleChatController: UIViewController {
 
   public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
+    navigationItem.backButtonTitle = ""
     statusBar.set(.darkContent)
     navigationController?.navigationBar.customize(
       backgroundColor: Asset.neutralWhite.color,
