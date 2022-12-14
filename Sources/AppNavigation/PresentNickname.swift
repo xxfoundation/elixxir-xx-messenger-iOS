@@ -52,11 +52,11 @@ public struct PresentNicknameNavigator: TypedNavigator {
     let controller = viewController(action.prefilled, action.completion)
     scrollViewController.addChild(controller)
     scrollViewController.contentView = controller.view
-    scrollViewController.wrapperView.handlesTouchesOutsideContent = true
+    scrollViewController.wrapperView.handlesTouchesOutsideContent = false
     scrollViewController.wrapperView.alignContentToBottom = true
     scrollViewController.scrollView.bounces = false
     controller.didMove(toParent: scrollViewController)
-    controller.transitioningDelegate = transitioningDelegate
+    scrollViewController.transitioningDelegate = transitioningDelegate
     scrollViewController.modalPresentationStyle = .overFullScreen
 
     action.parent.present(
