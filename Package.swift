@@ -203,6 +203,9 @@ let package = Package(
     ),
     .target(
       name: "WebsiteFeature",
+      dependencies: [
+        .target(name: "AppResources"),
+      ],
       swiftSettings: swiftSettings
     ),
     .target(
