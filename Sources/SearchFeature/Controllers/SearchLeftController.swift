@@ -280,7 +280,6 @@ final class SearchLeftController: UIViewController {
 
     items.append(drawerSaveButton)
 
-    let drawer = DrawerController(items)
     var nickname: String?
     var allowsSave = true
 
@@ -307,14 +306,19 @@ final class SearchLeftController: UIViewController {
       .receive(on: DispatchQueue.main)
       .sink { [unowned self] in
         guard allowsSave else { return }
-
-        drawer.dismiss(animated: true) {
+        navigator.perform(DismissModal(from: self)) { [weak self] in
+          guard let self else { return }
           self.viewModel.didSet(nickname: nickname ?? contact.username!, for: contact)
+          self.drawerCancellables.removeAll()
         }
       }
       .store(in: &drawerCancellables)
 
-    //coordinator.toNicknameDrawer(drawer, from: self)
+    navigator.perform(PresentDrawer(
+      items: items,
+      isDismissable: true,
+      from: self
+    ))
   }
 
   private func presentRequestDrawer(forContact contact: Contact) {
