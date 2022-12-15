@@ -40,7 +40,9 @@ public struct PresentWebsiteNavigator: TypedNavigator {
 
   public func perform(_ action: PresentWebsite, completion: @escaping () -> Void) {
     action.parent.present(
-      viewController(action.urlString),
+      UINavigationController(
+        rootViewController: viewController(action.urlString)
+      ),
       animated: action.animated,
       completion: completion
     )
