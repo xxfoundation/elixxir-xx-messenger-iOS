@@ -613,6 +613,8 @@ public enum Localized {
       public static let action = Localized.tr("Localizable", "createGroup.drawer.action")
       /// Cancel
       public static let cancel = Localized.tr("Localizable", "createGroup.drawer.cancel")
+      /// Got it
+      public static let gotit = Localized.tr("Localizable", "createGroup.drawer.gotit")
       /// Group Name
       public static let input = Localized.tr("Localizable", "createGroup.drawer.input")
       /// Needs to be 20 chars max or 256 bytes
@@ -623,6 +625,8 @@ public enum Localized {
       public static let otherInput = Localized.tr("Localizable", "createGroup.drawer.otherInput")
       /// Say hi to your friends!
       public static let otherPlaceholder = Localized.tr("Localizable", "createGroup.drawer.otherPlaceholder")
+      /// A group request will be sent to every user who can choose to join or not. Group chat requests are secured and sent via the xx network cMix protocol. However, due to the inherent batching associated with communicating with many people and current implementation details, it should not be considered as private as a standard, peer-to-peer chat.
+      public static let otherSubtitle = Localized.tr("Localizable", "createGroup.drawer.otherSubtitle")
       /// Secret Family
       public static let placeholder = Localized.tr("Localizable", "createGroup.drawer.placeholder")
       /// You are about to create a group message with other %@ users. The information below will be visible to all members of the group.
