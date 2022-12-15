@@ -1,4 +1,5 @@
 import UIKit
+import ScrollViewController
 
 /// Opens up `Drawer` on a given parent view controller
 public struct PresentDrawer: Action {
@@ -35,7 +36,7 @@ public struct PresentDrawer: Action {
 /// Performs `PresentDrawer` action
 public struct PresentDrawerNavigator: TypedNavigator {
   /// Custom transitioning delegate
-  let transitioningDelegate = BottomTransitioningDelegate()
+  let transitioningDelegate = FullscreenTransitioningDelegate()
 
   /// View controller which should be opened up
   var viewController: ([Any]) -> UIViewController
@@ -47,13 +48,19 @@ public struct PresentDrawerNavigator: TypedNavigator {
   }
 
   public func perform(_ action: PresentDrawer, completion: @escaping () -> Void) {
-    transitioningDelegate.isDismissableOnBackgroundTouch = action.isDismissable
+    let scrollViewController = ScrollViewController()
     let controller = viewController(action.items)
-    controller.transitioningDelegate = transitioningDelegate
-    controller.modalPresentationStyle = .overFullScreen
+    scrollViewController.addChild(controller)
+    scrollViewController.contentView = controller.view
+    scrollViewController.wrapperView.handlesTouchesOutsideContent = !action.isDismissable
+    scrollViewController.wrapperView.alignContentToBottom = true
+    scrollViewController.scrollView.bounces = false
+    controller.didMove(toParent: scrollViewController)
+    scrollViewController.transitioningDelegate = transitioningDelegate
+    scrollViewController.modalPresentationStyle = .overFullScreen
 
     action.parent.present(
-      controller,
+      scrollViewController,
       animated: action.animated,
       completion: completion
     )
