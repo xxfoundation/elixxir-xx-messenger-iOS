@@ -994,6 +994,10 @@
 = "Create Group";
 "createGroup.drawer.subtitle"
 = "You are about to create a group message with other %@ users. The information below will be visible to all members of the group.";
+"createGroup.drawer.otherSubtitle"
+= "A group request will be sent to every user who can choose to join or not. Group chat requests are secured and sent via the xx network cMix protocol. However, due to the inherent batching associated with communicating with many people and current implementation details, it should not be considered as private as a standard, peer-to-peer chat.";
+"createGroup.drawer.gotit"
+= "Got it";
 "createGroup.drawer.input"
 = "Group Name";
 "createGroup.drawer.otherInput"
