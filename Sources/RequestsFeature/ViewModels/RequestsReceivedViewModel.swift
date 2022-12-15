@@ -263,6 +263,7 @@ final class RequestsReceivedViewModel {
         try self.dbManager.getDB().saveContact(contact)
         
         let _ = try self.messenger.e2e.get()!.confirmReceivedRequest(partner: .live(contact.marshaled!))
+        contact.isRecent = true
         contact.authStatus = .friend
         try self.dbManager.getDB().saveContact(contact)
         
