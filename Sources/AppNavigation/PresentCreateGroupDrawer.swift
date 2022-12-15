@@ -1,5 +1,6 @@
 import UIKit
 import XXModels
+import ScrollViewController
 
 /// Opens up `CreateGroup` on a given parent view controller
 public struct PresentCreateGroup: Action {
@@ -30,7 +31,7 @@ public struct PresentCreateGroup: Action {
 /// Performs `PresentCreateGroup` action
 public struct PresentCreateGroupNavigator: TypedNavigator {
   /// Custom transitioning delegate
-  let transitioningDelegate = BottomTransitioningDelegate()
+  let transitioningDelegate = FullscreenTransitioningDelegate()
 
   /// View controller which should be opened up
   var viewController: ([Contact]) -> UIViewController
@@ -42,13 +43,18 @@ public struct PresentCreateGroupNavigator: TypedNavigator {
   }
 
   public func perform(_ action: PresentCreateGroup, completion: @escaping () -> Void) {
-    transitioningDelegate.isDismissableOnBackgroundTouch = true
+    let scrollViewController = ScrollViewController()
     let controller = viewController(action.members)
-    controller.transitioningDelegate = transitioningDelegate
-    controller.modalPresentationStyle = .overFullScreen
-
+    scrollViewController.addChild(controller)
+    scrollViewController.contentView = controller.view
+    scrollViewController.wrapperView.handlesTouchesOutsideContent = false
+    scrollViewController.wrapperView.alignContentToBottom = true
+    scrollViewController.scrollView.bounces = false
+    controller.didMove(toParent: scrollViewController)
+    scrollViewController.transitioningDelegate = transitioningDelegate
+    scrollViewController.modalPresentationStyle = .overFullScreen
     action.parent.present(
-      controller,
+      scrollViewController,
       animated: action.animated,
       completion: completion
     )
