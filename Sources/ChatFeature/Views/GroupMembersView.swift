@@ -10,6 +10,7 @@ final class GroupMembersView: UIView {
 
     layer.cornerRadius = 40
     layer.masksToBounds = true
+    layer.maskedCorners = [.layerMinXMinYCorner, .layerMaxXMinYCorner]
     backgroundColor = Asset.neutralWhite.color
 
     stackView.axis = .vertical

@@ -1,3 +1,4 @@
+import ScrollViewController
 import UIKit
 import XXModels
 
@@ -30,7 +31,7 @@ public struct PresentGroupMembers: Action {
 /// Performs `PresentGroupMembers` action
 public struct PresentGroupMembersNavigator: TypedNavigator {
   /// Custom transitioning delegate
-  let transitioningDelegate = BottomTransitioningDelegate()
+  let transitioningDelegate = FullscreenTransitioningDelegate()
 
   /// View controller which should be opened up
   var viewController: (GroupInfo) -> UIViewController
@@ -42,12 +43,18 @@ public struct PresentGroupMembersNavigator: TypedNavigator {
   }
 
   public func perform(_ action: PresentGroupMembers, completion: @escaping () -> Void) {
+    let scrollViewController = ScrollViewController()
     let controller = viewController(action.groupInfo)
-    controller.transitioningDelegate = transitioningDelegate
-    controller.modalPresentationStyle = .overFullScreen
-
+    scrollViewController.addChild(controller)
+    scrollViewController.contentView = controller.view
+    scrollViewController.wrapperView.handlesTouchesOutsideContent = false
+    scrollViewController.wrapperView.alignContentToBottom = true
+    scrollViewController.scrollView.bounces = false
+    controller.didMove(toParent: scrollViewController)
+    scrollViewController.transitioningDelegate = transitioningDelegate
+    scrollViewController.modalPresentationStyle = .overFullScreen
     action.parent.present(
-      controller,
+      scrollViewController,
       animated: action.animated,
       completion: completion
     )
