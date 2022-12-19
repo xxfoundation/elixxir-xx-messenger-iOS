@@ -41,8 +41,12 @@ public final class Voxophone: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDe
   public func load(_ url: URL) {
     destroyPlayer()
     destroyRecorder()
-    let player = setupPlayer(url: url)
-    state = .idle(url, duration: player.duration, isLoudspeaker: state.isLoudspeaker)
+    do {
+      let player = try setupPlayer(url: url)
+      state = .idle(url, duration: player.duration, isLoudspeaker: state.isLoudspeaker)
+    } catch {
+      state = .empty(isLoudspeaker: state.isLoudspeaker)
+    }
   }
 
   public func play() {
@@ -76,8 +80,8 @@ public final class Voxophone: NSObject, AVAudioRecorderDelegate, AVAudioPlayerDe
     }
   }
 
-  private func setupPlayer(url: URL) -> AVAudioPlayer {
-    let player = try! AVAudioPlayer(contentsOf: url, fileTypeHint: AVFileType.m4a.rawValue)
+  private func setupPlayer(url: URL) throws -> AVAudioPlayer {
+    let player = try AVAudioPlayer(contentsOf: url, fileTypeHint: AVFileType.m4a.rawValue)
     self.player = player
     return player
   }
